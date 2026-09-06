@@ -306,6 +306,7 @@ function flap(){
     pendingStationIndex = stationIndex+1;
     stationTransitionTimer = 90;
     transitionScoreSnapshot = score;
+    nextObstacleX = scrollX + 500; // give a clear runway into the new station instead of a stale catch-up burst
     duckBgm();
     state = 'playing';
     return;
