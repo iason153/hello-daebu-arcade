@@ -584,7 +584,7 @@ function drawDialogue(){
     img = images[shop.illust2] || images[shop.img] || images.hello_flap_up; headline=null; body=shop.line2;
   }
 
-  if(img && img.complete) drawCover(img, W, H);
+  if(img && img.complete) drawFitWidth(img, W, H, '#1a2a3a');
   else { ctx.fillStyle='#223'; ctx.fillRect(0,0,W,H); }
 
   if(headline || body){
@@ -667,6 +667,15 @@ function drawCover(img, w, h){
   const scale = Math.max(w/img.naturalWidth, h/img.naturalHeight);
   const dw = img.naturalWidth*scale, dh = img.naturalHeight*scale;
   ctx.drawImage(img, (w-dw)/2, (h-dh)/2, dw, dh);
+}
+function drawFitWidth(img, w, h, bgColor){
+  // fits img to the full width, never cropping left/right — any leftover
+  // top/bottom space is filled with bgColor instead of cutting off the sides
+  ctx.fillStyle = bgColor || '#1a2a3a';
+  ctx.fillRect(0,0,w,h);
+  const scale = w/img.naturalWidth;
+  const dh = img.naturalHeight*scale;
+  ctx.drawImage(img, 0, (h-dh)/2, w, dh);
 }
 function drawStartScreen(){
   ctx.save();
