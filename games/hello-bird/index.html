@@ -212,6 +212,7 @@ let stationStartScore = 0; // score value at the moment the current station bega
 let stationScrollAnchor = 0; // scrollX value at the moment the current station began (so its bg layers start at phase 0)
 let transitionScoreSnapshot = 0; // score shown on the arrival banner
 let gate = null; // the floating shop/target the player must fly into to advance
+let dialogueCut = 0; // which of the 3 RPG-style cutscene panels is showing
 let gatePending = false; // true once the gate has been spawned for the current station, until hit
 
 function checkStationTransition(){
@@ -282,8 +283,13 @@ function stationProgress(){
 function rollGap(){
   const g = station.gap;
   const progress = stationProgress();
-  const effMin = g.GAP_H_MAX - progress * (g.GAP_H_MAX - g.GAP_H_MIN);
-  const gapH = effMin + Math.random()*Math.max(10, g.GAP_H_MAX - effMin);
+  const range = g.GAP_H_MAX - g.GAP_H_MIN;
+  // the center point drifts from generous (easy) toward tight (hard) as progress increases,
+  // but a healthy random spread is always kept around that center so it never feels "fixed"
+  const center = g.GAP_H_MAX - progress * (range * 0.6);
+  const spread = Math.max(range * 0.35, 50);
+  let gapH = center + (Math.random()*2 - 1) * (spread/2);
+  gapH = Math.max(g.GAP_H_MIN, Math.min(g.GAP_H_MAX, gapH));
   const minGapY = g.GAP_MARGIN_TOP;
   const maxGapY = H - station.bg.GROUND_H - g.GAP_MARGIN_BOTTOM - gapH;
   const gapY = minGapY + Math.random()*Math.max(20,(maxGapY-minGapY));
@@ -316,15 +322,18 @@ function flap(){
   startBgmIfNeeded();
   if(state==='start'||state==='gameover'){ resetGame(); return; }
   if(state==='dialogue'){
-    // advance past the shop dialogue -> queue the actual station switch + arrival flash
-    gate = null;
-    gatePending = false;
-    pendingStationIndex = stationIndex+1;
-    stationTransitionTimer = 90;
-    transitionScoreSnapshot = score;
-    nextObstacleX = scrollX + 500; // give a clear runway into the new station instead of a stale catch-up burst
-    duckBgm();
-    state = 'playing';
+    dialogueCut++;
+    if(dialogueCut > 2){
+      // advance past the shop dialogue -> queue the actual station switch + arrival flash
+      gate = null;
+      gatePending = false;
+      pendingStationIndex = stationIndex+1;
+      stationTransitionTimer = 90;
+      transitionScoreSnapshot = score;
+      nextObstacleX = scrollX + 500; // give a clear runway into the new station instead of a stale catch-up burst
+      duckBgm();
+      state = 'playing';
+    }
     return;
   }
   hello.vy = T.FLAP;
@@ -422,6 +431,7 @@ function update(){
     const gx = gate.screenX;
     if(hx+HITBOX > gx-gate.w/2 && hx-HITBOX < gx+gate.w/2 && hy > gate.y-gate.h/2 && hy < gate.y+gate.h/2){
       gate.hit = true;
+      dialogueCut = 0;
       state = 'dialogue';
     }
   }
@@ -562,19 +572,41 @@ function drawDialogue(){
   ctx.strokeStyle='#d4a017'; ctx.lineWidth=5;
   roundRect(ctx, cx-cardW/2, cy-cardH/2, cardW, cardH, 18); ctx.stroke();
   ctx.fillStyle='#4a3a10'; ctx.textAlign='center';
-  ctx.font='bold 20px sans-serif';
-  ctx.fillText(shop.name, cx, cy-cardH/2+38);
-  ctx.font='bold 14px sans-serif'; ctx.fillStyle='#c0392b';
-  ctx.fillText(shop.tagline, cx, cy-cardH/2+62);
-  const img = images[shop.img];
-  if(img && img.complete){
-    const dispW = 190, dispH = dispW*(img.naturalHeight/img.naturalWidth);
-    ctx.drawImage(img, cx-dispW/2, cy-cardH/2+76, dispW, dispH);
+
+  if(dialogueCut===0){
+    // cut 1: shop introduction
+    ctx.font='bold 20px sans-serif';
+    ctx.fillText(shop.name, cx, cy-cardH/2+38);
+    ctx.font='bold 14px sans-serif'; ctx.fillStyle='#c0392b';
+    ctx.fillText(shop.tagline, cx, cy-cardH/2+62);
+    const img = images[shop.img];
+    if(img && img.complete){
+      const dispW = 190, dispH = dispW*(img.naturalHeight/img.naturalWidth);
+      ctx.drawImage(img, cx-dispW/2, cy-cardH/2+76, dispW, dispH);
+    }
+  } else if(dialogueCut===1){
+    // cut 2: the shopkeeper's line — uses a dedicated illustration if the shop has one,
+    // otherwise falls back to hello_happy so this still works before new art arrives
+    const img = images[shop.illust2] || images.hello_happy;
+    if(img && img.complete){
+      const dispH = 170, dispW = dispH*(img.naturalWidth/img.naturalHeight);
+      ctx.drawImage(img, cx-dispW/2, cy-cardH/2+30, dispW, dispH);
+    }
+    ctx.font='16px sans-serif'; ctx.fillStyle='#7a6a30';
+    wrapText(shop.line, cx, cy+cardH/2-70, cardW-50, 20);
+  } else {
+    // cut 3: closing beat before heading back into flight
+    const img = images[shop.illust3] || images.hello_flap_up;
+    if(img && img.complete){
+      const dispH = 170, dispW = dispH*(img.naturalWidth/img.naturalHeight);
+      ctx.drawImage(img, cx-dispW/2, cy-cardH/2+30, dispW, dispH);
+    }
+    ctx.font='bold 17px sans-serif'; ctx.fillStyle='#4a3a10';
+    ctx.fillText('든든하게 채웠으니, 다시 모험을 떠나시오!', cx, cy+cardH/2-70);
   }
-  ctx.font='14px sans-serif'; ctx.fillStyle='#7a6a30';
-  wrapText(shop.line, cx, cy+cardH/2-56, cardW-40, 18);
+
   ctx.font='bold 15px sans-serif'; ctx.fillStyle='#4a3a10';
-  ctx.fillText('탭해서 다음 스테이션으로', cx, cy+cardH/2-16);
+  ctx.fillText(dialogueCut<2 ? '탭해서 계속' : '탭해서 다음 스테이션으로', cx, cy+cardH/2-16);
   ctx.restore();
 }
 function wrapText(text, cx, startY, maxWidth, lineHeight){
