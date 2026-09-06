@@ -30,7 +30,7 @@
 </style>
 </head>
 <body>
-<div id="loading">헬로버드 불러오는 중... (0/45)</div>
+<div id="loading">헬로버드 불러오는 중... (0/48)</div>
 <button id="tuneBtn" title="설정">⚙</button>
 <div id="tunePanel">
   <h3>🔧 실시간 조정</h3>
@@ -43,7 +43,7 @@
 </div>
 <div id="wrap"><canvas id="game" width="480" height="1038"></canvas></div>
 <script>
-const ASSET_SRC = {"hello_neutral": "assets/hello_neutral.png", "hello_flap_up": "assets/hello_flap_up.png", "hello_flap_down": "assets/hello_flap_down.png", "hello_hit": "assets/hello_hit.png", "hello_happy": "assets/hello_happy.png", "cap_top": "assets/cap_top.png", "cap_bottom": "assets/cap_bottom.png", "start_screen": "assets/start_screen.png", "crow_wing_up": "assets/crow_wing_up.png", "crow_wing_down": "assets/crow_wing_down.png", "shop_corn_bread": "assets/shop_corn_bread.png", "sihwa_sky": "assets/sihwa_sky.png", "sihwa_mid": "assets/sihwa_mid.png", "sihwa_ground": "assets/sihwa_ground.png", "sihwa_sea": "assets/sihwa_sea.png", "sihwa_landmark": "assets/sihwa_landmark.png", "sihwa_tile_char1": "assets/sihwa_tile_char1.png", "sihwa_tile_char2": "assets/sihwa_tile_char2.png", "bangamori_sky": "assets/bangamori_sky.png", "bangamori_mid": "assets/bangamori_mid.png", "bangamori_ground": "assets/bangamori_ground.png", "bangamori_sea": "assets/bangamori_sea.png", "bangamori_tile_grape": "assets/bangamori_tile_grape.png", "bangamori_tile_fish": "assets/bangamori_tile_fish.png", "theme_sky": "assets/theme_sky.png", "theme_mid": "assets/theme_mid.png", "theme_ground": "assets/theme_ground.png", "theme_sea": "assets/theme_sea.png", "theme_landmark": "assets/theme_landmark.png", "theme_tile_flower": "assets/theme_tile_flower.png", "theme_tile_reed": "assets/theme_tile_reed.png", "gubong_sky": "assets/gubong_sky.png", "gubong_mid": "assets/gubong_mid.png", "gubong_ground": "assets/gubong_ground.png", "gubong_sea": "assets/gubong_sea.png", "gubong_landmark": "assets/gubong_landmark.png", "gubong_tile_sea": "assets/gubong_tile_sea.png", "gubong_tile_shell": "assets/gubong_tile_shell.png", "tando_sky": "assets/tando_sky.png", "tando_mid": "assets/tando_mid.png", "tando_ground": "assets/tando_ground.png", "tando_sea": "assets/tando_sea.png", "tando_landmark": "assets/tando_landmark.png", "tando_tile_boat": "assets/tando_tile_boat.png", "tando_tile_star": "assets/tando_tile_star.png"};
+const ASSET_SRC = {"hello_neutral": "assets/hello_neutral.png", "hello_flap_up": "assets/hello_flap_up.png", "hello_flap_down": "assets/hello_flap_down.png", "hello_hit": "assets/hello_hit.png", "hello_happy": "assets/hello_happy.png", "cap_top": "assets/cap_top.png", "cap_bottom": "assets/cap_bottom.png", "start_screen": "assets/start_screen.png", "crow_wing_up": "assets/crow_wing_up.png", "crow_wing_down": "assets/crow_wing_down.png", "shop_corn_bread": "assets/shop_corn_bread.png", "shop_greet": "assets/shop_greet.png", "shop_gift": "assets/shop_gift.png", "shop_flyoff": "assets/shop_flyoff.png", "sihwa_sky": "assets/sihwa_sky.png", "sihwa_mid": "assets/sihwa_mid.png", "sihwa_ground": "assets/sihwa_ground.png", "sihwa_sea": "assets/sihwa_sea.png", "sihwa_landmark": "assets/sihwa_landmark.png", "sihwa_tile_char1": "assets/sihwa_tile_char1.png", "sihwa_tile_char2": "assets/sihwa_tile_char2.png", "bangamori_sky": "assets/bangamori_sky.png", "bangamori_mid": "assets/bangamori_mid.png", "bangamori_ground": "assets/bangamori_ground.png", "bangamori_sea": "assets/bangamori_sea.png", "bangamori_tile_grape": "assets/bangamori_tile_grape.png", "bangamori_tile_fish": "assets/bangamori_tile_fish.png", "theme_sky": "assets/theme_sky.png", "theme_mid": "assets/theme_mid.png", "theme_ground": "assets/theme_ground.png", "theme_sea": "assets/theme_sea.png", "theme_landmark": "assets/theme_landmark.png", "theme_tile_flower": "assets/theme_tile_flower.png", "theme_tile_reed": "assets/theme_tile_reed.png", "gubong_sky": "assets/gubong_sky.png", "gubong_mid": "assets/gubong_mid.png", "gubong_ground": "assets/gubong_ground.png", "gubong_sea": "assets/gubong_sea.png", "gubong_landmark": "assets/gubong_landmark.png", "gubong_tile_sea": "assets/gubong_tile_sea.png", "gubong_tile_shell": "assets/gubong_tile_shell.png", "tando_sky": "assets/tando_sky.png", "tando_mid": "assets/tando_mid.png", "tando_ground": "assets/tando_ground.png", "tando_sea": "assets/tando_sea.png", "tando_landmark": "assets/tando_landmark.png", "tando_tile_boat": "assets/tando_tile_boat.png", "tando_tile_star": "assets/tando_tile_star.png"};
 const AUDIO_SRC = {"bgm": "assets/bgm.mp3", "sfx_jump": "assets/sfx_jump.mp3", "sfx_hit": "assets/sfx_hit.mp3", "sfx_die": "assets/sfx_die.mp3", "milestone_1": "assets/milestone_1.mp3", "milestone_2": "assets/milestone_2.mp3", "milestone_3": "assets/milestone_3.mp3", "milestone_4": "assets/milestone_4.mp3", "milestone_5": "assets/milestone_5.mp3"};
 const STATIONS = [{"key": "sihwa", "name": "시화방조제", "startScore": 0, "themes": ["char1", "char2"], "hasLandmark": true, "bg": {"SEA_H": 345, "SEA_OFFSET_X": 255, "SEA_OFFSET_Y": -25, "SEA_SCROLL": 0.05, "SEA_BLUR": 1.5, "LANDMARK_H": 265, "LANDMARK_OFFSET_X": 0, "LANDMARK_OFFSET_Y": 70, "LANDMARK_SCROLL": 0.03, "LANDMARK_BLUR": 2, "LANDMARK_WORLD_X": 250, "MID_H": 170, "MID_OFFSET_Y": 55, "MID_SCROLL": 0.55, "MID_BLUR": 0.5, "GROUND_H": 60, "GROUND_OFFSET_Y": 0, "GROUND_SCROLL": 0.9, "GROUND_BLUR": 0, "PILLAR_W": 66, "CAP_W": 88}, "gap": {"GAP_H_MIN": 120, "GAP_H_MAX": 340, "GAP_MARGIN_TOP": 125, "GAP_MARGIN_BOTTOM": 50, "DIFFICULTY_RAMP": 15, "SPEED_RAMP_MAX": 0.15, "OBSTACLE_SPEED": 3.1, "BOB_AMP": 0}}, {"key": "bangamori", "name": "방아머리", "startScore": 20, "themes": ["grape", "fish"], "hasLandmark": false, "bg": {"SEA_H": 345, "SEA_OFFSET_X": 0, "SEA_OFFSET_Y": -25, "SEA_SCROLL": 0.07, "SEA_BLUR": 1.5, "LANDMARK_H": 0, "LANDMARK_OFFSET_X": 0, "LANDMARK_OFFSET_Y": 0, "LANDMARK_SCROLL": 0, "LANDMARK_BLUR": 0, "LANDMARK_WORLD_X": 0, "MID_H": 170, "MID_OFFSET_Y": 55, "MID_SCROLL": 0.55, "MID_BLUR": 0.5, "GROUND_H": 60, "GROUND_OFFSET_Y": 0, "GROUND_SCROLL": 0.9, "GROUND_BLUR": 0, "PILLAR_W": 66, "CAP_W": 88}, "gap": {"GAP_H_MIN": 120, "GAP_H_MAX": 405, "GAP_MARGIN_TOP": 125, "GAP_MARGIN_BOTTOM": 50, "DIFFICULTY_RAMP": 15, "SPEED_RAMP_MAX": 0.15, "OBSTACLE_SPEED": 3.1, "BOB_AMP": 0}}, {"key": "theme", "name": "바다향기테마파크", "startScore": 45, "themes": ["flower", "reed"], "hasLandmark": true, "bg": {"SEA_H": 345, "SEA_OFFSET_X": 255, "SEA_OFFSET_Y": -25, "SEA_SCROLL": 0.05, "SEA_BLUR": 1.5, "LANDMARK_H": 305, "LANDMARK_OFFSET_X": 0, "LANDMARK_OFFSET_Y": 80, "LANDMARK_SCROLL": 0.03, "LANDMARK_BLUR": 2, "LANDMARK_WORLD_X": 250, "MID_H": 170, "MID_OFFSET_Y": 55, "MID_SCROLL": 0.55, "MID_BLUR": 0.5, "GROUND_H": 60, "GROUND_OFFSET_Y": 0, "GROUND_SCROLL": 0.9, "GROUND_BLUR": 0, "PILLAR_W": 66, "CAP_W": 88}, "gap": {"GAP_H_MIN": 200, "GAP_H_MAX": 420, "GAP_MARGIN_TOP": 125, "GAP_MARGIN_BOTTOM": 50, "DIFFICULTY_RAMP": 25, "SPEED_RAMP_MAX": 0.08, "OBSTACLE_SPEED": 3.1, "BOB_AMP": 24}}, {"key": "gubong", "name": "구봉도", "startScore": 70, "themes": ["sea", "shell"], "hasLandmark": true, "hasCrows": true, "bg": {"SEA_H": 345, "SEA_OFFSET_X": 255, "SEA_OFFSET_Y": -25, "SEA_SCROLL": 0.05, "SEA_BLUR": 1.5, "LANDMARK_H": 335, "LANDMARK_OFFSET_X": 0, "LANDMARK_OFFSET_Y": -5, "LANDMARK_SCROLL": 0.03, "LANDMARK_BLUR": 2, "LANDMARK_WORLD_X": 250, "MID_H": 170, "MID_OFFSET_Y": 55, "MID_SCROLL": 0.55, "MID_BLUR": 0.5, "GROUND_H": 60, "GROUND_OFFSET_Y": 0, "GROUND_SCROLL": 0.9, "GROUND_BLUR": 0, "PILLAR_W": 66, "CAP_W": 88}, "gap": {"GAP_H_MIN": 120, "GAP_H_MAX": 380, "GAP_MARGIN_TOP": 125, "GAP_MARGIN_BOTTOM": 50, "DIFFICULTY_RAMP": 15, "SPEED_RAMP_MAX": 0.15, "OBSTACLE_SPEED": 3.1, "BOB_AMP": 42}}, {"key": "tando", "name": "탄도항", "startScore": 100, "themes": ["boat", "star"], "hasLandmark": true, "hasCrows": true, "bg": {"SEA_H": 345, "SEA_OFFSET_X": 255, "SEA_OFFSET_Y": -25, "SEA_SCROLL": 0.05, "SEA_BLUR": 1.5, "LANDMARK_H": 290, "LANDMARK_OFFSET_X": 0, "LANDMARK_OFFSET_Y": 60, "LANDMARK_SCROLL": 0.03, "LANDMARK_BLUR": 2, "LANDMARK_WORLD_X": 0, "MID_H": 170, "MID_OFFSET_Y": 55, "MID_SCROLL": 0.55, "MID_BLUR": 0.5, "GROUND_H": 60, "GROUND_OFFSET_Y": 0, "GROUND_SCROLL": 0.9, "GROUND_BLUR": 0, "PILLAR_W": 66, "CAP_W": 88}, "gap": {"GAP_H_MIN": 100, "GAP_H_MAX": 330, "GAP_MARGIN_TOP": 125, "GAP_MARGIN_BOTTOM": 50, "DIFFICULTY_RAMP": 12, "SPEED_RAMP_MAX": 0.2, "OBSTACLE_SPEED": 3.3, "BOB_AMP": 52}}];
 
@@ -53,8 +53,12 @@ const SHOPS = [
   {
     name: '대부 옥수수찐빵',
     tagline: '대부도 최고의 옥수수찐빵집!!',
-    line: '"용사여, 우리 대부도를 지켜주셔서 감사하오. 이 찐빵을 드시오..."',
     img: 'shop_corn_bread',
+    introImg: 'shop_greet',
+    illust1: 'shop_gift',
+    line1: '용사여!! 대부도 최고의 옥수수 찐빵집에 온 걸 환영하네',
+    illust2: 'shop_flyoff',
+    line2: '모험에 지친 용사여 이 옥수수 찐빵을 먹고 힘을 내게',
   },
 ];
 
@@ -212,7 +216,8 @@ let stationStartScore = 0; // score value at the moment the current station bega
 let stationScrollAnchor = 0; // scrollX value at the moment the current station began (so its bg layers start at phase 0)
 let transitionScoreSnapshot = 0; // score shown on the arrival banner
 let gate = null; // the floating shop/target the player must fly into to advance
-let dialogueCut = 0; // which of the 3 RPG-style cutscene panels is showing
+let dialogueCut = 0; // which of the RPG-style cutscene panels is showing
+let dialogueFadeTimer = 0; // brief fade-from-black when entering the shop scene
 let gatePending = false; // true once the gate has been spawned for the current station, until hit
 
 function checkStationTransition(){
@@ -323,7 +328,7 @@ function flap(){
   if(state==='start'||state==='gameover'){ resetGame(); return; }
   if(state==='dialogue'){
     dialogueCut++;
-    if(dialogueCut > 2){
+    if(dialogueCut > 3){
       // advance past the shop dialogue -> queue the actual station switch + arrival flash
       gate = null;
       gatePending = false;
@@ -370,6 +375,7 @@ function update(){
       pendingStationIndex = -1;
     }
   }
+  if(dialogueFadeTimer>0) dialogueFadeTimer--;
   if(state!=='playing') return;
   hello.vy += T.GRAVITY;
   hello.y += hello.vy;
@@ -419,7 +425,7 @@ function update(){
   }
   crows = crows.filter(c=> c.x - scrollX > -100);
 
-  if(gatePending && !gate && obstacles.length===0){
+  if(gatePending && !gate && obstacles.every(o=>o.passed)){
     const minY = 140, maxY = H - station.bg.GROUND_H - 220;
     const baseY = minY + Math.random()*(maxY-minY);
     gate = { screenX: W + 150, baseY, y: baseY, bobSeed: Math.random()*Math.PI*2, w: T.GATE_W, h: T.GATE_W*1.25, hit:false,
@@ -432,6 +438,7 @@ function update(){
     if(hx+HITBOX > gx-gate.w/2 && hx-HITBOX < gx+gate.w/2 && hy > gate.y-gate.h/2 && hy < gate.y+gate.h/2){
       gate.hit = true;
       dialogueCut = 0;
+      dialogueFadeTimer = 30;
       state = 'dialogue';
     }
   }
@@ -565,48 +572,40 @@ function drawGate(){
 function drawDialogue(){
   const shop = gate ? gate.shop : SHOPS[0];
   ctx.save();
-  ctx.fillStyle='rgba(0,0,0,0.6)'; ctx.fillRect(0,0,W,H);
-  const cardW = W-60, cardH = 300, cx = W/2, cy = H/2;
-  ctx.fillStyle='#fff8e1';
-  roundRect(ctx, cx-cardW/2, cy-cardH/2, cardW, cardH, 18); ctx.fill();
-  ctx.strokeStyle='#d4a017'; ctx.lineWidth=5;
-  roundRect(ctx, cx-cardW/2, cy-cardH/2, cardW, cardH, 18); ctx.stroke();
-  ctx.fillStyle='#4a3a10'; ctx.textAlign='center';
 
+  let img, headline, body;
   if(dialogueCut===0){
-    // cut 1: shop introduction
-    ctx.font='bold 20px sans-serif';
-    ctx.fillText(shop.name, cx, cy-cardH/2+38);
-    ctx.font='bold 14px sans-serif'; ctx.fillStyle='#c0392b';
-    ctx.fillText(shop.tagline, cx, cy-cardH/2+62);
-    const img = images[shop.img];
-    if(img && img.complete){
-      const dispW = 190, dispH = dispW*(img.naturalHeight/img.naturalWidth);
-      ctx.drawImage(img, cx-dispW/2, cy-cardH/2+76, dispW, dispH);
-    }
+    img = images[shop.img]; headline=null; body=null;
   } else if(dialogueCut===1){
-    // cut 2: the shopkeeper's line — uses a dedicated illustration if the shop has one,
-    // otherwise falls back to hello_happy so this still works before new art arrives
-    const img = images[shop.illust2] || images.hello_happy;
-    if(img && img.complete){
-      const dispH = 170, dispW = dispH*(img.naturalWidth/img.naturalHeight);
-      ctx.drawImage(img, cx-dispW/2, cy-cardH/2+30, dispW, dispH);
-    }
-    ctx.font='16px sans-serif'; ctx.fillStyle='#7a6a30';
-    wrapText(shop.line, cx, cy+cardH/2-70, cardW-50, 20);
+    img = images[shop.introImg] || images[shop.img]; headline=shop.name; body=shop.tagline;
+  } else if(dialogueCut===2){
+    img = images[shop.illust1] || images[shop.img] || images.hello_happy; headline=null; body=shop.line1;
   } else {
-    // cut 3: closing beat before heading back into flight
-    const img = images[shop.illust3] || images.hello_flap_up;
-    if(img && img.complete){
-      const dispH = 170, dispW = dispH*(img.naturalWidth/img.naturalHeight);
-      ctx.drawImage(img, cx-dispW/2, cy-cardH/2+30, dispW, dispH);
-    }
-    ctx.font='bold 17px sans-serif'; ctx.fillStyle='#4a3a10';
-    ctx.fillText('든든하게 채웠으니, 다시 모험을 떠나시오!', cx, cy+cardH/2-70);
+    img = images[shop.illust2] || images[shop.img] || images.hello_flap_up; headline=null; body=shop.line2;
   }
 
-  ctx.font='bold 15px sans-serif'; ctx.fillStyle='#4a3a10';
-  ctx.fillText(dialogueCut<2 ? '탭해서 계속' : '탭해서 다음 스테이션으로', cx, cy+cardH/2-16);
+  if(img && img.complete) drawCover(img, W, H);
+  else { ctx.fillStyle='#223'; ctx.fillRect(0,0,W,H); }
+
+  if(headline || body){
+    const boxH = headline && body ? 150 : 110;
+    ctx.fillStyle='rgba(0,0,0,0.58)';
+    roundRect(ctx, 30, H/2-boxH/2, W-60, boxH, 16); ctx.fill();
+    ctx.fillStyle='#fff'; ctx.textAlign='center';
+    let y = H/2 - boxH/2 + 40;
+    if(headline){ ctx.font='bold 22px sans-serif'; ctx.fillText(headline, W/2, y); y += 34; }
+    if(body){ ctx.font='16px sans-serif'; wrapText(body, W/2, y+8, W-110, 22); }
+  }
+
+  ctx.fillStyle='rgba(0,0,0,0.55)';
+  roundRect(ctx, W/2-115, H-70, 230, 40, 20); ctx.fill();
+  ctx.fillStyle='#fff'; ctx.font='bold 14px sans-serif'; ctx.textAlign='center';
+  ctx.fillText(dialogueCut<3 ? '탭해서 계속' : '탭해서 다음 스테이션으로', W/2, H-45);
+
+  if(dialogueFadeTimer>0){
+    ctx.fillStyle = 'rgba(0,0,0,'+(dialogueFadeTimer/30)+')';
+    ctx.fillRect(0,0,W,H);
+  }
   ctx.restore();
 }
 function wrapText(text, cx, startY, maxWidth, lineHeight){
