@@ -345,12 +345,31 @@ function flap(){
   flapTimer = 10;
   playSfx('sfx_jump');
 }
-function handleInput(e){ if(e.cancelable) e.preventDefault(); flap(); }
+const NEXT_BTN = { x: W/2-115, y: H-70, w: 230, h: 40 };
+function getCanvasPos(e){
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  let clientX, clientY;
+  if(e.touches && e.touches[0]){ clientX = e.touches[0].clientX; clientY = e.touches[0].clientY; }
+  else if(e.changedTouches && e.changedTouches[0]){ clientX = e.changedTouches[0].clientX; clientY = e.changedTouches[0].clientY; }
+  else { clientX = e.clientX; clientY = e.clientY; }
+  return { x: (clientX-rect.left)*scaleX, y: (clientY-rect.top)*scaleY };
+}
+function handleInput(e){
+  if(e.cancelable) e.preventDefault();
+  if(state==='dialogue'){
+    const p = getCanvasPos(e);
+    const b = NEXT_BTN;
+    if(p.x>=b.x && p.x<=b.x+b.w && p.y>=b.y && p.y<=b.y+b.h) flap();
+    return; // ignore taps anywhere else while a dialogue cut is showing
+  }
+  flap();
+}
+// a single pointerdown covers mouse, touch and pen in one unified event —
+// registering mousedown/touchstart too would double- or triple-fire per tap
 canvas.addEventListener('pointerdown', handleInput);
-canvas.addEventListener('mousedown', handleInput);
-canvas.addEventListener('touchstart', handleInput, {passive:false});
 window.addEventListener('keydown', e=>{ if(e.code==='Space'){ e.preventDefault(); flap(); } });
-document.getElementById('wrap').addEventListener('pointerdown', handleInput);
 
 function update(){
   if(bgmDuckTimer>0){
@@ -597,10 +616,12 @@ function drawDialogue(){
     if(body){ ctx.font='16px sans-serif'; wrapText(body, W/2, y+8, W-110, 22); }
   }
 
-  ctx.fillStyle='rgba(0,0,0,0.55)';
+  ctx.fillStyle='#ffb703';
   roundRect(ctx, W/2-115, H-70, 230, 40, 20); ctx.fill();
-  ctx.fillStyle='#fff'; ctx.font='bold 14px sans-serif'; ctx.textAlign='center';
-  ctx.fillText(dialogueCut<3 ? '탭해서 계속' : '탭해서 다음 스테이션으로', W/2, H-45);
+  ctx.strokeStyle='#fff'; ctx.lineWidth=2;
+  roundRect(ctx, W/2-115, H-70, 230, 40, 20); ctx.stroke();
+  ctx.fillStyle='#3a2a00'; ctx.font='bold 15px sans-serif'; ctx.textAlign='center';
+  ctx.fillText(dialogueCut<3 ? '다음 ▶' : '다음 스테이션으로 ▶', W/2, H-45);
 
   if(dialogueFadeTimer>0){
     ctx.fillStyle = 'rgba(0,0,0,'+(dialogueFadeTimer/30)+')';
