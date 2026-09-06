@@ -125,6 +125,7 @@ const DEFAULTS = {
   HELLO_SIZE: 58, GRAVITY: 0.6, FLAP: -11,
   BGM_VOLUME: 0.12, SFX_VOLUME: 0.6,
   TEST_MODE: 1, TEST_TRANSITION_COUNT: 5,
+  GATE_W: 220, GATE_SPEED: 1.0,
 };
 let T;
 try {
@@ -143,6 +144,8 @@ const TUNE_META = [
   ['사운드','SFX_VOLUME','효과음 볼륨',0,1,0.01],
   ['테스트 / 운영','TEST_MODE','테스트 모드 (1=켜짐, 0=정식운영)',0,1,1],
   ['테스트 / 운영','TEST_TRANSITION_COUNT','테스트 모드 전환 통과개수',1,30,1],
+  ['상점 게이트','GATE_W','상점 크기',60,400,5],
+  ['상점 게이트','GATE_SPEED','상점 이동 속도(느릴수록 광고 노출↑)',0.1,6,0.1],
 ];
 function buildTunePanel(){
   const wrap = document.getElementById('tuneControls');
@@ -402,11 +405,12 @@ function update(){
 
   if(gatePending && !gate && obstacles.length===0){
     const minY = 140, maxY = H - station.bg.GROUND_H - 220;
-    gate = { x: scrollX + W*0.65, y: minY + Math.random()*(maxY-minY), w: 130, h: 160, hit:false,
+    gate = { screenX: W + 150, y: minY + Math.random()*(maxY-minY), w: T.GATE_W, h: T.GATE_W*1.25, hit:false,
              shop: SHOPS[Math.floor(Math.random()*SHOPS.length)] };
   }
   if(gate && !gate.hit){
-    const gx = gate.x - scrollX;
+    gate.screenX -= T.GATE_SPEED; // moves at its own independent (slow) speed, decoupled from world scroll
+    const gx = gate.screenX;
     if(hx+HITBOX > gx-gate.w/2 && hx-HITBOX < gx+gate.w/2 && hy > gate.y-gate.h/2 && hy < gate.y+gate.h/2){
       gate.hit = true;
       state = 'dialogue';
@@ -517,7 +521,7 @@ function drawCrows(){
 }
 function drawGate(){
   if(!gate || gate.hit) return;
-  const gx = gate.x - scrollX;
+  const gx = gate.screenX;
   if(gx < -200 || gx > W+200) return;
   ctx.save();
   const img = images[gate.shop.img];
