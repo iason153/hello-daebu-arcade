@@ -125,7 +125,7 @@ const DEFAULTS = {
   HELLO_SIZE: 58, GRAVITY: 0.6, FLAP: -11,
   BGM_VOLUME: 0.12, SFX_VOLUME: 0.6,
   TEST_MODE: 1, TEST_TRANSITION_COUNT: 5,
-  GATE_W: 220, GATE_SPEED: 1.0,
+  GATE_W: 330, GATE_SPEED: 0.7,
 };
 let T;
 try {
@@ -405,11 +405,13 @@ function update(){
 
   if(gatePending && !gate && obstacles.length===0){
     const minY = 140, maxY = H - station.bg.GROUND_H - 220;
-    gate = { screenX: W + 150, y: minY + Math.random()*(maxY-minY), w: T.GATE_W, h: T.GATE_W*1.25, hit:false,
+    const baseY = minY + Math.random()*(maxY-minY);
+    gate = { screenX: W + 150, baseY, y: baseY, bobSeed: Math.random()*Math.PI*2, w: T.GATE_W, h: T.GATE_W*1.25, hit:false,
              shop: SHOPS[Math.floor(Math.random()*SHOPS.length)] };
   }
   if(gate && !gate.hit){
     gate.screenX -= T.GATE_SPEED; // moves at its own independent (slow) speed, decoupled from world scroll
+    gate.y = gate.baseY + Math.sin(Date.now()/500 + gate.bobSeed) * 13; // gentle floating bob
     const gx = gate.screenX;
     if(hx+HITBOX > gx-gate.w/2 && hx-HITBOX < gx+gate.w/2 && hy > gate.y-gate.h/2 && hy < gate.y+gate.h/2){
       gate.hit = true;
