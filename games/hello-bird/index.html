@@ -15,6 +15,7 @@
   #loading{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
     color:#fff;font-size:16px;background:#1a2a3a;z-index:10;text-align:center;padding:20px;box-sizing:border-box;}
   #tuneBtn{position:fixed;top:8px;right:8px;z-index:20;width:36px;height:36px;border-radius:50%;
+    display:none;
     border:none;background:rgba(0,0,0,0.55);color:#fff;font-size:18px;cursor:pointer;}
   #tunePanel{position:fixed;top:0;right:0;bottom:0;width:230px;max-width:74vw;background:rgba(32,48,63,0.94);
     color:#fff;z-index:30;overflow-y:auto;padding:14px;box-sizing:border-box;font-size:13px;
@@ -187,6 +188,11 @@ function buildTunePanel(){
   });
 }
 function refreshTuneOut(){ document.getElementById('tuneOut').value = JSON.stringify(T, null, 2); }
+// the tuning panel is a developer tool — hidden from regular players by default,
+// only shown when the page is opened with ?dev=1 in the address bar
+const DEV_MODE = new URLSearchParams(location.search).get('dev') === '1';
+if(DEV_MODE) document.getElementById('tuneBtn').style.display = 'block';
+
 document.getElementById('tuneBtn').addEventListener('click', ()=>{
   const p = document.getElementById('tunePanel');
   const open = p.style.display === 'block';
