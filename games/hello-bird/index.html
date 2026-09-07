@@ -67,15 +67,22 @@ const SHOPS = [
 
 const canvas = document.getElementById('game');
 function fixViewportHeight(){
-  // mobile browsers report 100vh inconsistently depending on whether the
-  // address bar is expanded or collapsed — measuring the real visible height
-  // in JS and applying it directly avoids the "zoomed in / floor cut off" bug
+  // mobile browsers (and especially third-party in-app webviews like email/
+  // messenger apps) report the visible height inconsistently and sometimes
+  // only settle a moment after the page first loads — using visualViewport
+  // when available, plus a few delayed re-checks, catches those late updates
   const wrap = document.getElementById('wrap');
-  wrap.style.height = window.innerHeight + 'px';
+  const h = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
+  wrap.style.height = h + 'px';
 }
 fixViewportHeight();
 window.addEventListener('resize', fixViewportHeight);
 window.addEventListener('orientationchange', fixViewportHeight);
+if(window.visualViewport){
+  window.visualViewport.addEventListener('resize', fixViewportHeight);
+  window.visualViewport.addEventListener('scroll', fixViewportHeight);
+}
+[100, 300, 600, 1200, 2000].forEach(ms => setTimeout(fixViewportHeight, ms));
 const ctx = canvas.getContext('2d');
 const W = canvas.width, H = canvas.height;
 
