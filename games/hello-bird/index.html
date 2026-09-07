@@ -373,9 +373,9 @@ function handleInput(e){
 canvas.addEventListener('pointerdown', handleInput);
 window.addEventListener('keydown', e=>{ if(e.code==='Space'){ e.preventDefault(); flap(); } });
 
-function update(){
+function update(dt){
   if(bgmDuckTimer>0){
-    bgmDuckTimer--;
+    bgmDuckTimer = Math.max(0, bgmDuckTimer - dt);
     if(bgmStarted){
       const elapsed = 70 - bgmDuckTimer; // 0 -> 70
       let vol;
@@ -383,12 +383,13 @@ function update(){
       else if(elapsed<45){ vol = T.BGM_VOLUME * 0.15; }                     // hold low through the swap
       else { const p=(elapsed-45)/25; vol = T.BGM_VOLUME*(0.15 + p*0.85); } // recover back to full
       audio.bgm.volume = Math.max(0, Math.min(T.BGM_VOLUME, vol));
-      if(bgmDuckTimer===0) audio.bgm.volume = T.BGM_VOLUME; // guarantee it's fully restored
+      if(bgmDuckTimer<=0) audio.bgm.volume = T.BGM_VOLUME; // guarantee it's fully restored
     }
   }
   if(stationTransitionTimer>0){
-    stationTransitionTimer--;
-    if(stationTransitionTimer===45 && pendingStationIndex>=0){
+    const wasAbove45 = stationTransitionTimer > 45;
+    stationTransitionTimer = Math.max(0, stationTransitionTimer - dt);
+    if(wasAbove45 && stationTransitionTimer<=45 && pendingStationIndex>=0){
       stationIndex = pendingStationIndex;
       station = STATIONS[stationIndex];
       stationStartScore = score;
@@ -396,13 +397,13 @@ function update(){
       pendingStationIndex = -1;
     }
   }
-  if(dialogueFadeTimer>0) dialogueFadeTimer--;
+  if(dialogueFadeTimer>0) dialogueFadeTimer = Math.max(0, dialogueFadeTimer - dt);
   if(state!=='playing') return;
-  hello.vy += T.GRAVITY;
-  hello.y += hello.vy;
-  if(flapTimer>0) flapTimer--;
+  hello.vy += T.GRAVITY * dt;
+  hello.y += hello.vy * dt;
+  if(flapTimer>0) flapTimer = Math.max(0, flapTimer - dt);
 
-  scrollX += station.gap.OBSTACLE_SPEED * (1 + stationProgress()*station.gap.SPEED_RAMP_MAX);
+  scrollX += station.gap.OBSTACLE_SPEED * (1 + stationProgress()*station.gap.SPEED_RAMP_MAX) * dt;
   while(nextObstacleX < scrollX + W + 400 && !gatePending){ spawnObstacle(nextObstacleX); nextObstacleX += OBSTACLE_GAP_X; }
   if(station.hasCrows){
     while(nextCrowX < scrollX + W + 600){ spawnCrow(nextCrowX); nextCrowX += 650 + Math.random()*700; }
@@ -436,9 +437,9 @@ function update(){
   }
   const CROW_W = 46, CROW_H = 36;
   for(const cw of crows){
-    cw.wingTimer++;
+    cw.wingTimer += dt;
     if(cw.wingTimer>8){ cw.wingTimer=0; cw.wingFrame = 1-cw.wingFrame; }
-    cw.x -= station.gap.OBSTACLE_SPEED * (cw.speedMul - 1); // extra drift on top of the shared world scroll
+    cw.x -= station.gap.OBSTACLE_SPEED * (cw.speedMul - 1) * dt; // extra drift on top of the shared world scroll
     const cx = cw.x - scrollX;
     if(cx < hx+HITBOX && cx+CROW_W > hx-HITBOX && Math.abs(cw.y-hy) < (CROW_H/2+HITBOX)){
       if(hitTimer<=0){ energy -= 34; hitTimer = 55; hello.vy = -4; shakeTimer = 18; flashTimer = 22; playSfx('sfx_hit'); }
@@ -453,8 +454,8 @@ function update(){
              shop: SHOPS[Math.floor(Math.random()*SHOPS.length)] };
   }
   if(gate && !gate.hit){
-    gate.screenX -= T.GATE_SPEED; // moves at its own independent (slow) speed, decoupled from world scroll
-    gate.y = gate.baseY + Math.sin(Date.now()/500 + gate.bobSeed) * 13; // gentle floating bob
+    gate.screenX -= T.GATE_SPEED * dt; // moves at its own independent (slow) speed, decoupled from world scroll
+    gate.y = gate.baseY + Math.sin(Date.now()/500 + gate.bobSeed) * 13; // gentle floating bob (real-time based already)
     const gx = gate.screenX;
     if(hx+HITBOX > gx-gate.w/2 && hx-HITBOX < gx+gate.w/2 && hy > gate.y-gate.h/2 && hy < gate.y+gate.h/2){
       gate.hit = true;
@@ -463,11 +464,11 @@ function update(){
       state = 'dialogue';
     }
   }
-  if(hitTimer>0) hitTimer--;
-  if(shakeTimer>0) shakeTimer--;
-  if(flashTimer>0) flashTimer--;
-  if(milestoneTimer>0) milestoneTimer--;
-  if(healTimer>0) healTimer--;
+  if(hitTimer>0) hitTimer = Math.max(0, hitTimer - dt);
+  if(shakeTimer>0) shakeTimer = Math.max(0, shakeTimer - dt);
+  if(flashTimer>0) flashTimer = Math.max(0, flashTimer - dt);
+  if(milestoneTimer>0) milestoneTimer = Math.max(0, milestoneTimer - dt);
+  if(healTimer>0) healTimer = Math.max(0, healTimer - dt);
 
   if(hy > H + 60 || hy < -80 || energy<=0){
     if(state !== 'gameover'){ playSfx('sfx_die'); }
@@ -814,8 +815,15 @@ function draw(){
   drawUI();
 }
 
-function loop(){
-  if(!paused) update();
+let lastTs = null;
+function loop(ts){
+  let dt = 1;
+  if(lastTs !== null){
+    dt = (ts - lastTs) / (1000/60); // 1.0 == exactly one 60fps frame's worth of time
+    dt = Math.max(0, Math.min(dt, 3)); // clamp so a tab coming back from background doesn't jump wildly
+  }
+  lastTs = ts;
+  if(!paused) update(dt);
   draw();
   requestAnimationFrame(loop);
 }
