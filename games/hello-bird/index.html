@@ -66,6 +66,16 @@ const SHOPS = [
 ];
 
 const canvas = document.getElementById('game');
+function fixViewportHeight(){
+  // mobile browsers report 100vh inconsistently depending on whether the
+  // address bar is expanded or collapsed — measuring the real visible height
+  // in JS and applying it directly avoids the "zoomed in / floor cut off" bug
+  const wrap = document.getElementById('wrap');
+  wrap.style.height = window.innerHeight + 'px';
+}
+fixViewportHeight();
+window.addEventListener('resize', fixViewportHeight);
+window.addEventListener('orientationchange', fixViewportHeight);
 const ctx = canvas.getContext('2d');
 const W = canvas.width, H = canvas.height;
 
