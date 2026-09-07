@@ -73,7 +73,7 @@ function fixCanvasSize(){
   // scaled to fit while preserving its native 480x1038 aspect ratio
   const vw = window.innerWidth;
   const vh = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
-  const scale = Math.min(vw / canvas.width, vh / canvas.height);
+  const scale = Math.min(vw / canvas.width, vh / canvas.height) * 0.94; // small safety margin so odd browser-chrome quirks never crop the edges
   canvas.style.width = Math.floor(canvas.width * scale) + 'px';
   canvas.style.height = Math.floor(canvas.height * scale) + 'px';
 }
