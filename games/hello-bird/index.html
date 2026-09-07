@@ -296,13 +296,12 @@ function stationProgress(){
 function rollGap(){
   const g = station.gap;
   const progress = stationProgress();
-  const range = g.GAP_H_MAX - g.GAP_H_MIN;
-  // the center point drifts from generous (easy) toward tight (hard) as progress increases,
-  // but a healthy random spread is always kept around that center so it never feels "fixed"
-  const center = g.GAP_H_MAX - progress * (range * 0.6);
-  const spread = Math.max(range * 0.35, 50);
-  let gapH = center + (Math.random()*2 - 1) * (spread/2);
-  gapH = Math.max(g.GAP_H_MIN, Math.min(g.GAP_H_MAX, gapH));
+  // full random range every time (so consecutive gaps never look "samey"), but skewed
+  // toward the tighter end as progress rises — a gentle, random difficulty increase,
+  // not a hard deterministic ramp
+  let r = Math.random();
+  r = Math.pow(r, 1 + progress*1.3);
+  let gapH = g.GAP_H_MIN + r*(g.GAP_H_MAX - g.GAP_H_MIN);
   const minGapY = g.GAP_MARGIN_TOP;
   const maxGapY = H - station.bg.GROUND_H - g.GAP_MARGIN_BOTTOM - gapH;
   const gapY = minGapY + Math.random()*Math.max(20,(maxGapY-minGapY));
@@ -537,6 +536,20 @@ function drawVTileUp(img, cx, bottomY, topY, w){
   while(y > topY){ ctx.drawImage(img, cx - w/2, y - th, w, th); y -= th; }
   ctx.restore();
 }
+function drawVTileDown(img, cx, topY, bottomY, w){
+  // like drawVTileUp but anchors the tile pattern to the TOP edge instead —
+  // used for the bottom pillar so its pattern rides along with the moving
+  // gap-side cap, the same way the top pillar's pattern already does
+  if(!img || !img.complete || !img.naturalWidth) return;
+  if(bottomY <= topY) return;
+  const scale = w / img.naturalWidth;
+  const th = img.naturalHeight * scale;
+  ctx.save();
+  ctx.beginPath(); ctx.rect(cx - w/2, topY, w, bottomY - topY); ctx.clip();
+  let y = topY;
+  while(y < bottomY){ ctx.drawImage(img, cx - w/2, y, w, th); y += th; }
+  ctx.restore();
+}
 function drawBottomPillar(cx, gapBottomY, theme, stKey){
   const tileImg = images[stKey+'_tile_'+theme];
   const capBot = images.cap_bottom, capTop = images.cap_top;
@@ -544,7 +557,7 @@ function drawBottomPillar(cx, gapBottomY, theme, stKey){
   const capBotH = CAP_W * (capBot.naturalHeight/capBot.naturalWidth);
   const capTopH = CAP_W * (capTop.naturalHeight/capTop.naturalWidth);
   ctx.drawImage(capBot, cx-CAP_W/2, GROUND_Y-capBotH, CAP_W, capBotH);
-  drawVTileUp(tileImg, cx, GROUND_Y-capBotH, gapBottomY+capTopH, station.bg.PILLAR_W);
+  drawVTileDown(tileImg, cx, gapBottomY+capTopH, GROUND_Y-capBotH, station.bg.PILLAR_W);
   ctx.drawImage(capTop, cx-CAP_W/2, gapBottomY, CAP_W, capTopH);
 }
 function drawTopPillar(cx, gapTopY, theme, stKey){
