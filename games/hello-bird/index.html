@@ -10,7 +10,7 @@
   html,body{margin:0;padding:0;height:100%;background:#1a2a3a;overflow:hidden;
     font-family:-apple-system,BlinkMacSystemFont,'Malgun Gothic',sans-serif;touch-action:manipulation;}
   #wrap{width:100vw;height:100vh;display:flex;align-items:center;justify-content:center;}
-  #game{background:#bfe4ff;max-width:100vw;max-height:100vh;width:auto;height:auto;
+  #game{background:#bfe4ff;
     box-shadow:0 0 30px rgba(0,0,0,0.4); cursor:pointer; outline:none;}
   #loading{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
     color:#fff;font-size:16px;background:#1a2a3a;z-index:10;text-align:center;padding:20px;box-sizing:border-box;}
@@ -66,23 +66,25 @@ const SHOPS = [
 ];
 
 const canvas = document.getElementById('game');
-function fixViewportHeight(){
-  // mobile browsers (and especially third-party in-app webviews like email/
-  // messenger apps) report the visible height inconsistently and sometimes
-  // only settle a moment after the page first loads — using visualViewport
-  // when available, plus a few delayed re-checks, catches those late updates
-  const wrap = document.getElementById('wrap');
-  const h = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
-  wrap.style.height = h + 'px';
+function fixCanvasSize(){
+  // don't trust vw/vh CSS units at all (they behave inconsistently across mobile
+  // browsers and especially third-party in-app webviews) — measure the real
+  // visible pixel size in JS and set the canvas's on-screen size explicitly,
+  // scaled to fit while preserving its native 480x1038 aspect ratio
+  const vw = window.innerWidth;
+  const vh = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
+  const scale = Math.min(vw / canvas.width, vh / canvas.height);
+  canvas.style.width = Math.floor(canvas.width * scale) + 'px';
+  canvas.style.height = Math.floor(canvas.height * scale) + 'px';
 }
-fixViewportHeight();
-window.addEventListener('resize', fixViewportHeight);
-window.addEventListener('orientationchange', fixViewportHeight);
+fixCanvasSize();
+window.addEventListener('resize', fixCanvasSize);
+window.addEventListener('orientationchange', fixCanvasSize);
 if(window.visualViewport){
-  window.visualViewport.addEventListener('resize', fixViewportHeight);
-  window.visualViewport.addEventListener('scroll', fixViewportHeight);
+  window.visualViewport.addEventListener('resize', fixCanvasSize);
+  window.visualViewport.addEventListener('scroll', fixCanvasSize);
 }
-[100, 300, 600, 1200, 2000].forEach(ms => setTimeout(fixViewportHeight, ms));
+[100, 300, 600, 1200, 2000].forEach(ms => setTimeout(fixCanvasSize, ms));
 const ctx = canvas.getContext('2d');
 const W = canvas.width, H = canvas.height;
 
