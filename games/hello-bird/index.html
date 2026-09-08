@@ -155,6 +155,7 @@ const DEFAULTS = {
   TEST_MODE: 1, TEST_TRANSITION_COUNT: 20,
   GATE_TRIGGER_BUFFER: 2,
   GATE_W: 330, GATE_SPEED: 2.4, // was 0.7 — too slow made the gap after the last obstacle feel endless
+  INVINCIBLE: 0,
 };
 let T;
 try {
@@ -174,6 +175,7 @@ const TUNE_META = [
   ['테스트 / 운영','TEST_MODE','테스트 모드 (1=켜짐, 0=정식운영)',0,1,1],
   ['테스트 / 운영','TEST_TRANSITION_COUNT','테스트 모드 전환 통과개수',1,30,1],
   ['테스트 / 운영','GATE_TRIGGER_BUFFER','게이트 등장 여유값(작을수록 늦게 등장, 테스트 땐 0~1 추천)',0,10,1],
+  ['테스트 / 운영','INVINCIBLE','무적 모드 (1=켜짐, 장애물/추락 무시)',0,1,1],
   ['게이트','GATE_W','게이트 크기',60,400,5],
   ['게이트','GATE_SPEED','게이트 이동 속도',0.1,6,0.1],
 ];
@@ -477,7 +479,7 @@ function update(dt){
     }
     if(ox < hx + HITBOX && ox + PW > hx - HITBOX){
       if(hy - HITBOX < ob.gapY || hy + HITBOX > ob.gapY + ob.gapH){
-        if(hitTimer<=0){ energy -= 34; hitTimer = 55; hello.vy = -4; shakeTimer = 18; flashTimer = 22; playSfx('sfx_hit'); }
+        if(hitTimer<=0 && !T.INVINCIBLE){ energy -= 34; hitTimer = 55; hello.vy = -4; shakeTimer = 18; flashTimer = 22; playSfx('sfx_hit'); }
       }
     }
   }
@@ -488,7 +490,7 @@ function update(dt){
     cw.x -= station.gap.OBSTACLE_SPEED * (cw.speedMul - 1) * dt; // extra drift on top of the shared world scroll
     const cx = cw.x - scrollX;
     if(cx < hx+HITBOX && cx+CROW_W > hx-HITBOX && Math.abs(cw.y-hy) < (CROW_H/2+HITBOX)){
-      if(hitTimer<=0){ energy -= 34; hitTimer = 55; hello.vy = -4; shakeTimer = 18; flashTimer = 22; playSfx('sfx_hit'); }
+      if(hitTimer<=0 && !T.INVINCIBLE){ energy -= 34; hitTimer = 55; hello.vy = -4; shakeTimer = 18; flashTimer = 22; playSfx('sfx_hit'); }
     }
   }
   crows = crows.filter(c=> c.x - scrollX > -100);
@@ -523,7 +525,12 @@ function update(dt){
   if(milestoneTimer>0) milestoneTimer = Math.max(0, milestoneTimer - dt);
   if(healTimer>0) healTimer = Math.max(0, healTimer - dt);
 
-  if(hy > H + 60 || hy < -80 || energy<=0){
+  if(T.INVINCIBLE){
+    // keep hello visible on screen instead of letting it fly off top/bottom forever —
+    // clamp instead of dying, so it's still controllable while you're mid-tuning
+    if(hello.y < 0){ hello.y = 0; hello.vy = 0; }
+    if(hello.y > H){ hello.y = H; hello.vy = 0; }
+  } else if(hy > H + 60 || hy < -80 || energy<=0){
     if(state !== 'gameover'){ playSfx('sfx_die'); }
     state = 'gameover';
   }
