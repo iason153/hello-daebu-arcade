@@ -307,9 +307,8 @@ let milestoneSfxIndex = 0;
 let nextObstacleX = 750;
 let crows = [];
 let nextCrowX = 900;
-let heartGiven = false; // whether a mercy heart has already been placed for the current
-                         // "down to 1 heart" stretch — re-arms once energy recovers above it
 let heartActive = false; // true while a spawned mercy heart is still out there waiting to be grabbed
+let heartNextTryScore = 0; // score must reach this before another mercy heart attempt (cooldown after a catch or a miss)
 
 function resetGame(){
   hello = { y: H/2 - 100, vy: 0 };
@@ -327,8 +326,8 @@ function resetGame(){
   nextObstacleX = 750;
   crows = [];
   nextCrowX = 900;
-  heartGiven = false;
   heartActive = false;
+  heartNextTryScore = 0;
   stationIndex = 0;
   station = STATIONS[0];
   pendingStationIndex = -1;
@@ -493,15 +492,15 @@ function update(dt){
   const hx = HELLO_X, hy = hello.y;
   const PW = station.bg.PILLAR_W;
 
-  // mercy heart: once the player drops to their last heart, drop a heart pickup right in
-  // the gap of the next obstacle ahead — grabbing it needs no extra risk since it's sitting
-  // exactly where the player already has to fly through. one per "critical" stretch; it
-  // re-arms once energy recovers back above 1 heart, so it can save them again later too
+  // mercy heart: whenever the player is down to their last heart, drop a heart pickup
+  // right in the gap of the next obstacle ahead — grabbing it needs no extra risk since
+  // it's sitting exactly where the player already has to fly through. re-tries a few
+  // obstacles later if missed (see the cooldowns below), so it's not a one-shot deal —
+  // but it won't offer one on literally every single obstacle either
   const oneHeartLeft = energy > 0 && energy <= 100/3 + 1;
-  if(!oneHeartLeft) heartGiven = false;
-  if(oneHeartLeft && !heartGiven && !heartActive){
+  if(oneHeartLeft && !heartActive && score >= heartNextTryScore){
     const candidate = obstacles.find(o => !o.passed && (o.x - scrollX) > hx + 40);
-    if(candidate){ candidate.heart = true; heartActive = true; heartGiven = true; }
+    if(candidate){ candidate.heart = true; heartActive = true; }
   }
 
   for(const ob of obstacles){
@@ -527,6 +526,7 @@ function update(dt){
       if(Math.abs(hx-heartCx) < 28 && Math.abs(hy-heartCy) < 28){
         ob.heart = false;
         heartActive = false;
+        heartNextTryScore = score + 4; // short cooldown even after a catch, so it can't be farmed obstacle-to-obstacle
         energy = Math.min(100, energy + 34);
         healTimer = 30;
       }
@@ -589,7 +589,10 @@ function update(dt){
     state = 'gameover';
   }
   obstacles = obstacles.filter(o=> o.x - scrollX > -260);
-  if(heartActive && !obstacles.some(o=>o.heart)) heartActive = false; // missed it — let a later obstacle carry the next one
+  if(heartActive && !obstacles.some(o=>o.heart)){
+    heartActive = false;
+    heartNextTryScore = score + 3; // missed it — try again on a later obstacle instead of never again
+  }
 }
 
 // ---------- drawing helpers ----------
