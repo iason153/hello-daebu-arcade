@@ -2,1005 +2,271 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>헬로버드</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>헬로 대부도 오락실</title>
+<meta name="description" content="대부도 곳곳을 배경으로 한 가벼운 미니게임들. 첫 번째 게임 헬로버드를 지금 바로 즐겨보세요.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>
-  *{-webkit-tap-highlight-color: transparent; -webkit-touch-callout: none;
-    -webkit-user-select: none; user-select: none;}
-  html,body{margin:0;padding:0;height:100%;background:#1a2a3a;overflow:hidden;
-    font-family:-apple-system,BlinkMacSystemFont,'Malgun Gothic',sans-serif;touch-action:manipulation;}
-  #wrap{width:100vw;height:100vh;display:flex;align-items:center;justify-content:center;}
-  #game{background:#bfe4ff;
-    box-shadow:0 0 30px rgba(0,0,0,0.4); cursor:pointer; outline:none;}
-  #loading{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
-    color:#fff;font-size:16px;background:#1a2a3a;z-index:10;text-align:center;padding:20px;box-sizing:border-box;}
-  #tuneBtn{position:fixed;top:8px;right:8px;z-index:20;width:36px;height:36px;border-radius:50%;
-    display:none;
-    border:none;background:rgba(0,0,0,0.55);color:#fff;font-size:18px;cursor:pointer;}
-  #tunePanel{position:fixed;top:0;right:0;bottom:0;width:230px;max-width:74vw;background:rgba(32,48,63,0.94);
-    color:#fff;z-index:30;overflow-y:auto;padding:14px;box-sizing:border-box;font-size:13px;
-    box-shadow:-4px 0 16px rgba(0,0,0,0.4);display:none;}
-  #tunePanel h3{margin:4px 0 12px;font-size:15px;}
-  #tunePanel .row{margin-bottom:12px;}
-  #tunePanel label{display:flex;justify-content:space-between;margin-bottom:3px;color:#cfe;}
-  #tunePanel input[type=range]{width:100%;}
-  #tunePanel .btnrow{display:flex;gap:6px;margin-top:10px;}
-  #tunePanel button{flex:1;padding:8px;border:none;border-radius:6px;background:#3d8bfd;color:#fff;
-    font-size:12px;cursor:pointer;}
-  #tunePanel button.reset{background:#8a4d4d;}
-  #tuneOut{width:100%;height:90px;margin-top:8px;font-size:11px;background:#111;color:#9f9;
-    border:1px solid #444;border-radius:4px;padding:6px;box-sizing:border-box;}
+  :root{
+    --navy-deep:#0f1a30;
+    --navy-card:#1a2947;
+    --navy-card-dim:#16213a;
+    --coral:#ff6b4a;
+    --gold:#ffc857;
+    --teal:#2ec4b6;
+    --cream:#f6efe0;
+    --dim:#8fa0c4;
+    --line: rgba(246,239,224,0.1);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{-webkit-text-size-adjust:100%;}
+  body{
+    background:var(--navy-deep);
+    color:var(--cream);
+    font-family:'Noto Sans KR', sans-serif;
+    line-height:1.6;
+    overflow-x:hidden;
+  }
+  .display{ font-family:'Jua', sans-serif; }
+
+  a{ color:inherit; }
+  img{ max-width:100%; display:block; }
+
+  .wrap{ max-width:640px; margin:0 auto; padding:0 24px; }
+
+  /* ---------- hero ---------- */
+  .hero{
+    padding:56px 24px 40px;
+    text-align:center;
+    background:
+      radial-gradient(ellipse 120% 60% at 50% 0%, rgba(255,107,74,0.18), transparent 60%),
+      var(--navy-deep);
+  }
+  .hero .eyebrow-free-title{
+    font-family:'Jua', sans-serif;
+    font-size:clamp(32px, 8vw, 44px);
+    letter-spacing:-0.01em;
+    color:var(--cream);
+  }
+  .hero .title-accent{ color:var(--coral); }
+  .hero p.tagline{
+    margin-top:14px;
+    color:var(--dim);
+    font-size:16px;
+    max-width:38ch;
+    margin-left:auto; margin-right:auto;
+  }
+
+  .cabinet{
+    margin:36px auto 0;
+    max-width:280px;
+    position:relative;
+  }
+  .cabinet-frame{
+    background:linear-gradient(160deg, #24345c, #16213a);
+    border-radius:22px;
+    padding:14px;
+    box-shadow:
+      0 30px 60px -20px rgba(0,0,0,0.6),
+      0 0 0 1px var(--line);
+    animation: floaty 5s ease-in-out infinite;
+  }
+  .cabinet-frame img{
+    border-radius:12px;
+    width:100%;
+    display:block;
+  }
+  @keyframes floaty{
+    0%,100%{ transform: translateY(0) rotate(-1.2deg); }
+    50%{ transform: translateY(-10px) rotate(1deg); }
+  }
+
+  /* ---------- section headings ---------- */
+  .section{ padding:8px 24px 48px; }
+  .section h2{
+    font-family:'Jua', sans-serif;
+    font-size:22px;
+    margin-bottom:18px;
+    color:var(--cream);
+  }
+
+  /* ---------- featured game ---------- */
+  .game-featured{
+    background:var(--navy-card);
+    border-radius:20px;
+    overflow:hidden;
+    border:1px solid var(--line);
+  }
+  .game-featured .shot{
+    aspect-ratio: 480 / 520;
+    background:#0c1526;
+    display:flex; align-items:center; justify-content:center;
+    overflow:hidden;
+  }
+  .game-featured .shot img{ width:100%; height:100%; object-fit:cover; }
+  .game-featured .body{ padding:22px 22px 24px; }
+  .game-featured h3{
+    font-family:'Jua', sans-serif;
+    font-size:24px;
+    margin-bottom:8px;
+  }
+  .game-featured p{
+    color:var(--dim);
+    font-size:15px;
+    margin-bottom:18px;
+  }
+  .btn-play{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    background:var(--gold);
+    color:#2a1c00;
+    font-family:'Jua', sans-serif;
+    font-size:17px;
+    padding:13px 26px;
+    border-radius:999px;
+    text-decoration:none;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    box-shadow: 0 8px 0 0 #c99425;
+  }
+  .btn-play:active{
+    transform: translateY(6px);
+    box-shadow: 0 2px 0 0 #c99425;
+  }
+
+  /* ---------- teaser (coming soon) ---------- */
+  .game-teaser{
+    margin-top:14px;
+    display:flex;
+    align-items:center;
+    gap:14px;
+    padding:16px 18px;
+    border-radius:16px;
+    border:1px dashed var(--line);
+    color:var(--dim);
+  }
+  .game-teaser .icon{
+    width:44px; height:44px;
+    border-radius:10px;
+    background:var(--navy-card-dim);
+    display:flex; align-items:center; justify-content:center;
+    font-size:20px;
+    flex-shrink:0;
+  }
+  .game-teaser .txt strong{
+    display:block;
+    color:var(--cream);
+    font-family:'Jua', sans-serif;
+    font-size:16px;
+    font-weight:normal;
+    margin-bottom:2px;
+  }
+  .game-teaser .txt span{ font-size:13px; }
+
+  /* ---------- cross links ---------- */
+  .crosslinks p.lead{ color:var(--dim); font-size:15px; margin-bottom:16px; }
+  .linklist{ display:flex; flex-direction:column; gap:10px; }
+  .linklist a{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    background:var(--navy-card);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:16px 18px;
+    text-decoration:none;
+  }
+  .linklist .name{
+    font-family:'Jua', sans-serif;
+    font-size:16px;
+  }
+  .linklist .desc{
+    font-size:13px;
+    color:var(--dim);
+    margin-top:2px;
+  }
+  .linklist .go{
+    font-size:20px;
+    color:var(--teal);
+  }
+
+  footer{
+    text-align:center;
+    padding:20px 24px 40px;
+    color:var(--dim);
+    font-size:12px;
+  }
+
+  @media (min-width:520px){
+    .hero{ padding:72px 24px 48px; }
+  }
 </style>
 </head>
 <body>
-<div id="loading">헬로버드 불러오는 중... (0/52)</div>
-<button id="tuneBtn" title="설정">⚙</button>
-<div id="tunePanel">
-  <h3>🔧 실시간 조정</h3>
-  <div id="tuneControls"></div>
-  <div class="btnrow">
-    <button id="tuneCopy">값 복사(JSON)</button>
-    <button class="reset" id="tuneReset">기본값</button>
+
+<section class="hero">
+  <div class="wrap">
+    <h1 class="eyebrow-free-title">헬로 대부도<br><span class="title-accent">오락실</span></h1>
+    <p class="tagline">대부도 곳곳을 배경으로 한 아주 가벼운 미니게임들을 하나씩 만들고 있어요.</p>
+    <div class="cabinet">
+      <div class="cabinet-frame">
+        <img src="games/hello-bird/assets/start_screen.png" alt="헬로버드 시작 화면" loading="eager">
+      </div>
+    </div>
   </div>
-  <textarea id="tuneOut" readonly placeholder="여기 값이 표시돼요. 복사해서 저한테 보내주세요."></textarea>
-</div>
-<div id="wrap"><canvas id="game" width="480" height="1038"></canvas></div>
-<script>
-const ASSET_SRC = {"hello_neutral": "assets/hello_neutral.png", "hello_flap_up": "assets/hello_flap_up.png", "hello_flap_down": "assets/hello_flap_down.png", "hello_hit": "assets/hello_hit.png", "hello_happy": "assets/hello_happy.png", "cap_top": "assets/cap_top.png", "cap_bottom": "assets/cap_bottom.png", "start_screen": "assets/start_screen.png", "crow_wing_up": "assets/crow_wing_up.png", "crow_wing_down": "assets/crow_wing_down.png", "shop_corn_bread": "assets/shop_corn_bread.png", "shop_greet": "assets/shop_greet.png", "shop_gift": "assets/shop_gift.png", "shop_flyoff": "assets/shop_flyoff.png", "sihwa_sky": "assets/sihwa_sky.png", "sihwa_mid": "assets/sihwa_mid.png", "sihwa_ground": "assets/sihwa_ground.png", "sihwa_sea": "assets/sihwa_sea.png", "sihwa_landmark": "assets/sihwa_landmark.png", "sihwa_tile_char1": "assets/sihwa_tile_char1.png", "sihwa_tile_char2": "assets/sihwa_tile_char2.png", "bangamori_sky": "assets/bangamori_sky.png", "bangamori_mid": "assets/bangamori_mid.png", "bangamori_ground": "assets/bangamori_ground.png", "bangamori_sea": "assets/bangamori_sea.png", "bangamori_tile_grape": "assets/bangamori_tile_grape.png", "bangamori_tile_fish": "assets/bangamori_tile_fish.png", "theme_sky": "assets/theme_sky.png", "theme_mid": "assets/theme_mid.png", "theme_ground": "assets/theme_ground.png", "theme_sea": "assets/theme_sea.png", "theme_landmark": "assets/theme_landmark.png", "theme_tile_flower": "assets/theme_tile_flower.png", "theme_tile_reed": "assets/theme_tile_reed.png", "gubong_sky": "assets/gubong_sky.png", "gubong_mid": "assets/gubong_mid.png", "gubong_ground": "assets/gubong_ground.png", "gubong_sea": "assets/gubong_sea.png", "gubong_landmark": "assets/gubong_landmark.png", "gubong_tile_sea": "assets/gubong_tile_sea.png", "gubong_tile_shell": "assets/gubong_tile_shell.png", "tando_sky": "assets/tando_sky.png", "tando_mid": "assets/tando_mid.png", "tando_ground": "assets/tando_ground.png", "tando_sea": "assets/tando_sea.png", "tando_landmark": "assets/tando_landmark.png", "tando_tile_boat": "assets/tando_tile_boat.png", "tando_tile_star": "assets/tando_tile_star.png", "gate_sihwa": "assets/gate_sihwa.png", "gate_bangamori": "assets/gate_bangamori.png", "gate_theme": "assets/gate_theme.png", "gate_gubong": "assets/gate_gubong.png"};
-const AUDIO_SRC = {"bgm": "assets/bgm.mp3", "sfx_jump": "assets/sfx_jump.mp3", "sfx_hit": "assets/sfx_hit.mp3", "sfx_die": "assets/sfx_die.mp3", "milestone_1": "assets/milestone_1.mp3", "milestone_2": "assets/milestone_2.mp3", "milestone_3": "assets/milestone_3.mp3", "milestone_4": "assets/milestone_4.mp3", "milestone_5": "assets/milestone_5.mp3"};
-const STATIONS = [{"key": "sihwa", "name": "시화방조제", "startScore": 0, "themes": ["char1", "char2"], "hasLandmark": true, "bg": {"SEA_H": 345, "SEA_OFFSET_X": 255, "SEA_OFFSET_Y": -25, "SEA_SCROLL": 0.05, "SEA_BLUR": 1.5, "LANDMARK_H": 265, "LANDMARK_OFFSET_X": 0, "LANDMARK_OFFSET_Y": 70, "LANDMARK_SCROLL": 0.03, "LANDMARK_BLUR": 2, "LANDMARK_WORLD_X": 250, "MID_H": 170, "MID_OFFSET_Y": 55, "MID_SCROLL": 0.55, "MID_BLUR": 0.5, "GROUND_H": 60, "GROUND_OFFSET_Y": 0, "GROUND_SCROLL": 0.9, "GROUND_BLUR": 0, "PILLAR_W": 66, "CAP_W": 88}, "gap": {"GAP_H_MIN": 200, "GAP_H_MAX": 340, "GAP_MARGIN_TOP": 125, "GAP_MARGIN_BOTTOM": 50, "DIFFICULTY_RAMP": 15, "SPEED_RAMP_MAX": 0.15, "OBSTACLE_SPEED": 3.1, "BOB_AMP": 0, "SKEW_POWER": 0}}, {"key": "bangamori", "name": "방아머리", "startScore": 13, "themes": ["grape", "fish"], "hasLandmark": false, "bg": {"SEA_H": 345, "SEA_OFFSET_X": 0, "SEA_OFFSET_Y": -25, "SEA_SCROLL": 0.07, "SEA_BLUR": 1.5, "LANDMARK_H": 0, "LANDMARK_OFFSET_X": 0, "LANDMARK_OFFSET_Y": 0, "LANDMARK_SCROLL": 0, "LANDMARK_BLUR": 0, "LANDMARK_WORLD_X": 0, "MID_H": 170, "MID_OFFSET_Y": 55, "MID_SCROLL": 0.55, "MID_BLUR": 0.5, "GROUND_H": 60, "GROUND_OFFSET_Y": 0, "GROUND_SCROLL": 0.9, "GROUND_BLUR": 0, "PILLAR_W": 66, "CAP_W": 88}, "gap": {"GAP_H_MIN": 200, "GAP_H_MAX": 405, "GAP_MARGIN_TOP": 125, "GAP_MARGIN_BOTTOM": 50, "DIFFICULTY_RAMP": 15, "SPEED_RAMP_MAX": 0.15, "OBSTACLE_SPEED": 3.1, "BOB_AMP": 0, "SKEW_POWER": 0}}, {"key": "theme", "name": "바다향기테마파크", "startScore": 31, "themes": ["flower", "reed"], "hasLandmark": true, "bg": {"SEA_H": 345, "SEA_OFFSET_X": 255, "SEA_OFFSET_Y": -25, "SEA_SCROLL": 0.05, "SEA_BLUR": 1.5, "LANDMARK_H": 305, "LANDMARK_OFFSET_X": 0, "LANDMARK_OFFSET_Y": 80, "LANDMARK_SCROLL": 0.03, "LANDMARK_BLUR": 2, "LANDMARK_WORLD_X": 250, "MID_H": 170, "MID_OFFSET_Y": 55, "MID_SCROLL": 0.55, "MID_BLUR": 0.5, "GROUND_H": 60, "GROUND_OFFSET_Y": 0, "GROUND_SCROLL": 0.9, "GROUND_BLUR": 0, "PILLAR_W": 66, "CAP_W": 88}, "gap": {"GAP_H_MIN": 200, "GAP_H_MAX": 420, "GAP_MARGIN_TOP": 125, "GAP_MARGIN_BOTTOM": 50, "DIFFICULTY_RAMP": 25, "SPEED_RAMP_MAX": 0.08, "OBSTACLE_SPEED": 3.1, "BOB_AMP": 24, "SKEW_POWER": 1.0}}, {"key": "gubong", "name": "구봉도", "startScore": 51, "themes": ["sea", "shell"], "hasLandmark": true, "hasCrows": true, "bg": {"SEA_H": 345, "SEA_OFFSET_X": 255, "SEA_OFFSET_Y": -25, "SEA_SCROLL": 0.05, "SEA_BLUR": 1.5, "LANDMARK_H": 335, "LANDMARK_OFFSET_X": 0, "LANDMARK_OFFSET_Y": -5, "LANDMARK_SCROLL": 0.03, "LANDMARK_BLUR": 2, "LANDMARK_WORLD_X": 250, "MID_H": 170, "MID_OFFSET_Y": 55, "MID_SCROLL": 0.55, "MID_BLUR": 0.5, "GROUND_H": 60, "GROUND_OFFSET_Y": 0, "GROUND_SCROLL": 0.9, "GROUND_BLUR": 0, "PILLAR_W": 66, "CAP_W": 88}, "gap": {"GAP_H_MIN": 155, "GAP_H_MAX": 380, "GAP_MARGIN_TOP": 125, "GAP_MARGIN_BOTTOM": 50, "DIFFICULTY_RAMP": 15, "SPEED_RAMP_MAX": 0.15, "OBSTACLE_SPEED": 3.1, "BOB_AMP": 42, "SKEW_POWER": 1.3}}, {"key": "tando", "name": "탄도항", "startScore": 71, "themes": ["boat", "star"], "hasLandmark": true, "hasCrows": true, "bg": {"SEA_H": 345, "SEA_OFFSET_X": 255, "SEA_OFFSET_Y": -25, "SEA_SCROLL": 0.05, "SEA_BLUR": 1.5, "LANDMARK_H": 290, "LANDMARK_OFFSET_X": 0, "LANDMARK_OFFSET_Y": 60, "LANDMARK_SCROLL": 0.03, "LANDMARK_BLUR": 2, "LANDMARK_WORLD_X": 0, "MID_H": 170, "MID_OFFSET_Y": 55, "MID_SCROLL": 0.55, "MID_BLUR": 0.5, "GROUND_H": 60, "GROUND_OFFSET_Y": 0, "GROUND_SCROLL": 0.9, "GROUND_BLUR": 0, "PILLAR_W": 66, "CAP_W": 88}, "gap": {"GAP_H_MIN": 140, "GAP_H_MAX": 330, "GAP_MARGIN_TOP": 125, "GAP_MARGIN_BOTTOM": 50, "DIFFICULTY_RAMP": 12, "SPEED_RAMP_MAX": 0.2, "OBSTACLE_SPEED": 3.3, "BOB_AMP": 52, "SKEW_POWER": 1.6}, "endScore": 91}];
+</section>
 
-// shop data — NOT currently wired into the gate anymore (2026-09-08: ad-ization
-// deferred until there's real traffic; gates are now plain "NEXT STAGE" portals,
-// see gate_sihwa/gate_bangamori/gate_theme/gate_gubong in ASSET_SRC). Kept here
-// so the shop/dialogue system can be reconnected later without re-typing this.
-const SHOPS = [
-  {
-    name: '대부 옥수수찐빵',
-    tagline: '대부도 최고의 옥수수찐빵집!!',
-    img: 'shop_corn_bread',
-    introImg: 'shop_greet',
-    illust1: 'shop_gift',
-    line1: '용사여!! 대부도 최고의 옥수수 찐빵집에 온 걸 환영하네',
-    illust2: 'shop_flyoff',
-    line2: '모험에 지친 용사여 이 옥수수 찐빵을 먹고 힘을 내게',
-  },
-];
+<section class="section">
+  <div class="wrap">
+    <h2>지금 할 수 있는 게임</h2>
 
-const canvas = document.getElementById('game');
-function fixCanvasSize(){
-  // don't trust vw/vh CSS units at all (they behave inconsistently across mobile
-  // browsers and especially third-party in-app webviews) — measure the real
-  // visible pixel size in JS and set the canvas's on-screen size explicitly,
-  // scaled to fit while preserving its native 480x1038 aspect ratio
-  const vw = window.innerWidth;
-  const vh = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
-  const scale = Math.min(vw / canvas.width, vh / canvas.height) * 0.94; // small safety margin so odd browser-chrome quirks never crop the edges
-  canvas.style.width = Math.floor(canvas.width * scale) + 'px';
-  canvas.style.height = Math.floor(canvas.height * scale) + 'px';
-}
-fixCanvasSize();
-window.addEventListener('resize', fixCanvasSize);
-window.addEventListener('orientationchange', fixCanvasSize);
-if(window.visualViewport){
-  window.visualViewport.addEventListener('resize', fixCanvasSize);
-  window.visualViewport.addEventListener('scroll', fixCanvasSize);
-}
-[100, 300, 600, 1200, 2000].forEach(ms => setTimeout(fixCanvasSize, ms));
-const ctx = canvas.getContext('2d');
-const W = canvas.width, H = canvas.height;
+    <div class="game-featured">
+      <div class="shot">
+        <img src="games/hello-bird/assets/start_screen.png" alt="헬로버드 게임 화면" loading="lazy">
+      </div>
+      <div class="body">
+        <h3>헬로버드</h3>
+        <p>시화방조제부터 탄도항까지, 대부도 다섯 곳을 날아서 통과하는 플래피버드 스타일 게임이에요.</p>
+        <a class="btn-play" href="games/hello-bird/">플레이하기</a>
+      </div>
+    </div>
 
-const images = {};
-let toLoad = Object.keys(ASSET_SRC).length;
-let settled = 0;
-let started = false;
-const loadingEl = document.getElementById('loading');
+    <div class="game-teaser">
+      <div class="icon">🏃</div>
+      <div class="txt">
+        <strong>헬로런 · 준비 중</strong>
+        <span>매일 날씨에 따라 장애물이 달라지는 원버튼 러너</span>
+      </div>
+    </div>
+  </div>
+</section>
 
-function startGameLoop(){
-  if(started) return;
-  started = true;
-  loadingEl.style.display = 'none';
-  requestAnimationFrame(loop);
-}
-function settle(k, ok){
-  settled++;
-  loadingEl.textContent = '헬로버드 불러오는 중... (' + settled + '/' + toLoad + ')';
-  if(!ok) console.warn('이미지 로드 실패:', k);
-  if(settled >= toLoad) startGameLoop();
-}
-Object.keys(ASSET_SRC).forEach(k=>{
-  const img = new Image();
-  img.onload = ()=> settle(k, true);
-  img.onerror = ()=> settle(k, false);
-  img.src = ASSET_SRC[k];
-  images[k] = img;
-});
-setTimeout(startGameLoop, 4000);
-window.addEventListener('pointerdown', startGameLoop, {once:true});
+<section class="section crosslinks">
+  <div class="wrap">
+    <h2>대부도를 더 알아보고 싶다면</h2>
+    <p class="lead">게임 말고도 대부도 소식과 실시간 정보를 이 두 곳에서 확인할 수 있어요.</p>
+    <div class="linklist">
+      <a href="https://daebutalk.com" target="_blank" rel="noopener">
+        <div>
+          <div class="name">헬로대부도</div>
+          <div class="desc">대부도 소식과 이야기</div>
+        </div>
+        <div class="go">↗</div>
+      </a>
+      <a href="https://daebuseatime.com" target="_blank" rel="noopener">
+        <div>
+          <div class="name">대부도타임</div>
+          <div class="desc">지금 물때·날씨 확인하기</div>
+        </div>
+        <div class="go">↗</div>
+      </a>
+    </div>
+  </div>
+</section>
 
-// ---------- audio ----------
-const audio = {};
-Object.keys(AUDIO_SRC).forEach(k=>{
-  const a = new Audio(AUDIO_SRC[k]);
-  if(k==='bgm') a.loop = true;
-  audio[k] = a;
-});
-let bgmStarted = false;
-let bgmDuckTimer = 0; // frames remaining in a duck-then-recover envelope
-function startBgmIfNeeded(){
-  if(bgmStarted) return;
-  bgmStarted = true;
-  audio.bgm.volume = T.BGM_VOLUME;
-  audio.bgm.play().catch(()=>{});
-}
-function duckBgm(){
-  bgmDuckTimer = 70; // ~1.1s at 60fps
-}
-function playSfx(name){
-  const a = audio[name];
-  if(!a) return;
-  try{ a.currentTime = 0; a.volume = T.SFX_VOLUME; a.play().catch(()=>{}); }catch(e){}
-}
+<footer>© 헬로 대부도 오락실</footer>
 
-// ---------- shared engine constants ----------
-const HELLO_X = 130, HITBOX = 20;
-const OBSTACLE_GAP_X = 300;
-const CAP_H_TOP_UNUSED = 0;
-const GROUND_Y = H;
-
-// ---------- tunable (shared, not per-station) ----------
-const DEFAULTS = {
-  HELLO_SIZE: 58, GRAVITY: 0.6, FLAP: -11,
-  BGM_VOLUME: 0.12, SFX_VOLUME: 0.6,
-  TEST_MODE: 0, TEST_TRANSITION_COUNT: 10,
-  GATE_TRIGGER_BUFFER: 0,
-  GATE_W: 230, GATE_SPEED: 1.5,
-  INVINCIBLE: 0,
-};
-let T;
-try {
-  const saved = JSON.parse(localStorage.getItem('hb_tune_merged') || 'null');
-  T = Object.assign({}, DEFAULTS, saved || {});
-} catch(e){ T = Object.assign({}, DEFAULTS); }
-function saveTune(){
-  try { localStorage.setItem('hb_tune_merged', JSON.stringify(T)); } catch(e){}
-}
-
-const TUNE_META = [
-  ['캐릭터 / 물리','HELLO_SIZE','헬로 크기',20,150,2],
-  ['캐릭터 / 물리','GRAVITY','중력',0.1,1.5,0.02],
-  ['캐릭터 / 물리','FLAP','점프 힘(음수)',-20,-3,0.5],
-  ['사운드','BGM_VOLUME','배경음 볼륨',0,1,0.01],
-  ['사운드','SFX_VOLUME','효과음 볼륨',0,1,0.01],
-  ['테스트 / 운영','TEST_MODE','테스트 모드 (1=켜짐, 0=정식운영)',0,1,1],
-  ['테스트 / 운영','TEST_TRANSITION_COUNT','테스트 모드 전환 통과개수',1,30,1],
-  ['테스트 / 운영','GATE_TRIGGER_BUFFER','게이트 등장 여유값(작을수록 늦게 등장, 테스트 땐 0~1 추천)',0,10,1],
-  ['테스트 / 운영','INVINCIBLE','무적 모드 (1=켜짐, 장애물/추락 무시)',0,1,1],
-  ['게이트','GATE_W','게이트 크기',60,400,5],
-  ['게이트','GATE_SPEED','게이트 이동 속도',0.1,6,0.1],
-];
-function buildTunePanel(){
-  const wrap = document.getElementById('tuneControls');
-  wrap.innerHTML = '';
-  let lastGroup = null;
-  TUNE_META.forEach(([group,key,label,min,max,step])=>{
-    if(group !== lastGroup){
-      const h = document.createElement('div');
-      h.textContent = group;
-      h.style.cssText = 'margin:14px 0 6px;font-weight:bold;color:#8fd3ff;border-bottom:1px solid #3a5060;padding-bottom:3px;';
-      wrap.appendChild(h);
-      lastGroup = group;
-    }
-    const row = document.createElement('div');
-    row.className = 'row';
-    const lab = document.createElement('label');
-    const valSpan = document.createElement('span');
-    valSpan.textContent = T[key];
-    lab.innerHTML = '<span>'+label+'</span>';
-    lab.appendChild(valSpan);
-    const input = document.createElement('input');
-    input.type = 'range'; input.min = min; input.max = max; input.step = step;
-    input.value = T[key];
-    input.addEventListener('input', ()=>{
-      T[key] = parseFloat(input.value);
-      valSpan.textContent = T[key];
-      saveTune();
-      refreshTuneOut();
-      if(key==='BGM_VOLUME' && bgmStarted) audio.bgm.volume = T.BGM_VOLUME;
-    });
-    row.appendChild(lab); row.appendChild(input);
-    wrap.appendChild(row);
-  });
-}
-function refreshTuneOut(){ document.getElementById('tuneOut').value = JSON.stringify(T, null, 2); }
-// the tuning panel is a developer tool — hidden from regular players by default,
-// only shown when the page is opened with ?dev=1 in the address bar
-const DEV_MODE = new URLSearchParams(location.search).get('dev') === '1';
-if(DEV_MODE) document.getElementById('tuneBtn').style.display = 'block';
-
-document.getElementById('tuneBtn').addEventListener('click', ()=>{
-  const p = document.getElementById('tunePanel');
-  const open = p.style.display === 'block';
-  p.style.display = open ? 'none' : 'block';
-  paused = !open;
-  if(!open){
-    if(obstacles.length === 0){ spawnObstacle(scrollX + 160); spawnObstacle(scrollX + 160 + OBSTACLE_GAP_X); }
-    buildTunePanel(); refreshTuneOut();
-  }
-});
-document.getElementById('tuneCopy').addEventListener('click', ()=>{
-  refreshTuneOut();
-  const ta = document.getElementById('tuneOut');
-  ta.select();
-  try { document.execCommand('copy'); } catch(e){}
-  try { navigator.clipboard && navigator.clipboard.writeText(ta.value); } catch(e){}
-});
-document.getElementById('tuneReset').addEventListener('click', ()=>{
-  T = Object.assign({}, DEFAULTS);
-  saveTune(); buildTunePanel(); refreshTuneOut();
-});
-
-// ---------- station state ----------
-let stationIndex = 0;
-let station = STATIONS[0];
-let stationTransitionTimer = 0; // counts down during the transition flash+banner
-let pendingStationIndex = -1;
-let stationStartScore = 0; // score value at the moment the current station began (for test-mode countdown)
-let stationScrollAnchor = 0; // scrollX value at the moment the current station began (so its bg layers start at phase 0)
-let transitionScoreSnapshot = 0; // score shown on the arrival banner
-let gate = null; // the floating shop/target the player must fly into to advance
-let dialogueCut = 0; // which of the RPG-style cutscene panels is showing
-let dialogueFadeTimer = 0; // brief fade-from-black when entering the shop scene
-let gatePending = false; // true once the gate has been spawned for the current station, until hit
-let isEnding = false; // true once the player has crossed the final station's endScore — the
-                       // same fade/banner machinery plays, but lands on the ending screen
-                       // instead of swapping to a next station (there isn't one)
-
-function checkStationTransition(){
-  if(gatePending || stationTransitionTimer>0) return;
-  const buf = T.GATE_TRIGGER_BUFFER;
-  const next = STATIONS[stationIndex+1];
-  if(!next){
-    // last station (탄도항) — no gate to fly into, just cross the finish score and fade
-    if(!station.endScore) return;
-    const reached = T.TEST_MODE
-      ? (score - stationStartScore) >= T.TEST_TRANSITION_COUNT - buf
-      : score >= station.endScore - buf;
-    if(reached){
-      isEnding = true;
-      stationTransitionTimer = 90;
-      transitionScoreSnapshot = score;
-      duckBgm();
-    }
-    return;
-  }
-  // stop spawning new obstacles GATE_TRIGGER_BUFFER obstacles before the actual threshold,
-  // so the approach to the gate is clear instead of overlapping the last couple of pillars.
-  // tunable now because a small buffer (fine at real counts like 20-25) becomes a huge
-  // fraction of a tiny test count like 5, making the gate feel like it pops up "too early"
-  const reached = T.TEST_MODE
-    ? (score - stationStartScore) >= T.TEST_TRANSITION_COUNT - buf
-    : score >= next.startScore - buf;
-  if(reached){
-    gatePending = true; // this alone halts new obstacle spawns (see the spawn loop)
-  }
-}
-
-// ---------- game state ----------
-let state = 'start';
-let hello = { y: H/2 - 100, vy: 0 };
-let obstacles = [];
-let scrollX = 0;
-let score = 0;
-let energy = 100;
-let hitTimer = 0;
-let healTimer = 0;
-let flapTimer = 0;
-let paused = false;
-let shakeTimer = 0;
-let flashTimer = 0;
-let milestoneTimer = 0;
-let milestoneText = '';
-let lastMilestone = 0;
-const MILESTONE_SFX = ['milestone_1','milestone_2','milestone_3','milestone_4','milestone_5'];
-let milestoneSfxIndex = 0;
-let nextObstacleX = 650;
-let crows = [];
-let nextCrowX = 900;
-let heartGiven = false; // whether a mercy heart has already been placed for the current
-                         // "down to 1 heart" stretch — re-arms once energy recovers above it
-let heartActive = false; // true while a spawned mercy heart is still out there waiting to be grabbed
-
-function resetGame(){
-  hello = { y: H/2 - 100, vy: 0 };
-  obstacles = [];
-  scrollX = 0;
-  score = 0;
-  energy = 100;
-  hitTimer = 0;
-  healTimer = 0;
-  flapTimer = 0;
-  shakeTimer = 0;
-  flashTimer = 0;
-  milestoneTimer = 0;
-  lastMilestone = 0;
-  nextObstacleX = 650;
-  crows = [];
-  nextCrowX = 900;
-  heartGiven = false;
-  heartActive = false;
-  stationIndex = 0;
-  station = STATIONS[0];
-  pendingStationIndex = -1;
-  stationTransitionTimer = 0;
-  stationStartScore = 0;
-  stationScrollAnchor = 0;
-  gate = null;
-  gatePending = false;
-  isEnding = false;
-  state = 'playing';
-}
-
-function stationProgress(){
-  return Math.min(1, Math.max(0, (score - stationStartScore) / Math.max(1, station.gap.DIFFICULTY_RAMP)));
-}
-function rollGap(){
-  const g = station.gap;
-  const progress = stationProgress();
-  // full random range every time (so consecutive gaps never look "samey"), but skewed
-  // toward the tighter end as progress rises — a gentle, random difficulty increase,
-  // not a hard deterministic ramp
-  let r = Math.random();
-  r = Math.pow(r, 1 + progress*(g.SKEW_POWER||0));
-  let gapH = g.GAP_H_MIN + r*(g.GAP_H_MAX - g.GAP_H_MIN);
-  const minGapY = g.GAP_MARGIN_TOP;
-  const maxGapY = H - station.bg.GROUND_H - g.GAP_MARGIN_BOTTOM - gapH;
-  const gapY = minGapY + Math.random()*Math.max(20,(maxGapY-minGapY));
-  return {gapY, gapH};
-}
-function spawnObstacle(x){
-  const {gapY, gapH} = rollGap();
-  const themes = station.themes;
-  const topTheme = themes[Math.floor(Math.random()*themes.length)];
-  const botTheme = themes[Math.floor(Math.random()*themes.length)];
-  const bobAmp = station.gap.BOB_AMP || 0;
-  obstacles.push({x, gapY, gapH, baseGapY: gapY, bobSeed: Math.random()*Math.PI*2, bobAmp,
-                  topTheme, botTheme, passed:false, stKey: station.key});
-}
-function spawnCrow(x){
-  const minY = 120, maxY = H - station.bg.GROUND_H - 160;
-  const y = minY + Math.random()*(maxY-minY);
-  const speedMul = 1.2 + Math.random()*1.0; // each crow drifts a bit faster than the scenery
-  crows.push({x, y, wingTimer:0, wingFrame:0, speedMul});
-}
-function regenGaps(){
-  for(const ob of obstacles){
-    const {gapY, gapH} = rollGap();
-    ob.gapH = gapH; ob.gapY = gapY; ob.passed = false;
-  }
-  if(obstacles.length === 0){ spawnObstacle(scrollX + 160); spawnObstacle(scrollX + 160 + OBSTACLE_GAP_X); }
-}
-
-function flap(){
-  startBgmIfNeeded();
-  if(state==='start'||state==='gameover'||state==='ending'){ resetGame(); return; }
-  if(state==='dialogue'){
-    dialogueCut++;
-    if(dialogueCut > 3){
-      // advance past the shop dialogue -> queue the actual station switch + arrival flash
-      gate = null;
-      gatePending = false;
-      pendingStationIndex = stationIndex+1;
-      stationTransitionTimer = 90;
-      transitionScoreSnapshot = score;
-      nextObstacleX = scrollX + 500; // give a clear runway into the new station instead of a stale catch-up burst
-      duckBgm();
-      state = 'playing';
-    }
-    return;
-  }
-  hello.vy = T.FLAP;
-  flapTimer = 10;
-  playSfx('sfx_jump');
-}
-const NEXT_BTN = { x: W/2-115, y: H-70, w: 230, h: 40 };
-function getCanvasPos(e){
-  const rect = canvas.getBoundingClientRect();
-  const scaleX = canvas.width / rect.width;
-  const scaleY = canvas.height / rect.height;
-  let clientX, clientY;
-  if(e.touches && e.touches[0]){ clientX = e.touches[0].clientX; clientY = e.touches[0].clientY; }
-  else if(e.changedTouches && e.changedTouches[0]){ clientX = e.changedTouches[0].clientX; clientY = e.changedTouches[0].clientY; }
-  else { clientX = e.clientX; clientY = e.clientY; }
-  return { x: (clientX-rect.left)*scaleX, y: (clientY-rect.top)*scaleY };
-}
-function handleInput(e){
-  if(e.cancelable) e.preventDefault();
-  if(state==='dialogue'){
-    const p = getCanvasPos(e);
-    const b = NEXT_BTN;
-    if(p.x>=b.x && p.x<=b.x+b.w && p.y>=b.y && p.y<=b.y+b.h) flap();
-    return; // ignore taps anywhere else while a dialogue cut is showing
-  }
-  flap();
-}
-// a single pointerdown covers mouse, touch and pen in one unified event —
-// registering mousedown/touchstart too would double- or triple-fire per tap
-canvas.addEventListener('pointerdown', handleInput);
-window.addEventListener('keydown', e=>{ if(e.code==='Space'){ e.preventDefault(); flap(); } });
-
-function update(dt){
-  if(bgmDuckTimer>0){
-    bgmDuckTimer = Math.max(0, bgmDuckTimer - dt);
-    if(bgmStarted){
-      const elapsed = 70 - bgmDuckTimer; // 0 -> 70
-      let vol;
-      if(elapsed<15){ vol = T.BGM_VOLUME * (1 - (elapsed/15)*0.85); }       // duck down to a 15% floor
-      else if(elapsed<45){ vol = T.BGM_VOLUME * 0.15; }                     // hold low through the swap
-      else { const p=(elapsed-45)/25; vol = T.BGM_VOLUME*(0.15 + p*0.85); } // recover back to full
-      audio.bgm.volume = Math.max(0, Math.min(T.BGM_VOLUME, vol));
-      if(bgmDuckTimer<=0) audio.bgm.volume = T.BGM_VOLUME; // guarantee it's fully restored
-    }
-  }
-  if(stationTransitionTimer>0){
-    const wasAbove45 = stationTransitionTimer > 45;
-    const wasAboveZero = stationTransitionTimer > 0;
-    stationTransitionTimer = Math.max(0, stationTransitionTimer - dt);
-    if(wasAbove45 && stationTransitionTimer<=45){
-      if(pendingStationIndex>=0){
-        stationIndex = pendingStationIndex;
-        station = STATIONS[stationIndex];
-        stationStartScore = score;
-        stationScrollAnchor = scrollX;
-        pendingStationIndex = -1;
-      } else if(isEnding){
-        // same "swap during the blackout" timing as a normal station change — by the time
-        // the fade lifts, the ending screen is already the thing being revealed
-        state = 'ending';
-      }
-    }
-    if(wasAboveZero && stationTransitionTimer<=0 && pendingStationIndex<0 && !isEnding){
-      // set the runway at the exact instant obstacle spawning is allowed to resume again
-      // (the spawn loop is gated on stationTransitionTimer<=0) — setting it back at the
-      // swap point instead let ~45 more frames of scroll quietly eat into the buffer before
-      // spawning even started, which is why "right after the station starts" still felt tight
-      nextObstacleX = scrollX + 650;
-    }
-  }
-  if(dialogueFadeTimer>0) dialogueFadeTimer = Math.max(0, dialogueFadeTimer - dt);
-  if(state!=='playing') return;
-  // freeze hello in place for the whole station-transition blackout — otherwise gravity
-  // keeps pulling it down while the screen is faded to black (can't see it, can't react),
-  // and it lands on the ground right as the new station reveals itself. this is the fix
-  // for that: no position/velocity change at all until the transition is fully over
-  if(stationTransitionTimer<=0){
-    hello.y += hello.vy * dt + 0.5 * T.GRAVITY * dt * dt;
-    hello.vy += T.GRAVITY * dt;
-  } else {
-    hello.vy = 0;
-  }
-  if(flapTimer>0) flapTimer = Math.max(0, flapTimer - dt);
-
-  scrollX += station.gap.OBSTACLE_SPEED * (1 + stationProgress()*station.gap.SPEED_RAMP_MAX) * dt;
-  // also paused for the whole stationTransitionTimer window — otherwise an obstacle could
-  // spawn (and get its gap rolled) using the OLD station's already-ramped-up difficulty
-  // in the few frames between "gate hit" and the station actually swapping over
-  while(nextObstacleX < scrollX + W + 400 && !gatePending && stationTransitionTimer<=0){ spawnObstacle(nextObstacleX); nextObstacleX += OBSTACLE_GAP_X; }
-  if(station.hasCrows){
-    while(nextCrowX < scrollX + W + 600){ spawnCrow(nextCrowX); nextCrowX += 650 + Math.random()*700; }
-  }
-
-  const hx = HELLO_X, hy = hello.y;
-  const PW = station.bg.PILLAR_W;
-
-  // mercy heart: once the player drops to their last heart, drop a heart pickup right in
-  // the gap of the next obstacle ahead — grabbing it needs no extra risk since it's sitting
-  // exactly where the player already has to fly through. one per "critical" stretch; it
-  // re-arms once energy recovers back above 1 heart, so it can save them again later too
-  const oneHeartLeft = energy > 0 && energy <= 100/3 + 1;
-  if(!oneHeartLeft) heartGiven = false;
-  if(oneHeartLeft && !heartGiven && !heartActive){
-    const candidate = obstacles.find(o => !o.passed && (o.x - scrollX) > hx + 40);
-    if(candidate){ candidate.heart = true; heartActive = true; heartGiven = true; }
-  }
-
-  for(const ob of obstacles){
-    if(ob.bobAmp>0){
-      let ny = ob.baseGapY + Math.sin(scrollX/70 + ob.bobSeed) * ob.bobAmp;
-      const lo = station.gap.GAP_MARGIN_TOP, hi = H - station.bg.GROUND_H - station.gap.GAP_MARGIN_BOTTOM - ob.gapH;
-      ob.gapY = Math.max(lo, Math.min(hi, ny));
-    }
-    const ox = ob.x - scrollX;
-    if(!ob.passed && ox + PW < hx){
-      ob.passed = true; score++;
-      checkStationTransition();
-      if(score % 5 === 0 && score !== lastMilestone){
-        lastMilestone = score;
-        milestoneTimer = 60;
-        milestoneText = score + 'M!!';
-        playSfx(MILESTONE_SFX[milestoneSfxIndex]);
-        milestoneSfxIndex = (milestoneSfxIndex + 1) % MILESTONE_SFX.length;
-      }
-    }
-    if(ob.heart){
-      const heartCx = ox + PW/2, heartCy = ob.gapY + ob.gapH/2;
-      if(Math.abs(hx-heartCx) < 28 && Math.abs(hy-heartCy) < 28){
-        ob.heart = false;
-        heartActive = false;
-        energy = Math.min(100, energy + 34);
-        healTimer = 30;
-      }
-    }
-    if(ox < hx + HITBOX && ox + PW > hx - HITBOX){
-      if(hy - HITBOX < ob.gapY || hy + HITBOX > ob.gapY + ob.gapH){
-        if(hitTimer<=0 && !T.INVINCIBLE){ energy -= 34; hitTimer = 55; hello.vy = -4; shakeTimer = 18; flashTimer = 22; playSfx('sfx_hit'); }
-      }
-    }
-  }
-  const CROW_W = 46, CROW_H = 36;
-  for(const cw of crows){
-    cw.wingTimer += dt;
-    if(cw.wingTimer>8){ cw.wingTimer=0; cw.wingFrame = 1-cw.wingFrame; }
-    cw.x -= station.gap.OBSTACLE_SPEED * (cw.speedMul - 1) * dt; // extra drift on top of the shared world scroll
-    const cx = cw.x - scrollX;
-    if(cx < hx+HITBOX && cx+CROW_W > hx-HITBOX && Math.abs(cw.y-hy) < (CROW_H/2+HITBOX)){
-      if(hitTimer<=0 && !T.INVINCIBLE){ energy -= 34; hitTimer = 55; hello.vy = -4; shakeTimer = 18; flashTimer = 22; playSfx('sfx_hit'); }
-    }
-  }
-  crows = crows.filter(c=> c.x - scrollX > -100);
-
-  if(gatePending && !gate && obstacles.every(o=>o.passed)){
-    const minY = 140, maxY = H - station.bg.GROUND_H - 220;
-    const baseY = minY + Math.random()*(maxY-minY);
-    // spawns much closer to on-screen (was W+150) so it doesn't feel like a long
-    // empty gap after the last obstacle — see also GATE_SPEED default below
-    gate = { screenX: W + 40, baseY, y: baseY, bobSeed: Math.random()*Math.PI*2, w: T.GATE_W, h: T.GATE_W*1.25, hit:false,
-             img: 'gate_' + station.key };
-  }
-  if(gate && !gate.hit){
-    gate.screenX -= T.GATE_SPEED * dt; // moves at its own independent speed, decoupled from world scroll
-    gate.y = gate.baseY + Math.sin(Date.now()/500 + gate.bobSeed) * 13; // gentle floating bob (real-time based already)
-    const gx = gate.screenX;
-    if(hx+HITBOX > gx-gate.w/2 && hx-HITBOX < gx+gate.w/2 && hy > gate.y-gate.h/2 && hy < gate.y+gate.h/2){
-      gate.hit = true;
-      // ad-ization deferred (see SHOPS comment above) — flying into the gate now goes
-      // straight into the station transition instead of the old shop dialogue cutscene
-      gate = null;
-      gatePending = false;
-      pendingStationIndex = stationIndex+1;
-      stationTransitionTimer = 90;
-      transitionScoreSnapshot = score;
-      duckBgm();
-    }
-  }
-  if(hitTimer>0) hitTimer = Math.max(0, hitTimer - dt);
-  if(shakeTimer>0) shakeTimer = Math.max(0, shakeTimer - dt);
-  if(flashTimer>0) flashTimer = Math.max(0, flashTimer - dt);
-  if(milestoneTimer>0) milestoneTimer = Math.max(0, milestoneTimer - dt);
-  if(healTimer>0) healTimer = Math.max(0, healTimer - dt);
-
-  if(T.INVINCIBLE){
-    // keep hello visible on screen instead of letting it fly off top/bottom forever —
-    // clamp instead of dying, so it's still controllable while you're mid-tuning
-    if(hello.y < 0){ hello.y = 0; hello.vy = 0; }
-    if(hello.y > H){ hello.y = H; hello.vy = 0; }
-  } else if(hy > H + 60 || hy < -80 || energy<=0){
-    if(state !== 'gameover'){ playSfx('sfx_die'); }
-    state = 'gameover';
-  }
-  obstacles = obstacles.filter(o=> o.x - scrollX > -260);
-  if(heartActive && !obstacles.some(o=>o.heart)) heartActive = false; // missed it — let a later obstacle carry the next one
-}
-
-// ---------- drawing helpers ----------
-function drawTiledBottom(img, dispH, speedFactor, offsetY, blur, height, localScroll){
-  if(!img || !img.complete || !img.naturalWidth || dispH<=0) return;
-  const scale = dispH / img.naturalHeight;
-  const w = img.naturalWidth * scale;
-  const topY = height - dispH - offsetY;
-  const off = (localScroll*speedFactor) % w;
-  ctx.save();
-  if(blur>0) ctx.filter = 'blur('+blur+'px)';
-  for(let x = -off - w; x < W + w; x += w){ ctx.drawImage(img, x, topY, w, dispH); }
-  ctx.restore();
-}
-function drawSea(bg, seaImg, localScroll){
-  if(!seaImg || !seaImg.complete) return;
-  const dispH = bg.SEA_H;
-  const scale = dispH / seaImg.naturalHeight;
-  const w = seaImg.naturalWidth * scale;
-  const topY = GROUND_Y - dispH - bg.SEA_OFFSET_Y;
-  const baseX = (W - w) / 2 + bg.SEA_OFFSET_X;
-  ctx.save();
-  if(bg.SEA_BLUR>0) ctx.filter = 'blur('+bg.SEA_BLUR+'px)';
-  if(bg.SEA_SCROLL > 0){
-    const off = (localScroll*bg.SEA_SCROLL) % w;
-    for(let x = baseX - off - w; x < W + w; x += w){ ctx.drawImage(seaImg, x, topY, w, dispH); }
-  } else { ctx.drawImage(seaImg, baseX, topY, w, dispH); }
-  ctx.restore();
-}
-function drawLandmark(bg, img, localScroll){
-  if(!img || !img.complete || !bg.LANDMARK_H) return;
-  const dispH = bg.LANDMARK_H;
-  const scale = dispH / img.naturalHeight;
-  const w = img.naturalWidth * scale;
-  const topY = GROUND_Y - dispH - bg.LANDMARK_OFFSET_Y;
-  const x = bg.LANDMARK_WORLD_X - localScroll*bg.LANDMARK_SCROLL + bg.LANDMARK_OFFSET_X;
-  if(x + w < -50 || x > W + 50) return;
-  ctx.save();
-  if(bg.LANDMARK_BLUR>0) ctx.filter = 'blur('+bg.LANDMARK_BLUR+'px)';
-  ctx.drawImage(img, x, topY, w, dispH);
-  ctx.restore();
-}
-function drawImgFlippedV(img, x, y, w, h){
-  ctx.save(); ctx.translate(x, y+h); ctx.scale(1,-1); ctx.drawImage(img, 0, 0, w, h); ctx.restore();
-}
-function drawVTileUp(img, cx, bottomY, topY, w){
-  if(!img || !img.complete || !img.naturalWidth) return;
-  if(bottomY <= topY) return;
-  const scale = w / img.naturalWidth;
-  const th = img.naturalHeight * scale;
-  ctx.save();
-  ctx.beginPath(); ctx.rect(cx - w/2, topY, w, bottomY - topY); ctx.clip();
-  let y = bottomY;
-  while(y > topY){ ctx.drawImage(img, cx - w/2, y - th, w, th); y -= th; }
-  ctx.restore();
-}
-function drawVTileDown(img, cx, topY, bottomY, w){
-  // like drawVTileUp but anchors the tile pattern to the TOP edge instead —
-  // used for the bottom pillar so its pattern rides along with the moving
-  // gap-side cap, the same way the top pillar's pattern already does
-  if(!img || !img.complete || !img.naturalWidth) return;
-  if(bottomY <= topY) return;
-  const scale = w / img.naturalWidth;
-  const th = img.naturalHeight * scale;
-  ctx.save();
-  ctx.beginPath(); ctx.rect(cx - w/2, topY, w, bottomY - topY); ctx.clip();
-  let y = topY;
-  while(y < bottomY){ ctx.drawImage(img, cx - w/2, y, w, th); y += th; }
-  ctx.restore();
-}
-function drawBottomPillar(cx, gapBottomY, theme, stKey){
-  const tileImg = images[stKey+'_tile_'+theme];
-  const capBot = images.cap_bottom, capTop = images.cap_top;
-  const CAP_W = station.bg.CAP_W;
-  const capBotH = CAP_W * (capBot.naturalHeight/capBot.naturalWidth);
-  const capTopH = CAP_W * (capTop.naturalHeight/capTop.naturalWidth);
-  ctx.drawImage(capBot, cx-CAP_W/2, GROUND_Y-capBotH, CAP_W, capBotH);
-  // anchor the tile pattern to the TOP edge (the moving gap-side cap) instead of the
-  // ground — this is the fix for the "cap and body don't move together" bug: the old
-  // drawVTileUp call anchored to the ground (fixed), so the pattern's phase drifted
-  // relative to the cap every time the gap bobbed up/down
-  drawVTileDown(tileImg, cx, gapBottomY+capTopH, GROUND_Y-capBotH, station.bg.PILLAR_W);
-  ctx.drawImage(capTop, cx-CAP_W/2, gapBottomY, CAP_W, capTopH);
-}
-function drawTopPillar(cx, gapTopY, theme, stKey){
-  const tileImg = images[stKey+'_tile_'+theme];
-  const capTop = images.cap_top;
-  const CAP_W = station.bg.CAP_W;
-  const capTopH = CAP_W * (capTop.naturalHeight/capTop.naturalWidth);
-  drawVTileUp(tileImg, cx, gapTopY-capTopH, 0, station.bg.PILLAR_W);
-  drawImgFlippedV(capTop, cx-CAP_W/2, gapTopY-capTopH, CAP_W, capTopH);
-}
-function drawObstacles(){
-  for(const ob of obstacles){
-    const ox = ob.x - scrollX;
-    const cx = ox + station.bg.PILLAR_W/2;
-    drawTopPillar(cx, ob.gapY, ob.topTheme, ob.stKey);
-    drawBottomPillar(cx, ob.gapY+ob.gapH, ob.botTheme, ob.stKey);
-    if(ob.heart){
-      const cy = ob.gapY + ob.gapH/2;
-      const pulse = 1 + 0.18*Math.sin(Date.now()/180);
-      ctx.save();
-      ctx.translate(cx, cy);
-      ctx.scale(pulse, pulse);
-      ctx.textAlign='center'; ctx.textBaseline='middle';
-      ctx.font='bold 34px sans-serif';
-      ctx.lineWidth=3; ctx.strokeStyle='#fff';
-      ctx.strokeText('♥', 0, 0);
-      ctx.fillStyle='#ff4d6d';
-      ctx.fillText('♥', 0, 0);
-      ctx.restore();
-    }
-  }
-}
-function drawCrows(){
-  const w = 70, h = w * (54/75); // approx aspect from the source art
-  for(const cw of crows){
-    const img = images[cw.wingFrame===0 ? 'crow_wing_up' : 'crow_wing_down'];
-    if(!img || !img.complete) continue;
-    const cx = cw.x - scrollX;
-    const dh = w * (img.naturalHeight/img.naturalWidth);
-    ctx.drawImage(img, cx-w/2, cw.y-dh/2, w, dh);
-  }
-}
-function drawGate(){
-  if(!gate || gate.hit) return;
-  const gx = gate.screenX;
-  if(gx < -200 || gx > W+200) return;
-  ctx.save();
-  const img = images[gate.img];
-  if(img && img.complete){
-    const scale = gate.w / img.naturalWidth;
-    const dh = img.naturalHeight * scale;
-    ctx.drawImage(img, gx-gate.w/2, gate.y-dh/2, gate.w, dh);
-  } else {
-    ctx.fillStyle = '#fff8e1';
-    roundRect(ctx, gx-gate.w/2, gate.y-gate.h/2, gate.w, gate.h, 14); ctx.fill();
-  }
-  // pulsing red target ring above it pointing the way
-  const pulse = 1 + 0.15*Math.sin(Date.now()/150);
-  ctx.strokeStyle = 'rgba(230,30,30,0.9)'; ctx.lineWidth = 4;
-  ctx.beginPath(); ctx.arc(gx, gate.y-gate.h/2-30, 16*pulse, 0, Math.PI*2); ctx.stroke();
-  ctx.fillStyle = 'rgba(230,30,30,0.9)';
-  ctx.beginPath();
-  ctx.moveTo(gx-8, gate.y-gate.h/2-8); ctx.lineTo(gx+8, gate.y-gate.h/2-8); ctx.lineTo(gx, gate.y-gate.h/2+4);
-  ctx.closePath(); ctx.fill();
-  ctx.restore();
-}
-function drawDialogue(){
-  const shop = gate ? gate.shop : SHOPS[0];
-  ctx.save();
-
-  let img, headline, body;
-  if(dialogueCut===0){
-    img = images[shop.img]; headline=null; body=null;
-  } else if(dialogueCut===1){
-    img = images[shop.introImg] || images[shop.img]; headline=shop.name; body=shop.tagline;
-  } else if(dialogueCut===2){
-    img = images[shop.illust1] || images[shop.img] || images.hello_happy; headline=null; body=shop.line1;
-  } else {
-    img = images[shop.illust2] || images[shop.img] || images.hello_flap_up; headline=null; body=shop.line2;
-  }
-
-  if(img && img.complete) drawFitWidth(img, W, H, '#1a2a3a');
-  else { ctx.fillStyle='#223'; ctx.fillRect(0,0,W,H); }
-
-  if(headline || body){
-    const boxH = headline && body ? 150 : 110;
-    ctx.fillStyle='rgba(0,0,0,0.58)';
-    roundRect(ctx, 30, H/2-boxH/2, W-60, boxH, 16); ctx.fill();
-    ctx.fillStyle='#fff'; ctx.textAlign='center';
-    let y = H/2 - boxH/2 + 40;
-    if(headline){ ctx.font='bold 22px sans-serif'; ctx.fillText(headline, W/2, y); y += 34; }
-    if(body){ ctx.font='16px sans-serif'; wrapText(body, W/2, y+8, W-110, 22); }
-  }
-
-  ctx.fillStyle='#ffb703';
-  roundRect(ctx, W/2-115, H-70, 230, 40, 20); ctx.fill();
-  ctx.strokeStyle='#fff'; ctx.lineWidth=2;
-  roundRect(ctx, W/2-115, H-70, 230, 40, 20); ctx.stroke();
-  ctx.fillStyle='#3a2a00'; ctx.font='bold 15px sans-serif'; ctx.textAlign='center';
-  ctx.fillText(dialogueCut<3 ? '다음 ▶' : '다음 스테이션으로 ▶', W/2, H-45);
-
-  if(dialogueFadeTimer>0){
-    ctx.fillStyle = 'rgba(0,0,0,'+(dialogueFadeTimer/30)+')';
-    ctx.fillRect(0,0,W,H);
-  }
-  ctx.restore();
-}
-function wrapText(text, cx, startY, maxWidth, lineHeight){
-  const words = text.split(' ');
-  let line = '', y = startY;
-  const lines = [];
-  for(const w of words){
-    const test = line ? line+' '+w : w;
-    if(ctx.measureText(test).width > maxWidth && line){ lines.push(line); line = w; }
-    else line = test;
-  }
-  if(line) lines.push(line);
-  lines.forEach((l,i)=> ctx.fillText(l, cx, y + i*lineHeight));
-}
-function drawHello(){
-  let pose = 'hello_neutral';
-  if(hitTimer > 35) pose = 'hello_hit';
-  else if(healTimer > 0) pose = 'hello_happy';
-  else if(flapTimer > 0) pose = 'hello_flap_up';
-  else if(hello.vy > 3) pose = 'hello_flap_down';
-  const img = images[pose];
-  if(img && img.complete){
-    ctx.drawImage(img, HELLO_X - T.HELLO_SIZE/2, hello.y - T.HELLO_SIZE/2, T.HELLO_SIZE, T.HELLO_SIZE);
-  }
-}
-function roundRect(ctx,x,y,w,h,r){
-  ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
-  ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath();
-}
-function drawUI(){
-  ctx.save();
-  const HEART_COUNT = 3, perHeart = 100/HEART_COUNT;
-  ctx.font = '26px sans-serif'; ctx.textBaseline = 'alphabetic';
-  for(let i=0;i<HEART_COUNT;i++){
-    const filled = energy > i*perHeart + 1;
-    ctx.fillStyle = filled ? '#ff4d6d' : 'rgba(255,255,255,0.3)';
-    ctx.fillText('♥', 16 + i*30, 38);
-  }
-  ctx.fillStyle='#fff'; ctx.font='12px sans-serif';
-  ctx.fillText('에너지', 16, 52);
-  ctx.textAlign='right'; ctx.font='15px sans-serif';
-  ctx.fillText(score+' m', W-16, 32);
-  ctx.textAlign='left';
-  ctx.restore();
-
-  if(paused){
-    ctx.save();
-    ctx.fillStyle='rgba(0,0,0,0.6)'; roundRect(ctx, W/2-58,50,116,26,13); ctx.fill();
-    ctx.fillStyle='#fff'; ctx.font='13px sans-serif'; ctx.textAlign='center';
-    ctx.fillText('⏸ 조정 중 (일시정지)', W/2, 67);
-    ctx.textAlign='left'; ctx.restore();
-  }
-  if(state==='start'){ drawStartScreen(); }
-  else if(state==='gameover'){ drawGameOverScreen(); }
-  else if(state==='ending'){ drawEndingScreen(); }
-  else if(state==='dialogue'){ drawDialogue(); }
-}
-function drawCover(img, w, h){
-  // draws img covering a w x h box, centered, cropping overflow (like CSS background-size:cover)
-  const scale = Math.max(w/img.naturalWidth, h/img.naturalHeight);
-  const dw = img.naturalWidth*scale, dh = img.naturalHeight*scale;
-  ctx.drawImage(img, (w-dw)/2, (h-dh)/2, dw, dh);
-}
-function drawFitWidth(img, w, h, bgColor){
-  // fits img to the full width, never cropping left/right — any leftover
-  // top/bottom space is filled with bgColor instead of cutting off the sides
-  ctx.fillStyle = bgColor || '#1a2a3a';
-  ctx.fillRect(0,0,w,h);
-  const scale = w/img.naturalWidth;
-  const dh = img.naturalHeight*scale;
-  ctx.drawImage(img, 0, (h-dh)/2, w, dh);
-}
-function drawStartScreen(){
-  ctx.save();
-  const img = images.start_screen;
-  if(img && img.complete) drawCover(img, W, H);
-  else { ctx.fillStyle='rgba(0,0,0,0.45)'; ctx.fillRect(0,0,W,H); }
-  const pulse = 0.7 + 0.3*Math.abs(Math.sin(Date.now()/350));
-  ctx.globalAlpha = pulse;
-  ctx.fillStyle='rgba(0,0,0,0.55)';
-  roundRect(ctx, W/2-140, H-90, 280, 46, 23); ctx.fill();
-  ctx.globalAlpha = 1;
-  ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.font='bold 18px sans-serif';
-  ctx.fillText('탭하거나 스페이스바를 눌러 시작', W/2, H-61);
-  ctx.restore();
-}
-function drawGameOverScreen(){
-  ctx.save();
-  ctx.fillStyle='rgba(0,0,0,0.55)'; ctx.fillRect(0,0,W,H);
-  const img = images.hello_happy;
-  if(img && img.complete){
-    const hs = 110;
-    ctx.drawImage(img, W/2-hs/2, H/2-170, hs, hs);
-  }
-  ctx.fillStyle='#fff'; ctx.textAlign='center';
-  ctx.font='bold 26px sans-serif';
-  ctx.fillText('오늘은 여기까지!', W/2, H/2-30);
-  ctx.font='bold 40px sans-serif';
-  ctx.fillStyle='#ffb703';
-  ctx.fillText('총 '+score+'m 비행했어요!', W/2, H/2+22);
-  ctx.font='16px sans-serif';
-  ctx.fillStyle='#fff';
-  ctx.fillText('다시 탭해서 재도전', W/2, H/2+56);
-  ctx.restore();
-}
-function drawEndingScreen(){
-  ctx.save();
-  ctx.fillStyle='rgba(0,0,0,0.6)'; ctx.fillRect(0,0,W,H);
-  const img = images.hello_happy;
-  if(img && img.complete){
-    const hs = 130;
-    ctx.drawImage(img, W/2-hs/2, H/2-200, hs, hs);
-  }
-  ctx.fillStyle='#ffb703'; ctx.textAlign='center';
-  ctx.font='bold 30px sans-serif';
-  ctx.fillText('대부도 완주!! 🎉', W/2, H/2-40);
-  ctx.font='bold 42px sans-serif';
-  ctx.fillStyle='#fff';
-  ctx.fillText('총 '+score+'m 비행했어요!', W/2, H/2+15);
-  ctx.font='16px sans-serif';
-  ctx.fillStyle='#fff';
-  ctx.fillText('탭해서 다시 도전', W/2, H/2+55);
-  ctx.restore();
-}
-
-function drawStationTransition(){
-  if(stationTransitionTimer<=0) return;
-  const elapsed = 90 - stationTransitionTimer; // 0->90
-  const bannerText = isEnding ? '대부도 완주!!' :
-    ((pendingStationIndex>=0 ? STATIONS[pendingStationIndex] : station).name + ' 도착!');
-  // fade to black covering the moment the station assets actually swap (elapsed 45),
-  // then fade back in on the new station — replaces the old bright white flash, which
-  // felt too "busy" layered on top of the background/obstacles still visibly scrolling
-  // underneath (everything felt like one continuous blur instead of a clean beat)
-  let fadeA;
-  if(elapsed<30){ fadeA = elapsed/30; }
-  else if(elapsed<60){ fadeA = 1; }
-  else { fadeA = Math.max(0, 1-(elapsed-60)/30); }
-  if(fadeA>0){
-    ctx.save();
-    ctx.fillStyle = 'rgba(8,12,18,'+fadeA+')';
-    ctx.fillRect(0,0,W,H);
-    ctx.restore();
-  }
-  // banner text, pop in then out around the swap — reads as a clean title card while
-  // the screen is black, then fades along with the rest as the new station reveals
-  let scale, alpha;
-  if(elapsed<20){ const p=elapsed/20; scale=1.8-p*0.8; alpha=p; }
-  else if(elapsed<70){ scale=1.0; alpha=1; }
-  else { const p=(elapsed-70)/20; scale=1.0+p*0.3; alpha=1-p; }
-  ctx.save();
-  ctx.globalAlpha = Math.max(0,alpha);
-  ctx.translate(W/2, H*0.4);
-  ctx.scale(scale,scale);
-  ctx.textAlign='center';
-  ctx.font='bold 40px sans-serif';
-  ctx.lineWidth=8; ctx.strokeStyle='#fff';
-  ctx.strokeText(bannerText, 0, 0);
-  ctx.fillStyle='#ffb703';
-  ctx.fillText(bannerText, 0, 0);
-  if(elapsed>=15){
-    ctx.font='bold 20px sans-serif';
-    ctx.fillStyle='#fff';
-    ctx.fillText('총 '+transitionScoreSnapshot+'m', 0, 42);
-  }
-  ctx.restore();
-}
-
-function draw(){
-  const bg = station.bg;
-  const localScroll = scrollX - stationScrollAnchor;
-  ctx.save();
-  if(shakeTimer>0){
-    const mag = 6 * (shakeTimer/18);
-    ctx.translate((Math.random()-0.5)*mag*2, (Math.random()-0.5)*mag*2);
-  }
-  ctx.fillStyle = '#a0d7fa'; ctx.fillRect(0,0,W,H);
-  const skyImg = images[station.key+'_sky'];
-  if(skyImg && skyImg.complete) ctx.drawImage(skyImg, 0, 0, W, H);
-  drawSea(bg, images[station.key+'_sea'], localScroll);
-  if(station.hasLandmark) drawLandmark(bg, images[station.key+'_landmark'], localScroll);
-  drawTiledBottom(images[station.key+'_mid'], bg.MID_H, bg.MID_SCROLL, bg.MID_OFFSET_Y, bg.MID_BLUR, GROUND_Y, localScroll);
-  drawObstacles();
-  drawCrows();
-  drawGate();
-  drawTiledBottom(images[station.key+'_ground'], bg.GROUND_H, bg.GROUND_SCROLL, bg.GROUND_OFFSET_Y, bg.GROUND_BLUR, GROUND_Y, localScroll);
-  drawHello();
-  if(flashTimer>0){
-    ctx.fillStyle = 'rgba(255,40,40,'+(0.35*(flashTimer/22))+')';
-    ctx.fillRect(-20,-20,W+40,H+40);
-  }
-  ctx.restore();
-
-  if(milestoneTimer>0){
-    ctx.save();
-    const elapsed = 60 - milestoneTimer;
-    let scale, alpha = 1;
-    if(elapsed < 8){ const p = elapsed/8; scale = 2.0 - p*0.85; }
-    else if(elapsed < 45){ const beat = Math.abs(Math.sin((elapsed-8)*0.4)); scale = 1.15 + beat*0.22; }
-    else { const p=(elapsed-45)/15; scale = 1.15+p*0.35; alpha = 1-p; }
-    ctx.globalAlpha = alpha;
-    ctx.translate(W/2, H*0.32); ctx.scale(scale,scale);
-    ctx.textAlign='center'; ctx.font='bold 72px sans-serif';
-    ctx.lineWidth=9; ctx.strokeStyle='#fff'; ctx.strokeText(milestoneText,0,0);
-    ctx.fillStyle='#ff2d3a'; ctx.fillText(milestoneText,0,0);
-    ctx.restore();
-  }
-
-  drawStationTransition();
-  drawUI();
-}
-
-let lastTs = null;
-function loop(ts){
-  let dt = 1;
-  if(lastTs !== null){
-    dt = (ts - lastTs) / (1000/60); // 1.0 == exactly one 60fps frame's worth of time
-    dt = Math.max(0, Math.min(dt, 3)); // clamp so a tab coming back from background doesn't jump wildly
-  }
-  lastTs = ts;
-  if(!paused) update(dt);
-  draw();
-  requestAnimationFrame(loop);
-}
-</script>
 </body>
 </html>
