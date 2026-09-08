@@ -153,6 +153,7 @@ const DEFAULTS = {
   HELLO_SIZE: 58, GRAVITY: 0.6, FLAP: -11,
   BGM_VOLUME: 0.12, SFX_VOLUME: 0.6,
   TEST_MODE: 1, TEST_TRANSITION_COUNT: 20,
+  GATE_TRIGGER_BUFFER: 2,
   GATE_W: 330, GATE_SPEED: 2.4, // was 0.7 — too slow made the gap after the last obstacle feel endless
 };
 let T;
@@ -172,6 +173,7 @@ const TUNE_META = [
   ['사운드','SFX_VOLUME','효과음 볼륨',0,1,0.01],
   ['테스트 / 운영','TEST_MODE','테스트 모드 (1=켜짐, 0=정식운영)',0,1,1],
   ['테스트 / 운영','TEST_TRANSITION_COUNT','테스트 모드 전환 통과개수',1,30,1],
+  ['테스트 / 운영','GATE_TRIGGER_BUFFER','게이트 등장 여유값(작을수록 늦게 등장, 테스트 땐 0~1 추천)',0,10,1],
   ['상점 게이트','GATE_W','상점 크기',60,400,5],
   ['상점 게이트','GATE_SPEED','상점 이동 속도(느릴수록 광고 노출↑)',0.1,6,0.1],
 ];
@@ -252,11 +254,14 @@ let gatePending = false; // true once the gate has been spawned for the current 
 function checkStationTransition(){
   const next = STATIONS[stationIndex+1];
   if(!next || gatePending) return;
-  // stop spawning new obstacles 2 obstacles before the actual threshold, so the
-  // approach to the shop is clear instead of overlapping the last couple of pillars
+  // stop spawning new obstacles GATE_TRIGGER_BUFFER obstacles before the actual threshold,
+  // so the approach to the gate is clear instead of overlapping the last couple of pillars.
+  // tunable now because a small buffer (fine at real counts like 20-25) becomes a huge
+  // fraction of a tiny test count like 5, making the gate feel like it pops up "too early"
+  const buf = T.GATE_TRIGGER_BUFFER;
   const reached = T.TEST_MODE
-    ? (score - stationStartScore) >= T.TEST_TRANSITION_COUNT - 2
-    : score >= next.startScore - 2;
+    ? (score - stationStartScore) >= T.TEST_TRANSITION_COUNT - buf
+    : score >= next.startScore - buf;
   if(reached){
     gatePending = true; // this alone halts new obstacle spawns (see the spawn loop)
   }
@@ -803,16 +808,22 @@ function drawStationTransition(){
   if(stationTransitionTimer<=0) return;
   const elapsed = 90 - stationTransitionTimer; // 0->90
   const nextName = (pendingStationIndex>=0 ? STATIONS[pendingStationIndex] : station).name;
-  // white/gold flash, strongest right at the swap point (elapsed ~45)
-  const dist = Math.abs(elapsed-45);
-  const flashA = Math.max(0, 1 - dist/45);
-  if(flashA>0){
+  // fade to black covering the moment the station assets actually swap (elapsed 45),
+  // then fade back in on the new station — replaces the old bright white flash, which
+  // felt too "busy" layered on top of the background/obstacles still visibly scrolling
+  // underneath (everything felt like one continuous blur instead of a clean beat)
+  let fadeA;
+  if(elapsed<30){ fadeA = elapsed/30; }
+  else if(elapsed<60){ fadeA = 1; }
+  else { fadeA = Math.max(0, 1-(elapsed-60)/30); }
+  if(fadeA>0){
     ctx.save();
-    ctx.fillStyle = 'rgba(255,250,220,'+(flashA*0.85)+')';
+    ctx.fillStyle = 'rgba(8,12,18,'+fadeA+')';
     ctx.fillRect(0,0,W,H);
     ctx.restore();
   }
-  // banner text, pop in then out around the swap
+  // banner text, pop in then out around the swap — reads as a clean title card while
+  // the screen is black, then fades along with the rest as the new station reveals
   let scale, alpha;
   if(elapsed<20){ const p=elapsed/20; scale=1.8-p*0.8; alpha=p; }
   else if(elapsed<70){ scale=1.0; alpha=1; }
