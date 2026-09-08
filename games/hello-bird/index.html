@@ -48,7 +48,7 @@
 <script>
 const ASSET_SRC = {"hello_neutral": "assets/hello_neutral.png", "hello_flap_up": "assets/hello_flap_up.png", "hello_flap_down": "assets/hello_flap_down.png", "hello_hit": "assets/hello_hit.png", "hello_happy": "assets/hello_happy.png", "cap_top": "assets/cap_top.png", "cap_bottom": "assets/cap_bottom.png", "start_screen": "assets/start_screen.png", "crow_wing_up": "assets/crow_wing_up.png", "crow_wing_down": "assets/crow_wing_down.png", "shop_corn_bread": "assets/shop_corn_bread.png", "shop_greet": "assets/shop_greet.png", "shop_gift": "assets/shop_gift.png", "shop_flyoff": "assets/shop_flyoff.png", "sihwa_sky": "assets/sihwa_sky.png", "sihwa_mid": "assets/sihwa_mid.png", "sihwa_ground": "assets/sihwa_ground.png", "sihwa_sea": "assets/sihwa_sea.png", "sihwa_landmark": "assets/sihwa_landmark.png", "sihwa_tile_char1": "assets/sihwa_tile_char1.png", "sihwa_tile_char2": "assets/sihwa_tile_char2.png", "bangamori_sky": "assets/bangamori_sky.png", "bangamori_mid": "assets/bangamori_mid.png", "bangamori_ground": "assets/bangamori_ground.png", "bangamori_sea": "assets/bangamori_sea.png", "bangamori_tile_grape": "assets/bangamori_tile_grape.png", "bangamori_tile_fish": "assets/bangamori_tile_fish.png", "theme_sky": "assets/theme_sky.png", "theme_mid": "assets/theme_mid.png", "theme_ground": "assets/theme_ground.png", "theme_sea": "assets/theme_sea.png", "theme_landmark": "assets/theme_landmark.png", "theme_tile_flower": "assets/theme_tile_flower.png", "theme_tile_reed": "assets/theme_tile_reed.png", "gubong_sky": "assets/gubong_sky.png", "gubong_mid": "assets/gubong_mid.png", "gubong_ground": "assets/gubong_ground.png", "gubong_sea": "assets/gubong_sea.png", "gubong_landmark": "assets/gubong_landmark.png", "gubong_tile_sea": "assets/gubong_tile_sea.png", "gubong_tile_shell": "assets/gubong_tile_shell.png", "tando_sky": "assets/tando_sky.png", "tando_mid": "assets/tando_mid.png", "tando_ground": "assets/tando_ground.png", "tando_sea": "assets/tando_sea.png", "tando_landmark": "assets/tando_landmark.png", "tando_tile_boat": "assets/tando_tile_boat.png", "tando_tile_star": "assets/tando_tile_star.png", "gate_sihwa": "assets/gate_sihwa.png", "gate_bangamori": "assets/gate_bangamori.png", "gate_theme": "assets/gate_theme.png", "gate_gubong": "assets/gate_gubong.png"};
 const AUDIO_SRC = {"bgm": "assets/bgm.mp3", "sfx_jump": "assets/sfx_jump.mp3", "sfx_hit": "assets/sfx_hit.mp3", "sfx_die": "assets/sfx_die.mp3", "milestone_1": "assets/milestone_1.mp3", "milestone_2": "assets/milestone_2.mp3", "milestone_3": "assets/milestone_3.mp3", "milestone_4": "assets/milestone_4.mp3", "milestone_5": "assets/milestone_5.mp3"};
-const STATIONS = [{"key": "sihwa", "name": "시화방조제", "startScore": 0, "themes": ["char1", "char2"], "hasLandmark": true, "bg": {"SEA_H": 345, "SEA_OFFSET_X": 255, "SEA_OFFSET_Y": -25, "SEA_SCROLL": 0.05, "SEA_BLUR": 1.5, "LANDMARK_H": 265, "LANDMARK_OFFSET_X": 0, "LANDMARK_OFFSET_Y": 70, "LANDMARK_SCROLL": 0.03, "LANDMARK_BLUR": 2, "LANDMARK_WORLD_X": 250, "MID_H": 170, "MID_OFFSET_Y": 55, "MID_SCROLL": 0.55, "MID_BLUR": 0.5, "GROUND_H": 60, "GROUND_OFFSET_Y": 0, "GROUND_SCROLL": 0.9, "GROUND_BLUR": 0, "PILLAR_W": 66, "CAP_W": 88}, "gap": {"GAP_H_MIN": 200, "GAP_H_MAX": 340, "GAP_MARGIN_TOP": 125, "GAP_MARGIN_BOTTOM": 50, "DIFFICULTY_RAMP": 15, "SPEED_RAMP_MAX": 0.15, "OBSTACLE_SPEED": 3.1, "BOB_AMP": 0, "SKEW_POWER": 0}}, {"key": "bangamori", "name": "방아머리", "startScore": 10, "themes": ["grape", "fish"], "hasLandmark": false, "bg": {"SEA_H": 345, "SEA_OFFSET_X": 0, "SEA_OFFSET_Y": -25, "SEA_SCROLL": 0.07, "SEA_BLUR": 1.5, "LANDMARK_H": 0, "LANDMARK_OFFSET_X": 0, "LANDMARK_OFFSET_Y": 0, "LANDMARK_SCROLL": 0, "LANDMARK_BLUR": 0, "LANDMARK_WORLD_X": 0, "MID_H": 170, "MID_OFFSET_Y": 55, "MID_SCROLL": 0.55, "MID_BLUR": 0.5, "GROUND_H": 60, "GROUND_OFFSET_Y": 0, "GROUND_SCROLL": 0.9, "GROUND_BLUR": 0, "PILLAR_W": 66, "CAP_W": 88}, "gap": {"GAP_H_MIN": 200, "GAP_H_MAX": 405, "GAP_MARGIN_TOP": 125, "GAP_MARGIN_BOTTOM": 50, "DIFFICULTY_RAMP": 15, "SPEED_RAMP_MAX": 0.15, "OBSTACLE_SPEED": 3.1, "BOB_AMP": 0, "SKEW_POWER": 0}}, {"key": "theme", "name": "바다향기테마파크", "startScore": 22, "themes": ["flower", "reed"], "hasLandmark": true, "bg": {"SEA_H": 345, "SEA_OFFSET_X": 255, "SEA_OFFSET_Y": -25, "SEA_SCROLL": 0.05, "SEA_BLUR": 1.5, "LANDMARK_H": 305, "LANDMARK_OFFSET_X": 0, "LANDMARK_OFFSET_Y": 80, "LANDMARK_SCROLL": 0.03, "LANDMARK_BLUR": 2, "LANDMARK_WORLD_X": 250, "MID_H": 170, "MID_OFFSET_Y": 55, "MID_SCROLL": 0.55, "MID_BLUR": 0.5, "GROUND_H": 60, "GROUND_OFFSET_Y": 0, "GROUND_SCROLL": 0.9, "GROUND_BLUR": 0, "PILLAR_W": 66, "CAP_W": 88}, "gap": {"GAP_H_MIN": 200, "GAP_H_MAX": 420, "GAP_MARGIN_TOP": 125, "GAP_MARGIN_BOTTOM": 50, "DIFFICULTY_RAMP": 25, "SPEED_RAMP_MAX": 0.08, "OBSTACLE_SPEED": 3.1, "BOB_AMP": 24, "SKEW_POWER": 1.0}}, {"key": "gubong", "name": "구봉도", "startScore": 42, "themes": ["sea", "shell"], "hasLandmark": true, "hasCrows": true, "bg": {"SEA_H": 345, "SEA_OFFSET_X": 255, "SEA_OFFSET_Y": -25, "SEA_SCROLL": 0.05, "SEA_BLUR": 1.5, "LANDMARK_H": 335, "LANDMARK_OFFSET_X": 0, "LANDMARK_OFFSET_Y": -5, "LANDMARK_SCROLL": 0.03, "LANDMARK_BLUR": 2, "LANDMARK_WORLD_X": 250, "MID_H": 170, "MID_OFFSET_Y": 55, "MID_SCROLL": 0.55, "MID_BLUR": 0.5, "GROUND_H": 60, "GROUND_OFFSET_Y": 0, "GROUND_SCROLL": 0.9, "GROUND_BLUR": 0, "PILLAR_W": 66, "CAP_W": 88}, "gap": {"GAP_H_MIN": 120, "GAP_H_MAX": 380, "GAP_MARGIN_TOP": 125, "GAP_MARGIN_BOTTOM": 50, "DIFFICULTY_RAMP": 15, "SPEED_RAMP_MAX": 0.15, "OBSTACLE_SPEED": 3.1, "BOB_AMP": 42, "SKEW_POWER": 1.3}}, {"key": "tando", "name": "탄도항", "startScore": 62, "themes": ["boat", "star"], "hasLandmark": true, "hasCrows": true, "bg": {"SEA_H": 345, "SEA_OFFSET_X": 255, "SEA_OFFSET_Y": -25, "SEA_SCROLL": 0.05, "SEA_BLUR": 1.5, "LANDMARK_H": 290, "LANDMARK_OFFSET_X": 0, "LANDMARK_OFFSET_Y": 60, "LANDMARK_SCROLL": 0.03, "LANDMARK_BLUR": 2, "LANDMARK_WORLD_X": 0, "MID_H": 170, "MID_OFFSET_Y": 55, "MID_SCROLL": 0.55, "MID_BLUR": 0.5, "GROUND_H": 60, "GROUND_OFFSET_Y": 0, "GROUND_SCROLL": 0.9, "GROUND_BLUR": 0, "PILLAR_W": 66, "CAP_W": 88}, "gap": {"GAP_H_MIN": 100, "GAP_H_MAX": 330, "GAP_MARGIN_TOP": 125, "GAP_MARGIN_BOTTOM": 50, "DIFFICULTY_RAMP": 12, "SPEED_RAMP_MAX": 0.2, "OBSTACLE_SPEED": 3.3, "BOB_AMP": 52, "SKEW_POWER": 1.6}, "endScore": 82}];
+const STATIONS = [{"key": "sihwa", "name": "시화방조제", "startScore": 0, "themes": ["char1", "char2"], "hasLandmark": true, "bg": {"SEA_H": 345, "SEA_OFFSET_X": 255, "SEA_OFFSET_Y": -25, "SEA_SCROLL": 0.05, "SEA_BLUR": 1.5, "LANDMARK_H": 265, "LANDMARK_OFFSET_X": 0, "LANDMARK_OFFSET_Y": 70, "LANDMARK_SCROLL": 0.03, "LANDMARK_BLUR": 2, "LANDMARK_WORLD_X": 250, "MID_H": 170, "MID_OFFSET_Y": 55, "MID_SCROLL": 0.55, "MID_BLUR": 0.5, "GROUND_H": 60, "GROUND_OFFSET_Y": 0, "GROUND_SCROLL": 0.9, "GROUND_BLUR": 0, "PILLAR_W": 66, "CAP_W": 88}, "gap": {"GAP_H_MIN": 200, "GAP_H_MAX": 340, "GAP_MARGIN_TOP": 125, "GAP_MARGIN_BOTTOM": 50, "DIFFICULTY_RAMP": 15, "SPEED_RAMP_MAX": 0.15, "OBSTACLE_SPEED": 3.1, "BOB_AMP": 0, "SKEW_POWER": 0}}, {"key": "bangamori", "name": "방아머리", "startScore": 12, "themes": ["grape", "fish"], "hasLandmark": false, "bg": {"SEA_H": 345, "SEA_OFFSET_X": 0, "SEA_OFFSET_Y": -25, "SEA_SCROLL": 0.07, "SEA_BLUR": 1.5, "LANDMARK_H": 0, "LANDMARK_OFFSET_X": 0, "LANDMARK_OFFSET_Y": 0, "LANDMARK_SCROLL": 0, "LANDMARK_BLUR": 0, "LANDMARK_WORLD_X": 0, "MID_H": 170, "MID_OFFSET_Y": 55, "MID_SCROLL": 0.55, "MID_BLUR": 0.5, "GROUND_H": 60, "GROUND_OFFSET_Y": 0, "GROUND_SCROLL": 0.9, "GROUND_BLUR": 0, "PILLAR_W": 66, "CAP_W": 88}, "gap": {"GAP_H_MIN": 200, "GAP_H_MAX": 405, "GAP_MARGIN_TOP": 125, "GAP_MARGIN_BOTTOM": 50, "DIFFICULTY_RAMP": 15, "SPEED_RAMP_MAX": 0.15, "OBSTACLE_SPEED": 3.1, "BOB_AMP": 0, "SKEW_POWER": 0}}, {"key": "theme", "name": "바다향기테마파크", "startScore": 24, "themes": ["flower", "reed"], "hasLandmark": true, "bg": {"SEA_H": 345, "SEA_OFFSET_X": 255, "SEA_OFFSET_Y": -25, "SEA_SCROLL": 0.05, "SEA_BLUR": 1.5, "LANDMARK_H": 305, "LANDMARK_OFFSET_X": 0, "LANDMARK_OFFSET_Y": 80, "LANDMARK_SCROLL": 0.03, "LANDMARK_BLUR": 2, "LANDMARK_WORLD_X": 250, "MID_H": 170, "MID_OFFSET_Y": 55, "MID_SCROLL": 0.55, "MID_BLUR": 0.5, "GROUND_H": 60, "GROUND_OFFSET_Y": 0, "GROUND_SCROLL": 0.9, "GROUND_BLUR": 0, "PILLAR_W": 66, "CAP_W": 88}, "gap": {"GAP_H_MIN": 200, "GAP_H_MAX": 420, "GAP_MARGIN_TOP": 125, "GAP_MARGIN_BOTTOM": 50, "DIFFICULTY_RAMP": 25, "SPEED_RAMP_MAX": 0.08, "OBSTACLE_SPEED": 3.1, "BOB_AMP": 24, "SKEW_POWER": 1.0}}, {"key": "gubong", "name": "구봉도", "startScore": 44, "themes": ["sea", "shell"], "hasLandmark": true, "hasCrows": true, "bg": {"SEA_H": 345, "SEA_OFFSET_X": 255, "SEA_OFFSET_Y": -25, "SEA_SCROLL": 0.05, "SEA_BLUR": 1.5, "LANDMARK_H": 335, "LANDMARK_OFFSET_X": 0, "LANDMARK_OFFSET_Y": -5, "LANDMARK_SCROLL": 0.03, "LANDMARK_BLUR": 2, "LANDMARK_WORLD_X": 250, "MID_H": 170, "MID_OFFSET_Y": 55, "MID_SCROLL": 0.55, "MID_BLUR": 0.5, "GROUND_H": 60, "GROUND_OFFSET_Y": 0, "GROUND_SCROLL": 0.9, "GROUND_BLUR": 0, "PILLAR_W": 66, "CAP_W": 88}, "gap": {"GAP_H_MIN": 155, "GAP_H_MAX": 380, "GAP_MARGIN_TOP": 125, "GAP_MARGIN_BOTTOM": 50, "DIFFICULTY_RAMP": 15, "SPEED_RAMP_MAX": 0.15, "OBSTACLE_SPEED": 3.1, "BOB_AMP": 42, "SKEW_POWER": 1.3}}, {"key": "tando", "name": "탄도항", "startScore": 64, "themes": ["boat", "star"], "hasLandmark": true, "hasCrows": true, "bg": {"SEA_H": 345, "SEA_OFFSET_X": 255, "SEA_OFFSET_Y": -25, "SEA_SCROLL": 0.05, "SEA_BLUR": 1.5, "LANDMARK_H": 290, "LANDMARK_OFFSET_X": 0, "LANDMARK_OFFSET_Y": 60, "LANDMARK_SCROLL": 0.03, "LANDMARK_BLUR": 2, "LANDMARK_WORLD_X": 0, "MID_H": 170, "MID_OFFSET_Y": 55, "MID_SCROLL": 0.55, "MID_BLUR": 0.5, "GROUND_H": 60, "GROUND_OFFSET_Y": 0, "GROUND_SCROLL": 0.9, "GROUND_BLUR": 0, "PILLAR_W": 66, "CAP_W": 88}, "gap": {"GAP_H_MIN": 140, "GAP_H_MAX": 330, "GAP_MARGIN_TOP": 125, "GAP_MARGIN_BOTTOM": 50, "DIFFICULTY_RAMP": 12, "SPEED_RAMP_MAX": 0.2, "OBSTACLE_SPEED": 3.3, "BOB_AMP": 52, "SKEW_POWER": 1.6}, "endScore": 84}];
 
 // shop data — NOT currently wired into the gate anymore (2026-09-08: ad-ization
 // deferred until there's real traffic; gates are now plain "NEXT STAGE" portals,
@@ -304,9 +304,12 @@ let milestoneText = '';
 let lastMilestone = 0;
 const MILESTONE_SFX = ['milestone_1','milestone_2','milestone_3','milestone_4','milestone_5'];
 let milestoneSfxIndex = 0;
-let nextObstacleX = 650;
+let nextObstacleX = 750;
 let crows = [];
 let nextCrowX = 900;
+let heartGiven = false; // whether a mercy heart has already been placed for the current
+                         // "down to 1 heart" stretch — re-arms once energy recovers above it
+let heartActive = false; // true while a spawned mercy heart is still out there waiting to be grabbed
 
 function resetGame(){
   hello = { y: H/2 - 100, vy: 0 };
@@ -321,9 +324,11 @@ function resetGame(){
   flashTimer = 0;
   milestoneTimer = 0;
   lastMilestone = 0;
-  nextObstacleX = 650;
+  nextObstacleX = 750;
   crows = [];
   nextCrowX = 900;
+  heartGiven = false;
+  heartActive = false;
   stationIndex = 0;
   station = STATIONS[0];
   pendingStationIndex = -1;
@@ -439,6 +444,7 @@ function update(dt){
   }
   if(stationTransitionTimer>0){
     const wasAbove45 = stationTransitionTimer > 45;
+    const wasAboveZero = stationTransitionTimer > 0;
     stationTransitionTimer = Math.max(0, stationTransitionTimer - dt);
     if(wasAbove45 && stationTransitionTimer<=45){
       if(pendingStationIndex>=0){
@@ -447,15 +453,18 @@ function update(dt){
         stationStartScore = score;
         stationScrollAnchor = scrollX;
         pendingStationIndex = -1;
-        // fresh runway measured from the new station's own scroll position, so the first
-        // obstacle the player meets is rolled at stationProgress()==0 (the safe, wide end
-        // of the new station's gap range) instead of inheriting the old station's difficulty
-        nextObstacleX = scrollX + 450;
       } else if(isEnding){
         // same "swap during the blackout" timing as a normal station change — by the time
         // the fade lifts, the ending screen is already the thing being revealed
         state = 'ending';
       }
+    }
+    if(wasAboveZero && stationTransitionTimer<=0 && pendingStationIndex<0 && !isEnding){
+      // set the runway at the exact instant obstacle spawning is allowed to resume again
+      // (the spawn loop is gated on stationTransitionTimer<=0) — setting it back at the
+      // swap point instead let ~45 more frames of scroll quietly eat into the buffer before
+      // spawning even started, which is why "right after the station starts" still felt tight
+      nextObstacleX = scrollX + 750;
     }
   }
   if(dialogueFadeTimer>0) dialogueFadeTimer = Math.max(0, dialogueFadeTimer - dt);
@@ -483,6 +492,18 @@ function update(dt){
 
   const hx = HELLO_X, hy = hello.y;
   const PW = station.bg.PILLAR_W;
+
+  // mercy heart: once the player drops to their last heart, drop a heart pickup right in
+  // the gap of the next obstacle ahead — grabbing it needs no extra risk since it's sitting
+  // exactly where the player already has to fly through. one per "critical" stretch; it
+  // re-arms once energy recovers back above 1 heart, so it can save them again later too
+  const oneHeartLeft = energy > 0 && energy <= 100/3 + 1;
+  if(!oneHeartLeft) heartGiven = false;
+  if(oneHeartLeft && !heartGiven && !heartActive){
+    const candidate = obstacles.find(o => !o.passed && (o.x - scrollX) > hx + 40);
+    if(candidate){ candidate.heart = true; heartActive = true; heartGiven = true; }
+  }
+
   for(const ob of obstacles){
     if(ob.bobAmp>0){
       let ny = ob.baseGapY + Math.sin(scrollX/70 + ob.bobSeed) * ob.bobAmp;
@@ -499,6 +520,15 @@ function update(dt){
         milestoneText = score + 'M!!';
         playSfx(MILESTONE_SFX[milestoneSfxIndex]);
         milestoneSfxIndex = (milestoneSfxIndex + 1) % MILESTONE_SFX.length;
+      }
+    }
+    if(ob.heart){
+      const heartCx = ox + PW/2, heartCy = ob.gapY + ob.gapH/2;
+      if(Math.abs(hx-heartCx) < 28 && Math.abs(hy-heartCy) < 28){
+        ob.heart = false;
+        heartActive = false;
+        energy = Math.min(100, energy + 34);
+        healTimer = 30;
       }
     }
     if(ox < hx + HITBOX && ox + PW > hx - HITBOX){
@@ -559,6 +589,7 @@ function update(dt){
     state = 'gameover';
   }
   obstacles = obstacles.filter(o=> o.x - scrollX > -260);
+  if(heartActive && !obstacles.some(o=>o.heart)) heartActive = false; // missed it — let a later obstacle carry the next one
 }
 
 // ---------- drawing helpers ----------
@@ -657,6 +688,20 @@ function drawObstacles(){
     const cx = ox + station.bg.PILLAR_W/2;
     drawTopPillar(cx, ob.gapY, ob.topTheme, ob.stKey);
     drawBottomPillar(cx, ob.gapY+ob.gapH, ob.botTheme, ob.stKey);
+    if(ob.heart){
+      const cy = ob.gapY + ob.gapH/2;
+      const pulse = 1 + 0.18*Math.sin(Date.now()/180);
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.scale(pulse, pulse);
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.font='bold 34px sans-serif';
+      ctx.lineWidth=3; ctx.strokeStyle='#fff';
+      ctx.strokeText('♥', 0, 0);
+      ctx.fillStyle='#ff4d6d';
+      ctx.fillText('♥', 0, 0);
+      ctx.restore();
+    }
   }
 }
 function drawCrows(){
