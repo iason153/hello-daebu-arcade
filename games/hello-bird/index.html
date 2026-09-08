@@ -48,7 +48,7 @@
 <script>
 const ASSET_SRC = {"hello_neutral": "assets/hello_neutral.png", "hello_flap_up": "assets/hello_flap_up.png", "hello_flap_down": "assets/hello_flap_down.png", "hello_hit": "assets/hello_hit.png", "hello_happy": "assets/hello_happy.png", "cap_top": "assets/cap_top.png", "cap_bottom": "assets/cap_bottom.png", "start_screen": "assets/start_screen.png", "crow_wing_up": "assets/crow_wing_up.png", "crow_wing_down": "assets/crow_wing_down.png", "shop_corn_bread": "assets/shop_corn_bread.png", "shop_greet": "assets/shop_greet.png", "shop_gift": "assets/shop_gift.png", "shop_flyoff": "assets/shop_flyoff.png", "sihwa_sky": "assets/sihwa_sky.png", "sihwa_mid": "assets/sihwa_mid.png", "sihwa_ground": "assets/sihwa_ground.png", "sihwa_sea": "assets/sihwa_sea.png", "sihwa_landmark": "assets/sihwa_landmark.png", "sihwa_tile_char1": "assets/sihwa_tile_char1.png", "sihwa_tile_char2": "assets/sihwa_tile_char2.png", "bangamori_sky": "assets/bangamori_sky.png", "bangamori_mid": "assets/bangamori_mid.png", "bangamori_ground": "assets/bangamori_ground.png", "bangamori_sea": "assets/bangamori_sea.png", "bangamori_tile_grape": "assets/bangamori_tile_grape.png", "bangamori_tile_fish": "assets/bangamori_tile_fish.png", "theme_sky": "assets/theme_sky.png", "theme_mid": "assets/theme_mid.png", "theme_ground": "assets/theme_ground.png", "theme_sea": "assets/theme_sea.png", "theme_landmark": "assets/theme_landmark.png", "theme_tile_flower": "assets/theme_tile_flower.png", "theme_tile_reed": "assets/theme_tile_reed.png", "gubong_sky": "assets/gubong_sky.png", "gubong_mid": "assets/gubong_mid.png", "gubong_ground": "assets/gubong_ground.png", "gubong_sea": "assets/gubong_sea.png", "gubong_landmark": "assets/gubong_landmark.png", "gubong_tile_sea": "assets/gubong_tile_sea.png", "gubong_tile_shell": "assets/gubong_tile_shell.png", "tando_sky": "assets/tando_sky.png", "tando_mid": "assets/tando_mid.png", "tando_ground": "assets/tando_ground.png", "tando_sea": "assets/tando_sea.png", "tando_landmark": "assets/tando_landmark.png", "tando_tile_boat": "assets/tando_tile_boat.png", "tando_tile_star": "assets/tando_tile_star.png", "gate_sihwa": "assets/gate_sihwa.png", "gate_bangamori": "assets/gate_bangamori.png", "gate_theme": "assets/gate_theme.png", "gate_gubong": "assets/gate_gubong.png"};
 const AUDIO_SRC = {"bgm": "assets/bgm.mp3", "sfx_jump": "assets/sfx_jump.mp3", "sfx_hit": "assets/sfx_hit.mp3", "sfx_die": "assets/sfx_die.mp3", "milestone_1": "assets/milestone_1.mp3", "milestone_2": "assets/milestone_2.mp3", "milestone_3": "assets/milestone_3.mp3", "milestone_4": "assets/milestone_4.mp3", "milestone_5": "assets/milestone_5.mp3"};
-const STATIONS = [{"key": "sihwa", "name": "시화방조제", "startScore": 0, "themes": ["char1", "char2"], "hasLandmark": true, "bg": {"SEA_H": 345, "SEA_OFFSET_X": 255, "SEA_OFFSET_Y": -25, "SEA_SCROLL": 0.05, "SEA_BLUR": 1.5, "LANDMARK_H": 265, "LANDMARK_OFFSET_X": 0, "LANDMARK_OFFSET_Y": 70, "LANDMARK_SCROLL": 0.03, "LANDMARK_BLUR": 2, "LANDMARK_WORLD_X": 250, "MID_H": 170, "MID_OFFSET_Y": 55, "MID_SCROLL": 0.55, "MID_BLUR": 0.5, "GROUND_H": 60, "GROUND_OFFSET_Y": 0, "GROUND_SCROLL": 0.9, "GROUND_BLUR": 0, "PILLAR_W": 66, "CAP_W": 88}, "gap": {"GAP_H_MIN": 200, "GAP_H_MAX": 340, "GAP_MARGIN_TOP": 125, "GAP_MARGIN_BOTTOM": 50, "DIFFICULTY_RAMP": 15, "SPEED_RAMP_MAX": 0.15, "OBSTACLE_SPEED": 3.1, "BOB_AMP": 0, "SKEW_POWER": 0}}, {"key": "bangamori", "name": "방아머리", "startScore": 20, "themes": ["grape", "fish"], "hasLandmark": false, "bg": {"SEA_H": 345, "SEA_OFFSET_X": 0, "SEA_OFFSET_Y": -25, "SEA_SCROLL": 0.07, "SEA_BLUR": 1.5, "LANDMARK_H": 0, "LANDMARK_OFFSET_X": 0, "LANDMARK_OFFSET_Y": 0, "LANDMARK_SCROLL": 0, "LANDMARK_BLUR": 0, "LANDMARK_WORLD_X": 0, "MID_H": 170, "MID_OFFSET_Y": 55, "MID_SCROLL": 0.55, "MID_BLUR": 0.5, "GROUND_H": 60, "GROUND_OFFSET_Y": 0, "GROUND_SCROLL": 0.9, "GROUND_BLUR": 0, "PILLAR_W": 66, "CAP_W": 88}, "gap": {"GAP_H_MIN": 200, "GAP_H_MAX": 405, "GAP_MARGIN_TOP": 125, "GAP_MARGIN_BOTTOM": 50, "DIFFICULTY_RAMP": 15, "SPEED_RAMP_MAX": 0.15, "OBSTACLE_SPEED": 3.1, "BOB_AMP": 0, "SKEW_POWER": 0}}, {"key": "theme", "name": "바다향기테마파크", "startScore": 45, "themes": ["flower", "reed"], "hasLandmark": true, "bg": {"SEA_H": 345, "SEA_OFFSET_X": 255, "SEA_OFFSET_Y": -25, "SEA_SCROLL": 0.05, "SEA_BLUR": 1.5, "LANDMARK_H": 305, "LANDMARK_OFFSET_X": 0, "LANDMARK_OFFSET_Y": 80, "LANDMARK_SCROLL": 0.03, "LANDMARK_BLUR": 2, "LANDMARK_WORLD_X": 250, "MID_H": 170, "MID_OFFSET_Y": 55, "MID_SCROLL": 0.55, "MID_BLUR": 0.5, "GROUND_H": 60, "GROUND_OFFSET_Y": 0, "GROUND_SCROLL": 0.9, "GROUND_BLUR": 0, "PILLAR_W": 66, "CAP_W": 88}, "gap": {"GAP_H_MIN": 200, "GAP_H_MAX": 420, "GAP_MARGIN_TOP": 125, "GAP_MARGIN_BOTTOM": 50, "DIFFICULTY_RAMP": 25, "SPEED_RAMP_MAX": 0.08, "OBSTACLE_SPEED": 3.1, "BOB_AMP": 24, "SKEW_POWER": 1.0}}, {"key": "gubong", "name": "구봉도", "startScore": 70, "themes": ["sea", "shell"], "hasLandmark": true, "hasCrows": true, "bg": {"SEA_H": 345, "SEA_OFFSET_X": 255, "SEA_OFFSET_Y": -25, "SEA_SCROLL": 0.05, "SEA_BLUR": 1.5, "LANDMARK_H": 335, "LANDMARK_OFFSET_X": 0, "LANDMARK_OFFSET_Y": -5, "LANDMARK_SCROLL": 0.03, "LANDMARK_BLUR": 2, "LANDMARK_WORLD_X": 250, "MID_H": 170, "MID_OFFSET_Y": 55, "MID_SCROLL": 0.55, "MID_BLUR": 0.5, "GROUND_H": 60, "GROUND_OFFSET_Y": 0, "GROUND_SCROLL": 0.9, "GROUND_BLUR": 0, "PILLAR_W": 66, "CAP_W": 88}, "gap": {"GAP_H_MIN": 120, "GAP_H_MAX": 380, "GAP_MARGIN_TOP": 125, "GAP_MARGIN_BOTTOM": 50, "DIFFICULTY_RAMP": 15, "SPEED_RAMP_MAX": 0.15, "OBSTACLE_SPEED": 3.1, "BOB_AMP": 42, "SKEW_POWER": 1.3}}, {"key": "tando", "name": "탄도항", "startScore": 100, "themes": ["boat", "star"], "hasLandmark": true, "hasCrows": true, "bg": {"SEA_H": 345, "SEA_OFFSET_X": 255, "SEA_OFFSET_Y": -25, "SEA_SCROLL": 0.05, "SEA_BLUR": 1.5, "LANDMARK_H": 290, "LANDMARK_OFFSET_X": 0, "LANDMARK_OFFSET_Y": 60, "LANDMARK_SCROLL": 0.03, "LANDMARK_BLUR": 2, "LANDMARK_WORLD_X": 0, "MID_H": 170, "MID_OFFSET_Y": 55, "MID_SCROLL": 0.55, "MID_BLUR": 0.5, "GROUND_H": 60, "GROUND_OFFSET_Y": 0, "GROUND_SCROLL": 0.9, "GROUND_BLUR": 0, "PILLAR_W": 66, "CAP_W": 88}, "gap": {"GAP_H_MIN": 100, "GAP_H_MAX": 330, "GAP_MARGIN_TOP": 125, "GAP_MARGIN_BOTTOM": 50, "DIFFICULTY_RAMP": 12, "SPEED_RAMP_MAX": 0.2, "OBSTACLE_SPEED": 3.3, "BOB_AMP": 52, "SKEW_POWER": 1.6}}];
+const STATIONS = [{"key": "sihwa", "name": "시화방조제", "startScore": 0, "themes": ["char1", "char2"], "hasLandmark": true, "bg": {"SEA_H": 345, "SEA_OFFSET_X": 255, "SEA_OFFSET_Y": -25, "SEA_SCROLL": 0.05, "SEA_BLUR": 1.5, "LANDMARK_H": 265, "LANDMARK_OFFSET_X": 0, "LANDMARK_OFFSET_Y": 70, "LANDMARK_SCROLL": 0.03, "LANDMARK_BLUR": 2, "LANDMARK_WORLD_X": 250, "MID_H": 170, "MID_OFFSET_Y": 55, "MID_SCROLL": 0.55, "MID_BLUR": 0.5, "GROUND_H": 60, "GROUND_OFFSET_Y": 0, "GROUND_SCROLL": 0.9, "GROUND_BLUR": 0, "PILLAR_W": 66, "CAP_W": 88}, "gap": {"GAP_H_MIN": 200, "GAP_H_MAX": 340, "GAP_MARGIN_TOP": 125, "GAP_MARGIN_BOTTOM": 50, "DIFFICULTY_RAMP": 15, "SPEED_RAMP_MAX": 0.15, "OBSTACLE_SPEED": 3.1, "BOB_AMP": 0, "SKEW_POWER": 0}}, {"key": "bangamori", "name": "방아머리", "startScore": 10, "themes": ["grape", "fish"], "hasLandmark": false, "bg": {"SEA_H": 345, "SEA_OFFSET_X": 0, "SEA_OFFSET_Y": -25, "SEA_SCROLL": 0.07, "SEA_BLUR": 1.5, "LANDMARK_H": 0, "LANDMARK_OFFSET_X": 0, "LANDMARK_OFFSET_Y": 0, "LANDMARK_SCROLL": 0, "LANDMARK_BLUR": 0, "LANDMARK_WORLD_X": 0, "MID_H": 170, "MID_OFFSET_Y": 55, "MID_SCROLL": 0.55, "MID_BLUR": 0.5, "GROUND_H": 60, "GROUND_OFFSET_Y": 0, "GROUND_SCROLL": 0.9, "GROUND_BLUR": 0, "PILLAR_W": 66, "CAP_W": 88}, "gap": {"GAP_H_MIN": 200, "GAP_H_MAX": 405, "GAP_MARGIN_TOP": 125, "GAP_MARGIN_BOTTOM": 50, "DIFFICULTY_RAMP": 15, "SPEED_RAMP_MAX": 0.15, "OBSTACLE_SPEED": 3.1, "BOB_AMP": 0, "SKEW_POWER": 0}}, {"key": "theme", "name": "바다향기테마파크", "startScore": 22, "themes": ["flower", "reed"], "hasLandmark": true, "bg": {"SEA_H": 345, "SEA_OFFSET_X": 255, "SEA_OFFSET_Y": -25, "SEA_SCROLL": 0.05, "SEA_BLUR": 1.5, "LANDMARK_H": 305, "LANDMARK_OFFSET_X": 0, "LANDMARK_OFFSET_Y": 80, "LANDMARK_SCROLL": 0.03, "LANDMARK_BLUR": 2, "LANDMARK_WORLD_X": 250, "MID_H": 170, "MID_OFFSET_Y": 55, "MID_SCROLL": 0.55, "MID_BLUR": 0.5, "GROUND_H": 60, "GROUND_OFFSET_Y": 0, "GROUND_SCROLL": 0.9, "GROUND_BLUR": 0, "PILLAR_W": 66, "CAP_W": 88}, "gap": {"GAP_H_MIN": 200, "GAP_H_MAX": 420, "GAP_MARGIN_TOP": 125, "GAP_MARGIN_BOTTOM": 50, "DIFFICULTY_RAMP": 25, "SPEED_RAMP_MAX": 0.08, "OBSTACLE_SPEED": 3.1, "BOB_AMP": 24, "SKEW_POWER": 1.0}}, {"key": "gubong", "name": "구봉도", "startScore": 42, "themes": ["sea", "shell"], "hasLandmark": true, "hasCrows": true, "bg": {"SEA_H": 345, "SEA_OFFSET_X": 255, "SEA_OFFSET_Y": -25, "SEA_SCROLL": 0.05, "SEA_BLUR": 1.5, "LANDMARK_H": 335, "LANDMARK_OFFSET_X": 0, "LANDMARK_OFFSET_Y": -5, "LANDMARK_SCROLL": 0.03, "LANDMARK_BLUR": 2, "LANDMARK_WORLD_X": 250, "MID_H": 170, "MID_OFFSET_Y": 55, "MID_SCROLL": 0.55, "MID_BLUR": 0.5, "GROUND_H": 60, "GROUND_OFFSET_Y": 0, "GROUND_SCROLL": 0.9, "GROUND_BLUR": 0, "PILLAR_W": 66, "CAP_W": 88}, "gap": {"GAP_H_MIN": 120, "GAP_H_MAX": 380, "GAP_MARGIN_TOP": 125, "GAP_MARGIN_BOTTOM": 50, "DIFFICULTY_RAMP": 15, "SPEED_RAMP_MAX": 0.15, "OBSTACLE_SPEED": 3.1, "BOB_AMP": 42, "SKEW_POWER": 1.3}}, {"key": "tando", "name": "탄도항", "startScore": 62, "themes": ["boat", "star"], "hasLandmark": true, "hasCrows": true, "bg": {"SEA_H": 345, "SEA_OFFSET_X": 255, "SEA_OFFSET_Y": -25, "SEA_SCROLL": 0.05, "SEA_BLUR": 1.5, "LANDMARK_H": 290, "LANDMARK_OFFSET_X": 0, "LANDMARK_OFFSET_Y": 60, "LANDMARK_SCROLL": 0.03, "LANDMARK_BLUR": 2, "LANDMARK_WORLD_X": 0, "MID_H": 170, "MID_OFFSET_Y": 55, "MID_SCROLL": 0.55, "MID_BLUR": 0.5, "GROUND_H": 60, "GROUND_OFFSET_Y": 0, "GROUND_SCROLL": 0.9, "GROUND_BLUR": 0, "PILLAR_W": 66, "CAP_W": 88}, "gap": {"GAP_H_MIN": 100, "GAP_H_MAX": 330, "GAP_MARGIN_TOP": 125, "GAP_MARGIN_BOTTOM": 50, "DIFFICULTY_RAMP": 12, "SPEED_RAMP_MAX": 0.2, "OBSTACLE_SPEED": 3.3, "BOB_AMP": 52, "SKEW_POWER": 1.6}, "endScore": 82}];
 
 // shop data — NOT currently wired into the gate anymore (2026-09-08: ad-ization
 // deferred until there's real traffic; gates are now plain "NEXT STAGE" portals,
@@ -152,9 +152,9 @@ const GROUND_Y = H;
 const DEFAULTS = {
   HELLO_SIZE: 58, GRAVITY: 0.6, FLAP: -11,
   BGM_VOLUME: 0.12, SFX_VOLUME: 0.6,
-  TEST_MODE: 1, TEST_TRANSITION_COUNT: 20,
-  GATE_TRIGGER_BUFFER: 2,
-  GATE_W: 330, GATE_SPEED: 2.4, // was 0.7 — too slow made the gap after the last obstacle feel endless
+  TEST_MODE: 0, TEST_TRANSITION_COUNT: 10,
+  GATE_TRIGGER_BUFFER: 0,
+  GATE_W: 230, GATE_SPEED: 1.5,
   INVINCIBLE: 0,
 };
 let T;
@@ -252,15 +252,32 @@ let gate = null; // the floating shop/target the player must fly into to advance
 let dialogueCut = 0; // which of the RPG-style cutscene panels is showing
 let dialogueFadeTimer = 0; // brief fade-from-black when entering the shop scene
 let gatePending = false; // true once the gate has been spawned for the current station, until hit
+let isEnding = false; // true once the player has crossed the final station's endScore — the
+                       // same fade/banner machinery plays, but lands on the ending screen
+                       // instead of swapping to a next station (there isn't one)
 
 function checkStationTransition(){
+  if(gatePending || stationTransitionTimer>0) return;
+  const buf = T.GATE_TRIGGER_BUFFER;
   const next = STATIONS[stationIndex+1];
-  if(!next || gatePending) return;
+  if(!next){
+    // last station (탄도항) — no gate to fly into, just cross the finish score and fade
+    if(!station.endScore) return;
+    const reached = T.TEST_MODE
+      ? (score - stationStartScore) >= T.TEST_TRANSITION_COUNT - buf
+      : score >= station.endScore - buf;
+    if(reached){
+      isEnding = true;
+      stationTransitionTimer = 90;
+      transitionScoreSnapshot = score;
+      duckBgm();
+    }
+    return;
+  }
   // stop spawning new obstacles GATE_TRIGGER_BUFFER obstacles before the actual threshold,
   // so the approach to the gate is clear instead of overlapping the last couple of pillars.
   // tunable now because a small buffer (fine at real counts like 20-25) becomes a huge
   // fraction of a tiny test count like 5, making the gate feel like it pops up "too early"
-  const buf = T.GATE_TRIGGER_BUFFER;
   const reached = T.TEST_MODE
     ? (score - stationStartScore) >= T.TEST_TRANSITION_COUNT - buf
     : score >= next.startScore - buf;
@@ -315,6 +332,7 @@ function resetGame(){
   stationScrollAnchor = 0;
   gate = null;
   gatePending = false;
+  isEnding = false;
   state = 'playing';
 }
 
@@ -360,7 +378,7 @@ function regenGaps(){
 
 function flap(){
   startBgmIfNeeded();
-  if(state==='start'||state==='gameover'){ resetGame(); return; }
+  if(state==='start'||state==='gameover'||state==='ending'){ resetGame(); return; }
   if(state==='dialogue'){
     dialogueCut++;
     if(dialogueCut > 3){
@@ -422,16 +440,22 @@ function update(dt){
   if(stationTransitionTimer>0){
     const wasAbove45 = stationTransitionTimer > 45;
     stationTransitionTimer = Math.max(0, stationTransitionTimer - dt);
-    if(wasAbove45 && stationTransitionTimer<=45 && pendingStationIndex>=0){
-      stationIndex = pendingStationIndex;
-      station = STATIONS[stationIndex];
-      stationStartScore = score;
-      stationScrollAnchor = scrollX;
-      pendingStationIndex = -1;
-      // fresh runway measured from the new station's own scroll position, so the first
-      // obstacle the player meets is rolled at stationProgress()==0 (the safe, wide end
-      // of the new station's gap range) instead of inheriting the old station's difficulty
-      nextObstacleX = scrollX + 450;
+    if(wasAbove45 && stationTransitionTimer<=45){
+      if(pendingStationIndex>=0){
+        stationIndex = pendingStationIndex;
+        station = STATIONS[stationIndex];
+        stationStartScore = score;
+        stationScrollAnchor = scrollX;
+        pendingStationIndex = -1;
+        // fresh runway measured from the new station's own scroll position, so the first
+        // obstacle the player meets is rolled at stationProgress()==0 (the safe, wide end
+        // of the new station's gap range) instead of inheriting the old station's difficulty
+        nextObstacleX = scrollX + 450;
+      } else if(isEnding){
+        // same "swap during the blackout" timing as a normal station change — by the time
+        // the fade lifts, the ending screen is already the thing being revealed
+        state = 'ending';
+      }
     }
   }
   if(dialogueFadeTimer>0) dialogueFadeTimer = Math.max(0, dialogueFadeTimer - dt);
@@ -762,6 +786,7 @@ function drawUI(){
   }
   if(state==='start'){ drawStartScreen(); }
   else if(state==='gameover'){ drawGameOverScreen(); }
+  else if(state==='ending'){ drawEndingScreen(); }
   else if(state==='dialogue'){ drawDialogue(); }
 }
 function drawCover(img, w, h){
@@ -812,11 +837,31 @@ function drawGameOverScreen(){
   ctx.fillText('다시 탭해서 재도전', W/2, H/2+56);
   ctx.restore();
 }
+function drawEndingScreen(){
+  ctx.save();
+  ctx.fillStyle='rgba(0,0,0,0.6)'; ctx.fillRect(0,0,W,H);
+  const img = images.hello_happy;
+  if(img && img.complete){
+    const hs = 130;
+    ctx.drawImage(img, W/2-hs/2, H/2-200, hs, hs);
+  }
+  ctx.fillStyle='#ffb703'; ctx.textAlign='center';
+  ctx.font='bold 30px sans-serif';
+  ctx.fillText('대부도 완주!! 🎉', W/2, H/2-40);
+  ctx.font='bold 42px sans-serif';
+  ctx.fillStyle='#fff';
+  ctx.fillText('총 '+score+'m 비행했어요!', W/2, H/2+15);
+  ctx.font='16px sans-serif';
+  ctx.fillStyle='#fff';
+  ctx.fillText('탭해서 다시 도전', W/2, H/2+55);
+  ctx.restore();
+}
 
 function drawStationTransition(){
   if(stationTransitionTimer<=0) return;
   const elapsed = 90 - stationTransitionTimer; // 0->90
-  const nextName = (pendingStationIndex>=0 ? STATIONS[pendingStationIndex] : station).name;
+  const bannerText = isEnding ? '대부도 완주!!' :
+    ((pendingStationIndex>=0 ? STATIONS[pendingStationIndex] : station).name + ' 도착!');
   // fade to black covering the moment the station assets actually swap (elapsed 45),
   // then fade back in on the new station — replaces the old bright white flash, which
   // felt too "busy" layered on top of the background/obstacles still visibly scrolling
@@ -844,9 +889,9 @@ function drawStationTransition(){
   ctx.textAlign='center';
   ctx.font='bold 40px sans-serif';
   ctx.lineWidth=8; ctx.strokeStyle='#fff';
-  ctx.strokeText(nextName+' 도착!', 0, 0);
+  ctx.strokeText(bannerText, 0, 0);
   ctx.fillStyle='#ffb703';
-  ctx.fillText(nextName+' 도착!', 0, 0);
+  ctx.fillText(bannerText, 0, 0);
   if(elapsed>=15){
     ctx.font='bold 20px sans-serif';
     ctx.fillStyle='#fff';
