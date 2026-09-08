@@ -174,8 +174,8 @@ const TUNE_META = [
   ['테스트 / 운영','TEST_MODE','테스트 모드 (1=켜짐, 0=정식운영)',0,1,1],
   ['테스트 / 운영','TEST_TRANSITION_COUNT','테스트 모드 전환 통과개수',1,30,1],
   ['테스트 / 운영','GATE_TRIGGER_BUFFER','게이트 등장 여유값(작을수록 늦게 등장, 테스트 땐 0~1 추천)',0,10,1],
-  ['상점 게이트','GATE_W','상점 크기',60,400,5],
-  ['상점 게이트','GATE_SPEED','상점 이동 속도(느릴수록 광고 노출↑)',0.1,6,0.1],
+  ['게이트','GATE_W','게이트 크기',60,400,5],
+  ['게이트','GATE_SPEED','게이트 이동 속도',0.1,6,0.1],
 ];
 function buildTunePanel(){
   const wrap = document.getElementById('tuneControls');
@@ -434,14 +434,16 @@ function update(dt){
   }
   if(dialogueFadeTimer>0) dialogueFadeTimer = Math.max(0, dialogueFadeTimer - dt);
   if(state!=='playing') return;
-  // order matters here: update position with the OLD velocity plus the exact half-step
-  // acceleration term first, THEN update velocity. This is the closed-form solution for
-  // constant acceleration over a timestep, so the fall/jump arc comes out identical no
-  // matter how big or small dt is (60Hz vs 90Hz vs 120Hz, or a device stuttering to 30fps)
-  // — the previous order (velocity first, then position) is a cruder approximation whose
-  // error grows with dt, so the arc could genuinely look/feel different device to device
-  hello.y += hello.vy * dt + 0.5 * T.GRAVITY * dt * dt;
-  hello.vy += T.GRAVITY * dt;
+  // freeze hello in place for the whole station-transition blackout — otherwise gravity
+  // keeps pulling it down while the screen is faded to black (can't see it, can't react),
+  // and it lands on the ground right as the new station reveals itself. this is the fix
+  // for that: no position/velocity change at all until the transition is fully over
+  if(stationTransitionTimer<=0){
+    hello.y += hello.vy * dt + 0.5 * T.GRAVITY * dt * dt;
+    hello.vy += T.GRAVITY * dt;
+  } else {
+    hello.vy = 0;
+  }
   if(flapTimer>0) flapTimer = Math.max(0, flapTimer - dt);
 
   scrollX += station.gap.OBSTACLE_SPEED * (1 + stationProgress()*station.gap.SPEED_RAMP_MAX) * dt;
