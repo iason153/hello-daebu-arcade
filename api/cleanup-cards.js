@@ -5,7 +5,9 @@
 
 import { list, del } from '@vercel/blob';
 
-export const config = { runtime: 'edge' };
+// @vercel/blob의 list/del은 내부적으로 Node.js 전용 모듈(stream 등)을 사용해서
+// Edge 런타임에서는 빌드/배포가 실패한다 — 그래서 여기서는 edge 지정을 빼고
+// 기본값인 Node.js 런타임으로 돌린다.
 
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 

@@ -13,7 +13,9 @@
 
 import { put } from '@vercel/blob';
 
-export const config = { runtime: 'edge' };
+// @vercel/blob은 내부적으로 Node.js 전용 모듈을 사용해서 Edge 런타임과 호환이
+// 안 된다(cleanup-cards.js에서와 같은 이유) — 그래서 여기도 edge 지정 없이
+// 기본값인 Node.js 런타임으로 돌린다.
 
 function base64ToUint8Array(base64) {
   // "data:image/png;base64,...." 형태로 오는 경우 헤더를 떼어낸다
