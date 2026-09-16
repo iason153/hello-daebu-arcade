@@ -14,34 +14,31 @@
 import { put } from '@vercel/blob';
 
 // @vercel/blob은 내부적으로 Node.js 전용 모듈을 사용해서 Edge 런타임과 호환이
-// 안 된다(cleanup-cards.js에서와 같은 이유) — 그래서 여기도 edge 지정 없이
-// 기본값인 Node.js 런타임으로 돌린다.
+// 안 된다. 웹 표준 Request/Response 방식으로 함수를 짜면 Vercel이 이걸 Edge
+// Function으로 잘못 판단하는 경우가 있어서, score.js와 같은 전통적인
+// (req, res) 방식으로 작성해 Node.js 런타임임을 명확히 한다.
 
 function base64ToUint8Array(base64) {
-  // "data:image/png;base64,...." 형태로 오는 경우 헤더를 떼어낸다
   const commaIdx = base64.indexOf(',');
   const raw = commaIdx >= 0 ? base64.slice(commaIdx + 1) : base64;
-  const binary = atob(raw);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-  return bytes;
+  return Buffer.from(raw, 'base64');
 }
 
-export default async function handler(req) {
+export default async function handler(req, res) {
   if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'method not allowed' }), { status: 405 });
+    return res.status(405).json({ error: 'method not allowed' });
   }
 
   try {
-    const { imageBase64 } = await req.json();
+    const { imageBase64 } = req.body || {};
     if (!imageBase64 || typeof imageBase64 !== 'string') {
-      return new Response(JSON.stringify({ error: 'imageBase64 required' }), { status: 400 });
+      return res.status(400).json({ error: 'imageBase64 required' });
     }
 
     const bytes = base64ToUint8Array(imageBase64);
     // 5MB 넘는 이미지는 거부 — 공유 카드 용도라 이 정도면 충분히 여유 있음
     if (bytes.byteLength > 5 * 1024 * 1024) {
-      return new Response(JSON.stringify({ error: 'image too large' }), { status: 400 });
+      return res.status(400).json({ error: 'image too large' });
     }
 
     const filename = `kakao-cards/${Date.now()}_${Math.random().toString(36).slice(2, 8)}.png`;
@@ -51,11 +48,8 @@ export default async function handler(req) {
       addRandomSuffix: false,
     });
 
-    return new Response(JSON.stringify({ url: blob.url }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return res.status(200).json({ url: blob.url });
   } catch (e) {
-    return new Response(JSON.stringify({ error: 'upload failed' }), { status: 500 });
+    return res.status(500).json({ error: 'upload failed' });
   }
 }
