@@ -68,8 +68,10 @@ function calcSunset(lat, lon, dateKST) {
   const clamped = Math.min(1, Math.max(-1, cosH));
   const hourAngle = Math.acos(clamped) / rad; // 도 단위
 
-  // 일몰 = 720분(정오) + 4*(경도 - hourAngle) - eqTime, 분 단위(UTC)
-  const sunsetUTCMinutes = 720 + 4 * (lon - hourAngle) - eqTime;
+  // 일몰 = 720분(정오) + 4*(hourAngle - 경도) - eqTime, 분 단위(UTC)
+  // (경도가 동쪽으로 클수록 UTC 기준 정오/일몰 시각은 더 이른 시각이 됨 — 이전 버전은
+  //  이 항목의 부호가 반대로 들어가 있어서 일몰이 몇 시간씩 틀리게 나왔음)
+  const sunsetUTCMinutes = 720 + 4 * (hourAngle - lon) - eqTime;
   const sunsetUTC = new Date(Date.UTC(dateKST.getFullYear(), dateKST.getMonth(), dateKST.getDate(), 0, 0, 0) + sunsetUTCMinutes * 60000);
   return toKST(sunsetUTC);
 }
