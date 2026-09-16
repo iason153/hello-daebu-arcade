@@ -6,12 +6,14 @@
 //   - meters(또는 게임별 점수)가 상식적인 범위를 벗어나면 거부
 //   - 닉네임/연락처는 그대로 저장 (당첨자 연락용, 별도 인증 없음)
 //
-// 필요한 환경변수 (Vercel 프로젝트에 Vercel KV를 연결하면 자동으로 채워짐):
+// 필요한 환경변수 (Vercel 프로젝트에 Upstash Redis를 연결하면 자동으로 채워짐):
 //   KV_REST_API_URL, KV_REST_API_TOKEN
-//   (Vercel 대시보드 > Storage > Create Database > KV 로 생성 후 프로젝트에 연결하면 끝)
 //
-// 저장 구조: Redis Sorted Set  "score:{game}"  { score: meters, member: JSON(entry) }
-//   member에 JSON 전체를 넣는 이유: 같은 점수를 여러 명이 낼 수 있어서 member는 유니크해야 함.
+// 저장 구조: Redis Sorted Set  "score:{game}"
+//   score = meters(순위 정렬용 숫자), member = 닉네임/연락처/기록이 다 담긴 JSON 문자열 그 자체.
+//   (처음엔 "sorted set에는 순위만, 상세정보는 별도 hash에" 이렇게 두 군데로 나눠서 저장했는데,
+//    조회할 때 두 자료구조를 다시 짜맞추는 과정에서 값이 안 붙는 문제가 있었다. member 안에
+//    필요한 정보를 통째로 넣으면 조회 시 매칭할 게 없어져서 이 문제 자체가 사라진다.)
 
 import { kv } from '@vercel/kv';
 
@@ -46,17 +48,16 @@ async function handleSubmit(req, res) {
       return res.status(400).json({ error: 'invalid score' });
     }
 
+    // id를 넣어두는 이유: 같은 닉네임/연락처/기록으로 정확히 똑같은 밀리초에 두 번 등록하는
+    // 극히 드문 경우에도 member 문자열이 겹치지 않도록(겹치면 sorted set에서 한 건으로 합쳐짐)
     const entry = {
+      id: `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
       nickname: nick,
       contact: cont,
       meters: score,
       submittedAt: new Date().toISOString(),
     };
-    // member는 유니크해야 하므로 임의 id를 붙인다 (같은 사람이 여러 번 등록해도 각각 별도 기록으로 남음 —
-    // 필요하면 여기서 "닉네임+연락처로 이전 기록보다 낮으면 무시" 같은 로직을 추가할 수 있음)
-    const memberId = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-    await kv.zadd(`score:${game}`, { score, member: memberId });
-    await kv.hset(`score:${game}:entries`, { [memberId]: JSON.stringify(entry) });
+    await kv.zadd(`score:${game}`, { score, member: JSON.stringify(entry) });
 
     return res.status(200).json({ ok: true });
   } catch (e) {
@@ -72,22 +73,24 @@ async function handleLeaderboard(req, res) {
       return res.status(400).json({ error: 'invalid game' });
     }
 
-    // 점수 높은 순 상위 N명의 memberId를 가져온다
-    const topMembers = await kv.zrange(`score:${game}`, 0, limit - 1, { rev: true, withScores: true });
-    // topMembers: [member1, score1, member2, score2, ...] 형태로 반환됨(@vercel/kv 버전에 따라 다를 수 있어 방어적으로 처리)
-    const memberIds = [];
-    for (let i = 0; i < topMembers.length; i += 2) memberIds.push(topMembers[i]);
+    // 점수 높은 순 상위 N개 member를 가져온다. 각 member 자체가 그 기록의 전체 정보(JSON)라
+    // 이후 별도로 다른 자료구조와 짜맞출 필요가 없다.
+    const topMembers = await kv.zrange(`score:${game}`, 0, limit - 1, { rev: true });
 
-    const entriesRaw = memberIds.length ? await kv.hmget(`score:${game}:entries`, ...memberIds) : [];
-    const leaderboard = memberIds.map((id, i) => {
-      const raw = entriesRaw[i];
-      const parsed = raw ? JSON.parse(typeof raw === 'string' ? raw : JSON.stringify(raw)) : {};
-      return {
-        rank: i + 1,
-        nickname: parsed.nickname,
-        meters: parsed.meters,
-        // 연락처(contact)는 관리자용 데이터라 공개 리더보드 응답에는 포함하지 않는다
-      };
+    const leaderboard = [];
+    topMembers.forEach((raw) => {
+      // @vercel/kv 클라이언트가 JSON처럼 보이는 값을 자동으로 파싱해서 돌려주는 경우와,
+      // 문자열 그대로 돌려주는 경우가 둘 다 있을 수 있어 방어적으로 처리한다.
+      // 예전 버전(디버깅 전) 코드로 등록된 낡은 기록이 섞여 있어도(member가 JSON이 아닌 경우)
+      // 그 한 건만 건너뛰고 나머지 리더보드는 정상적으로 보여준다.
+      try {
+        const entry = typeof raw === 'string' ? JSON.parse(raw) : raw;
+        if (entry && entry.nickname) {
+          leaderboard.push({ rank: leaderboard.length + 1, nickname: entry.nickname, meters: entry.meters });
+        }
+      } catch (e) {
+        // 낡은/손상된 기록은 조용히 건너뜀
+      }
     });
 
     return res.status(200).json({ game, leaderboard });
