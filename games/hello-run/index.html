@@ -22,14 +22,16 @@
 <body>
 <div id="wrap"><canvas id="c"></canvas></div>
 <div id="loading">불러오는 중...</div>
-<button id="retryBtn" style="display:none;position:fixed;left:50%;transform:translateX(-50%);bottom:35%;z-index:80;background:#2a2f45;color:#fff;font-weight:bold;font-size:15px;padding:12px 30px;border:2px solid #ffc857;border-radius:999px;">🔄 다시하기</button>
-<button id="shareBtn" style="display:none;position:fixed;left:50%;transform:translateX(-50%);bottom:25%;z-index:80;background:#ffc857;color:#2a1c00;font-weight:bold;font-size:15px;padding:12px 26px;border:none;border-radius:999px;box-shadow:0 6px 0 #c99425;">📤 기록 카드 공유하기</button>
-<div id="rankPanel" style="display:none;position:fixed;left:50%;transform:translateX(-50%);bottom:3%;z-index:80;width:260px;background:rgba(10,14,24,0.92);border-radius:14px;padding:14px;color:#fff;font-family:sans-serif;">
+<div id="gameoverPanel" style="display:none; position:fixed; left:50%; top:57%; transform:translateX(-50%); z-index:80; flex-direction:column; align-items:center; gap:10px; width:264px; max-height:40vh; overflow-y:auto;">
+<button id="retryBtn" style="width:100%;background:#2a2f45;color:#fff;font-weight:bold;font-size:15px;padding:12px 0;border:2px solid #ffc857;border-radius:999px;">🔄 다시하기</button>
+<button id="shareBtn" style="width:100%;background:#ffc857;color:#2a1c00;font-weight:bold;font-size:15px;padding:12px 0;border:none;border-radius:999px;box-shadow:0 6px 0 #c99425;">📤 기록 카드 공유하기</button>
+<div id="rankPanel" style="width:100%;background:rgba(10,14,24,0.92);border-radius:14px;padding:14px;color:#fff;font-family:sans-serif;">
   <div style="font-size:13px;margin-bottom:8px;color:#ffc857;font-weight:bold;">🏆 이벤트 랭킹 등록</div>
   <input id="rankNickname" placeholder="닉네임" maxlength="12" style="width:100%;box-sizing:border-box;padding:8px;border-radius:6px;border:none;margin-bottom:6px;font-size:13px;">
   <input id="rankContact" placeholder="카카오톡 ID (당첨 연락용)" maxlength="30" style="width:100%;box-sizing:border-box;padding:8px;border-radius:6px;border:none;margin-bottom:8px;font-size:13px;">
   <button id="rankSubmitBtn" style="width:100%;padding:9px;border:none;border-radius:6px;background:#ffc857;color:#2a1c00;font-weight:bold;font-size:13px;">기록 등록하기</button>
   <div id="rankMsg" style="font-size:11px;margin-top:6px;color:rgba(255,255,255,0.75);"></div>
+</div>
 </div>
 <button id="devBtn">⚙</button>
 <a id="rankLinkBtn" href="./ranking.html" style="position:fixed; top:8px; left:8px; z-index:70; width:34px; height:34px; border-radius:50%; background:rgba(0,0,0,0.4); color:#fff; display:flex; align-items:center; justify-content:center; font-size:16px; text-decoration:none;">🏆</a>
@@ -235,9 +237,7 @@ function resetGame(){
   state = 'playing';
   startRunSound();
   playStationBgm(station.key);
-  document.getElementById('shareBtn').style.display = 'none';
-  document.getElementById('retryBtn').style.display = 'none';
-  document.getElementById('rankPanel').style.display = 'none';
+  document.getElementById('gameoverPanel').style.display = 'none';
   const rm = document.getElementById('rankMsg'); if(rm) rm.textContent = '';
 }
 
@@ -436,9 +436,9 @@ function playNoise(duration, volume){
   src.connect(gain); gain.connect(audioCtx.destination);
   src.start();
 }
-function sfxLand(){ playNoise(0.07,0.16); }
-function sfxCrouch(){ playTone(280,140,0.09,'sawtooth',0.09); }
-function sfxHit(){ playTone(320,70,0.28,'square',0.22); playNoise(0.18,0.18); }
+function sfxLand(){ playNoise(0.09,0.32); }
+function sfxCrouch(){ playTone(300,150,0.11,'sawtooth',0.24); }
+function sfxHit(){ playTone(320,70,0.28,'square',0.28); playNoise(0.18,0.24); }
 
 // 마일스톤(10m마다) 효과음 — 5가지 중 매번 다른 걸 무작위로 재생(대표가 직접 보내준 파일)
 const MILESTONE_SFX_FILES = ['sfx_milestone_1.mp3','sfx_milestone_2.mp3','sfx_milestone_3.mp3','sfx_milestone_4.mp3','sfx_milestone_5.mp3'];
@@ -641,9 +641,7 @@ function gameOver(){
     bestToday = displayM;
     localStorage.setItem('hr_best_today', String(bestToday));
   }
-  document.getElementById('shareBtn').style.display = 'block';
-  document.getElementById('retryBtn').style.display = 'block';
-  document.getElementById('rankPanel').style.display = 'block';
+  document.getElementById('gameoverPanel').style.display = 'flex';
 }
 
 document.getElementById('retryBtn').addEventListener('click', (e)=>{
