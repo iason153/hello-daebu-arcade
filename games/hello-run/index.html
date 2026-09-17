@@ -22,9 +22,9 @@
 <body>
 <div id="wrap"><canvas id="c"></canvas></div>
 <div id="loading">불러오는 중...</div>
-<button id="retryBtn" style="display:none;position:fixed;left:50%;transform:translateX(-50%);bottom:5%;z-index:80;background:#2a2f45;color:#fff;font-weight:bold;font-size:15px;padding:12px 30px;border:2px solid #ffc857;border-radius:999px;">🔄 다시하기</button>
-<button id="shareBtn" style="display:none;position:fixed;left:50%;transform:translateX(-50%);bottom:14%;z-index:80;background:#ffc857;color:#2a1c00;font-weight:bold;font-size:15px;padding:12px 26px;border:none;border-radius:999px;box-shadow:0 6px 0 #c99425;">📤 기록 카드 공유하기</button>
-<div id="rankPanel" style="display:none;position:fixed;left:50%;transform:translateX(-50%);bottom:24%;z-index:80;width:260px;background:rgba(10,14,24,0.92);border-radius:14px;padding:14px;color:#fff;font-family:sans-serif;">
+<button id="retryBtn" style="display:none;position:fixed;left:50%;transform:translateX(-50%);bottom:35%;z-index:80;background:#2a2f45;color:#fff;font-weight:bold;font-size:15px;padding:12px 30px;border:2px solid #ffc857;border-radius:999px;">🔄 다시하기</button>
+<button id="shareBtn" style="display:none;position:fixed;left:50%;transform:translateX(-50%);bottom:25%;z-index:80;background:#ffc857;color:#2a1c00;font-weight:bold;font-size:15px;padding:12px 26px;border:none;border-radius:999px;box-shadow:0 6px 0 #c99425;">📤 기록 카드 공유하기</button>
+<div id="rankPanel" style="display:none;position:fixed;left:50%;transform:translateX(-50%);bottom:3%;z-index:80;width:260px;background:rgba(10,14,24,0.92);border-radius:14px;padding:14px;color:#fff;font-family:sans-serif;">
   <div style="font-size:13px;margin-bottom:8px;color:#ffc857;font-weight:bold;">🏆 이벤트 랭킹 등록</div>
   <input id="rankNickname" placeholder="닉네임" maxlength="12" style="width:100%;box-sizing:border-box;padding:8px;border-radius:6px;border:none;margin-bottom:6px;font-size:13px;">
   <input id="rankContact" placeholder="카카오톡 ID (당첨 연락용)" maxlength="30" style="width:100%;box-sizing:border-box;padding:8px;border-radius:6px;border:none;margin-bottom:8px;font-size:13px;">
@@ -32,6 +32,7 @@
   <div id="rankMsg" style="font-size:11px;margin-top:6px;color:rgba(255,255,255,0.75);"></div>
 </div>
 <button id="devBtn">⚙</button>
+<a id="rankLinkBtn" href="./ranking.html" style="position:fixed; top:8px; left:8px; z-index:70; width:34px; height:34px; border-radius:50%; background:rgba(0,0,0,0.4); color:#fff; display:flex; align-items:center; justify-content:center; font-size:16px; text-decoration:none;">🏆</a>
 <div id="devPanel"></div>
 <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js" crossorigin="anonymous"></script>
 <script>
@@ -345,6 +346,7 @@ try{ showCrouchHint = !localStorage.getItem('hr_seen_crouch'); }catch(e){}
 function startCrouch(){
   if(!grounded) return;
   crouching = true;
+  sfxCrouch();
   if(showCrouchHint){
     showCrouchHint = false;
     try{ localStorage.setItem('hr_seen_crouch','1'); }catch(e){}
@@ -399,11 +401,44 @@ canvas.addEventListener('pointerup', e=>{ e.preventDefault(); handleUp(e); });
 canvas.addEventListener('pointercancel', e=>{ handleUp(e); });
 
 // ---------- sound ----------
+let audioCtx = null;
 function ensureAudio(){
   // 모바일 브라우저의 자동재생 제한 때문에, 사용자가 화면을 처음 탭하는 시점에
-  // 배경음악을 한 번 시도해서 풀어준다(그 뒤로는 자유롭게 재생 가능해짐).
+  // 오디오를 풀어준다 — WebAudio(효과음)와 <audio>(배경음악/점프음) 둘 다 필요.
+  if(!audioCtx){
+    try{ audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){}
+  }
+  if(audioCtx && audioCtx.state==='suspended') audioCtx.resume();
   if(state==='start') playStationBgm(station.key);
 }
+function playTone(freqStart, freqEnd, duration, type, volume){
+  if(!audioCtx) return;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(freqStart, audioCtx.currentTime);
+  osc.frequency.exponentialRampToValueAtTime(Math.max(freqEnd,1), audioCtx.currentTime+duration);
+  gain.gain.setValueAtTime(volume, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime+duration);
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.start(); osc.stop(audioCtx.currentTime+duration);
+}
+function playNoise(duration, volume){
+  if(!audioCtx) return;
+  const bufferSize = Math.floor(audioCtx.sampleRate*duration);
+  const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for(let i=0;i<bufferSize;i++){ data[i] = (Math.random()*2-1) * (1 - i/bufferSize); }
+  const src = audioCtx.createBufferSource();
+  src.buffer = buffer;
+  const gain = audioCtx.createGain();
+  gain.gain.setValueAtTime(volume, audioCtx.currentTime);
+  src.connect(gain); gain.connect(audioCtx.destination);
+  src.start();
+}
+function sfxLand(){ playNoise(0.07,0.16); }
+function sfxCrouch(){ playTone(280,140,0.09,'sawtooth',0.09); }
+function sfxHit(){ playTone(320,70,0.28,'square',0.22); playNoise(0.18,0.18); }
 
 // 마일스톤(10m마다) 효과음 — 5가지 중 매번 다른 걸 무작위로 재생(대표가 직접 보내준 파일)
 const MILESTONE_SFX_FILES = ['sfx_milestone_1.mp3','sfx_milestone_2.mp3','sfx_milestone_3.mp3','sfx_milestone_4.mp3','sfx_milestone_5.mp3'];
@@ -424,7 +459,8 @@ function sfxMilestone(){
 const STATION_BGM_FILES = { sihwa:'bgm_sihwa.mp3', bangamori:'bgm_bangamori.mp3', theme:'bgm_theme.mp3', gubong:'bgm_gubong.mp3', tando:'bgm_tando.mp3' };
 const bgmPlayer = new Audio();
 bgmPlayer.loop = true;
-bgmPlayer.volume = 0.35; // 달리기 효과음보다 낮게 깔아서 "배경"음악답게
+bgmPlayer.volume = 0.16; // 달리기/점프/효과음보다 한참 낮게 — 배경에 은은히 깔리는 정도.
+                          // 처음엔 0.35로 뒀다가 실제 테스트에서 너무 크다는 피드백을 받고 낮춤.
 let bgmStationKey = null;
 function playStationBgm(stationKey){
   const file = STATION_BGM_FILES[stationKey];
@@ -526,6 +562,7 @@ function update(dt){
     if(hello.y >= GROUND_Y){
       hello.y = GROUND_Y; hello.vy = 0; grounded = true; jumpsUsed = 0;
       squashTimer = T.LAND_SQUASH_TIME;
+      sfxLand();
       startRunSound();
     }
   }
@@ -598,6 +635,7 @@ function update(dt){
 function gameOver(){
   if(state!=='playing') return;
   state = 'gameover';
+  sfxHit();
   stopRunSound();
   if(displayM > bestToday){
     bestToday = displayM;
@@ -1172,7 +1210,6 @@ function drawUI(){
     ctx.fillText(displayM+'m', W/2, H/2-10);
     ctx.font='16px sans-serif';
     ctx.fillText('오늘 최고 '+bestToday+'m', W/2, H/2+24);
-    ctx.fillText('탭해서 다시 도전', W/2, H/2+60);
     ctx.restore();
   }
 }
