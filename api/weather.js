@@ -49,8 +49,8 @@ function ptyToWeatherMode(pty) {
 }
 
 // NOAA 근사 공식 기반 일출/일몰 계산 (초 단위 정밀도는 필요 없어 단순화된 버전 사용)
-// 반환값: 그날의 일몰 시각(KST, Date 객체)
-function calcSunset(lat, lon, dateKST) {
+// 반환값: { sunrise, sunset } — 그날의 일출/일몰 시각(KST, Date 객체)
+function calcSunTimes(lat, lon, dateKST) {
   const rad = Math.PI / 180;
   const start = Date.UTC(dateKST.getFullYear(), 0, 1);
   const dayOfYear = Math.floor((Date.UTC(dateKST.getFullYear(), dateKST.getMonth(), dateKST.getDate()) - start) / 86400000) + 1;
@@ -63,23 +63,36 @@ function calcSunset(lat, lon, dateKST) {
     - 0.002697 * Math.cos(3 * gamma) + 0.00148 * Math.sin(3 * gamma); // 라디안
 
   const latRad = lat * rad;
-  const zenith = 90.833 * rad; // 대기굴절 보정 포함 표준 일몰 기준각
+  const zenith = 90.833 * rad; // 대기굴절 보정 포함 표준 일출/일몰 기준각
   const cosH = (Math.cos(zenith) - Math.sin(latRad) * Math.sin(decl)) / (Math.cos(latRad) * Math.cos(decl));
   const clamped = Math.min(1, Math.max(-1, cosH));
   const hourAngle = Math.acos(clamped) / rad; // 도 단위
 
-  // 일몰 = 720분(정오) + 4*(hourAngle - 경도) - eqTime, 분 단위(UTC)
-  // (경도가 동쪽으로 클수록 UTC 기준 정오/일몰 시각은 더 이른 시각이 됨 — 이전 버전은
-  //  이 항목의 부호가 반대로 들어가 있어서 일몰이 몇 시간씩 틀리게 나왔음)
-  const sunsetUTCMinutes = 720 + 4 * (hourAngle - lon) - eqTime;
-  const sunsetUTC = new Date(Date.UTC(dateKST.getFullYear(), dateKST.getMonth(), dateKST.getDate(), 0, 0, 0) + sunsetUTCMinutes * 60000);
-  return toKST(sunsetUTC);
+  // 태양이 해당 경도 자오선을 통과하는(정오) 시각 = 720분(UTC 자정 기준) - 4*경도 - eqTime.
+  // 일출 = 정오 - hourAngle*4분, 일몰 = 정오 + hourAngle*4분.
+  const solarNoonUTCMinutes = 720 - 4 * lon - eqTime;
+  const sunriseUTCMinutes = solarNoonUTCMinutes - 4 * hourAngle;
+  const sunsetUTCMinutes = solarNoonUTCMinutes + 4 * hourAngle;
+
+  const midnightUTC = Date.UTC(dateKST.getFullYear(), dateKST.getMonth(), dateKST.getDate(), 0, 0, 0);
+  return {
+    sunrise: toKST(new Date(midnightUTC + sunriseUTCMinutes * 60000)),
+    sunset: toKST(new Date(midnightUTC + sunsetUTCMinutes * 60000)),
+  };
 }
 
-function computeTimeOfDay(nowKST, sunsetKST) {
-  const sunsetMs = sunsetKST.getTime();
+// 일출/일몰 둘 다를 기준으로 낮/노을/밤을 판정한다.
+// (이전 버전은 일몰만 기준으로 삼아서, 자정~일출 사이의 새벽 시간대가 전부 "낮"으로
+//  잘못 나왔다 — 예를 들어 일출 직전 아침에 접속하면 "일몰까지 40분 이상 남았으니 낮"으로
+//  판정돼버리는 식. 일출 전후 40분도 노을과 같은 연출(주황빛 하늘)로 재사용해 새벽/노을을
+//  같은 값으로 표현한다.)
+function computeTimeOfDay(nowKST, sunriseKST, sunsetKST) {
   const nowMs = nowKST.getTime();
-  const duskWindowMs = 40 * 60000; // 일몰 전후 40분을 "노을"로 처리
+  const sunriseMs = sunriseKST.getTime();
+  const sunsetMs = sunsetKST.getTime();
+  const duskWindowMs = 40 * 60000; // 일출/일몰 전후 40분을 "노을"로 처리
+  if (nowMs < sunriseMs - duskWindowMs) return 'night';
+  if (nowMs < sunriseMs + duskWindowMs) return 'sunset';
   if (nowMs < sunsetMs - duskWindowMs) return 'day';
   if (nowMs < sunsetMs + duskWindowMs) return 'sunset';
   return 'night';
@@ -89,8 +102,8 @@ export default async function handler(req) {
   const KMA_KEY = process.env.KMA_SERVICE_KEY;
   const nowKST = toKST(new Date());
 
-  const sunset = calcSunset(DAEBU_LAT, DAEBU_LON, nowKST);
-  const timeOfDay = computeTimeOfDay(nowKST, sunset);
+  const { sunrise, sunset } = calcSunTimes(DAEBU_LAT, DAEBU_LON, nowKST);
+  const timeOfDay = computeTimeOfDay(nowKST, sunrise, sunset);
 
   let weatherMode = 'clear';
   let tempC = null;
@@ -127,6 +140,7 @@ export default async function handler(req) {
       weatherMode,
       timeOfDay,
       tempC,
+      sunrise: sunrise.toISOString(),
       sunset: sunset.toISOString(),
       updatedAt: nowKST.toISOString(),
     }),
@@ -134,8 +148,12 @@ export default async function handler(req) {
       status: 200,
       headers: {
         'Content-Type': 'application/json',
-        // CDN(Vercel Edge) 캐시 10분 — 기상청 API 호출 횟수를 줄인다
-        'Cache-Control': 's-maxage=600, stale-while-revalidate=120',
+        // s-maxage: CDN(Vercel Edge)은 10분간 캐시해서 기상청 API 호출 횟수를 줄인다.
+        // max-age=0 + must-revalidate: 브라우저 자체 캐시는 매번 새로 검사하게 강제한다 —
+        // 이게 없으면(이전 버전) 브라우저가 자체 판단으로 훨씬 오래 캐시해버릴 수 있어서,
+        // 전날 저녁에 요청한 응답이 다음날 아침까지 그대로 남아 노을/밤 배경이 뜨는 식의
+        // 버그가 있었다.
+        'Cache-Control': 'public, max-age=0, must-revalidate, s-maxage=600, stale-while-revalidate=120',
       },
     }
   );
