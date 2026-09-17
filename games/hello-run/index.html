@@ -22,6 +22,7 @@
 <body>
 <div id="wrap"><canvas id="c"></canvas></div>
 <div id="loading">불러오는 중...</div>
+<button id="retryBtn" style="display:none;position:fixed;left:50%;transform:translateX(-50%);bottom:5%;z-index:80;background:#2a2f45;color:#fff;font-weight:bold;font-size:15px;padding:12px 30px;border:2px solid #ffc857;border-radius:999px;">🔄 다시하기</button>
 <button id="shareBtn" style="display:none;position:fixed;left:50%;transform:translateX(-50%);bottom:14%;z-index:80;background:#ffc857;color:#2a1c00;font-weight:bold;font-size:15px;padding:12px 26px;border:none;border-radius:999px;box-shadow:0 6px 0 #c99425;">📤 기록 카드 공유하기</button>
 <div id="rankPanel" style="display:none;position:fixed;left:50%;transform:translateX(-50%);bottom:24%;z-index:80;width:260px;background:rgba(10,14,24,0.92);border-radius:14px;padding:14px;color:#fff;font-family:sans-serif;">
   <div style="font-size:13px;margin-bottom:8px;color:#ffc857;font-weight:bold;">🏆 이벤트 랭킹 등록</div>
@@ -232,7 +233,9 @@ function resetGame(){
   nextObstacleX = 700;
   state = 'playing';
   startRunSound();
+  playStationBgm(station.key);
   document.getElementById('shareBtn').style.display = 'none';
+  document.getElementById('retryBtn').style.display = 'none';
   document.getElementById('rankPanel').style.display = 'none';
   const rm = document.getElementById('rankMsg'); if(rm) rm.textContent = '';
 }
@@ -325,7 +328,6 @@ function tryJump(){
     // double jump stays instant/reactive — no windup, since it's a quick mid-air correction
     hello.vy = effJumpVel();
     jumpsUsed = 2;
-    sfxDoubleJump();
     stopRunSound();
     playJumpSound();
   }
@@ -335,7 +337,6 @@ function launchJump(){
   hello.vy = effJumpVel();
   grounded = false;
   jumpsUsed = 1;
-  sfxJump();
   stopRunSound();
   playJumpSound();
 }
@@ -344,7 +345,6 @@ try{ showCrouchHint = !localStorage.getItem('hr_seen_crouch'); }catch(e){}
 function startCrouch(){
   if(!grounded) return;
   crouching = true;
-  sfxCrouch();
   if(showCrouchHint){
     showCrouchHint = false;
     try{ localStorage.setItem('hr_seen_crouch','1'); }catch(e){}
@@ -368,7 +368,12 @@ let crouchByTouch = false;
 
 function handleDown(e){
   ensureAudio();
-  if(state!=='playing'){ resetGame(); return; }
+  // 화면 탭으로 시작하는 건 'start' 화면에서만 허용한다. 게임오버 화면에서는 탭으로
+  // 재시작하지 않는다 — 죽자마자 반사적으로 화면을 연타하다가 의도치 않게 바로
+  // 재시작되어 버리는 문제가 있었다. 게임오버 화면의 재시작은 아래 "다시하기"
+  // 버튼(#retryBtn)을 눌러야만 되도록 분리했다.
+  if(state==='start'){ resetGame(); return; }
+  if(state!=='playing') return;
   const p = canvasPosFromEvent(e);
   activeTouchId = e.pointerId;
   if(grounded && p.y > GROUND_Y - T.CROUCH_ZONE_MARGIN){
@@ -393,53 +398,42 @@ canvas.addEventListener('pointermove', e=>{ e.preventDefault(); handleMove(e); }
 canvas.addEventListener('pointerup', e=>{ e.preventDefault(); handleUp(e); });
 canvas.addEventListener('pointercancel', e=>{ handleUp(e); });
 
-// ---------- update ----------
-// ---------- sound (synthesized, no audio files needed) ----------
-let audioCtx = null;
+// ---------- sound ----------
 function ensureAudio(){
-  if(!audioCtx){
-    try{ audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){}
-  }
-  if(audioCtx && audioCtx.state==='suspended') audioCtx.resume();
+  // 모바일 브라우저의 자동재생 제한 때문에, 사용자가 화면을 처음 탭하는 시점에
+  // 배경음악을 한 번 시도해서 풀어준다(그 뒤로는 자유롭게 재생 가능해짐).
+  if(state==='start') playStationBgm(station.key);
 }
-function playTone(freqStart, freqEnd, duration, type, volume){
-  if(!audioCtx) return;
-  const osc = audioCtx.createOscillator();
-  const gain = audioCtx.createGain();
-  osc.type = type;
-  osc.frequency.setValueAtTime(freqStart, audioCtx.currentTime);
-  osc.frequency.exponentialRampToValueAtTime(Math.max(freqEnd,1), audioCtx.currentTime+duration);
-  gain.gain.setValueAtTime(volume, audioCtx.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime+duration);
-  osc.connect(gain); gain.connect(audioCtx.destination);
-  osc.start(); osc.stop(audioCtx.currentTime+duration);
-}
-function playNoise(duration, volume){
-  if(!audioCtx) return;
-  const bufferSize = Math.floor(audioCtx.sampleRate*duration);
-  const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-  const data = buffer.getChannelData(0);
-  for(let i=0;i<bufferSize;i++){ data[i] = (Math.random()*2-1) * (1 - i/bufferSize); }
-  const src = audioCtx.createBufferSource();
-  src.buffer = buffer;
-  const gain = audioCtx.createGain();
-  gain.gain.setValueAtTime(volume, audioCtx.currentTime);
-  src.connect(gain); gain.connect(audioCtx.destination);
-  src.start();
-}
-function sfxJump(){ playTone(420,720,0.13,'square',0.14); }
-function sfxDoubleJump(){ playTone(560,900,0.13,'square',0.14); }
-function sfxLand(){ playNoise(0.07,0.16); }
-function sfxCrouch(){ playTone(280,140,0.09,'sawtooth',0.09); }
-function sfxHit(){ playTone(320,70,0.28,'square',0.22); playNoise(0.18,0.18); }
-let milestoneSfxIndex = 0;
+
+// 마일스톤(10m마다) 효과음 — 5가지 중 매번 다른 걸 무작위로 재생(대표가 직접 보내준 파일)
+const MILESTONE_SFX_FILES = ['sfx_milestone_1.mp3','sfx_milestone_2.mp3','sfx_milestone_3.mp3','sfx_milestone_4.mp3','sfx_milestone_5.mp3'];
+const milestoneSfxPool = MILESTONE_SFX_FILES.map(f => new Audio('./assets/'+f));
+let lastMilestoneSfxIndex = -1;
 function sfxMilestone(){
-  // cycles through a few different pitches so every 5m doesn't sound identical —
-  // same trick Hello Bird uses with its milestone sfx rotation
-  const bases = [520, 600, 660, 740, 820];
-  const f = bases[milestoneSfxIndex % bases.length];
-  milestoneSfxIndex++;
-  playTone(f, f*1.6, 0.16, 'sine', 0.18);
+  // 같은 소리가 두 번 연속으로 안 나오게, 이전과 다른 인덱스만 뽑는다
+  let i;
+  do { i = Math.floor(Math.random()*milestoneSfxPool.length); } while(milestoneSfxPool.length>1 && i===lastMilestoneSfxIndex);
+  lastMilestoneSfxIndex = i;
+  const snd = milestoneSfxPool[i];
+  snd.currentTime = 0;
+  snd.play().catch(()=>{});
+}
+
+// 스테이션(장소)별 배경음악 — 파일이 커서(5~8MB) 5개를 한꺼번에 미리 안 불러오고,
+// 실제로 필요한 시점(게임 시작/스테이션 전환)에만 그 한 곡의 src를 지정해 스트리밍 재생한다.
+const STATION_BGM_FILES = { sihwa:'bgm_sihwa.mp3', bangamori:'bgm_bangamori.mp3', theme:'bgm_theme.mp3', gubong:'bgm_gubong.mp3', tando:'bgm_tando.mp3' };
+const bgmPlayer = new Audio();
+bgmPlayer.loop = true;
+bgmPlayer.volume = 0.35; // 달리기 효과음보다 낮게 깔아서 "배경"음악답게
+let bgmStationKey = null;
+function playStationBgm(stationKey){
+  const file = STATION_BGM_FILES[stationKey];
+  if(!file) return;
+  if(bgmStationKey === stationKey && !bgmPlayer.paused) return; // 이미 같은 곡 재생 중이면 안 건드림
+  bgmStationKey = stationKey;
+  bgmPlayer.src = './assets/' + file;
+  bgmPlayer.currentTime = 0;
+  bgmPlayer.play().catch(()=>{});
 }
 function announceWeather(){ weatherAnnounceTimer = 100; }
 
@@ -531,7 +525,7 @@ function update(dt){
     hello.vy += effGravity() * dt;
     if(hello.y >= GROUND_Y){
       hello.y = GROUND_Y; hello.vy = 0; grounded = true; jumpsUsed = 0;
-      squashTimer = T.LAND_SQUASH_TIME; sfxLand();
+      squashTimer = T.LAND_SQUASH_TIME;
       startRunSound();
     }
   }
@@ -604,15 +598,20 @@ function update(dt){
 function gameOver(){
   if(state!=='playing') return;
   state = 'gameover';
-  sfxHit();
   stopRunSound();
   if(displayM > bestToday){
     bestToday = displayM;
     localStorage.setItem('hr_best_today', String(bestToday));
   }
   document.getElementById('shareBtn').style.display = 'block';
+  document.getElementById('retryBtn').style.display = 'block';
   document.getElementById('rankPanel').style.display = 'block';
 }
+
+document.getElementById('retryBtn').addEventListener('click', (e)=>{
+  e.stopPropagation();
+  resetGame();
+});
 
 // ---------- ranking submission (헬로런+헬로버드 공용 서버리스 함수, game 파라미터로 구분) ----------
 (function initRankPanel(){
@@ -647,52 +646,125 @@ function gameOver(){
 })();
 
 // ---------- share card ----------
+function roundRectPath(ctx, x, y, w, h, r){
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.arcTo(x+w, y, x+w, y+h, r);
+  ctx.arcTo(x+w, y+h, x, y+h, r);
+  ctx.arcTo(x, y+h, x, y, r);
+  ctx.arcTo(x, y, x+w, y, r);
+  ctx.closePath();
+}
+
 function buildShareCard(){
   const cw = 640, ch = 800;
   const sc = document.createElement('canvas');
   sc.width = cw; sc.height = ch;
   const sctx = sc.getContext('2d');
 
-  // blurred, dimmed snapshot of the live game canvas as the backdrop
-  sctx.filter = 'blur(10px) brightness(0.55)';
+  // 카드 전체를 둥근 사각형으로 자르고, 그 안에서만 그린다
+  const cardR = 28;
+  roundRectPath(sctx, 0, 0, cw, ch, cardR);
+  sctx.save();
+  sctx.clip();
+
+  // 실제 플레이 화면을 흐리게/어둡게 깐 배경
+  sctx.filter = 'blur(14px) brightness(0.5) saturate(1.15)';
   sctx.drawImage(canvas, 0, 0, cw, ch);
   sctx.filter = 'none';
-  sctx.fillStyle = 'rgba(10,14,24,0.25)';
-  sctx.fillRect(0,0,cw,ch);
+
+  // 위/아래는 진하게, 가운데는 연하게 — 글자 가독성 + 하단은 브랜드 색感 있는 톤
+  const grad = sctx.createLinearGradient(0, 0, 0, ch);
+  grad.addColorStop(0, 'rgba(8,10,20,0.58)');
+  grad.addColorStop(0.42, 'rgba(8,10,20,0.22)');
+  grad.addColorStop(0.72, 'rgba(8,10,20,0.5)');
+  grad.addColorStop(1, 'rgba(24,16,4,0.85)');
+  sctx.fillStyle = grad;
+  sctx.fillRect(0, 0, cw, ch);
 
   sctx.textAlign = 'center';
-  sctx.fillStyle = '#ffc857';
-  sctx.font = 'bold 30px sans-serif';
-  sctx.fillText('헬로런', cw/2, 74);
 
-  sctx.font = 'bold 120px sans-serif';
-  sctx.lineWidth = 7; sctx.strokeStyle = 'rgba(0,0,0,0.5)';
+  // 상단 배지: "🏃 헬로런"
+  sctx.font = '600 22px sans-serif';
+  const badgeText = '🏃 헬로런';
+  const badgeW = sctx.measureText(badgeText).width + 44;
+  roundRectPath(sctx, cw/2-badgeW/2, 36, badgeW, 44, 22);
+  sctx.fillStyle = 'rgba(255,255,255,0.16)';
+  sctx.fill();
+  sctx.fillStyle = '#ffe9b8';
+  sctx.fillText(badgeText, cw/2, 65);
+
+  // 큰 기록 숫자 — 은은한 글로우 + 그라데이션
+  sctx.save();
+  sctx.shadowColor = 'rgba(255,200,87,0.65)';
+  sctx.shadowBlur = 32;
+  const numGrad = sctx.createLinearGradient(cw/2-160, 170, cw/2+160, 290);
+  numGrad.addColorStop(0, '#fff6dd');
+  numGrad.addColorStop(1, '#ffc857');
+  sctx.font = '800 126px sans-serif';
+  sctx.lineWidth = 6;
+  sctx.strokeStyle = 'rgba(0,0,0,0.45)';
   sctx.strokeText(displayM+'m', cw/2, 270);
-  sctx.fillStyle = '#fff';
+  sctx.fillStyle = numGrad;
   sctx.fillText(displayM+'m', cw/2, 270);
+  sctx.restore();
 
-  sctx.font = '24px sans-serif';
-  sctx.fillStyle = 'rgba(255,255,255,0.92)';
+  // 정보 칩: 장소 · 시간대 · 날씨 (오늘의 플레이 조건을 한눈에)
+  const wIcon = weatherMode==='rain' ? '🌧️' : (weatherMode==='snow' ? '❄️' : '☀️');
   const wLabel = weatherMode==='rain' ? '비' : (weatherMode==='snow' ? '눈' : '맑음');
+  const todIcon = timeOfDay==='night' ? '🌙' : (timeOfDay==='sunset' ? '🌇' : '🌤️');
   const todLabel = timeOfDay==='night' ? '밤' : (timeOfDay==='sunset' ? '노을' : '낮');
-  sctx.fillText('오늘의 '+station.name+' · '+todLabel+' · '+wLabel, cw/2, 316);
+  const chipText = '📍 '+station.name+'   '+todIcon+' '+todLabel+'   '+wIcon+' '+wLabel;
+  sctx.font = '500 20px sans-serif';
+  const chipW = Math.min(568, sctx.measureText(chipText).width + 48);
+  roundRectPath(sctx, cw/2-chipW/2, 306, chipW, 46, 23);
+  sctx.fillStyle = 'rgba(0,0,0,0.34)';
+  sctx.fill();
+  sctx.fillStyle = 'rgba(255,255,255,0.95)';
+  sctx.fillText(chipText, cw/2, 336);
 
+  // 캐릭터 — 뒤에 은은한 원형 글로우를 깔아 화면 위에 붕 뜬 느낌 방지
   const heloImg = images['hello_happy'] || images['hello_run_1'];
   if(heloImg && heloImg.complete){
-    const hw = 210, hh = hw*(heloImg.naturalHeight/heloImg.naturalWidth);
-    sctx.drawImage(heloImg, cw/2-hw/2, 360, hw, hh);
+    sctx.save();
+    const glowGrad = sctx.createRadialGradient(cw/2, 470, 10, cw/2, 470, 130);
+    glowGrad.addColorStop(0, 'rgba(255,200,87,0.35)');
+    glowGrad.addColorStop(1, 'rgba(255,200,87,0)');
+    sctx.fillStyle = glowGrad;
+    sctx.beginPath(); sctx.arc(cw/2, 470, 130, 0, Math.PI*2); sctx.fill();
+    sctx.restore();
+
+    const hw = 216, hh = hw*(heloImg.naturalHeight/heloImg.naturalWidth);
+    sctx.drawImage(heloImg, cw/2-hw/2, 380, hw, hh);
   }
 
-  sctx.font = 'bold 22px sans-serif';
-  sctx.fillStyle = 'rgba(255,255,255,0.9)';
-  sctx.fillText('오늘 최고 기록 '+bestToday+'m', cw/2, 640);
+  // 오늘 최고 기록 배지
+  sctx.font = '600 20px sans-serif';
+  const bestText = '🏆 오늘 최고 '+bestToday+'m';
+  const bestW = sctx.measureText(bestText).width + 36;
+  roundRectPath(sctx, cw/2-bestW/2, 628, bestW, 42, 21);
+  sctx.fillStyle = 'rgba(255,255,255,0.14)';
+  sctx.fill();
+  sctx.fillStyle = '#fff';
+  sctx.fillText(bestText, cw/2, 656);
 
+  // 하단 브랜드 바
+  sctx.fillStyle = 'rgba(0,0,0,0.3)';
+  sctx.fillRect(0, ch-92, cw, 92);
   sctx.fillStyle = '#ffc857';
-  sctx.font = 'bold 28px sans-serif';
-  sctx.fillText('daebugame.com', cw/2, ch-56);
-  sctx.fillStyle = 'rgba(255,255,255,0.75)';
-  sctx.font = '16px sans-serif';
-  sctx.fillText('대부도 곳곳을 달리는 미니게임, 헬로 대부도 오락실', cw/2, ch-26);
+  sctx.font = '800 30px sans-serif';
+  sctx.fillText('daebugame.com', cw/2, ch-50);
+  sctx.fillStyle = 'rgba(255,255,255,0.8)';
+  sctx.font = '15px sans-serif';
+  sctx.fillText('대부도 곳곳을 달리는 미니게임, 헬로 대부도 오락실', cw/2, ch-22);
+
+  sctx.restore(); // 클리핑 해제
+
+  // 카드 테두리 — 금색 프레임
+  roundRectPath(sctx, 2, 2, cw-4, ch-4, cardR);
+  sctx.lineWidth = 4;
+  sctx.strokeStyle = 'rgba(255,200,87,0.55)';
+  sctx.stroke();
 
   return sc;
 }
@@ -854,6 +926,7 @@ function setStation(i){
   stationIndex = ((i % STATIONS.length) + STATIONS.length) % STATIONS.length;
   station = STATIONS[stationIndex];
   BG = station.bg;
+  playStationBgm(station.key);
 }
 
 function drawGroundShadow(cx, width, liftFromGround){
@@ -1152,7 +1225,7 @@ async function applyLiveConditions(){
   try{
     const controller = new AbortController();
     const timer = setTimeout(()=>controller.abort(), 3000);
-    const res = await fetch('/api/weather?station=' + encodeURIComponent(station.key), {signal: controller.signal});
+    const res = await fetch('/api/weather?station=' + encodeURIComponent(station.key), {signal: controller.signal, cache: 'no-store'});
     clearTimeout(timer);
     if(res.ok){
       const data = await res.json();
