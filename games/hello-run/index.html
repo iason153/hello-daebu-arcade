@@ -692,6 +692,27 @@ function roundRectPath(ctx, x, y, w, h, r){
   ctx.closePath();
 }
 
+// 공유카드 배경 + 캐릭터 스티커(대표가 직접 그려서/생성해서 준 것들) — 카드를 만들 때만
+// 필요해서, 페이지 로딩을 막지 않게 백그라운드로 조용히 불러온다. 카드 생성 시점엔 이미
+// 다 불러와져 있을 만큼 시간이 지나있는 게 보통이라, 못 불러왔을 때만 아래에서 안전하게 폴백한다.
+const shareCardBg = new Image();
+shareCardBg.src = './assets/share-card-bg.jpg';
+const SHARE_CHAR_COUNT = 10;
+const shareCharImages = Array.from({length: SHARE_CHAR_COUNT}, (_, i) => {
+  const img = new Image();
+  img.src = './assets/share_char_' + (i+1) + '.png';
+  return img;
+});
+let lastShareCharIndex = -1;
+function pickRandomShareChar(){
+  const loaded = shareCharImages.filter(img => img.complete && img.naturalWidth>0);
+  if(loaded.length===0) return null;
+  let img;
+  do { img = loaded[Math.floor(Math.random()*loaded.length)]; } while(loaded.length>1 && img===shareCharImages[lastShareCharIndex]);
+  lastShareCharIndex = shareCharImages.indexOf(img);
+  return img;
+}
+
 function buildShareCard(){
   const cw = 640, ch = 800;
   const sc = document.createElement('canvas');
@@ -704,95 +725,72 @@ function buildShareCard(){
   sctx.save();
   sctx.clip();
 
-  // 실제 플레이 화면을 흐리게/어둡게 깐 배경
-  sctx.filter = 'blur(14px) brightness(0.5) saturate(1.15)';
-  sctx.drawImage(canvas, 0, 0, cw, ch);
-  sctx.filter = 'none';
-
-  // 위/아래는 진하게, 가운데는 연하게 — 글자 가독성 + 하단은 브랜드 색感 있는 톤
-  const grad = sctx.createLinearGradient(0, 0, 0, ch);
-  grad.addColorStop(0, 'rgba(8,10,20,0.58)');
-  grad.addColorStop(0.42, 'rgba(8,10,20,0.22)');
-  grad.addColorStop(0.72, 'rgba(8,10,20,0.5)');
-  grad.addColorStop(1, 'rgba(24,16,4,0.85)');
-  sctx.fillStyle = grad;
-  sctx.fillRect(0, 0, cw, ch);
+  // 대표가 만든 카드 배경(방조제·등대·관람차 일러스트) — 못 불러왔으면 기존 방식(게임 화면
+  // 블러)으로 조용히 폴백해서 카드 생성 자체는 항상 되게 한다
+  if(shareCardBg.complete && shareCardBg.naturalWidth>0){
+    sctx.drawImage(shareCardBg, 0, 0, cw, ch);
+  } else {
+    sctx.filter = 'blur(14px) brightness(0.5) saturate(1.15)';
+    sctx.drawImage(canvas, 0, 0, cw, ch);
+    sctx.filter = 'none';
+    sctx.fillStyle = 'rgba(8,10,20,0.4)';
+    sctx.fillRect(0, 0, cw, ch);
+  }
 
   sctx.textAlign = 'center';
 
-  // 상단 배지: "🏃 헬로런"
-  sctx.font = '600 22px sans-serif';
-  const badgeText = '🏃 헬로런';
-  const badgeW = sctx.measureText(badgeText).width + 44;
-  roundRectPath(sctx, cw/2-badgeW/2, 36, badgeW, 44, 22);
-  sctx.fillStyle = 'rgba(255,255,255,0.16)';
-  sctx.fill();
-  sctx.fillStyle = '#ffe9b8';
-  sctx.fillText(badgeText, cw/2, 65);
-
-  // 큰 기록 숫자 — 은은한 글로우 + 그라데이션
+  // 큰 기록 숫자 — 배경 그림의 하늘 영역(정보 알약 위)에 은은한 글로우 + 그라데이션으로
   sctx.save();
-  sctx.shadowColor = 'rgba(255,200,87,0.65)';
-  sctx.shadowBlur = 32;
-  const numGrad = sctx.createLinearGradient(cw/2-160, 170, cw/2+160, 290);
+  sctx.shadowColor = 'rgba(255,200,87,0.7)';
+  sctx.shadowBlur = 26;
+  const numGrad = sctx.createLinearGradient(cw/2-150, 130, cw/2+150, 250);
   numGrad.addColorStop(0, '#fff6dd');
   numGrad.addColorStop(1, '#ffc857');
-  sctx.font = '800 126px sans-serif';
+  sctx.font = '800 108px sans-serif';
   sctx.lineWidth = 6;
-  sctx.strokeStyle = 'rgba(0,0,0,0.45)';
-  sctx.strokeText(displayM+'m', cw/2, 270);
+  sctx.strokeStyle = 'rgba(60,30,0,0.45)';
+  sctx.strokeText(displayM+'m', cw/2, 245);
   sctx.fillStyle = numGrad;
-  sctx.fillText(displayM+'m', cw/2, 270);
+  sctx.fillText(displayM+'m', cw/2, 245);
   sctx.restore();
 
-  // 정보 칩: 장소 · 시간대 · 날씨 (오늘의 플레이 조건을 한눈에)
+  // 정보 텍스트: 장소 · 시간대 · 날씨 — 배경에 이미 그려진 알약 모양 위에 얹는다
   const wIcon = weatherMode==='rain' ? '🌧️' : (weatherMode==='snow' ? '❄️' : '☀️');
   const wLabel = weatherMode==='rain' ? '비' : (weatherMode==='snow' ? '눈' : '맑음');
   const todIcon = timeOfDay==='night' ? '🌙' : (timeOfDay==='sunset' ? '🌇' : '🌤️');
   const todLabel = timeOfDay==='night' ? '밤' : (timeOfDay==='sunset' ? '노을' : '낮');
   const chipText = '📍 '+station.name+'   '+todIcon+' '+todLabel+'   '+wIcon+' '+wLabel;
-  sctx.font = '500 20px sans-serif';
-  const chipW = Math.min(568, sctx.measureText(chipText).width + 48);
-  roundRectPath(sctx, cw/2-chipW/2, 306, chipW, 46, 23);
-  sctx.fillStyle = 'rgba(0,0,0,0.34)';
-  sctx.fill();
-  sctx.fillStyle = 'rgba(255,255,255,0.95)';
-  sctx.fillText(chipText, cw/2, 336);
+  sctx.font = '600 21px sans-serif';
+  sctx.fillStyle = '#3a2a12';
+  sctx.fillText(chipText, cw/2, 318);
 
-  // 캐릭터 — 뒤에 은은한 원형 글로우를 깔아 화면 위에 붕 뜬 느낌 방지
-  const heloImg = images['hello_happy'] || images['hello_run_1'];
-  if(heloImg && heloImg.complete){
-    sctx.save();
-    const glowGrad = sctx.createRadialGradient(cw/2, 470, 10, cw/2, 470, 130);
-    glowGrad.addColorStop(0, 'rgba(255,200,87,0.35)');
-    glowGrad.addColorStop(1, 'rgba(255,200,87,0)');
-    sctx.fillStyle = glowGrad;
-    sctx.beginPath(); sctx.arc(cw/2, 470, 130, 0, Math.PI*2); sctx.fill();
-    sctx.restore();
-
-    const hw = 216, hh = hw*(heloImg.naturalHeight/heloImg.naturalWidth);
-    sctx.drawImage(heloImg, cw/2-hw/2, 380, hw, hh);
+  // 캐릭터 — 배경의 동그란 노을 원 안에, 매번 다른 포즈(대표가 준 10종 중 랜덤)로
+  const charImg = pickRandomShareChar();
+  if(charImg){
+    const cs = 246;
+    sctx.drawImage(charImg, cw/2-cs/2, 511-cs/2, cs, cs);
   }
 
-  // 오늘 최고 기록 배지
-  sctx.font = '600 20px sans-serif';
-  const bestText = '🏆 오늘 최고 '+bestToday+'m';
-  const bestW = sctx.measureText(bestText).width + 36;
-  roundRectPath(sctx, cw/2-bestW/2, 628, bestW, 42, 21);
-  sctx.fillStyle = 'rgba(255,255,255,0.14)';
-  sctx.fill();
-  sctx.fillStyle = '#fff';
-  sctx.fillText(bestText, cw/2, 656);
+  // 오늘 최고 기록 — 하단 남색 바 안, CTA 버튼 위쪽 작은 줄
+  sctx.font = '600 17px sans-serif';
+  sctx.fillStyle = 'rgba(255,255,255,0.85)';
+  sctx.fillText('🏆 오늘 최고 '+bestToday+'m', cw/2, 722);
 
-  // 하단 브랜드 바
-  sctx.fillStyle = 'rgba(0,0,0,0.3)';
-  sctx.fillRect(0, ch-92, cw, 92);
+  // 하단 CTA — "링크"가 그냥 텍스트가 아니라 딱 눌러볼 만한 버튼처럼 보이도록
+  // 금색 알약 버튼 + 화살표로 강조
+  const ctaText = '👉  daebugame.com 놀러가기';
+  sctx.font = '800 25px sans-serif';
+  const ctaW = Math.min(cw-64, sctx.measureText(ctaText).width + 56);
+  roundRectPath(sctx, cw/2-ctaW/2, 745, ctaW, 50, 25);
+  sctx.save();
+  sctx.shadowColor = 'rgba(0,0,0,0.35)';
+  sctx.shadowBlur = 10;
+  sctx.shadowOffsetY = 3;
   sctx.fillStyle = '#ffc857';
-  sctx.font = '800 30px sans-serif';
-  sctx.fillText('daebugame.com', cw/2, ch-50);
-  sctx.fillStyle = 'rgba(255,255,255,0.8)';
-  sctx.font = '15px sans-serif';
-  sctx.fillText('대부도 곳곳을 달리는 미니게임, 헬로 대부도 오락실', cw/2, ch-22);
+  sctx.fill();
+  sctx.restore();
+  sctx.fillStyle = '#2a1c00';
+  sctx.fillText(ctaText, cw/2, 778);
 
   sctx.restore(); // 클리핑 해제
 
