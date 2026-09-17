@@ -22,16 +22,17 @@
 <body>
 <div id="wrap"><canvas id="c"></canvas></div>
 <div id="loading">불러오는 중...</div>
-<div id="gameoverPanel" style="display:none; position:fixed; left:50%; top:57%; transform:translateX(-50%); z-index:80; flex-direction:column; align-items:center; gap:10px; width:264px; max-height:40vh; overflow-y:auto;">
-<button id="retryBtn" style="width:100%;background:#2a2f45;color:#fff;font-weight:bold;font-size:15px;padding:12px 0;border:2px solid #ffc857;border-radius:999px;">🔄 다시하기</button>
-<button id="shareBtn" style="width:100%;background:#ffc857;color:#2a1c00;font-weight:bold;font-size:15px;padding:12px 0;border:none;border-radius:999px;box-shadow:0 6px 0 #c99425;">📤 기록 카드 공유하기</button>
-<div id="rankPanel" style="width:100%;background:rgba(10,14,24,0.92);border-radius:14px;padding:14px;color:#fff;font-family:sans-serif;">
-  <div style="font-size:13px;margin-bottom:8px;color:#ffc857;font-weight:bold;">🏆 이벤트 랭킹 등록</div>
-  <input id="rankNickname" placeholder="닉네임" maxlength="12" style="width:100%;box-sizing:border-box;padding:8px;border-radius:6px;border:none;margin-bottom:6px;font-size:13px;">
-  <input id="rankContact" placeholder="카카오톡 ID (당첨 연락용)" maxlength="30" style="width:100%;box-sizing:border-box;padding:8px;border-radius:6px;border:none;margin-bottom:8px;font-size:13px;">
-  <button id="rankSubmitBtn" style="width:100%;padding:9px;border:none;border-radius:6px;background:#ffc857;color:#2a1c00;font-weight:bold;font-size:13px;">기록 등록하기</button>
-  <div id="rankMsg" style="font-size:11px;margin-top:6px;color:rgba(255,255,255,0.75);"></div>
+<div id="gameoverPanel" style="display:none; position:fixed; left:50%; top:56%; transform:translateX(-50%); z-index:80; flex-direction:column; align-items:center; gap:7px; width:250px; max-height:44vh; overflow-y:auto;">
+<button id="retryBtn" style="width:100%;background:#2a2f45;color:#fff;font-weight:bold;font-size:13px;padding:9px 0;border:2px solid #ffc857;border-radius:999px;">🔄 다시하기</button>
+<button id="shareBtn" style="width:100%;background:#ffc857;color:#2a1c00;font-weight:bold;font-size:13px;padding:9px 0;border:none;border-radius:999px;box-shadow:0 4px 0 #c99425;">📤 기록 카드 공유하기</button>
+<div id="rankPanel" style="width:100%;background:rgba(10,14,24,0.92);border-radius:12px;padding:10px;color:#fff;font-family:sans-serif;">
+  <div style="font-size:11px;margin-bottom:5px;color:#ffc857;font-weight:bold;">🏆 이벤트 랭킹 등록</div>
+  <input id="rankNickname" placeholder="닉네임" maxlength="12" style="width:100%;box-sizing:border-box;padding:6px;border-radius:6px;border:none;margin-bottom:4px;font-size:12px;">
+  <input id="rankContact" placeholder="카카오톡 ID (당첨 연락용)" maxlength="30" style="width:100%;box-sizing:border-box;padding:6px;border-radius:6px;border:none;margin-bottom:5px;font-size:12px;">
+  <button id="rankSubmitBtn" style="width:100%;padding:7px;border:none;border-radius:6px;background:#ffc857;color:#2a1c00;font-weight:bold;font-size:12px;">기록 등록하기</button>
+  <div id="rankMsg" style="font-size:10px;margin-top:4px;color:rgba(255,255,255,0.75);"></div>
 </div>
+
 </div>
 <button id="devBtn">⚙</button>
 <a id="rankLinkBtn" href="./ranking.html" style="position:fixed; top:8px; left:8px; z-index:70; width:34px; height:34px; border-radius:50%; background:rgba(0,0,0,0.4); color:#fff; display:flex; align-items:center; justify-content:center; font-size:16px; text-decoration:none;">🏆</a>
@@ -739,18 +740,15 @@ function buildShareCard(){
 
   sctx.textAlign = 'center';
 
-  // 큰 기록 숫자 — 배경 그림의 하늘 영역(정보 알약 위)에 은은한 글로우 + 그라데이션으로
+  // 큰 기록 숫자 — 강렬한 빨간색 + 흰 테두리 + 글로우로 시선을 확 붙잡게
   sctx.save();
-  sctx.shadowColor = 'rgba(255,200,87,0.7)';
-  sctx.shadowBlur = 26;
-  const numGrad = sctx.createLinearGradient(cw/2-150, 130, cw/2+150, 250);
-  numGrad.addColorStop(0, '#fff6dd');
-  numGrad.addColorStop(1, '#ffc857');
-  sctx.font = '800 108px sans-serif';
-  sctx.lineWidth = 6;
-  sctx.strokeStyle = 'rgba(60,30,0,0.45)';
+  sctx.shadowColor = 'rgba(255,30,30,0.85)';
+  sctx.shadowBlur = 30;
+  sctx.font = '900 108px sans-serif';
+  sctx.lineWidth = 8;
+  sctx.strokeStyle = '#ffffff';
   sctx.strokeText(displayM+'m', cw/2, 245);
-  sctx.fillStyle = numGrad;
+  sctx.fillStyle = '#ff2020';
   sctx.fillText(displayM+'m', cw/2, 245);
   sctx.restore();
 
@@ -772,25 +770,29 @@ function buildShareCard(){
   }
 
   // 오늘 최고 기록 — 하단 남색 바 안, CTA 버튼 위쪽 작은 줄
-  sctx.font = '600 17px sans-serif';
+  sctx.font = '600 16px sans-serif';
   sctx.fillStyle = 'rgba(255,255,255,0.85)';
-  sctx.fillText('🏆 오늘 최고 '+bestToday+'m', cw/2, 722);
+  sctx.fillText('🏆 오늘 최고 '+bestToday+'m', cw/2, 714);
 
-  // 하단 CTA — "링크"가 그냥 텍스트가 아니라 딱 눌러볼 만한 버튼처럼 보이도록
-  // 금색 알약 버튼 + 화살표로 강조
+  // 하단 CTA — "링크"가 그냥 텍스트가 아니라 딱 눌러볼 만한 버튼처럼, 더 크고 확실하게
   const ctaText = '👉  daebugame.com 놀러가기';
-  sctx.font = '800 25px sans-serif';
-  const ctaW = Math.min(cw-64, sctx.measureText(ctaText).width + 56);
-  roundRectPath(sctx, cw/2-ctaW/2, 745, ctaW, 50, 25);
+  sctx.font = '800 26px sans-serif';
+  const ctaW = Math.min(cw-48, sctx.measureText(ctaText).width + 60);
+  const ctaY = 736, ctaH = 56;
   sctx.save();
-  sctx.shadowColor = 'rgba(0,0,0,0.35)';
-  sctx.shadowBlur = 10;
-  sctx.shadowOffsetY = 3;
+  // 바깥쪽에 은은한 흰 링을 한 겹 더 둘러서 배지처럼 확실히 도드라지게
+  roundRectPath(sctx, cw/2-ctaW/2-5, ctaY-5, ctaW+10, ctaH+10, (ctaH+10)/2);
+  sctx.fillStyle = 'rgba(255,255,255,0.35)';
+  sctx.fill();
+  roundRectPath(sctx, cw/2-ctaW/2, ctaY, ctaW, ctaH, ctaH/2);
+  sctx.shadowColor = 'rgba(0,0,0,0.4)';
+  sctx.shadowBlur = 14;
+  sctx.shadowOffsetY = 4;
   sctx.fillStyle = '#ffc857';
   sctx.fill();
   sctx.restore();
   sctx.fillStyle = '#2a1c00';
-  sctx.fillText(ctaText, cw/2, 778);
+  sctx.fillText(ctaText, cw/2, ctaY+ctaH/2+9);
 
   sctx.restore(); // 클리핑 해제
 
@@ -1201,9 +1203,18 @@ function drawUI(){
   } else if(state==='gameover'){
     ctx.save();
     ctx.fillStyle='rgba(0,0,0,0.5)'; ctx.fillRect(0,0,W,H);
-    ctx.fillStyle='#fff'; ctx.textAlign='center';
-    ctx.font='bold 30px sans-serif';
+    ctx.textAlign='center';
+    // 최종 기록은 강렬하게 — 빨간색 + 굵은 글씨 + 은은한 글로우로 눈에 확 띄게
+    ctx.save();
+    ctx.shadowColor='rgba(255,40,40,0.85)';
+    ctx.shadowBlur=22;
+    ctx.font='900 44px sans-serif';
+    ctx.lineWidth=5; ctx.strokeStyle='rgba(0,0,0,0.55)';
+    ctx.strokeText(displayM+'m', W/2, H/2-10);
+    ctx.fillStyle='#ff3b3b';
     ctx.fillText(displayM+'m', W/2, H/2-10);
+    ctx.restore();
+    ctx.fillStyle='#fff';
     ctx.font='16px sans-serif';
     ctx.fillText('오늘 최고 '+bestToday+'m', W/2, H/2+24);
     ctx.restore();
