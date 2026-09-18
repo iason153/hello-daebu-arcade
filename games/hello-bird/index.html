@@ -15,9 +15,10 @@
 <style>
   *{-webkit-tap-highlight-color: transparent; -webkit-touch-callout: none;
     -webkit-user-select: none; user-select: none;}
-  html,body{margin:0;padding:0;height:100%;background:#1a2a3a;overflow:hidden;
+  html{margin:0;padding:0;width:100%;height:100%;overflow:hidden;}
+  body{margin:0;padding:0;width:100%;height:100%;background:#1a2a3a;overflow:hidden;overscroll-behavior:none;position:fixed;inset:0;
     font-family:-apple-system,BlinkMacSystemFont,'Malgun Gothic',sans-serif;touch-action:manipulation;}
-  #wrap{width:100vw;height:100vh;display:flex;align-items:center;justify-content:center;}
+  #wrap{width:100%;height:100%;display:flex;align-items:center;justify-content:center;overflow:hidden;}
   #game{background:#bfe4ff;
     box-shadow:0 0 30px rgba(0,0,0,0.4); cursor:pointer; outline:none;}
   #loading{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
@@ -54,7 +55,7 @@
 </div>
 <div id="wrap"><canvas id="game" width="480" height="1038"></canvas></div>
 
-<a id="rankLinkBtn" href="./ranking.html" style="position:fixed; top:10px; left:10px; z-index:70; display:flex; align-items:center; gap:5px; padding:7px 14px 7px 10px; border-radius:999px; background:rgba(0,0,0,0.45); border:1.5px solid rgba(255,183,3,0.55); color:#ffe9b8; font-family:sans-serif; font-weight:bold; font-size:13px; text-decoration:none; white-space:nowrap;">🏆 랭킹 확인</a>
+<a id="rankLinkBtn" href="./ranking.html" style="position:fixed; top:56px; left:10px; z-index:70; display:flex; align-items:center; gap:5px; padding:7px 14px 7px 10px; border-radius:999px; background:rgba(0,0,0,0.45); border:1.5px solid rgba(255,183,3,0.55); color:#ffe9b8; font-family:sans-serif; font-weight:bold; font-size:13px; text-decoration:none; white-space:nowrap;">🏆 랭킹 확인</a>
 
 <div id="gameoverPanel" style="display:none; position:fixed; left:50%; top:56%; transform:translateX(-50%); z-index:80; flex-direction:column; align-items:center; gap:7px; width:250px; max-height:42vh; overflow-y:auto;">
 <button id="retryBtn" style="width:100%;background:#2a2f45;color:#fff;font-weight:bold;font-size:13px;padding:9px 0;border:2px solid #ffb703;border-radius:999px;">🔄 다시하기</button>
