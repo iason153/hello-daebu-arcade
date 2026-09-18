@@ -24,7 +24,7 @@
 <div id="loading">불러오는 중...</div>
 <div id="gameoverPanel" style="display:none; position:fixed; left:50%; top:56%; transform:translateX(-50%); z-index:80; flex-direction:column; align-items:center; gap:7px; width:250px; max-height:44vh; overflow-y:auto;">
 <button id="retryBtn" style="width:100%;background:#2a2f45;color:#fff;font-weight:bold;font-size:13px;padding:9px 0;border:2px solid #ffc857;border-radius:999px;">🔄 다시하기</button>
-<button id="shareBtn" style="width:100%;background:#ffc857;color:#2a1c00;font-weight:bold;font-size:13px;padding:9px 0;border:none;border-radius:999px;box-shadow:0 4px 0 #c99425;">📤 기록 카드 공유하기</button>
+<button id="shareBtn" style="width:100%;background:#ffc857;color:#2a1c00;font-weight:bold;font-size:13px;padding:9px 0;border:none;border-radius:999px;box-shadow:0 4px 0 #c99425;">📤 친구에게 자랑하기!</button>
 <div id="rankPanel" style="width:100%;background:rgba(10,14,24,0.92);border-radius:12px;padding:10px;color:#fff;font-family:sans-serif;">
   <div style="font-size:11px;margin-bottom:5px;color:#ffc857;font-weight:bold;">🏆 이벤트 랭킹 등록</div>
   <input id="rankNickname" placeholder="닉네임" maxlength="12" style="width:100%;box-sizing:border-box;padding:6px;border-radius:6px;border:none;margin-bottom:4px;font-size:12px;">
@@ -35,7 +35,7 @@
 
 </div>
 <button id="devBtn">⚙</button>
-<a id="rankLinkBtn" href="./ranking.html" style="position:fixed; top:8px; left:8px; z-index:70; width:34px; height:34px; border-radius:50%; background:rgba(0,0,0,0.4); color:#fff; display:flex; align-items:center; justify-content:center; font-size:16px; text-decoration:none;">🏆</a>
+<a id="rankLinkBtn" href="./ranking.html" style="position:fixed; top:10px; left:10px; z-index:70; display:flex; align-items:center; gap:5px; padding:7px 14px 7px 10px; border-radius:999px; background:rgba(0,0,0,0.45); border:1.5px solid rgba(255,200,87,0.55); color:#ffe9b8; font-family:sans-serif; font-weight:bold; font-size:13px; text-decoration:none; white-space:nowrap;">🏆 랭킹 확인</a>
 <div id="devPanel"></div>
 <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js" crossorigin="anonymous"></script>
 <script>
@@ -1077,12 +1077,24 @@ function drawUI(){
   // not a highlight overlay
   if(state==='playing' && showCrouchHint){
     ctx.save();
-    ctx.fillStyle = 'rgba(255,255,255,0.55)';
-    ctx.font = 'bold 13px sans-serif';
+    const bounce = Math.sin(performance.now()/260) * 6;
+    const hintY = GROUND_Y - T.CROUCH_ZONE_MARGIN - 50;
+    const hintText = '아래 바닥 터치 = 숙이기';
     ctx.textAlign = 'center';
-    ctx.strokeStyle = 'rgba(0,0,0,0.4)'; ctx.lineWidth = 3;
-    ctx.strokeText('▾ 바닥을 탭하면 숙여요', W/2, GROUND_Y - T.CROUCH_ZONE_MARGIN - 6);
-    ctx.fillText('▾ 바닥을 탭하면 숙여요', W/2, GROUND_Y - T.CROUCH_ZONE_MARGIN - 6);
+    ctx.font = '900 27px sans-serif';
+    const tw = ctx.measureText(hintText).width;
+    // 배경 알약을 깔아서 어떤 배경(밤하늘/낮하늘) 위에서도 확실히 도드라지게
+    roundRectPath(ctx, W/2-tw/2-24, hintY-36, tw+48, 48, 24);
+    ctx.fillStyle = 'rgba(255,200,87,0.94)';
+    ctx.fill();
+    ctx.fillStyle = '#2a1c00';
+    ctx.fillText(hintText, W/2, hintY-4);
+    // 아래쪽으로 통통 튀는 화살표 — 바닥 쪽으로 시선을 유도
+    ctx.font = '900 30px sans-serif';
+    ctx.fillStyle = 'rgba(255,200,87,0.95)';
+    ctx.strokeStyle = 'rgba(0,0,0,0.45)'; ctx.lineWidth = 3;
+    ctx.strokeText('▼', W/2, hintY+38+bounce);
+    ctx.fillText('▼', W/2, hintY+38+bounce);
     ctx.restore();
   }
   ctx.textAlign='left';
