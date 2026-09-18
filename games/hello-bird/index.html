@@ -56,7 +56,7 @@
 
 <a id="rankLinkBtn" href="./ranking.html" style="position:fixed; top:10px; left:10px; z-index:70; display:flex; align-items:center; gap:5px; padding:7px 14px 7px 10px; border-radius:999px; background:rgba(0,0,0,0.45); border:1.5px solid rgba(255,183,3,0.55); color:#ffe9b8; font-family:sans-serif; font-weight:bold; font-size:13px; text-decoration:none; white-space:nowrap;">🏆 랭킹 확인</a>
 
-<div id="gameoverPanel" style="display:none; position:fixed; left:50%; top:63%; transform:translateX(-50%); z-index:80; flex-direction:column; align-items:center; gap:7px; width:250px; max-height:34vh; overflow-y:auto;">
+<div id="gameoverPanel" style="display:none; position:fixed; left:50%; top:56%; transform:translateX(-50%); z-index:80; flex-direction:column; align-items:center; gap:7px; width:250px; max-height:42vh; overflow-y:auto;">
 <button id="retryBtn" style="width:100%;background:#2a2f45;color:#fff;font-weight:bold;font-size:13px;padding:9px 0;border:2px solid #ffb703;border-radius:999px;">🔄 다시하기</button>
 <button id="shareBtn" style="width:100%;background:#ffb703;color:#2a1c00;font-weight:bold;font-size:13px;padding:9px 0;border:none;border-radius:999px;box-shadow:0 4px 0 #c98d02;">📤 친구에게 자랑하기!</button>
 <div id="rankPanel" style="width:100%;background:rgba(10,14,24,0.92);border-radius:12px;padding:10px;color:#fff;font-family:sans-serif;">
@@ -66,7 +66,7 @@
   <button id="rankSubmitBtn" style="width:100%;padding:7px;border:none;border-radius:6px;background:#ffb703;color:#2a1c00;font-weight:bold;font-size:12px;">기록 등록하기</button>
   <div id="rankMsg" style="font-size:10px;margin-top:4px;color:rgba(255,255,255,0.75);"></div>
 </div>
-<a href="../../index.html" style="font-size:12px;color:rgba(255,255,255,0.7);text-decoration:underline;font-family:sans-serif;">🏠 오락실로 돌아가기</a>
+<a href="../../index.html" style="width:100%;box-sizing:border-box;text-align:center;background:rgba(255,255,255,0.1);color:#fff;font-weight:bold;font-size:12px;padding:8px 0;border:1.5px solid rgba(255,255,255,0.35);border-radius:999px;text-decoration:none;font-family:sans-serif;">🏠 오락실로 돌아가기</a>
 </div>
 
 <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.8.1/kakao.min.js" crossorigin="anonymous"></script>
@@ -919,45 +919,35 @@ function drawStartScreen(){
 function drawGameOverScreen(){
   ctx.save();
   ctx.fillStyle='rgba(0,0,0,0.55)'; ctx.fillRect(0,0,W,H);
-  const img = images.hello_happy;
-  if(img && img.complete){
-    const hs = 110;
-    ctx.drawImage(img, W/2-hs/2, H/2-170, hs, hs);
-  }
   ctx.fillStyle='#fff'; ctx.textAlign='center';
   ctx.font='bold 26px sans-serif';
-  ctx.fillText('오늘은 여기까지!', W/2, H/2-30);
+  ctx.fillText('오늘은 여기까지!', W/2, H/2-60);
   // 최종 기록은 강렬하게 — 빨간색 + 굵은 글씨 + 글로우(헬로런과 같은 스타일)
   ctx.save();
   ctx.shadowColor='rgba(255,40,40,0.85)'; ctx.shadowBlur=20;
   ctx.font='900 40px sans-serif';
   ctx.lineWidth=5; ctx.strokeStyle='rgba(0,0,0,0.55)';
-  ctx.strokeText('총 '+score+'m 비행했어요!', W/2, H/2+22);
+  ctx.strokeText('총 '+score+'m 비행했어요!', W/2, H/2-5);
   ctx.fillStyle='#ff3b3b';
-  ctx.fillText('총 '+score+'m 비행했어요!', W/2, H/2+22);
+  ctx.fillText('총 '+score+'m 비행했어요!', W/2, H/2-5);
   ctx.restore();
   ctx.font='16px sans-serif';
   ctx.fillStyle='#fff';
-  ctx.fillText('오늘 최고 '+bestToday+'m', W/2, H/2+56);
+  ctx.fillText('오늘 최고 '+bestToday+'m', W/2, H/2+30);
   ctx.restore();
 }
 function drawEndingScreen(){
   ctx.save();
   ctx.fillStyle='rgba(0,0,0,0.6)'; ctx.fillRect(0,0,W,H);
-  const img = images.hello_happy;
-  if(img && img.complete){
-    const hs = 130;
-    ctx.drawImage(img, W/2-hs/2, H/2-200, hs, hs);
-  }
   ctx.fillStyle='#ffb703'; ctx.textAlign='center';
   ctx.font='bold 30px sans-serif';
-  ctx.fillText('대부도 완주!! 🎉', W/2, H/2-40);
+  ctx.fillText('대부도 완주!! 🎉', W/2, H/2-70);
   ctx.font='bold 42px sans-serif';
   ctx.fillStyle='#fff';
-  ctx.fillText('총 '+score+'m 비행했어요!', W/2, H/2+15);
+  ctx.fillText('총 '+score+'m 비행했어요!', W/2, H/2-10);
   ctx.font='16px sans-serif';
   ctx.fillStyle='#fff';
-  ctx.fillText('오늘 최고 '+bestToday+'m', W/2, H/2+55);
+  ctx.fillText('오늘 최고 '+bestToday+'m', W/2, H/2+30);
   ctx.restore();
 }
 
