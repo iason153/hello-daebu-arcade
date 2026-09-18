@@ -6,7 +6,7 @@
 <title>헬로 대부도 오락실 랭킹</title>
 <style>
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
-  html,body{margin:0; padding:0; background:#0f1a30; color:#fff; font-family:-apple-system,BlinkMacSystemFont,"Malgun Gothic",sans-serif; min-height:100%;}
+  html,body{margin:0; padding:0; background:#0f1a30; color:#fff; font-family:-apple-system,BlinkMacSystemFont,"Malgun Gothic",sans-serif; min-height:100%; overflow-x:hidden;}
   body{
     background:
       radial-gradient(circle at 20% -10%, rgba(255,200,87,0.18), transparent 45%),
@@ -79,17 +79,23 @@
     <button class="btn ghost" id="refreshBtn">↻ 새로고침</button>
     <a class="btn primary" href="./index.html">🏃 게임하러 가기</a>
   </div>
-  <div style="text-align:center;margin-top:14px;">
-    <a href="../../index.html" style="font-size:13px;color:rgba(255,255,255,0.55);text-decoration:underline;">🏠 오락실로 돌아가기</a>
-  </div>
+  <a href="../../index.html" style="display:block;text-align:center;margin-top:10px;padding:12px 0;border-radius:999px;background:rgba(255,255,255,0.08);border:1.5px solid rgba(255,255,255,0.2);color:#fff;font-weight:700;font-size:13px;text-decoration:none;">🏠 오락실로 돌아가기</a>
 
-  <footer>기록은 실시간으로 반영돼요 · 상금은 소정의 커피 쿠폰이에요 ☕</footer>
+  <footer id="noticeFooter"></footer>
 </div>
 
 <script>
+// ===== 여기만 대표님이 직접 고치면 돼요 =====
+// 화면 맨 아래 안내 문구예요. 빈 칸('')으로 두면 아무것도 안 뜨고,
+// 뭔가 넣고 싶으면 따옴표 안에 문장만 바꿔서 GitHub에서 저장하면 바로 반영돼요.
+// 예: const NOTICE_TEXT = '기록은 실시간으로 반영돼요 · 상금은 소정의 커피 쿠폰이에요 ☕';
+const NOTICE_TEXT = '';
+// ============================================
+
 const RANK_ICONS = ['🥇','🥈','🥉'];
 let currentGame = 'hello_run';
 const listEl = document.getElementById('list');
+document.getElementById('noticeFooter').textContent = NOTICE_TEXT;
 
 function renderLoading(){
   listEl.innerHTML = '<div class="state-msg">불러오는 중...</div>';
