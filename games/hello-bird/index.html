@@ -56,7 +56,7 @@
 
 <a id="rankLinkBtn" href="./ranking.html" style="position:fixed; top:10px; left:10px; z-index:70; display:flex; align-items:center; gap:5px; padding:7px 14px 7px 10px; border-radius:999px; background:rgba(0,0,0,0.45); border:1.5px solid rgba(255,183,3,0.55); color:#ffe9b8; font-family:sans-serif; font-weight:bold; font-size:13px; text-decoration:none; white-space:nowrap;">🏆 랭킹 확인</a>
 
-<div id="gameoverPanel" style="display:none; position:fixed; left:50%; top:57%; transform:translateX(-50%); z-index:80; flex-direction:column; align-items:center; gap:7px; width:250px; max-height:40vh; overflow-y:auto;">
+<div id="gameoverPanel" style="display:none; position:fixed; left:50%; top:63%; transform:translateX(-50%); z-index:80; flex-direction:column; align-items:center; gap:7px; width:250px; max-height:34vh; overflow-y:auto;">
 <button id="retryBtn" style="width:100%;background:#2a2f45;color:#fff;font-weight:bold;font-size:13px;padding:9px 0;border:2px solid #ffb703;border-radius:999px;">🔄 다시하기</button>
 <button id="shareBtn" style="width:100%;background:#ffb703;color:#2a1c00;font-weight:bold;font-size:13px;padding:9px 0;border:none;border-radius:999px;box-shadow:0 4px 0 #c98d02;">📤 친구에게 자랑하기!</button>
 <div id="rankPanel" style="width:100%;background:rgba(10,14,24,0.92);border-radius:12px;padding:10px;color:#fff;font-family:sans-serif;">
@@ -66,6 +66,7 @@
   <button id="rankSubmitBtn" style="width:100%;padding:7px;border:none;border-radius:6px;background:#ffb703;color:#2a1c00;font-weight:bold;font-size:12px;">기록 등록하기</button>
   <div id="rankMsg" style="font-size:10px;margin-top:4px;color:rgba(255,255,255,0.75);"></div>
 </div>
+<a href="../../index.html" style="font-size:12px;color:rgba(255,255,255,0.7);text-decoration:underline;font-family:sans-serif;">🏠 오락실로 돌아가기</a>
 </div>
 
 <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.8.1/kakao.min.js" crossorigin="anonymous"></script>
@@ -74,7 +75,7 @@
 // daebugame.com 도메인으로 등록돼 있어서 별도 설정 없이 바로 쓸 수 있음.
 try{
   if(window.Kakao && !window.Kakao.isInitialized()){
-    window.Kakao.init('3994a3bda3b8146e709683fdb350c9cc');
+    window.Kakao.init('KAKAO_JAVASCRIPT_KEY_여기에_교체');
   }
 }catch(e){
   console.warn('[헬로버드] Kakao 초기화 실패:', e);
@@ -1071,8 +1072,14 @@ function blobToBase64(blob){
 }
 
 // 공유카드 배경(대표가 준 파이프 테마 그림) — 필요할 때만 쓰니까 페이지 로딩을 막지
-// 않게 조용히 백그라운드로 불러온다
+// 않게 조용히 백그라운드로 불러온다. shareCardBgReady로 "로딩 끝났다"는 신호를 만들어
+// shareCard()에서 잠깐 기다려준다 — 없으면 게임을 짧게 하고 바로 공유 눌렀을 때
+// 아직 다 안 불러와져서 옛날 방식(화면 블러)으로 조용히 폴백돼버릴 수 있음.
 const shareCardBg = new Image();
+const shareCardBgReady = new Promise((resolve)=>{
+  shareCardBg.onload = ()=>resolve(true);
+  shareCardBg.onerror = ()=>resolve(false);
+});
 shareCardBg.src = './assets/share-card-bg.jpg';
 
 function buildShareCard(){
@@ -1186,8 +1193,9 @@ function setShareBtnLoading(loading){
   }
 }
 
-function shareCard(){
+async function shareCard(){
   setShareBtnLoading(true);
+  await Promise.race([shareCardBgReady, new Promise(r=>setTimeout(r, 3000))]);
   const sc = buildShareCard();
   sc.toBlob(async (blob)=>{
     if(!blob){
