@@ -53,6 +53,34 @@
   <textarea id="tuneOut" readonly placeholder="여기 값이 표시돼요. 복사해서 저한테 보내주세요."></textarea>
 </div>
 <div id="wrap"><canvas id="game" width="480" height="1038"></canvas></div>
+
+<a id="rankLinkBtn" href="./ranking.html" style="position:fixed; top:10px; left:10px; z-index:70; display:flex; align-items:center; gap:5px; padding:7px 14px 7px 10px; border-radius:999px; background:rgba(0,0,0,0.45); border:1.5px solid rgba(255,183,3,0.55); color:#ffe9b8; font-family:sans-serif; font-weight:bold; font-size:13px; text-decoration:none; white-space:nowrap;">🏆 랭킹 확인</a>
+
+<div id="gameoverPanel" style="display:none; position:fixed; left:50%; top:57%; transform:translateX(-50%); z-index:80; flex-direction:column; align-items:center; gap:7px; width:250px; max-height:40vh; overflow-y:auto;">
+<button id="retryBtn" style="width:100%;background:#2a2f45;color:#fff;font-weight:bold;font-size:13px;padding:9px 0;border:2px solid #ffb703;border-radius:999px;">🔄 다시하기</button>
+<button id="shareBtn" style="width:100%;background:#ffb703;color:#2a1c00;font-weight:bold;font-size:13px;padding:9px 0;border:none;border-radius:999px;box-shadow:0 4px 0 #c98d02;">📤 친구에게 자랑하기!</button>
+<div id="rankPanel" style="width:100%;background:rgba(10,14,24,0.92);border-radius:12px;padding:10px;color:#fff;font-family:sans-serif;">
+  <div style="font-size:11px;margin-bottom:5px;color:#ffb703;font-weight:bold;">🏆 이벤트 랭킹 등록</div>
+  <input id="rankNickname" placeholder="닉네임" maxlength="12" style="width:100%;box-sizing:border-box;padding:6px;border-radius:6px;border:none;margin-bottom:4px;font-size:12px;">
+  <input id="rankContact" placeholder="카카오톡 ID (당첨 연락용)" maxlength="30" style="width:100%;box-sizing:border-box;padding:6px;border-radius:6px;border:none;margin-bottom:5px;font-size:12px;">
+  <button id="rankSubmitBtn" style="width:100%;padding:7px;border:none;border-radius:6px;background:#ffb703;color:#2a1c00;font-weight:bold;font-size:12px;">기록 등록하기</button>
+  <div id="rankMsg" style="font-size:10px;margin-top:4px;color:rgba(255,255,255,0.75);"></div>
+</div>
+</div>
+
+<script src="https://t1.kakaocdn.net/kakao_js_sdk/2.8.1/kakao.min.js" crossorigin="anonymous"></script>
+<script>
+// 카카오톡 공유용 초기화. 헬로런과 같은 카카오 앱(JavaScript 키) 재사용 — 이미
+// daebugame.com 도메인으로 등록돼 있어서 별도 설정 없이 바로 쓸 수 있음.
+try{
+  if(window.Kakao && !window.Kakao.isInitialized()){
+    window.Kakao.init('KAKAO_JAVASCRIPT_KEY_여기에_교체');
+  }
+}catch(e){
+  console.warn('[헬로버드] Kakao 초기화 실패:', e);
+}
+</script>
+
 <script>
 const ASSET_SRC = {"hello_neutral": "assets/hello_neutral.png", "hello_flap_up": "assets/hello_flap_up.png", "hello_flap_down": "assets/hello_flap_down.png", "hello_hit": "assets/hello_hit.png", "hello_happy": "assets/hello_happy.png", "cap_top": "assets/cap_top.png", "cap_bottom": "assets/cap_bottom.png", "start_screen": "assets/start_screen.png", "crow_wing_up": "assets/crow_wing_up.png", "crow_wing_down": "assets/crow_wing_down.png", "shop_corn_bread": "assets/shop_corn_bread.png", "shop_greet": "assets/shop_greet.png", "shop_gift": "assets/shop_gift.png", "shop_flyoff": "assets/shop_flyoff.png", "sihwa_sky": "assets/sihwa_sky.png", "sihwa_mid": "assets/sihwa_mid.png", "sihwa_ground": "assets/sihwa_ground.png", "sihwa_sea": "assets/sihwa_sea.png", "sihwa_landmark": "assets/sihwa_landmark.png", "sihwa_tile_char1": "assets/sihwa_tile_char1.png", "sihwa_tile_char2": "assets/sihwa_tile_char2.png", "bangamori_sky": "assets/bangamori_sky.png", "bangamori_mid": "assets/bangamori_mid.png", "bangamori_ground": "assets/bangamori_ground.png", "bangamori_sea": "assets/bangamori_sea.png", "bangamori_tile_grape": "assets/bangamori_tile_grape.png", "bangamori_tile_fish": "assets/bangamori_tile_fish.png", "theme_sky": "assets/theme_sky.png", "theme_mid": "assets/theme_mid.png", "theme_ground": "assets/theme_ground.png", "theme_sea": "assets/theme_sea.png", "theme_landmark": "assets/theme_landmark.png", "theme_tile_flower": "assets/theme_tile_flower.png", "theme_tile_reed": "assets/theme_tile_reed.png", "gubong_sky": "assets/gubong_sky.png", "gubong_mid": "assets/gubong_mid.png", "gubong_ground": "assets/gubong_ground.png", "gubong_sea": "assets/gubong_sea.png", "gubong_landmark": "assets/gubong_landmark.png", "gubong_tile_sea": "assets/gubong_tile_sea.png", "gubong_tile_shell": "assets/gubong_tile_shell.png", "tando_sky": "assets/tando_sky.png", "tando_mid": "assets/tando_mid.png", "tando_ground": "assets/tando_ground.png", "tando_sea": "assets/tando_sea.png", "tando_landmark": "assets/tando_landmark.png", "tando_tile_boat": "assets/tando_tile_boat.png", "tando_tile_star": "assets/tando_tile_star.png", "gate_sihwa": "assets/gate_sihwa.png", "gate_bangamori": "assets/gate_bangamori.png", "gate_theme": "assets/gate_theme.png", "gate_gubong": "assets/gate_gubong.png"};
 const AUDIO_SRC = {"bgm": "assets/bgm.mp3", "sfx_jump": "assets/sfx_jump.mp3", "sfx_hit": "assets/sfx_hit.mp3", "sfx_die": "assets/sfx_die.mp3", "milestone_1": "assets/milestone_1.mp3", "milestone_2": "assets/milestone_2.mp3", "milestone_3": "assets/milestone_3.mp3", "milestone_4": "assets/milestone_4.mp3", "milestone_5": "assets/milestone_5.mp3"};
@@ -317,6 +345,7 @@ let crows = [];
 let nextCrowX = 900;
 let heartActive = false; // true while a spawned mercy heart is still out there waiting to be grabbed
 let heartNextTryScore = 0; // score must reach this before another mercy heart attempt (cooldown after a catch or a miss)
+let bestToday = Number(localStorage.getItem('hb_best_today')||0);
 
 function resetGame(){
   hello = { y: H/2 - 100, vy: 0 };
@@ -346,6 +375,8 @@ function resetGame(){
   gatePending = false;
   isEnding = false;
   state = 'playing';
+  document.getElementById('gameoverPanel').style.display = 'none';
+  const rm = document.getElementById('rankMsg'); if(rm) rm.textContent = '';
 }
 
 function stationProgress(){
@@ -390,7 +421,11 @@ function regenGaps(){
 
 function flap(){
   startBgmIfNeeded();
-  if(state==='start'||state==='gameover'||state==='ending'){ resetGame(); return; }
+  if(state==='start'){ resetGame(); return; }
+  // 게임오버/완주 화면에서는 화면 탭으로 재시작하지 않는다 — 헬로런과 같은 이유로,
+  // 죽자마자 연타하다가 의도치 않게 바로 재시작되는 문제를 막기 위해 아래 "다시하기"
+  // 버튼(#retryBtn)으로만 재시작하게 분리했다.
+  if(state==='gameover'||state==='ending'){ return; }
   if(state==='dialogue'){
     dialogueCut++;
     if(dialogueCut > 3){
@@ -464,6 +499,8 @@ function update(dt){
         // same "swap during the blackout" timing as a normal station change — by the time
         // the fade lifts, the ending screen is already the thing being revealed
         state = 'ending';
+        if(score > bestToday){ bestToday = score; localStorage.setItem('hb_best_today', String(bestToday)); }
+        document.getElementById('gameoverPanel').style.display = 'flex';
       }
     }
     if(wasAboveZero && stationTransitionTimer<=0 && pendingStationIndex<0 && !isEnding){
@@ -593,7 +630,11 @@ function update(dt){
     if(hello.y < 0){ hello.y = 0; hello.vy = 0; }
     if(hello.y > H){ hello.y = H; hello.vy = 0; }
   } else if(hy > H + 60 || hy < -80 || energy<=0){
-    if(state !== 'gameover'){ playSfx('sfx_die'); }
+    if(state !== 'gameover'){
+      playSfx('sfx_die');
+      if(score > bestToday){ bestToday = score; localStorage.setItem('hb_best_today', String(bestToday)); }
+      document.getElementById('gameoverPanel').style.display = 'flex';
+    }
     state = 'gameover';
   }
   obstacles = obstacles.filter(o=> o.x - scrollX > -260);
@@ -885,12 +926,18 @@ function drawGameOverScreen(){
   ctx.fillStyle='#fff'; ctx.textAlign='center';
   ctx.font='bold 26px sans-serif';
   ctx.fillText('오늘은 여기까지!', W/2, H/2-30);
-  ctx.font='bold 40px sans-serif';
-  ctx.fillStyle='#ffb703';
+  // 최종 기록은 강렬하게 — 빨간색 + 굵은 글씨 + 글로우(헬로런과 같은 스타일)
+  ctx.save();
+  ctx.shadowColor='rgba(255,40,40,0.85)'; ctx.shadowBlur=20;
+  ctx.font='900 40px sans-serif';
+  ctx.lineWidth=5; ctx.strokeStyle='rgba(0,0,0,0.55)';
+  ctx.strokeText('총 '+score+'m 비행했어요!', W/2, H/2+22);
+  ctx.fillStyle='#ff3b3b';
   ctx.fillText('총 '+score+'m 비행했어요!', W/2, H/2+22);
+  ctx.restore();
   ctx.font='16px sans-serif';
   ctx.fillStyle='#fff';
-  ctx.fillText('다시 탭해서 재도전', W/2, H/2+56);
+  ctx.fillText('오늘 최고 '+bestToday+'m', W/2, H/2+56);
   ctx.restore();
 }
 function drawEndingScreen(){
@@ -909,7 +956,7 @@ function drawEndingScreen(){
   ctx.fillText('총 '+score+'m 비행했어요!', W/2, H/2+15);
   ctx.font='16px sans-serif';
   ctx.fillStyle='#fff';
-  ctx.fillText('탭해서 다시 도전', W/2, H/2+55);
+  ctx.fillText('오늘 최고 '+bestToday+'m', W/2, H/2+55);
   ctx.restore();
 }
 
@@ -1012,6 +1059,241 @@ function loop(ts){
   draw();
   requestAnimationFrame(loop);
 }
+
+// ---------- 공유카드 + 랭킹 등록 + 카카오톡 공유 (헬로런과 같은 시스템을 그대로 이식) ----------
+function blobToBase64(blob){
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onloadend = ()=>resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
+// 공유카드 배경(대표가 준 파이프 테마 그림) — 필요할 때만 쓰니까 페이지 로딩을 막지
+// 않게 조용히 백그라운드로 불러온다
+const shareCardBg = new Image();
+shareCardBg.src = './assets/share-card-bg.jpg';
+
+function buildShareCard(){
+  const cw = 640, ch = 800;
+  const sc = document.createElement('canvas');
+  sc.width = cw; sc.height = ch;
+  const sctx = sc.getContext('2d');
+
+  const cardR = 28;
+  roundRect(sctx, 0, 0, cw, ch, cardR);
+  sctx.save();
+  sctx.clip();
+
+  // 전용 카드 배경 — 못 불러왔으면 게임 화면 블러로 조용히 폴백
+  if(shareCardBg.complete && shareCardBg.naturalWidth>0){
+    sctx.drawImage(shareCardBg, 0, 0, cw, ch);
+  } else {
+    sctx.filter = 'blur(14px) brightness(0.5) saturate(1.15)';
+    sctx.drawImage(canvas, 0, 0, cw, ch);
+    sctx.filter = 'none';
+    sctx.fillStyle = 'rgba(8,10,20,0.4)';
+    sctx.fillRect(0, 0, cw, ch);
+  }
+
+  sctx.textAlign = 'center';
+
+  // 큰 기록 숫자 — 강렬한 빨간색 + 흰 테두리 + 글로우
+  sctx.save();
+  sctx.shadowColor = 'rgba(255,30,30,0.85)';
+  sctx.shadowBlur = 30;
+  sctx.font = '900 108px sans-serif';
+  sctx.lineWidth = 8;
+  sctx.strokeStyle = '#ffffff';
+  sctx.strokeText(score+'m', cw/2, 245);
+  sctx.fillStyle = '#ff2020';
+  sctx.fillText(score+'m', cw/2, 245);
+  sctx.restore();
+
+  // 정보 텍스트: 도착한 장소 — 배경에 이미 그려진 알약 모양 위에 얹는다
+  const chipText = '📍 ' + station.name + '까지 비행';
+  sctx.font = '600 21px sans-serif';
+  sctx.fillStyle = '#3a2a12';
+  sctx.fillText(chipText, cw/2, 318);
+
+  // 캐릭터 — 배경의 동그란 원 안에
+  const heloImg = images.hello_happy;
+  if(heloImg && heloImg.complete){
+    const hw = 216, hh = hw*(heloImg.naturalHeight/heloImg.naturalWidth);
+    sctx.drawImage(heloImg, cw/2-hw/2, 511-hh/2, hw, hh);
+  }
+
+  // 오늘 최고 기록 — 하단 남색 바 안, CTA 버튼 위쪽 작은 줄
+  sctx.font = '600 16px sans-serif';
+  sctx.fillStyle = 'rgba(255,255,255,0.85)';
+  sctx.fillText('🏆 오늘 최고 '+bestToday+'m', cw/2, 714);
+
+  // 하단 CTA — 눌러볼 만한 버튼처럼, 더 크고 확실하게
+  const ctaText = '👉  daebugame.com 놀러가기';
+  sctx.font = '800 26px sans-serif';
+  const ctaW = Math.min(cw-48, sctx.measureText(ctaText).width + 60);
+  const ctaY = 736, ctaH = 56;
+  sctx.save();
+  roundRect(sctx, cw/2-ctaW/2-5, ctaY-5, ctaW+10, ctaH+10, (ctaH+10)/2);
+  sctx.fillStyle = 'rgba(255,255,255,0.35)';
+  sctx.fill();
+  roundRect(sctx, cw/2-ctaW/2, ctaY, ctaW, ctaH, ctaH/2);
+  sctx.shadowColor = 'rgba(0,0,0,0.4)';
+  sctx.shadowBlur = 14;
+  sctx.shadowOffsetY = 4;
+  sctx.fillStyle = '#ffb703';
+  sctx.fill();
+  sctx.restore();
+  sctx.fillStyle = '#2a1c00';
+  sctx.fillText(ctaText, cw/2, ctaY+ctaH/2+9);
+
+  sctx.restore();
+
+  roundRect(sctx, 2, 2, cw-4, ch-4, cardR);
+  sctx.lineWidth = 4;
+  sctx.strokeStyle = 'rgba(255,183,3,0.55)';
+  sctx.stroke();
+
+  return sc;
+}
+
+function showToast(msg){
+  let t = document.getElementById('toastMsg');
+  if(!t){
+    t = document.createElement('div');
+    t.id = 'toastMsg';
+    t.style.cssText = 'position:fixed;left:50%;bottom:46%;transform:translateX(-50%);z-index:200;background:rgba(0,0,0,0.88);color:#fff;padding:11px 20px;border-radius:999px;font-size:13px;font-family:sans-serif;font-weight:bold;box-shadow:0 4px 14px rgba(0,0,0,0.45);opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap;max-width:88vw;overflow:hidden;text-overflow:ellipsis;';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.opacity = '1';
+  clearTimeout(t._hideTimer);
+  t._hideTimer = setTimeout(()=>{ t.style.opacity = '0'; }, 2500);
+}
+
+function setShareBtnLoading(loading){
+  const btn = document.getElementById('shareBtn');
+  if(loading){
+    btn.dataset.origText = btn.dataset.origText || btn.textContent;
+    btn.textContent = '⏳ 카드 만드는 중...';
+    btn.disabled = true;
+    btn.style.opacity = '0.7';
+  } else {
+    btn.textContent = btn.dataset.origText || '📤 친구에게 자랑하기!';
+    btn.disabled = false;
+    btn.style.opacity = '1';
+  }
+}
+
+function shareCard(){
+  setShareBtnLoading(true);
+  const sc = buildShareCard();
+  sc.toBlob(async (blob)=>{
+    if(!blob){
+      setShareBtnLoading(false);
+      showToast('카드 생성에 실패했어요 😢 다시 시도해주세요');
+      return;
+    }
+    try{
+      if(window.Kakao && window.Kakao.isInitialized && window.Kakao.isInitialized()){
+        try{
+          const base64 = await blobToBase64(blob);
+          const uploadRes = await fetch('/api/kakao-upload', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({ imageBase64: base64 })
+          });
+          if(uploadRes.ok){
+            const { url } = await uploadRes.json();
+            window.Kakao.Share.sendDefault({
+              objectType: 'feed',
+              content: {
+                title: '헬로버드에서 ' + score + 'm 비행했어요!',
+                description: station.name + '까지 도착 · daebugame.com',
+                imageUrl: url,
+                link: { mobileWebUrl: 'https://daebugame.com', webUrl: 'https://daebugame.com' }
+              },
+              buttons: [{ title: '나도 도전하기', link: { mobileWebUrl: 'https://daebugame.com', webUrl: 'https://daebugame.com' } }]
+            });
+            showToast('카카오톡 공유창을 열었어요! 📤');
+            return;
+          }
+        }catch(e){}
+      }
+      const file = new File([blob], 'hello-bird-'+score+'m.png', {type:'image/png'});
+      if(navigator.canShare && navigator.canShare({files:[file]})){
+        try{
+          await navigator.share({files:[file], title:'헬로버드 '+score+'m', text:'헬로버드에서 '+score+'m 비행했어요! daebugame.com'});
+          showToast('공유했어요! 🎉');
+          return;
+        }catch(e){
+          if(e && e.name === 'AbortError'){ return; }
+        }
+      }
+      try{
+        if(window.claude && window.claude.use){
+          const downloads = await window.claude.use('downloads');
+          if(downloads){
+            await downloads.save({ filename: 'hello-bird-'+score+'m.png', data: blob });
+            showToast('이미지로 저장했어요! 📥');
+            return;
+          }
+        }
+      }catch(e){}
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'hello-bird-'+score+'m.png';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(()=>URL.revokeObjectURL(url), 4000);
+      showToast('이미지로 저장했어요! 📥');
+    } finally {
+      setShareBtnLoading(false);
+    }
+  }, 'image/png');
+}
+document.getElementById('shareBtn').addEventListener('click', (e)=>{
+  e.stopPropagation();
+  shareCard();
+});
+
+document.getElementById('retryBtn').addEventListener('click', (e)=>{
+  e.stopPropagation();
+  resetGame();
+});
+
+// 랭킹 등록 — 헬로런과 같은 /api/score 사용, game만 'hello_bird'로 구분.
+// 닉네임/연락처 입력값은 헬로런과 같은 localStorage 키를 공유해서, 한 번 입력하면
+// 다른 게임에서도 다시 안 쳐도 되게 했다.
+(function initRankPanel(){
+  try{
+    const savedNick = localStorage.getItem('hr_nickname');
+    const savedContact = localStorage.getItem('hr_contact');
+    if(savedNick) document.getElementById('rankNickname').value = savedNick;
+    if(savedContact) document.getElementById('rankContact').value = savedContact;
+  }catch(e){}
+  document.getElementById('rankSubmitBtn').addEventListener('click', async (e)=>{
+    e.stopPropagation();
+    const nick = document.getElementById('rankNickname').value.trim();
+    const contact = document.getElementById('rankContact').value.trim();
+    const msg = document.getElementById('rankMsg');
+    if(!nick || !contact){ msg.textContent = '닉네임과 연락처를 모두 입력해주세요.'; return; }
+    if(score <= 0 || score > 5000){ msg.textContent = '기록을 확인할 수 없습니다.'; return; }
+    try{ localStorage.setItem('hr_nickname', nick); localStorage.setItem('hr_contact', contact); }catch(e){}
+    msg.textContent = '등록 중...';
+    try{
+      const res = await fetch('/api/score', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ game:'hello_bird', nickname:nick, contact:contact, meters:score })
+      });
+      if(res.ok){ msg.textContent = '등록 완료! 행운을 빌어요 🍀'; }
+      else{ msg.textContent = '등록에 실패했어요. 잠시 후 다시 시도해주세요.'; }
+    }catch(e){
+      msg.textContent = '네트워크 오류로 등록에 실패했어요.';
+    }
+  });
+})();
 </script>
 </body>
 </html>
