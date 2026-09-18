@@ -32,7 +32,7 @@
   <button id="rankSubmitBtn" style="width:100%;padding:7px;border:none;border-radius:6px;background:#ffc857;color:#2a1c00;font-weight:bold;font-size:12px;">기록 등록하기</button>
   <div id="rankMsg" style="font-size:10px;margin-top:4px;color:rgba(255,255,255,0.75);"></div>
 </div>
-<a href="../../index.html" style="font-size:12px;color:rgba(255,255,255,0.7);text-decoration:underline;font-family:sans-serif;">🏠 오락실로 돌아가기</a>
+<a href="../../index.html" style="width:100%;box-sizing:border-box;text-align:center;background:rgba(255,255,255,0.1);color:#fff;font-weight:bold;font-size:12px;padding:8px 0;border:1.5px solid rgba(255,255,255,0.35);border-radius:999px;text-decoration:none;font-family:sans-serif;">🏠 오락실로 돌아가기</a>
 
 </div>
 <button id="devBtn">⚙</button>
@@ -64,7 +64,9 @@ const sndJump = new Audio(AUDIO_B64.jump);
 function startRunSound(){ if(sndRun.paused) sndRun.play().catch(()=>{}); }
 function stopRunSound(){ if(!sndRun.paused) sndRun.pause(); }
 function playJumpSound(){ sndJump.currentTime = 0; sndJump.play().catch(()=>{}); }
-const IS_DEV = true; // this build is just for feel-testing between us, so always show the panel
+// 대중 배포 단계로 넘어가면서, 평소엔 안 보이고 ?dev=1로 접속했을 때만 설정 버튼이
+// 뜨게 바꿈(헬로버드랑 같은 방식) — 예전엔 손맛 테스트 기간이라 항상 켜뒀었음
+const IS_DEV = new URLSearchParams(location.search).get('dev') === '1';
                       // (the ?dev=1 query trick doesn't reliably pass through the artifact host)
 
 const canvas = document.getElementById('c');
