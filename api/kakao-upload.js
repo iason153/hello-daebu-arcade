@@ -30,26 +30,34 @@ export default async function handler(req, res) {
   }
 
   try {
+    console.log('[kakao-upload] 요청 수신, body 타입:', typeof req.body);
     const { imageBase64 } = req.body || {};
     if (!imageBase64 || typeof imageBase64 !== 'string') {
+      console.error('[kakao-upload] imageBase64 없음 또는 문자열 아님:', typeof imageBase64);
       return res.status(400).json({ error: 'imageBase64 required' });
     }
 
     const bytes = base64ToUint8Array(imageBase64);
+    console.log('[kakao-upload] 디코딩된 바이트 길이:', bytes.byteLength);
     // 5MB 넘는 이미지는 거부 — 공유 카드 용도라 이 정도면 충분히 여유 있음
     if (bytes.byteLength > 5 * 1024 * 1024) {
       return res.status(400).json({ error: 'image too large' });
     }
 
     const filename = `kakao-cards/${Date.now()}_${Math.random().toString(36).slice(2, 8)}.png`;
+    console.log('[kakao-upload] Blob 업로드 시도:', filename);
     const blob = await put(filename, bytes, {
       access: 'public',
       contentType: 'image/png',
       addRandomSuffix: false,
     });
+    console.log('[kakao-upload] Blob 업로드 성공:', blob.url);
 
     return res.status(200).json({ url: blob.url });
   } catch (e) {
-    return res.status(500).json({ error: 'upload failed' });
+    // 임시로 에러 상세를 응답에도 실어서 보낸다(디버깅용) — 원인 잡히면 다시
+    // 조용한 응답으로 되돌릴 것
+    console.error('[kakao-upload] 실패:', e && e.message, e && e.stack);
+    return res.status(500).json({ error: 'upload failed', message: e && e.message, name: e && e.name });
   }
 }
