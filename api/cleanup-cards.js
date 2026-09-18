@@ -25,10 +25,10 @@ export default async function handler(req, res) {
     let deleted = 0;
     const now = Date.now();
     do {
-      const { blobs, cursor: nextCursor } = await list({ prefix: 'kakao-cards/', cursor, limit: 1000 });
+      const { blobs, cursor: nextCursor } = await list({ prefix: 'kakao-cards/', cursor, limit: 1000, token: process.env.BLOBPUBLIC_READ_WRITE_TOKEN });
       const stale = blobs.filter((b) => now - new Date(b.uploadedAt).getTime() > ONE_DAY_MS);
       if (stale.length) {
-        await del(stale.map((b) => b.url));
+        await del(stale.map((b) => b.url), { token: process.env.BLOBPUBLIC_READ_WRITE_TOKEN });
         deleted += stale.length;
       }
       cursor = nextCursor;

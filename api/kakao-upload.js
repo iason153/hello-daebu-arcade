@@ -50,6 +50,9 @@ export default async function handler(req, res) {
       access: 'public',
       contentType: 'image/png',
       addRandomSuffix: false,
+      // 환경변수 이름이 BLOB_READ_WRITE_TOKEN이 아니라 BLOBPUBLIC_READ_WRITE_TOKEN으로
+      // 생성돼서(접두사 충돌 방지용으로 그렇게 만듦), 여기서 명시적으로 지정한다.
+      token: process.env.BLOBPUBLIC_READ_WRITE_TOKEN,
     });
     console.log('[kakao-upload] Blob 업로드 성공:', blob.url);
 
