@@ -44,9 +44,15 @@
 // (JavaScript 키는 클라이언트에 노출되는 게 정상 — 네이티브/REST 키처럼 숨길 필요 없음)
 try{
   if(window.Kakao && !window.Kakao.isInitialized()){
-    window.Kakao.init('3994a3bda3b8146e709683fdb350c9cc');
+    window.Kakao.init('KAKAO_JAVASCRIPT_KEY_여기에_교체');
   }
-}catch(e){}
+  // 디버깅용: 브라우저 개발자도구 콘솔(F12)에서 이 값을 확인하면 카카오 SDK가
+  // 실제로 로드/초기화됐는지 바로 알 수 있다 (true가 아니면 SDK 로드 실패이거나
+  // 키/도메인 설정 문제일 가능성이 큼)
+  console.log('[헬로런] Kakao SDK 로드:', !!window.Kakao, '/ 초기화:', window.Kakao && window.Kakao.isInitialized && window.Kakao.isInitialized());
+}catch(e){
+  console.warn('[헬로런] Kakao 초기화 실패:', e);
+}
 </script>
 <script>
 const ASSETS_B64 = {"hello_run_1":"./assets/hello_run_1.png", "hello_run_2":"./assets/hello_run_2.png", "hello_run_3":"./assets/hello_run_3.png", "hello_run_4":"./assets/hello_run_4.png", "hello_jump_ready":"./assets/hello_jump_ready.png", "hello_jump_rise":"./assets/hello_jump_rise.png", "hello_jump_peak":"./assets/hello_jump_peak.png", "hello_jump_land":"./assets/hello_jump_land.png", "hello_crouch_1":"./assets/hello_crouch_1.png", "hello_crouch_2":"./assets/hello_crouch_2.png", "hello_crouch_3":"./assets/hello_crouch_3.png", "hello_crouch_4":"./assets/hello_crouch_4.png", "hello_hit":"./assets/hello_hit.png", "obstacle_air_1":"./assets/obstacle_air_1.png", "obstacle_air_2":"./assets/obstacle_air_2.png", "obstacle_air_3":"./assets/obstacle_air_3.png", "obstacle_air_4":"./assets/obstacle_air_4.png", "obstacle_air_5":"./assets/obstacle_air_5.png", "obstacle_air_6":"./assets/obstacle_air_6.png", "obstacle_air_7":"./assets/obstacle_air_7.png", "obstacle_long_1":"./assets/obstacle_long_1.png", "obstacle_long_2":"./assets/obstacle_long_2.png", "obstacle_long_3":"./assets/obstacle_long_3.png", "obstacle_low_1":"./assets/obstacle_low_1.png", "obstacle_low_10":"./assets/obstacle_low_10.png", "obstacle_low_11":"./assets/obstacle_low_11.png", "obstacle_low_12":"./assets/obstacle_low_12.png", "obstacle_low_13":"./assets/obstacle_low_13.png", "obstacle_low_14":"./assets/obstacle_low_14.png", "obstacle_low_15":"./assets/obstacle_low_15.png", "obstacle_low_16":"./assets/obstacle_low_16.png", "obstacle_low_2":"./assets/obstacle_low_2.png", "obstacle_low_3":"./assets/obstacle_low_3.png", "obstacle_low_4":"./assets/obstacle_low_4.png", "obstacle_low_5":"./assets/obstacle_low_5.png", "obstacle_low_6":"./assets/obstacle_low_6.png", "obstacle_low_7":"./assets/obstacle_low_7.png", "obstacle_low_8":"./assets/obstacle_low_8.png", "obstacle_low_9":"./assets/obstacle_low_9.png", "obstacle_mid_1":"./assets/obstacle_mid_1.png", "obstacle_mid_2":"./assets/obstacle_mid_2.png", "obstacle_mid_3":"./assets/obstacle_mid_3.png", "obstacle_mid_4":"./assets/obstacle_mid_4.png", "obstacle_mid_5":"./assets/obstacle_mid_5.png", "obstacle_mid_6":"./assets/obstacle_mid_6.png", "obstacle_mid_7":"./assets/obstacle_mid_7.png", "obstacle_mid_8":"./assets/obstacle_mid_8.png", "obstacle_tall_1":"./assets/obstacle_tall_1.png", "obstacle_tall_2":"./assets/obstacle_tall_2.png", "obstacle_tall_3":"./assets/obstacle_tall_3.png", "obstacle_tall_4":"./assets/obstacle_tall_4.png", "obstacle_tall_5":"./assets/obstacle_tall_5.png", "obstacle_tall_6":"./assets/obstacle_tall_6.png", "theme_sea":"./assets/theme_sea.png", "sihwa_mid":"./assets/sihwa_mid.png", "tando_sea":"./assets/tando_sea.png", "gubong_sea":"./assets/gubong_sea.png", "sihwa_ground":"./assets/sihwa_ground.png", "tando_mid":"./assets/tando_mid.png", "bangamori_ground":"./assets/bangamori_ground.png", "gubong_sky":"./assets/gubong_sky.png", "sihwa_sky":"./assets/sihwa_sky.png", "tando_sky":"./assets/tando_sky.png", "sky_snow":"./assets/sky_snow.png", "gubong_ground":"./assets/gubong_ground.png", "gubong_landmark":"./assets/gubong_landmark.png", "sky_sunset":"./assets/sky_sunset.png", "gubong_mid":"./assets/gubong_mid.png", "tando_ground":"./assets/tando_ground.png", "sky_rain":"./assets/sky_rain.png", "bangamori_sky":"./assets/bangamori_sky.png", "theme_landmark":"./assets/theme_landmark.png", "bangamori_sea":"./assets/bangamori_sea.png", "sky_night":"./assets/sky_night.png", "theme_sky":"./assets/theme_sky.png", "sihwa_landmark":"./assets/sihwa_landmark.png", "tando_landmark":"./assets/tando_landmark.png", "sihwa_sea":"./assets/sihwa_sea.png", "theme_ground":"./assets/theme_ground.png", "theme_mid":"./assets/theme_mid.png", "bangamori_mid":"./assets/bangamori_mid.png"};
@@ -813,66 +819,118 @@ function blobToBase64(blob){
   });
 }
 
+// 눌렀을 때 아무 반응이 없어 보이는 문제 — 실제로는 카드 만들고 업로드하는 동안 몇 초
+//걸리는데 화면에 그걸 보여주는 게 없어서 그랬음. 버튼 자체를 로딩 상태로 바꾸고,
+// 끝나면 결과(성공/실패)를 화면 아래 토스트 메시지로 짧게 보여준다.
+function showToast(msg){
+  let t = document.getElementById('toastMsg');
+  if(!t){
+    t = document.createElement('div');
+    t.id = 'toastMsg';
+    t.style.cssText = 'position:fixed;left:50%;bottom:46%;transform:translateX(-50%);z-index:200;background:rgba(0,0,0,0.88);color:#fff;padding:11px 20px;border-radius:999px;font-size:13px;font-family:sans-serif;font-weight:bold;box-shadow:0 4px 14px rgba(0,0,0,0.45);opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap;max-width:88vw;overflow:hidden;text-overflow:ellipsis;';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.opacity = '1';
+  clearTimeout(t._hideTimer);
+  t._hideTimer = setTimeout(()=>{ t.style.opacity = '0'; }, 2500);
+}
+
+function setShareBtnLoading(loading){
+  const btn = document.getElementById('shareBtn');
+  if(loading){
+    btn.dataset.origText = btn.dataset.origText || btn.textContent;
+    btn.textContent = '⏳ 카드 만드는 중...';
+    btn.disabled = true;
+    btn.style.opacity = '0.7';
+  } else {
+    btn.textContent = btn.dataset.origText || '📤 친구에게 자랑하기!';
+    btn.disabled = false;
+    btn.style.opacity = '1';
+  }
+}
+
 function shareCard(){
+  setShareBtnLoading(true);
   const sc = buildShareCard();
   sc.toBlob(async (blob)=>{
-    if(!blob) return;
-    // B안(개인화 카드 이미지): 카카오 SDK가 초기화돼 있으면 이 카드 이미지를
-    // /api/kakao-upload로 잠깐 업로드(24h 후 자동 정리)한 뒤, 그 URL을 카톡 피드
-    // 템플릿에 넣어 실제 결과가 담긴 이미지가 카톡 미리보기에 뜨게 한다.
-    if(window.Kakao && window.Kakao.isInitialized && window.Kakao.isInitialized()){
-      try{
-        const base64 = await blobToBase64(blob);
-        const uploadRes = await fetch('/api/kakao-upload', {
-          method: 'POST',
-          headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({ imageBase64: base64 })
-        });
-        if(uploadRes.ok){
-          const { url } = await uploadRes.json();
-          window.Kakao.Share.sendDefault({
-            objectType: 'feed',
-            content: {
-              title: '헬로런에서 ' + displayM + 'm 달렸어요!',
-              description: '오늘의 ' + station.name + ' · daebugame.com',
-              imageUrl: url,
-              link: { mobileWebUrl: 'https://daebugame.com', webUrl: 'https://daebugame.com' }
-            },
-            buttons: [{ title: '나도 도전하기', link: { mobileWebUrl: 'https://daebugame.com', webUrl: 'https://daebugame.com' } }]
-          });
-          return;
-        }
-      }catch(e){
-        // 업로드나 카카오 SDK 호출이 실패하면 아래 기본 공유 흐름으로 자연스럽게 폴백
-      }
+    if(!blob){
+      setShareBtnLoading(false);
+      showToast('카드 생성에 실패했어요 😢 다시 시도해주세요');
+      return;
     }
-    const file = new File([blob], 'hello-run-'+displayM+'m.png', {type:'image/png'});
-    if(navigator.canShare && navigator.canShare({files:[file]})){
-      try{ await navigator.share({files:[file], title:'헬로런 '+displayM+'m', text:'헬로런에서 '+displayM+'m 기록했어요! daebugame.com'}); return; }catch(e){}
-    }
-    // plain <a download> is inert inside a published Claude artifact page — use the
-    // platform's downloads capability instead. on the real deployed site (daebugame.com)
-    // this whole branch is unnecessary; the <a download> fallback below would just work there.
     try{
-      if(window.claude && window.claude.use){
-        const downloads = await window.claude.use('downloads');
-        if(downloads){
-          await downloads.save({ filename: 'hello-run-'+displayM+'m.png', data: blob });
-          return;
+      // B안(개인화 카드 이미지): 카카오 SDK가 초기화돼 있으면 이 카드 이미지를
+      // /api/kakao-upload로 잠깐 업로드(24h 후 자동 정리)한 뒤, 그 URL을 카톡 피드
+      // 템플릿에 넣어 실제 결과가 담긴 이미지가 카톡 미리보기에 뜨게 한다.
+      if(window.Kakao && window.Kakao.isInitialized && window.Kakao.isInitialized()){
+        try{
+          const base64 = await blobToBase64(blob);
+          const uploadRes = await fetch('/api/kakao-upload', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({ imageBase64: base64 })
+          });
+          if(uploadRes.ok){
+            const { url } = await uploadRes.json();
+            window.Kakao.Share.sendDefault({
+              objectType: 'feed',
+              content: {
+                title: '헬로런에서 ' + displayM + 'm 달렸어요!',
+                description: '오늘의 ' + station.name + ' · daebugame.com',
+                imageUrl: url,
+                link: { mobileWebUrl: 'https://daebugame.com', webUrl: 'https://daebugame.com' }
+              },
+              buttons: [{ title: '나도 도전하기', link: { mobileWebUrl: 'https://daebugame.com', webUrl: 'https://daebugame.com' } }]
+            });
+            showToast('카카오톡 공유창을 열었어요! 📤');
+            return;
+          }
+        }catch(e){
+          // 업로드나 카카오 SDK 호출이 실패하면 아래 기본 공유 흐름으로 자연스럽게 폴백
         }
       }
-    }catch(e){}
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = 'hello-run-'+displayM+'m.png';
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    setTimeout(()=>URL.revokeObjectURL(url), 4000);
+      const file = new File([blob], 'hello-run-'+displayM+'m.png', {type:'image/png'});
+      if(navigator.canShare && navigator.canShare({files:[file]})){
+        try{
+          await navigator.share({files:[file], title:'헬로런 '+displayM+'m', text:'헬로런에서 '+displayM+'m 기록했어요! daebugame.com'});
+          showToast('공유했어요! 🎉');
+          return;
+        }catch(e){
+          // 사용자가 공유 시트에서 직접 취소한 경우(AbortError)는 실패가 아니라 그냥
+          // 취소한 것 — 이 경우엔 다운로드로 넘어가지 않고 조용히 끝낸다
+          if(e && e.name === 'AbortError'){ return; }
+        }
+      }
+      // plain <a download> is inert inside a published Claude artifact page — use the
+      // platform's downloads capability instead. on the real deployed site (daebugame.com)
+      // this whole branch is unnecessary; the <a download> fallback below would just work there.
+      try{
+        if(window.claude && window.claude.use){
+          const downloads = await window.claude.use('downloads');
+          if(downloads){
+            await downloads.save({ filename: 'hello-run-'+displayM+'m.png', data: blob });
+            showToast('이미지로 저장했어요! 📥');
+            return;
+          }
+        }
+      }catch(e){}
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'hello-run-'+displayM+'m.png';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(()=>URL.revokeObjectURL(url), 4000);
+      showToast('이미지로 저장했어요! 📥');
+    } finally {
+      setShareBtnLoading(false);
+    }
   }, 'image/png');
 }
 document.getElementById('shareBtn').addEventListener('click', (e)=>{
   e.stopPropagation();
   shareCard();
 });
+
 
 // ---------- draw ----------
 
@@ -1078,7 +1136,10 @@ function drawUI(){
   if(state==='playing' && showCrouchHint){
     ctx.save();
     const bounce = Math.sin(performance.now()/260) * 6;
-    const hintY = GROUND_Y - T.CROUCH_ZONE_MARGIN - 50;
+    // 캐릭터가 서 있을 때(978 근처)는 물론, 점프 정점(대략 717 근처)까지도 절대 안 겹치게
+    // 훨씬 위쪽(하늘 영역)에 띄운다 — 예전엔 바닥 바로 위라 캐릭터/장애물을 가려서 플레이가
+    // 안 될 정도였음
+    const hintY = 560;
     const hintText = '아래 바닥 터치 = 숙이기';
     ctx.textAlign = 'center';
     ctx.font = '900 27px sans-serif';
@@ -1093,8 +1154,8 @@ function drawUI(){
     ctx.font = '900 30px sans-serif';
     ctx.fillStyle = 'rgba(255,200,87,0.95)';
     ctx.strokeStyle = 'rgba(0,0,0,0.45)'; ctx.lineWidth = 3;
-    ctx.strokeText('▼', W/2, hintY+38+bounce);
-    ctx.fillText('▼', W/2, hintY+38+bounce);
+    ctx.strokeText('▼', W/2, hintY+40+bounce);
+    ctx.fillText('▼', W/2, hintY+40+bounce);
     ctx.restore();
   }
   ctx.textAlign='left';
