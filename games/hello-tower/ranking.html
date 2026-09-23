@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>헬로 대부도 오락실 랭킹</title>
+<style>
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; padding:0; background:#0f1a30; color:#fff; font-family:-apple-system,BlinkMacSystemFont,"Malgun Gothic",sans-serif; min-height:100%; overflow-x:hidden;}
+  body{
+    background:
+      radial-gradient(circle at 20% -10%, rgba(255,200,87,0.18), transparent 45%),
+      radial-gradient(circle at 100% 0%, rgba(126,200,227,0.15), transparent 40%),
+      #0f1a30;
+    padding: 28px 16px 48px;
+  }
+  .wrap{max-width:480px; margin:0 auto;}
+  header{text-align:center; margin-bottom:22px;}
+  header .emoji{font-size:40px; display:block; margin-bottom:6px;}
+  header h1{font-size:22px; margin:0 0 4px; color:#ffe9b8; letter-spacing:-0.3px;}
+  header p{font-size:13px; margin:0; color:rgba(255,255,255,0.55);}
+
+  .tabs{display:flex; gap:8px; margin-bottom:18px; background:rgba(255,255,255,0.06); padding:4px; border-radius:14px;}
+  .tab{flex:1; text-align:center; padding:10px 0; border-radius:11px; font-size:14px; font-weight:700; color:rgba(255,255,255,0.55); cursor:pointer; transition:background .15s,color .15s;}
+  .tab.active{background:#ffc857; color:#2a1c00;}
+
+  .list{display:flex; flex-direction:column; gap:10px; min-height:160px;}
+  .row{
+    display:flex; align-items:center; gap:12px;
+    background:rgba(255,255,255,0.06);
+    border:1px solid rgba(255,255,255,0.08);
+    border-radius:14px; padding:12px 14px;
+  }
+  .row.top1{background:linear-gradient(135deg, rgba(255,200,87,0.28), rgba(255,200,87,0.08)); border-color:rgba(255,200,87,0.5);}
+  .row.top2{background:rgba(255,255,255,0.1); border-color:rgba(255,255,255,0.22);}
+  .row.top3{background:rgba(217,152,90,0.16); border-color:rgba(217,152,90,0.4);}
+  .rank{
+    width:36px; height:36px; flex:0 0 36px;
+    border-radius:50%; background:rgba(255,255,255,0.1);
+    display:flex; align-items:center; justify-content:center;
+    font-weight:800; font-size:14px; color:rgba(255,255,255,0.8);
+  }
+  .row.top1 .rank, .row.top2 .rank, .row.top3 .rank{ font-size:20px; background:transparent; }
+  .nick{flex:1; font-size:15px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .meters{font-size:17px; font-weight:800; color:#ffc857;}
+  .row.top1 .meters{font-size:20px;}
+
+  .state-msg{text-align:center; padding:40px 10px; color:rgba(255,255,255,0.55); font-size:14px; line-height:1.6;}
+
+  .actions{display:flex; gap:10px; margin-top:22px;}
+  .btn{
+    flex:1; text-align:center; padding:13px 0; border-radius:999px;
+    font-weight:700; font-size:14px; text-decoration:none; border:none; cursor:pointer;
+  }
+  .btn.primary{background:#ffc857; color:#2a1c00;}
+  .btn.ghost{background:rgba(255,255,255,0.08); color:#fff; border:1px solid rgba(255,255,255,0.18);}
+
+  footer{text-align:center; margin-top:30px; font-size:12px; color:rgba(255,255,255,0.35);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="emoji">🏆</span>
+    <h1>헬로 대부도 오락실 랭킹</h1>
+    <p>daebugame.com · 이벤트 진행 중인 게임의 상위 기록</p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-game="hello_tower">🗼 헬로타워</div>
+    <div class="tab" data-game="hello_run">🏃 헬로런</div>
+    <div class="tab" data-game="hello_bird">🐦 헬로버드</div>
+  </div>
+
+  <div class="list" id="list">
+    <div class="state-msg">불러오는 중...</div>
+  </div>
+
+  <div class="actions">
+    <button class="btn ghost" id="refreshBtn">↻ 새로고침</button>
+    <a class="btn primary" href="./index.html">🗼 게임하러 가기</a>
+  </div>
+  <a href="../../index.html" style="display:block;text-align:center;margin-top:10px;padding:12px 0;border-radius:999px;background:rgba(255,255,255,0.08);border:1.5px solid rgba(255,255,255,0.2);color:#fff;font-weight:700;font-size:13px;text-decoration:none;">🏠 오락실로 돌아가기</a>
+
+  <footer id="noticeFooter"></footer>
+</div>
+
+<script>
+// ===== 여기만 대표님이 직접 고치면 돼요 =====
+// 화면 맨 아래 안내 문구예요. 빈 칸('')으로 두면 아무것도 안 뜨고,
+// 뭔가 넣고 싶으면 따옴표 안에 문장만 바꿔서 GitHub에서 저장하면 바로 반영돼요.
+// 예: const NOTICE_TEXT = '기록은 실시간으로 반영돼요 · 상금은 소정의 커피 쿠폰이에요 ☕';
+const NOTICE_TEXT = '';
+// ============================================
+
+const RANK_ICONS = ['🥇','🥈','🥉'];
+let currentGame = 'hello_tower';
+const listEl = document.getElementById('list');
+document.getElementById('noticeFooter').textContent = NOTICE_TEXT;
+
+function renderLoading(){
+  listEl.innerHTML = '<div class="state-msg">불러오는 중...</div>';
+}
+function renderError(){
+  listEl.innerHTML = '<div class="state-msg">기록을 불러오지 못했어요.<br>잠시 후 다시 시도해주세요.</div>';
+}
+function renderEmpty(){
+  listEl.innerHTML = '<div class="state-msg">아직 등록된 기록이 없어요.<br>첫 기록의 주인공이 되어보세요! 🎉</div>';
+}
+function renderList(entries){
+  if(!entries || entries.length===0){ renderEmpty(); return; }
+  listEl.innerHTML = entries.map((e, i)=>{
+    const rank = i+1;
+    const topClass = rank<=3 ? ' top'+rank : '';
+    const rankLabel = rank<=3 ? RANK_ICONS[rank-1] : rank;
+    const nick = (e.nickname||'').toString().slice(0,12);
+    const unit = (currentGame==='hello_tower') ? '층' : 'm';
+    const meters = (e.meters!=null) ? e.meters+unit : '-';
+    return '<div class="row'+topClass+'"><div class="rank">'+rankLabel+'</div><div class="nick">'+escapeHtml(nick)+'</div><div class="meters">'+meters+'</div></div>';
+  }).join('');
+}
+function escapeHtml(s){
+  return s.replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+async function loadRanking(){
+  renderLoading();
+  try{
+    const res = await fetch('/api/score?game='+encodeURIComponent(currentGame)+'&limit=20', {cache:'no-store'});
+    if(!res.ok){ renderError(); return; }
+    const data = await res.json();
+    renderList(data.leaderboard);
+  }catch(e){
+    renderError();
+  }
+}
+
+document.querySelectorAll('.tab').forEach(tab=>{
+  tab.addEventListener('click', ()=>{
+    if(tab.classList.contains('active')) return;
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    tab.classList.add('active');
+    currentGame = tab.dataset.game;
+    loadRanking();
+  });
+});
+document.getElementById('refreshBtn').addEventListener('click', loadRanking);
+
+loadRanking();
+</script>
+</body>
+</html>
+
