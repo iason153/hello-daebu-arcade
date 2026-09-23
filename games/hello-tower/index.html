@@ -337,19 +337,18 @@ platformImg.onload = () => {
 };
 
 // ---------- 층수 구간별 난이도 단계 ----------
-// [배포용 재조정] 테스트 때는 50층 이후로 더 안 어려워지게 방치돼 있었는데,
-// 이제 "신의 영역"(엔딩)이 훨씬 높은 층수라 그때까지 계속 조금씩 더 빡빡해지게
-// 재설계함. 초반(~20층)은 그대로 관대하게 둬서 진입장벽은 낮게, 후반으로 갈수록
-// 점점 어려워져서 끝까지 가는 건 실력+운이 다 따라야 하는 수준으로.
+// [압축] 180층 목표는 너무 길어서 지루하다는 피드백 — "신의 영역"(엔딩)을
+// 100층으로 압축. 초반(~12층)은 그대로 관대하게 둬서 진입장벽은 낮게, 후반으로
+// 갈수록 점점 어려워져서 끝까지 가는 건 실력+운이 다 따라야 하는 수준으로.
 const DIFFICULTY_STAGES = [
   { floor: 0,   frictionMul: 1.0,  tiltDeg: 32 },
-  { floor: 20,  frictionMul: 0.88, tiltDeg: 29 },
-  { floor: 40,  frictionMul: 0.76, tiltDeg: 26 },
-  { floor: 65,  frictionMul: 0.64, tiltDeg: 23 },
-  { floor: 90,  frictionMul: 0.54, tiltDeg: 20 },
-  { floor: 115, frictionMul: 0.46, tiltDeg: 18 },
-  { floor: 140, frictionMul: 0.40, tiltDeg: 16 },
-  { floor: 165, frictionMul: 0.35, tiltDeg: 14 },
+  { floor: 12,  frictionMul: 0.88, tiltDeg: 29 },
+  { floor: 24,  frictionMul: 0.76, tiltDeg: 26 },
+  { floor: 38,  frictionMul: 0.64, tiltDeg: 23 },
+  { floor: 52,  frictionMul: 0.54, tiltDeg: 20 },
+  { floor: 68,  frictionMul: 0.46, tiltDeg: 18 },
+  { floor: 84,  frictionMul: 0.40, tiltDeg: 16 },
+  { floor: 100, frictionMul: 0.35, tiltDeg: 14 },
 ];
 function difficultyStage(floor) {
   let stage = DIFFICULTY_STAGES[0];
@@ -424,11 +423,11 @@ const SHAPE_TIER_HARD = ['hello', 'conch', 'mini', 'pillar']; // 폭 40~90 — �
 
 function pickRandomType() {
   let pool;
-  if (floorCount < 15) {
+  if (floorCount < 8) {
     pool = SHAPE_TIER_EASY; // 초반: 쉬운 것만
-  } else if (floorCount < 35) {
+  } else if (floorCount < 20) {
     pool = SHAPE_TIER_EASY.concat(SHAPE_TIER_MEDIUM); // 중반: 보통 섞임
-  } else if (floorCount < 60) {
+  } else if (floorCount < 35) {
     pool = SHAPE_TIER_EASY.concat(SHAPE_TIER_MEDIUM, SHAPE_TIER_HARD); // 후반: 어려운 것도 섞임
   } else {
     pool = SHAPE_TIER_EASY.concat(SHAPE_TIER_MEDIUM, SHAPE_TIER_HARD, SHAPE_TIER_HARD); // 고층: 어려운 것 비중up
@@ -456,6 +455,7 @@ let impactTime = -99999; // 마지막 착지 시각 — 탑 전체가 살짝 짜
 let shakeTime = -99999;  // 마지막 착지 시각 — 화면 흔들림 연출용
 let dustParticles = [];  // 착지 순간 터지는 먼지 파티클 { x, y, vx, vy, born }
 let floorPopups = [];    // "+1층" 떠오르는 텍스트 { x, y, born }
+let whisperPopups = [];  // 블록이 가끔 속삭이는 대사 { x, y, born, text }
 let milestoneBurst = []; // 마일스톤 순간 화면에 확 터지는 색종이 파티클 { x, y, vx, vy, born, color }
 
 // ---------- 구름 ----------
@@ -518,25 +518,24 @@ function drawClouds() {
 }
 
 // ---------- 하늘 단계(층수 기준) — 맑은 하늘 → 구름 위(대기권) → 성층권 → 우주 ----------
-// [배포용 스케일] 테스트 때는 5층 간격으로 압축해서 확인했었는데, 실제로는 그 4배
-// 층수에서 벌어지도록 되돌림 — "신의 영역"(엔딩)이 진짜 희귀한 도달점이 되도록.
-// 0~20층: 맑은 하늘 / 20~40층: 구름층 근접 / 40~60층: 구름 위(대기권)
-// 60~80층: 대기 옅어짐 / 80~100층: 성층권 / 100~120층: 대기권 끝자락
-// 120~140층: 우주 진입 / 140층~: 완전한 우주
-const CLOUD_CEILING_FLOOR = 40; // 이 층수부터는 새 구름이 안 생김("구름 위"로 올라왔다는 뜻)
+// [재압축] 180층은 너무 길다는 피드백 — 엔딩(100층) 기준으로 다시 맞춤.
+// 0~11층: 맑은 하늘 / 11~22층: 구름층 근접 / 22~33층: 구름 위(대기권)
+// 33~44층: 대기 옅어짐 / 44~56층: 성층권 / 56~67층: 대기권 끝자락
+// 67~78층: 우주 진입 / 78층~: 완전한 우주
+const CLOUD_CEILING_FLOOR = 22; // 이 층수부터는 새 구름이 안 생김("구름 위"로 올라왔다는 뜻)
 const SKY_STAGES = [
   { floor: 0,   top: '#8fd3f4', bottom: '#c9f0ff' },  // 맑은 하늘
-  { floor: 20,  top: '#8fd3f4', bottom: '#eaf8ff' },  // 구름층 근접, 살짝 밝아짐
-  { floor: 40,  top: '#cdeaff', bottom: '#f8fcff' },  // 구름 위(대기권), 뽀얗게 밝음
-  { floor: 60,  top: '#9db8ec', bottom: '#dce8ff' },  // 대기 옅어지며 다시 파랗게
-  { floor: 80,  top: '#4a63b8', bottom: '#a7bdea' },  // 성층권, 짙은 파랑
-  { floor: 100, top: '#1c2456', bottom: '#4a5698' },  // 대기권 끝자락, 어두워짐
-  { floor: 120, top: '#05071c', bottom: '#161c46' },  // 우주 진입
-  { floor: 140, top: '#000008', bottom: '#050512' },  // 완전한 우주
-  { floor: 160, top: '#3a2f6e', bottom: '#c98bd6' },  // 우주 너머 — 신비로운 보랏빛 여명(천국 예고)
-  { floor: 180, top: '#ffe9a8', bottom: '#fff6d5' },  // 천국 — 황금빛으로 가득한 하늘
+  { floor: 11,  top: '#8fd3f4', bottom: '#eaf8ff' },  // 구름층 근접, 살짝 밝아짐
+  { floor: 22,  top: '#cdeaff', bottom: '#f8fcff' },  // 구름 위(대기권), 뽀얗게 밝음
+  { floor: 33,  top: '#9db8ec', bottom: '#dce8ff' },  // 대기 옅어지며 다시 파랗게
+  { floor: 44,  top: '#4a63b8', bottom: '#a7bdea' },  // 성층권, 짙은 파랑
+  { floor: 56,  top: '#1c2456', bottom: '#4a5698' },  // 대기권 끝자락, 어두워짐
+  { floor: 67,  top: '#05071c', bottom: '#161c46' },  // 우주 진입
+  { floor: 78,  top: '#000008', bottom: '#050512' },  // 완전한 우주
+  { floor: 89,  top: '#3a2f6e', bottom: '#c98bd6' },  // 우주 너머 — 신비로운 보랏빛 여명(천국 예고)
+  { floor: 100, top: '#ffe9a8', bottom: '#fff6d5' },  // 천국 — 황금빛으로 가득한 하늘
 ];
-const HEAVEN_FLOOR = 180; // 이 층수에 도달하면 엔딩(신들의 환영) — 아주 드문 도달점
+const HEAVEN_FLOOR = 100; // 이 층수에 도달하면 엔딩(신들의 환영) — 드물지만 너무 길지는 않게
 
 function hexToRgb(hex) {
   const n = parseInt(hex.slice(1), 16);
@@ -571,8 +570,8 @@ function getSkyColors(floor) {
 // 구름과 똑같은 원리(세계 좌표 고정) — 일정 층수 이상부터 별을 계속 심고,
 // 낮은 층(대기권)에서는 알파를 0으로 둬서 안 보이게 했다가 층수가 오르면서
 // 서서히 나타나게(반짝임도 살짝) 한다.
-const STAR_START_FLOOR = 72;  // 이 층수부터 별이 옅게 보이기 시작
-const STAR_FULL_FLOOR = 120;  // 이 층수부터 완전히 선명하게 보임
+const STAR_START_FLOOR = 40;  // 이 층수부터 별이 옅게 보이기 시작
+const STAR_FULL_FLOOR = 67;   // 이 층수부터 완전히 선명하게 보임
 let stars = [];
 let highestStarSpawnedY = GROUND_Y;
 
@@ -615,9 +614,9 @@ function drawStars() {
 // 구름 위(대기권~성층권): 비행기 — 동체+날개 실루엣, 옅은 비행운 흔적.
 // 우주: 우주선 — 작은 캡슐형, 깜빡이는 불빛.
 // 셋 다 "세계 좌표 고정 + 가로로는 시간에 따라 계속 흘러가는" 같은 원리를 공유한다.
-const BIRD_MAX_FLOOR = 40;               // 새가 나오는 고도 범위(맑은 하늘)
-const PLANE_MIN_FLOOR = 40, PLANE_MAX_FLOOR = 100;  // 비행기 범위(구름 위~성층권)
-const SHIP_MIN_FLOOR = 100, SHIP_MAX_FLOOR = 180;   // 우주선 범위(우주)
+const BIRD_MAX_FLOOR = 22;              // 새가 나오는 고도 범위(맑은 하늘)
+const PLANE_MIN_FLOOR = 22, PLANE_MAX_FLOOR = 56;  // 비행기 범위(구름 위~성층권)
+const SHIP_MIN_FLOOR = 56, SHIP_MAX_FLOOR = 100;   // 우주선 범위(우주)
 
 let travelers = []; // { type:'bird'|'plane'|'ship', worldY, xOffset, speed, ... }
 let highestTravelerSpawnedY = GROUND_Y;
@@ -965,11 +964,11 @@ function playStormScream() {
 
 // ---------- 배경음악 — 하늘 단계(고도)에 맞춰 5곡을 자동으로 교체(크로스페이드) ----------
 const BGM_STAGES = [
-  { floor: 0,   src: 'assets/bgm/bg1.mp3' },
-  { floor: 40,  src: 'assets/bgm/bg2.mp3' },
-  { floor: 80,  src: 'assets/bgm/bg3.mp3' },
-  { floor: 120, src: 'assets/bgm/bg4.mp3' },
-  { floor: 160, src: 'assets/bgm/bg5.mp3' },
+  { floor: 0,  src: 'assets/bgm/bg1.mp3' },
+  { floor: 22, src: 'assets/bgm/bg2.mp3' },
+  { floor: 44, src: 'assets/bgm/bg3.mp3' },
+  { floor: 67, src: 'assets/bgm/bg4.mp3' },
+  { floor: 89, src: 'assets/bgm/bg5.mp3' },
 ];
 const bgmAudios = BGM_STAGES.map(s => {
   const a = new Audio(s.src);
@@ -1204,6 +1203,9 @@ function finalizeSettle(body) {
   document.getElementById('floorCounter').textContent = floorCount + '층';
   towerTopY = body.bounds.min.y;
   spawnFloorPopup(body.position.x, body.bounds.min.y); // 닿은 그 자리에서 "+1층" 떠오름
+  if (Math.random() < 0.16) { // 매층은 아니고 가끔만 — 16% 확률
+    spawnWhisper(body.position.x, body.bounds.min.y - 26); // +1층 문구랑 안 겹치게 살짝 위에서
+  }
 
   if (floorCount >= HEAVEN_FLOOR) {
     showEnding();
@@ -1249,6 +1251,29 @@ function spawnDustBurst(x, y) {
 function spawnFloorPopup(x, y) {
   floorPopups.push({ x, y, born: performance.now() });
   if (floorPopups.length > 20) floorPopups.splice(0, floorPopups.length - 20);
+}
+
+// 블록들이 가끔 속삭이는 대사 — 매층마다는 아니고 낮은 확률로만(아래 호출부 참고).
+// 말풍선처럼 +1층보다 천천히, 조금 더 오래 보이게.
+const WHISPER_LINES = [
+  '고소공포증이 있어',
+  '높은 건 딱 질색이야',
+  '태풍아 제발 오지마',
+  '대부도에 놀러 가고 싶어',
+  '하늘 위에는 뭐가 있을까?',
+  '구름 위를 우리가 갈 수 있을까?',
+  '정말 우리가 해낼 수 있을까?',
+  '삶은 원래 고통이라지??',
+  '고통 없는 삶은 진짜 삶이 아니래',
+  '고통과 행복은 같이 오는 거야',
+  '어디까지 올라가나 한 번 해보자!',
+  '우리가 힘을 합치면 못할 게 없어!',
+  '진정한 사랑은 존재를 인정하는 것!',
+];
+function spawnWhisper(x, y) {
+  const text = WHISPER_LINES[Math.floor(Math.random() * WHISPER_LINES.length)];
+  whisperPopups.push({ x, y, born: performance.now(), text });
+  if (whisperPopups.length > 6) whisperPopups.splice(0, whisperPopups.length - 6);
 }
 
 // 마일스톤(5층마다) 순간 화면 중앙에서 사방으로 터지는 색종이 파티클
@@ -1788,6 +1813,50 @@ function render() {
     ctx.lineWidth = 4;
     ctx.strokeText('+1층', 0, 0);
     ctx.fillText('+1층', 0, 0);
+    ctx.restore();
+  }
+
+  // 블록들의 속삭임 — 말풍선 스타일로 좀 더 천천히, 오래 보이게
+  const WHISPER_LIFE = 2000;
+  whisperPopups = whisperPopups.filter(p => now2 - p.born < WHISPER_LIFE);
+  for (const p of whisperPopups) {
+    const t = (now2 - p.born) / WHISPER_LIFE;
+    const py = p.y - t * 60 - cameraY;
+    // 등장/퇴장만 부드럽게 페이드, 중간엔 계속 선명하게 유지(대사를 읽을 시간 확보)
+    const alpha = t < 0.15 ? t / 0.15 : (t > 0.8 ? Math.max(0, (1 - t) / 0.2) : 1);
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.font = '600 15px sans-serif';
+    ctx.textAlign = 'center';
+    const textW = ctx.measureText(p.text).width;
+    const padX = 12, padY = 8;
+    const bw = textW + padX * 2, bh = 15 + padY * 2;
+    // 말풍선 배경
+    ctx.fillStyle = 'rgba(255,255,255,0.92)';
+    ctx.strokeStyle = 'rgba(80,80,90,0.5)';
+    ctx.lineWidth = 1.2;
+    const bx = p.x - bw / 2, by = py - bh - 10;
+    const r = 9;
+    ctx.beginPath();
+    ctx.moveTo(bx + r, by);
+    ctx.arcTo(bx + bw, by, bx + bw, by + bh, r);
+    ctx.arcTo(bx + bw, by + bh, bx, by + bh, r);
+    ctx.arcTo(bx, by + bh, bx, by, r);
+    ctx.arcTo(bx, by, bx + bw, by, r);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    // 꼬리
+    ctx.beginPath();
+    ctx.moveTo(p.x - 6, by + bh);
+    ctx.lineTo(p.x + 6, by + bh);
+    ctx.lineTo(p.x, by + bh + 8);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    // 텍스트
+    ctx.fillStyle = '#3a3a3a';
+    ctx.fillText(p.text, p.x, by + bh / 2 + 5);
     ctx.restore();
   }
 
