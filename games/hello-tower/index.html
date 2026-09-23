@@ -104,7 +104,7 @@
   #overlay.ending .finalFloor { color: #ffe9a8; text-shadow: 0 0 12px #ffcf6b; }
 
   #rankLinkBtn {
-    position: fixed; top: env(safe-area-inset-top, 0px); left: 0; margin: 14px 0 0 14px;
+    position: fixed; top: env(safe-area-inset-top, 0px); left: 0; margin: 62px 0 0 14px;
     z-index: 25; display: flex; align-items: center; gap: 5px;
     padding: 7px 14px 7px 10px; border-radius: 999px;
     background: rgba(0,0,0,0.45); border: 1.5px solid rgba(255,200,87,0.55);
@@ -1183,8 +1183,15 @@ document.getElementById('retryBtn').addEventListener('click', () => {
 
 // ---------- 카카오톡 공유("친구에게 자랑하기") ----------
 // 헬로런과 같은 방식(결과 카드 이미지를 캔버스로 만들어서 카카오톡 피드 템플릿의
-// imageUrl로 올림) — 전용 배경/캐릭터 그림은 없어서, 배경은 지금 게임 화면을 흐리게
-// 찍은 걸로, 캐릭터는 표정 있는 8종 블록 중 랜덤으로 대신함.
+// imageUrl로 올림) — 대표님이 만들어주신 전용 배경(등대·풍차·구름섬+캐릭터들, 알약
+// 모양 안내문구 자리와 하단 남색 CTA 바까지 이미 그려진 그림) 사용.
+const shareCardBg = new Image();
+const shareCardBgReady = new Promise((resolve) => {
+  shareCardBg.onload = () => resolve(true);
+  shareCardBg.onerror = () => resolve(false);
+});
+shareCardBg.src = 'assets/share-card-bg.jpg';
+
 function roundRectPath(c, x, y, w, h, r) {
   c.beginPath();
   c.moveTo(x + r, y);
@@ -1210,45 +1217,50 @@ function buildShareCard() {
   sctx.save();
   sctx.clip();
 
-  // 전용 카드 배경이 없어서, 지금 게임 화면을 블러+어둡게 찍어서 배경으로 사용
-  sctx.filter = 'blur(14px) brightness(0.55) saturate(1.15)';
-  sctx.drawImage(canvas, 0, 0, cw, ch);
-  sctx.filter = 'none';
-  sctx.fillStyle = 'rgba(20,20,40,0.35)';
-  sctx.fillRect(0, 0, cw, ch);
+  // 전용 배경(등대·풍차·구름섬 일러스트) — 못 불러왔으면 게임 화면 블러로 폴백
+  if (shareCardBg.complete && shareCardBg.naturalWidth > 0) {
+    sctx.drawImage(shareCardBg, 0, 0, cw, ch);
+  } else {
+    sctx.filter = 'blur(14px) brightness(0.55) saturate(1.15)';
+    sctx.drawImage(canvas, 0, 0, cw, ch);
+    sctx.filter = 'none';
+    sctx.fillStyle = 'rgba(20,20,40,0.35)';
+    sctx.fillRect(0, 0, cw, ch);
+  }
 
   sctx.textAlign = 'center';
 
-  // 큰 층수 숫자 — 황금빛 글로우
+  // 큰 층수 숫자 — 배경 그림의 알약 모양 안내문구 자리(y≈314) 바로 위, 트인 하늘에
   sctx.save();
   sctx.shadowColor = 'rgba(255,190,60,0.9)';
   sctx.shadowBlur = 30;
-  sctx.font = '900 100px sans-serif';
+  sctx.font = '900 92px sans-serif';
   sctx.lineWidth = 8;
   sctx.strokeStyle = '#ffffff';
-  sctx.strokeText(floorCount + '층', cw / 2, 245);
+  sctx.strokeText(floorCount + '층', cw / 2, 200);
   sctx.fillStyle = '#ff9d1f';
-  sctx.fillText(floorCount + '층', cw / 2, 245);
+  sctx.fillText(floorCount + '층', cw / 2, 200);
   sctx.restore();
 
-  sctx.font = '600 21px sans-serif';
-  sctx.fillStyle = '#fff6e0';
-  sctx.fillText('🗼 헬로타워 · 대부도 오락실', cw / 2, 305);
+  // 안내 문구 — 배경에 이미 그려진 알약 모양 위에 얹음
+  sctx.font = '600 20px sans-serif';
+  sctx.fillStyle = '#3a2a12';
+  sctx.fillText('🗼 헬로타워 · 대부도 오락실', cw / 2, 320);
 
-  // 캐릭터 — 표정 있는 블록 중 랜덤
+  // 캐릭터 — 배경의 노을 태양(원) 자리에, 표정 있는 블록 중 랜덤으로
   const charImg = pickRandomShareChar();
   if (charImg && charImg.complete && charImg.naturalWidth) {
-    const cs = 246;
+    const cs = 240;
     const ar = charImg.naturalWidth / charImg.naturalHeight;
     const dw = ar >= 1 ? cs : cs * ar, dh = ar >= 1 ? cs / ar : cs;
-    sctx.drawImage(charImg, cw / 2 - dw / 2, 511 - dh / 2, dw, dh);
+    sctx.drawImage(charImg, cw / 2 - dw / 2, 575 - dh / 2, dw, dh);
   }
 
-  // 하단 CTA
+  // 하단 CTA — 배경의 남색 바(y≈696~) 안에
   const ctaText = '👉  daebugame.com 놀러가기';
   sctx.font = '800 26px sans-serif';
   const ctaW = Math.min(cw - 48, sctx.measureText(ctaText).width + 60);
-  const ctaY = 706, ctaH = 56;
+  const ctaY = 720, ctaH = 56;
   sctx.save();
   roundRectPath(sctx, cw / 2 - ctaW / 2 - 5, ctaY - 5, ctaW + 10, ctaH + 10, (ctaH + 10) / 2);
   sctx.fillStyle = 'rgba(255,255,255,0.35)';
@@ -1308,6 +1320,9 @@ function setShareBtnLoading(loading) {
 }
 async function shareCard() {
   setShareBtnLoading(true);
+  // 배경 이미지가 아직 안 불러와졌으면 최대 3초까지 기다렸다가 만든다(짧게 하고 바로
+  // 공유 누르면 아직 로드 중일 수 있음 — 이게 없으면 조용히 블러 폴백으로 넘어가버림)
+  await Promise.race([shareCardBgReady, new Promise((r) => setTimeout(r, 3000))]);
   const sc = buildShareCard();
   sc.toBlob(async (blob) => {
     if (!blob) {
