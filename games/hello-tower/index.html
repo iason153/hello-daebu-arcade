@@ -43,14 +43,22 @@
   }
 
   #milestone {
-    position: fixed; top: 28%; left: 0; right: 0; text-align: center;
+    position: fixed; top: 26%; left: 0; right: 0; text-align: center;
     pointer-events: none; z-index: 15; opacity: 0;
-    font-size: 34px; font-weight: 900; color: #fff;
-    text-shadow: 0 0 14px rgba(255,214,110,0.9), 0 2px 6px rgba(0,0,0,0.5);
-    transition: opacity 0.35s ease, transform 0.35s ease;
-    transform: scale(0.85) translateY(6px);
+    font-size: 44px; font-weight: 900; color: #fff;
+    -webkit-text-stroke: 2px rgba(120,70,0,0.6);
+    text-shadow: 0 0 22px rgba(255,214,110,1), 0 0 44px rgba(255,180,60,0.7), 0 3px 6px rgba(0,0,0,0.5);
   }
-  #milestone.show { opacity: 1; transform: scale(1) translateY(0); }
+  #milestone.show { animation: milestonePop 1.3s cubic-bezier(0.22, 1.4, 0.36, 1) forwards; }
+  @keyframes milestonePop {
+    0%   { opacity: 0; transform: scale(0.3) translateY(10px); }
+    12%  { opacity: 1; transform: scale(1.35) translateY(0); }
+    22%  { transform: scale(0.95); }
+    30%  { transform: scale(1.08); }
+    38%  { transform: scale(1); }
+    78%  { opacity: 1; transform: scale(1); }
+    100% { opacity: 0; transform: scale(1.1) translateY(-14px); }
+  }
 
   #overlay {
     position: fixed; inset: 0; background: rgba(0,0,0,0.55);
@@ -422,6 +430,8 @@ let settleTimer = 0;
 let impactTime = -99999; // 마지막 착지 시각 — 탑 전체가 살짝 짜부됐다 펴지는 연출용
 let shakeTime = -99999;  // 마지막 착지 시각 — 화면 흔들림 연출용
 let dustParticles = [];  // 착지 순간 터지는 먼지 파티클 { x, y, vx, vy, born }
+let floorPopups = [];    // "+1층" 떠오르는 텍스트 { x, y, born }
+let milestoneBurst = []; // 마일스톤 순간 화면에 확 터지는 색종이 파티클 { x, y, vx, vy, born, color }
 
 // ---------- 구름 ----------
 // [원리] 구름을 "카메라를 따라가지 않는, 게임 세계에 고정된 위치"에 심어둔다.
@@ -1070,15 +1080,22 @@ function checkGameOver() {
   return false;
 }
 
-// [마일스톤] 5층마다 화면 중앙에 잠깐 뜨는 달성 표시(천국 도착 층수와 겹치면 안 띄움,
-// 그쪽은 showEnding()이 따로 더 크게 축하해줌).
+// [마일스톤] 5층마다 화면 중앙에 확 띄는 달성 표시(천국 도착 층수와 겹치면 안 띄움,
+// 그쪽은 showEnding()이 따로 더 크게 축하해줌). 텍스트 펑 튀는 애니메이션 + 화면 전체
+// 살짝 밝아지는 플래시 + 색종이 파티클까지 같이 터뜨려서 눈에 확 띄게 함.
 let milestoneTimer = null;
+let milestoneFlashUntil = 0;
 function showMilestone(floor) {
   const el = document.getElementById('milestone');
-  el.textContent = `🎉 ${floor}층!`;
+  el.textContent = `🎉 ${floor}층 돌파!`;
+  el.classList.remove('show');
+  void el.offsetWidth; // 리플로우 강제 — 연속으로 5층씩 찍어도 애니메이션이 매번 처음부터 다시 재생되게
   el.classList.add('show');
   if (milestoneTimer) clearTimeout(milestoneTimer);
-  milestoneTimer = setTimeout(() => { el.classList.remove('show'); }, 1100);
+  milestoneTimer = setTimeout(() => { el.classList.remove('show'); }, 1300);
+  milestoneFlashUntil = performance.now() + 350;
+  shakeTime = performance.now(); // 착지 흔들림과 같은 효과를 재사용해서 한 번 더 텅 하는 느낌
+  spawnMilestoneBurst();
 }
 
 function endGame() {
@@ -1161,6 +1178,7 @@ function finalizeSettle(body) {
   floorCount++;
   document.getElementById('floorCounter').textContent = floorCount + '층';
   towerTopY = body.bounds.min.y;
+  spawnFloorPopup(body.position.x, body.bounds.min.y); // 닿은 그 자리에서 "+1층" 떠오름
 
   if (floorCount >= HEAVEN_FLOOR) {
     showEnding();
@@ -1198,6 +1216,33 @@ function spawnDustBurst(x, y) {
     });
   }
   if (dustParticles.length > 90) dustParticles.splice(0, dustParticles.length - 90);
+}
+
+// "+1층" — 블록이 닿는 그 자리에서 떠오르며 사라지는 텍스트. 한 층 한 층 쌓일 때마다
+// 바로 그 자리에서 터져야 박진감이 사니까, 정착이 "확정"되는 순간(finalizeSettle)에
+// 그 블록의 착지 지점에서 스폰한다.
+function spawnFloorPopup(x, y) {
+  floorPopups.push({ x, y, born: performance.now() });
+  if (floorPopups.length > 20) floorPopups.splice(0, floorPopups.length - 20);
+}
+
+// 마일스톤(5층마다) 순간 화면 중앙에서 사방으로 터지는 색종이 파티클
+function spawnMilestoneBurst() {
+  const colors = ['#ffd166', '#ff6b6b', '#4dd4ac', '#6ea8ff', '#ff9ecf'];
+  const cx = GAME_W / 2, cy = GAME_H * 0.32;
+  const n = 26;
+  for (let i = 0; i < n; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 2 + Math.random() * 3.5;
+    milestoneBurst.push({
+      x: cx, y: cy,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      born: performance.now(),
+      color: colors[Math.floor(Math.random() * colors.length)],
+      size: 4 + Math.random() * 4
+    });
+  }
 }
 
 function playThudSound() {
@@ -1697,6 +1742,52 @@ function render() {
     ctx.arc(px, py - cameraY, p.r * (1 - t * 0.35), 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
+    ctx.restore();
+  }
+
+  // "+1층" — 블록이 닿은 자리에서 위로 떠오르며 사라짐(박진감용, 매층마다)
+  const FLOOR_POPUP_LIFE = 750;
+  floorPopups = floorPopups.filter(p => now2 - p.born < FLOOR_POPUP_LIFE);
+  for (const p of floorPopups) {
+    const t = (now2 - p.born) / FLOOR_POPUP_LIFE;
+    const py = p.y - t * 50 - cameraY; // 위로 떠오름
+    const scale = 1 + Math.sin(t * Math.PI) * 0.15; // 살짝 통통 튀는 느낌
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, 1 - t * t);
+    ctx.translate(p.x, py);
+    ctx.scale(scale, scale);
+    ctx.font = 'bold 24px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#ffe066';
+    ctx.strokeStyle = 'rgba(90,60,0,0.6)';
+    ctx.lineWidth = 4;
+    ctx.strokeText('+1층', 0, 0);
+    ctx.fillText('+1층', 0, 0);
+    ctx.restore();
+  }
+
+  // 마일스톤 색종이 파티클
+  const MILESTONE_BURST_LIFE = 900;
+  milestoneBurst = milestoneBurst.filter(p => now2 - p.born < MILESTONE_BURST_LIFE);
+  for (const p of milestoneBurst) {
+    const t = (now2 - p.born) / MILESTONE_BURST_LIFE;
+    const px = p.x + p.vx * (now2 - p.born) * 0.05;
+    const py = p.y + p.vy * (now2 - p.born) * 0.05 + t * t * 40;
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, 1 - t);
+    ctx.translate(px, py);
+    ctx.rotate(t * 8);
+    ctx.fillStyle = p.color;
+    ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+    ctx.restore();
+  }
+  // 마일스톤 화면 플래시
+  if (now2 < milestoneFlashUntil) {
+    const ft = 1 - (milestoneFlashUntil - now2) / 350;
+    ctx.save();
+    ctx.globalAlpha = (1 - ft) * 0.35;
+    ctx.fillStyle = '#fff3c4';
+    ctx.fillRect(0, 0, GAME_W, GAME_H);
     ctx.restore();
   }
 
