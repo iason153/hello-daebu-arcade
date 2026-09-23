@@ -65,8 +65,8 @@
     position: fixed; top: 26%; left: 0; right: 0; text-align: center;
     pointer-events: none; z-index: 15; opacity: 0;
     font-size: 44px; font-weight: 900; color: #fff;
-    -webkit-text-stroke: 2px rgba(120,70,0,0.6);
-    text-shadow: 0 0 22px rgba(255,214,110,1), 0 0 44px rgba(255,180,60,0.7), 0 3px 6px rgba(0,0,0,0.5);
+    -webkit-text-stroke: 2.5px rgba(70,40,10,0.85);
+    text-shadow: 0 0 22px rgba(255,214,110,1), 0 0 44px rgba(255,180,60,0.7), 0 3px 8px rgba(0,0,0,0.7);
   }
   #milestone.show { animation: milestonePop 1.3s cubic-bezier(0.22, 1.4, 0.36, 1) forwards; }
   @keyframes milestonePop {
@@ -1021,6 +1021,18 @@ function unlockAudioOnFirstInput() {
 }
 window.addEventListener('pointerdown', unlockAudioOnFirstInput);
 
+// [탭 비활성화 대응] 다른 탭으로 전환하거나 화면을 꺼도 배경음악이 계속 재생되던
+// 문제 — visibilitychange로 감지해서 숨겨지면 일시정지, 돌아오면 다시 재생.
+document.addEventListener('visibilitychange', () => {
+  if (currentBgmIndex < 0) return;
+  const bgm = bgmAudios[currentBgmIndex];
+  if (document.hidden) {
+    bgm.pause();
+  } else if (SOUND_ENABLED) {
+    bgm.play().catch(() => {});
+  }
+});
+
 // ---------- 천둥 효과음(녹음 파일) ----------
 const thunderSoundSrc = new Audio('assets/sfx/thunder.mp3');
 thunderSoundSrc.volume = 0.75;
@@ -1108,9 +1120,18 @@ function checkGameOver() {
   return false;
 }
 
-// [마일스톤] 5층마다 화면 중앙에 확 띄는 달성 표시(천국 도착 층수와 겹치면 안 띄움,
-// 그쪽은 showEnding()이 따로 더 크게 축하해줌). 텍스트 펑 튀는 애니메이션 + 화면 전체
-// 살짝 밝아지는 플래시 + 색종이 파티클까지 같이 터뜨려서 눈에 확 띄게 함.
+// [마일스톤] 층수 오를수록 간격을 넓힘 — 초반엔 5층마다(자주 성취감), 30층부터는
+// 10층마다, 60층부터는 20층마다로 줄여서 후반에 너무 자주 터져서 성가신 걸 방지.
+// (천국 도착 층수와 겹치면 안 띄움, 그쪽은 showEnding()이 따로 더 크게 축하해줌)
+function isMilestoneFloor(floor) {
+  if (floor <= 0) return false;
+  if (floor < 30) return floor % 5 === 0;
+  if (floor < 60) return floor % 10 === 0;
+  return floor % 20 === 0;
+}
+
+// 텍스트 펑 튀는 애니메이션 + 화면 전체 살짝 밝아지는 플래시 + 색종이 파티클까지
+// 같이 터뜨려서 눈에 확 띄게 함.
 let milestoneTimer = null;
 let milestoneFlashUntil = 0;
 function showMilestone(floor) {
@@ -1218,7 +1239,7 @@ function finalizeSettle(body) {
     showEnding();
     return;
   }
-  if (floorCount % 5 === 0) {
+  if (isMilestoneFloor(floorCount)) {
     showMilestone(floorCount);
   }
   if (checkGameOver()) {
@@ -1815,10 +1836,15 @@ function render() {
     ctx.scale(scale, scale);
     ctx.font = 'bold 24px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillStyle = '#ffe066';
-    ctx.strokeStyle = 'rgba(90,60,0,0.6)';
-    ctx.lineWidth = 4;
+    // [가독성 수정] 노란 글씨였는데 100층 근처 황금빛 하늘이랑 색이 비슷해서 묻힘 —
+    // 흰색 채우기 + 두꺼운 진한 테두리 + 그림자로 바꿔서 어떤 하늘색 위에서도 잘 보이게.
+    ctx.shadowColor = 'rgba(0,0,0,0.45)';
+    ctx.shadowBlur = 6;
+    ctx.fillStyle = '#ffffff';
+    ctx.strokeStyle = 'rgba(40,30,10,0.85)';
+    ctx.lineWidth = 5;
     ctx.strokeText('+1층', 0, 0);
+    ctx.shadowBlur = 0; // 채우기엔 그림자 중복 안 되게(테두리에서만 살짝)
     ctx.fillText('+1층', 0, 0);
     ctx.restore();
   }
