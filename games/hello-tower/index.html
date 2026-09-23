@@ -42,6 +42,16 @@
     pointer-events: none; z-index: 10; transition: opacity 0.4s; opacity: 0;
   }
 
+  #milestone {
+    position: fixed; top: 28%; left: 0; right: 0; text-align: center;
+    pointer-events: none; z-index: 15; opacity: 0;
+    font-size: 34px; font-weight: 900; color: #fff;
+    text-shadow: 0 0 14px rgba(255,214,110,0.9), 0 2px 6px rgba(0,0,0,0.5);
+    transition: opacity 0.35s ease, transform 0.35s ease;
+    transform: scale(0.85) translateY(6px);
+  }
+  #milestone.show { opacity: 1; transform: scale(1) translateY(0); }
+
   #overlay {
     position: fixed; inset: 0; background: rgba(0,0,0,0.55);
     display: none; align-items: center; justify-content: center; flex-direction: column;
@@ -72,6 +82,7 @@
   <button id="devBtn" style="display:none;">⚙</button>
 </div>
 <div id="hint">화면을 탭해서 조각을 떨어뜨리세요</div>
+<div id="milestone"></div>
 
 <div id="overlay">
   <h1 id="overlayTitle">타워가 무너졌어요!</h1>
@@ -871,7 +882,7 @@ const BLOCK_SOUND_PATHS = {
 const BLOCK_SOUND_SRC = {};
 Object.keys(BLOCK_SOUND_PATHS).forEach(key => {
   const a = new Audio(BLOCK_SOUND_PATHS[key]);
-  a.volume = 0.6;
+  a.volume = 0.85;
   BLOCK_SOUND_SRC[key] = a;
 });
 let pendulumSoundTimer = null;
@@ -883,7 +894,7 @@ function playBlockCuteSound(type) {
   if (!src) return;
   try {
     const clip = src.cloneNode();
-    clip.volume = 0.6;
+    clip.volume = 0.85;
     clip.play().catch(() => {});
   } catch (e) { /* 무시 */ }
 }
@@ -932,7 +943,7 @@ const bgmAudios = BGM_STAGES.map(s => {
   return a;
 });
 let currentBgmIndex = -1;
-const BGM_TARGET_VOLUME = 0.35;
+const BGM_TARGET_VOLUME = 0.16; // 0.35 → 0.16, 귀여운 소리가 포인트니까 배경음은 확실히 낮춤
 const BGM_FADE_MS = 1400;
 
 function bgmIndexForFloor(floor) {
@@ -1059,6 +1070,17 @@ function checkGameOver() {
   return false;
 }
 
+// [마일스톤] 5층마다 화면 중앙에 잠깐 뜨는 달성 표시(천국 도착 층수와 겹치면 안 띄움,
+// 그쪽은 showEnding()이 따로 더 크게 축하해줌).
+let milestoneTimer = null;
+function showMilestone(floor) {
+  const el = document.getElementById('milestone');
+  el.textContent = `🎉 ${floor}층!`;
+  el.classList.add('show');
+  if (milestoneTimer) clearTimeout(milestoneTimer);
+  milestoneTimer = setTimeout(() => { el.classList.remove('show'); }, 1100);
+}
+
 function endGame() {
   state = 'gameover';
   stopPendulumSound();
@@ -1143,6 +1165,9 @@ function finalizeSettle(body) {
   if (floorCount >= HEAVEN_FLOOR) {
     showEnding();
     return;
+  }
+  if (floorCount % 5 === 0) {
+    showMilestone(floorCount);
   }
   if (checkGameOver()) {
     endGame();
@@ -1293,7 +1318,12 @@ function settlePiece(body) {
   body.landTime = now; // 이 블록만 잠깐 impact(찌푸림) 표정으로
   setTimeout(() => { body.landTime = 0; }, IMPACT_FACE_DURATION + 40); // 확실하게 되돌리는 안전장치
   shakeTime = now;
-  spawnDustBurst(body.position.x, body.bounds.max.y);
+  // 먼지를 블록 정중앙이 아니라 좌우 모서리 쪽에 띄워서(캐릭터 얼굴에 안 가리고)
+  // 더 잘 보이게 함 — 매번 왼쪽/오른쪽 중 무작위로.
+  const dustSide = Math.random() < 0.5 ? -1 : 1;
+  const halfW = (body.bounds.max.x - body.bounds.min.x) / 2;
+  const dustX = body.position.x + dustSide * halfW * 0.9;
+  spawnDustBurst(dustX, body.bounds.max.y);
   stopDropSound(); // 떨어지는 소리는 닿는 순간 바로 끊고
   playThudClip();  // 그 자리에서 "쿵" 소리로 넘어감
 
