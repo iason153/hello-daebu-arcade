@@ -20,16 +20,20 @@
 
   #loadingOverlay {
     position: fixed; inset: 0; z-index: 999;
-    background: linear-gradient(#8fd3f4, #c9f0ff);
-    display: flex; align-items: center; justify-content: center;
+    background-color: #8fd3f4;
+    background-image: url('assets/bg/thumbnail.jpg');
+    background-size: cover; background-position: center;
+    display: flex; align-items: flex-end; justify-content: center;
+    padding-bottom: 12%; box-sizing: border-box;
     transition: opacity 0.4s ease;
   }
   #loadingOverlay.hidden { opacity: 0; pointer-events: none; }
   #loadingSpinner {
-    width: 40px; height: 40px; border-radius: 50%;
-    border: 5px solid rgba(255,255,255,0.55);
+    width: 34px; height: 34px; border-radius: 50%;
+    border: 5px solid rgba(255,255,255,0.45);
     border-top-color: #fff;
     animation: loadingSpin 0.8s linear infinite;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
   }
   @keyframes loadingSpin { to { transform: rotate(360deg); } }
 
@@ -1203,7 +1207,7 @@ function finalizeSettle(body) {
   document.getElementById('floorCounter').textContent = floorCount + '층';
   towerTopY = body.bounds.min.y;
   spawnFloorPopup(body.position.x, body.bounds.min.y); // 닿은 그 자리에서 "+1층" 떠오름
-  if (Math.random() < 0.16) { // 매층은 아니고 가끔만 — 16% 확률
+  if (Math.random() < 0.3) { // 16% → 30%, 지루하지 않게 더 자주
     spawnWhisper(body.position.x, body.bounds.min.y - 26); // +1층 문구랑 안 겹치게 살짝 위에서
   }
 
@@ -1816,8 +1820,8 @@ function render() {
     ctx.restore();
   }
 
-  // 블록들의 속삭임 — 말풍선 스타일로 좀 더 천천히, 오래 보이게
-  const WHISPER_LIFE = 2000;
+  // 블록들의 속삭임 — 말풍선 스타일로 좀 더 천천히, 오래 보이게(크기도 확실히 키움)
+  const WHISPER_LIFE = 2300;
   whisperPopups = whisperPopups.filter(p => now2 - p.born < WHISPER_LIFE);
   for (const p of whisperPopups) {
     const t = (now2 - p.born) / WHISPER_LIFE;
@@ -1826,17 +1830,17 @@ function render() {
     const alpha = t < 0.15 ? t / 0.15 : (t > 0.8 ? Math.max(0, (1 - t) / 0.2) : 1);
     ctx.save();
     ctx.globalAlpha = alpha;
-    ctx.font = '600 15px sans-serif';
+    ctx.font = '700 22px sans-serif'; // 15px → 22px, 훨씬 잘 보이게
     ctx.textAlign = 'center';
     const textW = ctx.measureText(p.text).width;
-    const padX = 12, padY = 8;
-    const bw = textW + padX * 2, bh = 15 + padY * 2;
+    const padX = 18, padY = 13;
+    const bw = textW + padX * 2, bh = 22 + padY * 2;
     // 말풍선 배경
-    ctx.fillStyle = 'rgba(255,255,255,0.92)';
-    ctx.strokeStyle = 'rgba(80,80,90,0.5)';
-    ctx.lineWidth = 1.2;
-    const bx = p.x - bw / 2, by = py - bh - 10;
-    const r = 9;
+    ctx.fillStyle = 'rgba(255,255,255,0.95)';
+    ctx.strokeStyle = 'rgba(80,80,90,0.55)';
+    ctx.lineWidth = 1.6;
+    const bx = p.x - bw / 2, by = py - bh - 14;
+    const r = 12;
     ctx.beginPath();
     ctx.moveTo(bx + r, by);
     ctx.arcTo(bx + bw, by, bx + bw, by + bh, r);
@@ -1848,15 +1852,15 @@ function render() {
     ctx.stroke();
     // 꼬리
     ctx.beginPath();
-    ctx.moveTo(p.x - 6, by + bh);
-    ctx.lineTo(p.x + 6, by + bh);
-    ctx.lineTo(p.x, by + bh + 8);
+    ctx.moveTo(p.x - 9, by + bh);
+    ctx.lineTo(p.x + 9, by + bh);
+    ctx.lineTo(p.x, by + bh + 12);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
     // 텍스트
     ctx.fillStyle = '#3a3a3a';
-    ctx.fillText(p.text, p.x, by + bh / 2 + 5);
+    ctx.fillText(p.text, p.x, by + bh / 2 + 7);
     ctx.restore();
   }
 
