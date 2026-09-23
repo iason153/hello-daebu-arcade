@@ -92,6 +92,11 @@
     font-size: 17px; font-weight: 800; color: #333; box-shadow: 0 4px 0 #cc9900;
   }
   #overlay button:active { transform: translateY(2px); box-shadow: 0 2px 0 #cc9900; }
+  #overlay #shareBtn {
+    background: #2a2f45; color: #fff; font-size: 14px; padding: 10px 28px;
+    box-shadow: 0 4px 0 #14172488; margin-top: 4px;
+  }
+  #overlay #shareBtn:active { box-shadow: 0 2px 0 #14172488; }
   #overlay.ending {
     background: radial-gradient(circle, rgba(255,236,168,0.5), rgba(120,70,20,0.75));
   }
@@ -152,6 +157,7 @@
   <h1 id="overlayTitle">타워가 무너졌어요!</h1>
   <div class="finalFloor" id="finalFloorNum">0층</div>
   <button id="retryBtn">다시 하기</button>
+  <button id="shareBtn">📤 친구에게 자랑하기!</button>
   <div id="rankPanel">
     <div class="rankPanelLabel">🏆 이벤트 랭킹 등록</div>
     <input id="rankNickname" placeholder="닉네임" maxlength="12">
@@ -163,8 +169,18 @@
   <a class="overlayLink" href="../../index.html">🏠 오락실로 돌아가기</a>
 </div>
 
+<script src="https://t1.kakaocdn.net/kakao_js_sdk/2.8.1/kakao.min.js" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
 <script>
+// 카카오톡 공유용 SDK 초기화 — 헬로런/헬로버드랑 같은 daebugame.com 앱 키 그대로 재사용
+try {
+  if (window.Kakao && !window.Kakao.isInitialized()) {
+    window.Kakao.init('3994a3bda3b8146e709683fdb350c9cc');
+  }
+} catch (e) {
+  console.warn('[헬로타워] Kakao 초기화 실패:', e);
+}
+
 /* =========================================================================
    헬로타워 — 물리 기반 균형쌓기 게임
    진행 상태(2026-09-20 세션): Matter.js 세팅 + 9종 캐릭터 물리 바디 정의
@@ -1165,6 +1181,204 @@ document.getElementById('retryBtn').addEventListener('click', () => {
   });
 })();
 
+// ---------- 카카오톡 공유("친구에게 자랑하기") ----------
+// 헬로런과 같은 방식(결과 카드 이미지를 캔버스로 만들어서 카카오톡 피드 템플릿의
+// imageUrl로 올림) — 전용 배경/캐릭터 그림은 없어서, 배경은 지금 게임 화면을 흐리게
+// 찍은 걸로, 캐릭터는 표정 있는 8종 블록 중 랜덤으로 대신함.
+function roundRectPath(c, x, y, w, h, r) {
+  c.beginPath();
+  c.moveTo(x + r, y);
+  c.arcTo(x + w, y, x + w, y + h, r);
+  c.arcTo(x + w, y + h, x, y + h, r);
+  c.arcTo(x, y + h, x, y, r);
+  c.arcTo(x, y, x + w, y, r);
+  c.closePath();
+}
+function pickRandomShareChar() {
+  const keys = Object.keys(BLOCK_SOUND_SRC); // 표정 있는 8종만(사운드 있는 것과 동일한 목록)
+  const key = keys[Math.floor(Math.random() * keys.length)];
+  return sprites[key];
+}
+function buildShareCard() {
+  const cw = 640, ch = 800;
+  const sc = document.createElement('canvas');
+  sc.width = cw; sc.height = ch;
+  const sctx = sc.getContext('2d');
+
+  const cardR = 28;
+  roundRectPath(sctx, 0, 0, cw, ch, cardR);
+  sctx.save();
+  sctx.clip();
+
+  // 전용 카드 배경이 없어서, 지금 게임 화면을 블러+어둡게 찍어서 배경으로 사용
+  sctx.filter = 'blur(14px) brightness(0.55) saturate(1.15)';
+  sctx.drawImage(canvas, 0, 0, cw, ch);
+  sctx.filter = 'none';
+  sctx.fillStyle = 'rgba(20,20,40,0.35)';
+  sctx.fillRect(0, 0, cw, ch);
+
+  sctx.textAlign = 'center';
+
+  // 큰 층수 숫자 — 황금빛 글로우
+  sctx.save();
+  sctx.shadowColor = 'rgba(255,190,60,0.9)';
+  sctx.shadowBlur = 30;
+  sctx.font = '900 100px sans-serif';
+  sctx.lineWidth = 8;
+  sctx.strokeStyle = '#ffffff';
+  sctx.strokeText(floorCount + '층', cw / 2, 245);
+  sctx.fillStyle = '#ff9d1f';
+  sctx.fillText(floorCount + '층', cw / 2, 245);
+  sctx.restore();
+
+  sctx.font = '600 21px sans-serif';
+  sctx.fillStyle = '#fff6e0';
+  sctx.fillText('🗼 헬로타워 · 대부도 오락실', cw / 2, 305);
+
+  // 캐릭터 — 표정 있는 블록 중 랜덤
+  const charImg = pickRandomShareChar();
+  if (charImg && charImg.complete && charImg.naturalWidth) {
+    const cs = 246;
+    const ar = charImg.naturalWidth / charImg.naturalHeight;
+    const dw = ar >= 1 ? cs : cs * ar, dh = ar >= 1 ? cs / ar : cs;
+    sctx.drawImage(charImg, cw / 2 - dw / 2, 511 - dh / 2, dw, dh);
+  }
+
+  // 하단 CTA
+  const ctaText = '👉  daebugame.com 놀러가기';
+  sctx.font = '800 26px sans-serif';
+  const ctaW = Math.min(cw - 48, sctx.measureText(ctaText).width + 60);
+  const ctaY = 706, ctaH = 56;
+  sctx.save();
+  roundRectPath(sctx, cw / 2 - ctaW / 2 - 5, ctaY - 5, ctaW + 10, ctaH + 10, (ctaH + 10) / 2);
+  sctx.fillStyle = 'rgba(255,255,255,0.35)';
+  sctx.fill();
+  roundRectPath(sctx, cw / 2 - ctaW / 2, ctaY, ctaW, ctaH, ctaH / 2);
+  sctx.shadowColor = 'rgba(0,0,0,0.4)';
+  sctx.shadowBlur = 14;
+  sctx.shadowOffsetY = 4;
+  sctx.fillStyle = '#ffc857';
+  sctx.fill();
+  sctx.restore();
+  sctx.fillStyle = '#2a1c00';
+  sctx.fillText(ctaText, cw / 2, ctaY + ctaH / 2 + 9);
+
+  sctx.restore(); // 클리핑 해제
+
+  roundRectPath(sctx, 2, 2, cw - 4, ch - 4, cardR);
+  sctx.lineWidth = 4;
+  sctx.strokeStyle = 'rgba(255,200,87,0.55)';
+  sctx.stroke();
+
+  return sc;
+}
+function blobToBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+function showToast(msg) {
+  let t = document.getElementById('toastMsg');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'toastMsg';
+    t.style.cssText = 'position:fixed;left:50%;bottom:46%;transform:translateX(-50%);z-index:200;background:rgba(0,0,0,0.88);color:#fff;padding:11px 20px;border-radius:999px;font-size:13px;font-family:sans-serif;font-weight:bold;box-shadow:0 4px 14px rgba(0,0,0,0.45);opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap;max-width:88vw;overflow:hidden;text-overflow:ellipsis;';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.opacity = '1';
+  clearTimeout(t._hideTimer);
+  t._hideTimer = setTimeout(() => { t.style.opacity = '0'; }, 2500);
+}
+function setShareBtnLoading(loading) {
+  const btn = document.getElementById('shareBtn');
+  if (loading) {
+    btn.dataset.origText = btn.dataset.origText || btn.textContent;
+    btn.textContent = '⏳ 카드 만드는 중...';
+    btn.disabled = true;
+    btn.style.opacity = '0.7';
+  } else {
+    btn.textContent = btn.dataset.origText || '📤 친구에게 자랑하기!';
+    btn.disabled = false;
+    btn.style.opacity = '1';
+  }
+}
+async function shareCard() {
+  setShareBtnLoading(true);
+  const sc = buildShareCard();
+  sc.toBlob(async (blob) => {
+    if (!blob) {
+      setShareBtnLoading(false);
+      showToast('카드 생성에 실패했어요 😢 다시 시도해주세요');
+      return;
+    }
+    try {
+      if (window.Kakao && window.Kakao.isInitialized && window.Kakao.isInitialized()) {
+        try {
+          const base64 = await blobToBase64(blob);
+          const uploadRes = await fetch('/api/kakao-upload', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ imageBase64: base64 }),
+          });
+          if (uploadRes.ok) {
+            const { url } = await uploadRes.json();
+            window.Kakao.Share.sendDefault({
+              objectType: 'feed',
+              content: {
+                title: '헬로타워에서 ' + floorCount + '층 쌓았어요!',
+                description: '대부도 캐릭터 균형쌓기 게임 · daebugame.com',
+                imageUrl: url,
+                link: { mobileWebUrl: 'https://daebugame.com', webUrl: 'https://daebugame.com' },
+              },
+              buttons: [{ title: '나도 도전하기', link: { mobileWebUrl: 'https://daebugame.com', webUrl: 'https://daebugame.com' } }],
+            });
+            showToast('카카오톡 공유창을 열었어요! 📤');
+            return;
+          }
+        } catch (e) { /* 아래 기본 공유 흐름으로 폴백 */ }
+      }
+      const file = new File([blob], 'hello-tower-' + floorCount + 'f.png', { type: 'image/png' });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({ files: [file], title: '헬로타워 ' + floorCount + '층', text: '헬로타워에서 ' + floorCount + '층 쌓았어요! daebugame.com' });
+          showToast('공유했어요! 🎉');
+          return;
+        } catch (e) {
+          if (e && e.name === 'AbortError') { return; }
+        }
+      }
+      // claude.ai 아트팩트 미리보기에서 테스트할 때만 필요한 경로(실제 배포本에서는
+      // 아래 <a download>가 바로 먹혀서 이 분기는 그냥 안 타고 지나감)
+      try {
+        if (window.claude && window.claude.use) {
+          const downloads = await window.claude.use('downloads');
+          if (downloads) {
+            await downloads.save({ filename: 'hello-tower-' + floorCount + 'f.png', data: blob });
+            showToast('이미지로 저장했어요! 📥');
+            return;
+          }
+        }
+      } catch (e) { /* 무시 */ }
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'hello-tower-' + floorCount + 'f.png';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+      showToast('이미지로 저장했어요! 📥');
+    } finally {
+      setShareBtnLoading(false);
+    }
+  }, 'image/png');
+}
+document.getElementById('shareBtn').addEventListener('click', (e) => {
+  e.stopPropagation();
+  shareCard();
+});
+
 // [디버그 전용] 실제로 안 쌓고도 높은 층수의 하늘 단계를 미리 볼 수 있게, 층수와
 // 그에 맞는 카메라 높이를 한 번에 강제로 건너뛰는 버튼. 물리 탑은 그대로 두고
 // towerTopY/floorCount만 옮겨서 카메라가 그 높이까지 따라 올라가게 함.
@@ -1941,7 +2155,14 @@ function render() {
     ctx.fillStyle = 'rgba(255,255,255,0.95)';
     ctx.strokeStyle = 'rgba(80,80,90,0.55)';
     ctx.lineWidth = 1.6;
-    const bx = p.x - bw / 2, by = py - bh - 14;
+    // [수정] 예전엔 블록 위치(p.x)를 중심으로만 그려서, 문장이 길면 말풍선 좌우 끝이
+    // 화면 밖으로 나갔음. 이제 말풍선 자체의 좌우 끝이 화면 안(여백 6px)에 들어오게
+    // bx를 직접 조정 — 텍스트와 꼬리도 그 조정된 위치 기준으로 맞춤.
+    const margin = 6;
+    let bx = p.x - bw / 2;
+    bx = Math.max(margin, Math.min(GAME_W - bw - margin, bx));
+    const by = py - bh - 14;
+    const bubbleCenterX = bx + bw / 2;
     const r = 12;
     ctx.beginPath();
     ctx.moveTo(bx + r, by);
@@ -1952,17 +2173,19 @@ function render() {
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
-    // 꼬리
+    // 꼬리 — 말풍선이 옆으로 밀렸어도 실제 블록(p.x) 쪽을 최대한 가리키되, 말풍선
+    // 폭 안(가장자리에서 14px 이상 안쪽)으로 눌러서 어색하게 삐져나가지 않게 함
+    const tailX = Math.max(bx + 14, Math.min(bx + bw - 14, p.x));
     ctx.beginPath();
-    ctx.moveTo(p.x - 9, by + bh);
-    ctx.lineTo(p.x + 9, by + bh);
-    ctx.lineTo(p.x, by + bh + 12);
+    ctx.moveTo(tailX - 9, by + bh);
+    ctx.lineTo(tailX + 9, by + bh);
+    ctx.lineTo(tailX, by + bh + 12);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
-    // 텍스트
+    // 텍스트 — 말풍선의 실제 중심(bubbleCenterX) 기준으로
     ctx.fillStyle = '#3a3a3a';
-    ctx.fillText(p.text, p.x, by + bh / 2 + 7);
+    ctx.fillText(p.text, bubbleCenterX, by + bh / 2 + 7);
     ctx.restore();
   }
 
