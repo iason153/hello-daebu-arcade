@@ -18,6 +18,21 @@
     transform: translate(-50%, -50%);
   }
 
+  #loadingOverlay {
+    position: fixed; inset: 0; z-index: 999;
+    background: linear-gradient(#8fd3f4, #c9f0ff);
+    display: flex; align-items: center; justify-content: center;
+    transition: opacity 0.4s ease;
+  }
+  #loadingOverlay.hidden { opacity: 0; pointer-events: none; }
+  #loadingSpinner {
+    width: 40px; height: 40px; border-radius: 50%;
+    border: 5px solid rgba(255,255,255,0.55);
+    border-top-color: #fff;
+    animation: loadingSpin 0.8s linear infinite;
+  }
+  @keyframes loadingSpin { to { transform: rotate(360deg); } }
+
   #hud {
     position: fixed; top: 0; left: 0; right: 0;
     display: flex; justify-content: space-between; align-items: flex-start;
@@ -83,6 +98,10 @@
 <body>
 
 <canvas id="gameCanvas"></canvas>
+
+<div id="loadingOverlay">
+  <div id="loadingSpinner"></div>
+</div>
 
 <div id="hud">
   <div id="floorCounter">0층</div>
@@ -318,13 +337,19 @@ platformImg.onload = () => {
 };
 
 // ---------- 층수 구간별 난이도 단계 ----------
-// 15/30/50층을 기준으로 마찰(관대함)이 단계적으로 줄고, 넘어짐 판정 각도도 같이
-// 빡빡해진다. 숫자만 바꾸면 구간을 조정할 수 있게 표로 정리해둠.
+// [배포용 재조정] 테스트 때는 50층 이후로 더 안 어려워지게 방치돼 있었는데,
+// 이제 "신의 영역"(엔딩)이 훨씬 높은 층수라 그때까지 계속 조금씩 더 빡빡해지게
+// 재설계함. 초반(~20층)은 그대로 관대하게 둬서 진입장벽은 낮게, 후반으로 갈수록
+// 점점 어려워져서 끝까지 가는 건 실력+운이 다 따라야 하는 수준으로.
 const DIFFICULTY_STAGES = [
-  { floor: 0,  frictionMul: 1.0,  tiltDeg: 32 },
-  { floor: 15, frictionMul: 0.85, tiltDeg: 28 },
-  { floor: 30, frictionMul: 0.7,  tiltDeg: 24 },
-  { floor: 50, frictionMul: 0.55, tiltDeg: 20 },
+  { floor: 0,   frictionMul: 1.0,  tiltDeg: 32 },
+  { floor: 20,  frictionMul: 0.88, tiltDeg: 29 },
+  { floor: 40,  frictionMul: 0.76, tiltDeg: 26 },
+  { floor: 65,  frictionMul: 0.64, tiltDeg: 23 },
+  { floor: 90,  frictionMul: 0.54, tiltDeg: 20 },
+  { floor: 115, frictionMul: 0.46, tiltDeg: 18 },
+  { floor: 140, frictionMul: 0.40, tiltDeg: 16 },
+  { floor: 165, frictionMul: 0.35, tiltDeg: 14 },
 ];
 function difficultyStage(floor) {
   let stage = DIFFICULTY_STAGES[0];
@@ -399,11 +424,11 @@ const SHAPE_TIER_HARD = ['hello', 'conch', 'mini', 'pillar']; // 폭 40~90 — �
 
 function pickRandomType() {
   let pool;
-  if (floorCount < 8) {
+  if (floorCount < 15) {
     pool = SHAPE_TIER_EASY; // 초반: 쉬운 것만
-  } else if (floorCount < 18) {
+  } else if (floorCount < 35) {
     pool = SHAPE_TIER_EASY.concat(SHAPE_TIER_MEDIUM); // 중반: 보통 섞임
-  } else if (floorCount < 30) {
+  } else if (floorCount < 60) {
     pool = SHAPE_TIER_EASY.concat(SHAPE_TIER_MEDIUM, SHAPE_TIER_HARD); // 후반: 어려운 것도 섞임
   } else {
     pool = SHAPE_TIER_EASY.concat(SHAPE_TIER_MEDIUM, SHAPE_TIER_HARD, SHAPE_TIER_HARD); // 고층: 어려운 것 비중up
@@ -493,25 +518,25 @@ function drawClouds() {
 }
 
 // ---------- 하늘 단계(층수 기준) — 맑은 하늘 → 구름 위(대기권) → 성층권 → 우주 ----------
-// [테스트용 압축] 실제로는 훨씬 높은 층에서 벌어질 일이지만, 뒤로 갈수록 난이도가
-// 올라가서 직접 확인하기 어렵다는 피드백이라 전 구간을 5층 간격으로 확 압축함.
-// 0~5층: 맑은 하늘 / 5~10층: 구름층 근접 / 10~15층: 구름 위(대기권)
-// 15~20층: 대기 옅어짐 / 20~25층: 성층권 / 25~30층: 대기권 끝자락
-// 30~35층: 우주 진입 / 35층~: 완전한 우주
-const CLOUD_CEILING_FLOOR = 10; // 이 층수부터는 새 구름이 안 생김("구름 위"로 올라왔다는 뜻)
+// [배포용 스케일] 테스트 때는 5층 간격으로 압축해서 확인했었는데, 실제로는 그 4배
+// 층수에서 벌어지도록 되돌림 — "신의 영역"(엔딩)이 진짜 희귀한 도달점이 되도록.
+// 0~20층: 맑은 하늘 / 20~40층: 구름층 근접 / 40~60층: 구름 위(대기권)
+// 60~80층: 대기 옅어짐 / 80~100층: 성층권 / 100~120층: 대기권 끝자락
+// 120~140층: 우주 진입 / 140층~: 완전한 우주
+const CLOUD_CEILING_FLOOR = 40; // 이 층수부터는 새 구름이 안 생김("구름 위"로 올라왔다는 뜻)
 const SKY_STAGES = [
-  { floor: 0,  top: '#8fd3f4', bottom: '#c9f0ff' },  // 맑은 하늘
-  { floor: 5,  top: '#8fd3f4', bottom: '#eaf8ff' },  // 구름층 근접, 살짝 밝아짐
-  { floor: 10, top: '#cdeaff', bottom: '#f8fcff' },  // 구름 위(대기권), 뽀얗게 밝음
-  { floor: 15, top: '#9db8ec', bottom: '#dce8ff' },  // 대기 옅어지며 다시 파랗게
-  { floor: 20, top: '#4a63b8', bottom: '#a7bdea' },  // 성층권, 짙은 파랑
-  { floor: 25, top: '#1c2456', bottom: '#4a5698' },  // 대기권 끝자락, 어두워짐
-  { floor: 30, top: '#05071c', bottom: '#161c46' },  // 우주 진입
-  { floor: 35, top: '#000008', bottom: '#050512' },  // 완전한 우주
-  { floor: 40, top: '#3a2f6e', bottom: '#c98bd6' },  // 우주 너머 — 신비로운 보랏빛 여명(천국 예고)
-  { floor: 45, top: '#ffe9a8', bottom: '#fff6d5' },  // 천국 — 황금빛으로 가득한 하늘
+  { floor: 0,   top: '#8fd3f4', bottom: '#c9f0ff' },  // 맑은 하늘
+  { floor: 20,  top: '#8fd3f4', bottom: '#eaf8ff' },  // 구름층 근접, 살짝 밝아짐
+  { floor: 40,  top: '#cdeaff', bottom: '#f8fcff' },  // 구름 위(대기권), 뽀얗게 밝음
+  { floor: 60,  top: '#9db8ec', bottom: '#dce8ff' },  // 대기 옅어지며 다시 파랗게
+  { floor: 80,  top: '#4a63b8', bottom: '#a7bdea' },  // 성층권, 짙은 파랑
+  { floor: 100, top: '#1c2456', bottom: '#4a5698' },  // 대기권 끝자락, 어두워짐
+  { floor: 120, top: '#05071c', bottom: '#161c46' },  // 우주 진입
+  { floor: 140, top: '#000008', bottom: '#050512' },  // 완전한 우주
+  { floor: 160, top: '#3a2f6e', bottom: '#c98bd6' },  // 우주 너머 — 신비로운 보랏빛 여명(천국 예고)
+  { floor: 180, top: '#ffe9a8', bottom: '#fff6d5' },  // 천국 — 황금빛으로 가득한 하늘
 ];
-const HEAVEN_FLOOR = 45; // 이 층수에 도달하면 엔딩(신들의 환영)
+const HEAVEN_FLOOR = 180; // 이 층수에 도달하면 엔딩(신들의 환영) — 아주 드문 도달점
 
 function hexToRgb(hex) {
   const n = parseInt(hex.slice(1), 16);
@@ -546,8 +571,8 @@ function getSkyColors(floor) {
 // 구름과 똑같은 원리(세계 좌표 고정) — 일정 층수 이상부터 별을 계속 심고,
 // 낮은 층(대기권)에서는 알파를 0으로 둬서 안 보이게 했다가 층수가 오르면서
 // 서서히 나타나게(반짝임도 살짝) 한다.
-const STAR_START_FLOOR = 18;  // 이 층수부터 별이 옅게 보이기 시작
-const STAR_FULL_FLOOR = 30;   // 이 층수부터 완전히 선명하게 보임
+const STAR_START_FLOOR = 72;  // 이 층수부터 별이 옅게 보이기 시작
+const STAR_FULL_FLOOR = 120;  // 이 층수부터 완전히 선명하게 보임
 let stars = [];
 let highestStarSpawnedY = GROUND_Y;
 
@@ -590,9 +615,9 @@ function drawStars() {
 // 구름 위(대기권~성층권): 비행기 — 동체+날개 실루엣, 옅은 비행운 흔적.
 // 우주: 우주선 — 작은 캡슐형, 깜빡이는 불빛.
 // 셋 다 "세계 좌표 고정 + 가로로는 시간에 따라 계속 흘러가는" 같은 원리를 공유한다.
-const BIRD_MAX_FLOOR = 10;              // 새가 나오는 고도 범위(맑은 하늘)
-const PLANE_MIN_FLOOR = 10, PLANE_MAX_FLOOR = 25;  // 비행기 범위(구름 위~성층권)
-const SHIP_MIN_FLOOR = 25, SHIP_MAX_FLOOR = 45;    // 우주선 범위(우주)
+const BIRD_MAX_FLOOR = 40;               // 새가 나오는 고도 범위(맑은 하늘)
+const PLANE_MIN_FLOOR = 40, PLANE_MAX_FLOOR = 100;  // 비행기 범위(구름 위~성층권)
+const SHIP_MIN_FLOOR = 100, SHIP_MAX_FLOOR = 180;   // 우주선 범위(우주)
 
 let travelers = []; // { type:'bird'|'plane'|'ship', worldY, xOffset, speed, ... }
 let highestTravelerSpawnedY = GROUND_Y;
@@ -940,11 +965,11 @@ function playStormScream() {
 
 // ---------- 배경음악 — 하늘 단계(고도)에 맞춰 5곡을 자동으로 교체(크로스페이드) ----------
 const BGM_STAGES = [
-  { floor: 0,  src: 'assets/bgm/bg1.mp3' },
-  { floor: 10, src: 'assets/bgm/bg2.mp3' },
-  { floor: 20, src: 'assets/bgm/bg3.mp3' },
-  { floor: 30, src: 'assets/bgm/bg4.mp3' },
-  { floor: 40, src: 'assets/bgm/bg5.mp3' },
+  { floor: 0,   src: 'assets/bgm/bg1.mp3' },
+  { floor: 40,  src: 'assets/bgm/bg2.mp3' },
+  { floor: 80,  src: 'assets/bgm/bg3.mp3' },
+  { floor: 120, src: 'assets/bgm/bg4.mp3' },
+  { floor: 160, src: 'assets/bgm/bg5.mp3' },
 ];
 const bgmAudios = BGM_STAGES.map(s => {
   const a = new Audio(s.src);
@@ -1888,15 +1913,52 @@ function render() {
   }
 }
 
-// [최초 시작 연출] 첫 블록이 탭 없이 바로 떨어지는 순간에 맞춰 게임 시작 효과음과
-// 그 블록의 귀여운 소리를 함께 재생. 브라우저 자동재생 정책 때문에 막힐 수 있는데,
-// 그런 경우 위에서 등록한 첫 입력 시 unlockAudioOnFirstInput이 배경음악은 되살리고,
-// 이 시작 사운드 자체는 한 번뿐이라 놓쳐도 게임 진행에는 지장 없음.
-playGameStartSound();
-playBlockCuteSound(currentType);
-updateBgmForFloor(floorCount);
+// [로딩 개선] 예전엔 이미지가 준비되기 전에 렌더링이 먼저 시작돼서, 빈 배경 →
+// 배경만 뜬 상태 → 흰 박스 → 표정 생김 순으로 뚝뚝 끊겨 보였음. 이제 핵심
+// 이미지(바닥·받침대·처음 두 블록)가 실제로 로드될 때까지 로딩 화면으로 가려두고,
+// 다 준비된 다음에야 화면을 보여주고 시작 연출(효과음 등)을 튼다.
+const criticalImages = [groundSimpleImg, platformImg, sprites[currentType], sprites[nextType]].filter(Boolean);
+let loadingRevealed = false;
 
-requestAnimationFrame(loop);
+function revealGame() {
+  if (loadingRevealed) return;
+  loadingRevealed = true;
+  const el = document.getElementById('loadingOverlay');
+  el.classList.add('hidden');
+  setTimeout(() => { el.style.display = 'none'; }, 450);
+
+  // [최초 시작 연출] 화면이 실제로 보이는 이 순간에 맞춰 게임 시작 효과음과 그
+  // 블록의 귀여운 소리를 함께 재생. 브라우저 자동재생 정책 때문에 막힐 수 있는데,
+  // 그런 경우 위에서 등록한 첫 입력 시 unlockAudioOnFirstInput이 배경음악은
+  // 되살리고, 이 시작 사운드 자체는 한 번뿐이라 놓쳐도 게임 진행에는 지장 없음.
+  playGameStartSound();
+  playBlockCuteSound(currentType);
+  updateBgmForFloor(floorCount);
+
+  // [중요] 게임 루프(물리 진행 포함)는 화면이 실제로 보이기 시작하는 지금부터
+  // 돌린다. 로딩 화면 뒤에서 미리 돌고 있었다면, 첫 블록은 0.4초면 다 떨어지는데
+  // 로딩이 그보다 오래 걸리는 순간 이미 다 떨어져서 착지해버린 뒤에 화면이
+  // 열려서 "떨어지는 장면"을 놓치게 됨 — 그래서 로딩 중엔 아예 루프를 안 돌림.
+  requestAnimationFrame(loop);
+}
+
+let criticalLoadedCount = 0;
+function onCriticalImageReady() {
+  criticalLoadedCount++;
+  if (criticalLoadedCount >= criticalImages.length) revealGame();
+}
+if (criticalImages.length === 0) {
+  revealGame();
+} else {
+  criticalImages.forEach(img => {
+    if (img.complete && img.naturalWidth) onCriticalImageReady();
+    else {
+      img.addEventListener('load', onCriticalImageReady);
+      img.addEventListener('error', onCriticalImageReady); // 하나가 실패해도 전체가 멈추지 않게
+    }
+  });
+}
+setTimeout(revealGame, 2500); // 안전장치 — 로딩이 예상보다 오래 걸려도 2.5초 뒤엔 강제로 시작
 </script>
 </body>
 </html>
