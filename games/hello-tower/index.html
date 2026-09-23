@@ -20,9 +20,9 @@
 
   #loadingOverlay {
     position: fixed; inset: 0; z-index: 999;
-    background-color: #8fd3f4;
+    background-color: #20aefd; /* 새 섬네일의 하늘색과 맞춤(레터박스 여백이 자연스럽게 이어지게) */
     background-image: url('assets/bg/thumbnail.jpg');
-    background-size: cover; background-position: center;
+    background-size: contain; background-repeat: no-repeat; background-position: top center;
     display: flex; align-items: flex-end; justify-content: center;
     padding-bottom: 12%; box-sizing: border-box;
     transition: opacity 0.4s ease;
@@ -97,6 +97,38 @@
   }
   #overlay.ending h1 { color: #fff6d5; text-shadow: 0 0 14px #ffdb7d, 0 2px 6px rgba(0,0,0,0.5); }
   #overlay.ending .finalFloor { color: #ffe9a8; text-shadow: 0 0 12px #ffcf6b; }
+
+  #rankLinkBtn {
+    position: fixed; top: env(safe-area-inset-top, 0px); left: 0; margin: 14px 0 0 14px;
+    z-index: 25; display: flex; align-items: center; gap: 5px;
+    padding: 7px 14px 7px 10px; border-radius: 999px;
+    background: rgba(0,0,0,0.45); border: 1.5px solid rgba(255,200,87,0.55);
+    color: #ffe9b8; font-weight: 800; font-size: 13px; text-decoration: none;
+    white-space: nowrap;
+  }
+
+  #rankPanel {
+    width: 250px; max-width: 80vw; margin-top: 14px;
+    background: rgba(10,14,24,0.92); border-radius: 12px; padding: 12px;
+    text-align: left;
+  }
+  #rankPanel .rankPanelLabel { font-size: 12px; margin-bottom: 6px; color: #ffc857; font-weight: 800; }
+  #rankPanel input {
+    width: 100%; box-sizing: border-box; padding: 8px; border-radius: 6px;
+    border: none; margin-bottom: 6px; font-size: 13px;
+  }
+  #rankPanel button {
+    width: 100%; padding: 9px; border: none; border-radius: 8px;
+    background: #ffc857; color: #2a1c00; font-weight: 800; font-size: 13px;
+  }
+  #rankMsg { font-size: 11px; margin-top: 6px; color: rgba(255,255,255,0.8); min-height: 14px; }
+
+  .overlayLink {
+    display: block; width: 250px; max-width: 80vw; box-sizing: border-box;
+    text-align: center; margin-top: 10px; padding: 11px 0; border-radius: 999px;
+    background: rgba(255,255,255,0.1); border: 1.5px solid rgba(255,255,255,0.3);
+    color: #fff; font-weight: 700; font-size: 13px; text-decoration: none;
+  }
 </style>
 </head>
 <body>
@@ -112,6 +144,7 @@
   <button id="skipFloorBtn" style="display:none;">+10층 스킵</button>
   <button id="devBtn" style="display:none;">⚙</button>
 </div>
+<a id="rankLinkBtn" href="./ranking.html">🏆 랭킹 확인</a>
 <div id="hint">화면을 탭해서 조각을 떨어뜨리세요</div>
 <div id="milestone"></div>
 
@@ -119,6 +152,15 @@
   <h1 id="overlayTitle">타워가 무너졌어요!</h1>
   <div class="finalFloor" id="finalFloorNum">0층</div>
   <button id="retryBtn">다시 하기</button>
+  <div id="rankPanel">
+    <div class="rankPanelLabel">🏆 이벤트 랭킹 등록</div>
+    <input id="rankNickname" placeholder="닉네임" maxlength="12">
+    <input id="rankContact" placeholder="카카오톡 ID (당첨 연락용)" maxlength="30">
+    <button id="rankSubmitBtn">기록 등록하기</button>
+    <div id="rankMsg"></div>
+  </div>
+  <a class="overlayLink" href="./ranking.html">🏆 랭킹 확인</a>
+  <a class="overlayLink" href="../../index.html">🏠 오락실로 돌아가기</a>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
@@ -1091,6 +1133,37 @@ canvas.addEventListener('pointerdown', onTap);
 document.getElementById('retryBtn').addEventListener('click', () => {
   location.reload();
 });
+
+// ---------- 랭킹 등록 ----------
+// 헬로런/헬로버드와 같은 /api/score 이벤트 시스템 공용 사용. 게임 값만 'hello_tower'로
+// 구분, 점수 필드는 API가 공용으로 쓰는 "meters" 이름 그대로 넣되 실제로는 층수(floorCount).
+(function () {
+  try {
+    const savedNick = localStorage.getItem('ht_nickname');
+    const savedContact = localStorage.getItem('ht_contact');
+    if (savedNick) document.getElementById('rankNickname').value = savedNick;
+    if (savedContact) document.getElementById('rankContact').value = savedContact;
+  } catch (e) { /* 무시 */ }
+
+  document.getElementById('rankSubmitBtn').addEventListener('click', async () => {
+    const nick = document.getElementById('rankNickname').value.trim();
+    const contact = document.getElementById('rankContact').value.trim();
+    const msg = document.getElementById('rankMsg');
+    if (!nick || !contact) { msg.textContent = '닉네임과 연락처를 모두 입력해주세요.'; return; }
+    try { localStorage.setItem('ht_nickname', nick); localStorage.setItem('ht_contact', contact); } catch (e) { /* 무시 */ }
+    msg.textContent = '등록 중...';
+    try {
+      const res = await fetch('/api/score', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ game: 'hello_tower', nickname: nick, contact: contact, meters: floorCount }),
+      });
+      msg.textContent = res.ok ? '등록됐어요! 🎉' : '등록에 실패했어요. 다시 시도해주세요.';
+    } catch (e) {
+      msg.textContent = '네트워크 오류예요. 다시 시도해주세요.';
+    }
+  });
+})();
 
 // [디버그 전용] 실제로 안 쌓고도 높은 층수의 하늘 단계를 미리 볼 수 있게, 층수와
 // 그에 맞는 카메라 높이를 한 번에 강제로 건너뛰는 버튼. 물리 탑은 그대로 두고
