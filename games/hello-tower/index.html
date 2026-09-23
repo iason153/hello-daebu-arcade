@@ -1208,7 +1208,10 @@ function finalizeSettle(body) {
   towerTopY = body.bounds.min.y;
   spawnFloorPopup(body.position.x, body.bounds.min.y); // 닿은 그 자리에서 "+1층" 떠오름
   if (Math.random() < 0.3) { // 16% → 30%, 지루하지 않게 더 자주
-    spawnWhisper(body.position.x, body.bounds.min.y - 26); // +1층 문구랑 안 겹치게 살짝 위에서
+    // 정중앙 말고 좌우로 랜덤하게 흩어지게(+1층 문구랑도 안 겹치고 더 생동감 있게)
+    const whisperSide = (Math.random() - 0.5) * 2; // -1~1
+    const whisperX = Math.max(60, Math.min(GAME_W - 60, body.position.x + whisperSide * (GAME_W * 0.22)));
+    spawnWhisper(whisperX, body.bounds.min.y - 26);
   }
 
   if (floorCount >= HEAVEN_FLOOR) {
