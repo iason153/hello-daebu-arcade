@@ -18,7 +18,7 @@
 import { kv } from '@vercel/kv';
 
 const MAX_METERS = 5000; // 터무니없는 점수 최소 검증용 상한선(헬로런 기준, 필요시 게임별로 분리 가능)
-const ALLOWED_GAMES = ['hello_run', 'hello_bird'];
+const ALLOWED_GAMES = ['hello_run', 'hello_bird', 'hello_tower'];
 
 export default async function handler(req, res) {
   if (req.method === 'POST') {
