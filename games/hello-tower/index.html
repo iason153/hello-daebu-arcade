@@ -491,8 +491,12 @@ function pickRandomType() {
     pool = SHAPE_TIER_EASY.concat(SHAPE_TIER_MEDIUM); // 중반: 보통 섞임
   } else if (floorCount < 35) {
     pool = SHAPE_TIER_EASY.concat(SHAPE_TIER_MEDIUM, SHAPE_TIER_HARD); // 후반: 어려운 것도 섞임
-  } else {
+  } else if (floorCount < 60) {
     pool = SHAPE_TIER_EASY.concat(SHAPE_TIER_MEDIUM, SHAPE_TIER_HARD, SHAPE_TIER_HARD); // 고층: 어려운 것 비중up
+  } else {
+    // [추가] 60층 이후 — 시계추 자체는 더 안 빨라지니, 대신 좁고 불안정한 블록
+    // 비중을 한 번 더 늘려서(쉬운 것 비중은 줄이고) 여기서부터 계속 어려워지게 함
+    pool = SHAPE_TIER_EASY.concat(SHAPE_TIER_MEDIUM, SHAPE_TIER_HARD, SHAPE_TIER_HARD, SHAPE_TIER_HARD);
   }
   return pool[Math.floor(Math.random() * pool.length)];
 }
@@ -1117,19 +1121,20 @@ let gustDir = 1;
 let lightningUntil = 0; // 번쩍임 연출 종료 시각
 let gustIntensity = 0;  // 0~1, 타워 흔들림/화면 틴트 세기(블로우 동안 서서히 오르내림)
 
-// 층수에 따른 시계추 속도 — 예전엔 29층쯤에서 상한선에 닿아 그 뒤로 안 빨라지고,
-// 왕복 폭도 63층쯤이면 더 안 좁아져서 60층 근처부터 갑자기 쉬워지는 느낌이 났음.
-// 이제 100층(엔딩) 근처까지 계속 조금씩 더 빡빡해지도록 늘림.
+// 층수에 따른 시계추 속도 — [재조정] 100층까지 계속 빨라지게 했더니 후반부가
+// 사람이 반응 불가능한 영역까지 가버림(대표님 피드백). 이제 대략 48층 근처에서
+// 속도·범위 둘 다 상한선(사람이 훈련하면 반응 가능한 수준)에 도달해서 거기서
+// 고정되고, 그 뒤(48~100층) 난이도는 마찰/기울기(난이도 단계)·블록 모양·태풍
+// 쪽에서 계속 세지도록 함 — "더 빨리"가 아니라 "다른 방식으로 더 어렵게".
 function pendulumSpeed() {
   const base = 2.2;
-  const growth = 0.045;
-  const cap = 6.2;
-  return Math.min(base + floorCount * growth, cap); // 상한선까지 대략 90층 걸림
+  const growth = 0.055;
+  const cap = 4.8;
+  return Math.min(base + floorCount * growth, cap); // 상한선까지 대략 48층
 }
 function pendulumRange() {
-  // 초반엔 넓게 왕복, 층수가 오를수록 좁아짐 — 최소폭 도달도 100층 근처까지 늘어지게
-  const startRange = GAME_W * 0.42, minRange = GAME_W * 0.17;
-  const shrinkPerFloor = (startRange - minRange) / 92;
+  const startRange = GAME_W * 0.42, minRange = GAME_W * 0.20;
+  const shrinkPerFloor = (startRange - minRange) / 48;
   return Math.max(startRange - floorCount * shrinkPerFloor, minRange);
 }
 
@@ -1848,7 +1853,10 @@ function loop(now) {
   if (gustState === 'warning' && performance.now() > gustWarnUntil) {
     gustState = 'blow';
     gustBlowUntil = performance.now() + 900; // 0.55 → 0.9초, 더 길게 몰아침
-    nextGustAt = performance.now() + 7000 + Math.random() * 5000;
+    // [추가] 60층 이후엔 태풍 간격을 조금씩 더 좁혀서(최소 4.5초까지) 후반 압박을 늘림
+    // — 반사신경이 아니라 "더 자주 대처해야 하는" 방식으로 어려워지게
+    const gustIntervalShrink = Math.min(floorCount * 30, 2500); // 최대 2.5초까지 단축
+    nextGustAt = performance.now() + (7000 - gustIntervalShrink) + Math.random() * 5000;
     shakeTime = performance.now(); // 기존 화면 흔들림 효과를 돌풍에도 재사용해서 더 세게 느껴지게
     lightningUntil = performance.now() + 140; // 시작 순간 번쩍
     playGustBlowSound();
