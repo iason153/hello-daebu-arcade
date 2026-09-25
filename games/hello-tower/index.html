@@ -1555,7 +1555,7 @@ function finalizeSettle(body) {
   document.getElementById('floorCounter').textContent = floorCount + '층';
   towerTopY = body.bounds.min.y;
   spawnFloorPopup(body.position.x, body.bounds.min.y); // 닿은 그 자리에서 "+1층" 떠오름
-  if (Math.random() < 0.3) { // 16% → 30%, 지루하지 않게 더 자주
+  if (Math.random() < WHISPER_CHANCE) { // 기본 30% — 관리자 페이지에서 조정
     // 정중앙 말고 좌우로 랜덤하게 흩어지게(+1층 문구랑도 안 겹치고 더 생동감 있게)
     const whisperSide = (Math.random() - 0.5) * 2; // -1~1
     const whisperX = Math.max(60, Math.min(GAME_W - 60, body.position.x + whisperSide * (GAME_W * 0.22)));
@@ -1611,7 +1611,9 @@ function spawnFloorPopup(x, y) {
 
 // 블록들이 가끔 속삭이는 대사 — 매층마다는 아니고 낮은 확률로만(아래 호출부 참고).
 // 말풍선처럼 +1층보다 천천히, 조금 더 오래 보이게.
-const WHISPER_LINES = [
+// 아래 목록은 "기본값" — 관리자 페이지(/admin.html)에서 문구를 저장해두면
+// 게임 시작 때 /api/config 로 받아와 이 목록을 통째로 바꿔 쓴다(loadRemoteConfig 참고).
+let WHISPER_LINES = [
   '고소공포증이 있어',
   '높은 건 딱 질색이야',
   '태풍아 제발 오지마',
@@ -1626,6 +1628,24 @@ const WHISPER_LINES = [
   '우리가 힘을 합치면 못할 게 없어!',
   '진정한 사랑은 존재를 인정하는 것!',
 ];
+let WHISPER_CHANCE = 0.3; // 착지할 때 말풍선이 뜰 확률(관리자 페이지에서 조정 가능)
+
+// 관리자 페이지에서 바꾼 운영 설정을 받아온다. 게임 시작을 막지 않도록 기다리지 않고
+// 뒤에서 조용히 받아오며, 실패하면 위 기본값으로 그냥 진행한다.
+(async function loadRemoteConfig() {
+  try {
+    const res = await fetch('/api/config?game=hello_tower');
+    if (!res.ok) return;
+    const { config } = await res.json();
+    if (config && Array.isArray(config.whispers) && config.whispers.length) {
+      WHISPER_LINES = config.whispers.map(String);
+    }
+    if (config && Number.isFinite(config.whisperChance)) {
+      WHISPER_CHANCE = Math.max(0, Math.min(1, config.whisperChance));
+    }
+  } catch (e) { /* 기본값 유지 */ }
+})();
+
 function spawnWhisper(x, y) {
   const text = WHISPER_LINES[Math.floor(Math.random() * WHISPER_LINES.length)];
   whisperPopups.push({ x, y, born: performance.now(), text });
