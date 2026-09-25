@@ -2,8 +2,16 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5YPGVVP49T"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag("js", new Date());
+  gtag("config", "G-5YPGVVP49T");
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>헬로런 프로토타입 (점프/숙이기 손맛 테스트)</title>
+<title>헬로런 | 헬로 대부도 오락실</title>
 <style>
   *{-webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; -webkit-user-select:none; user-select:none; margin:0; padding:0; box-sizing:border-box;}
   html,body{background:#0f1a30; overflow:hidden; height:100%; width:100%;}
@@ -228,6 +236,14 @@ let jumpsUsed = 0; // 0 = grounded, 1 = used first jump, 2 = used double jump
 let obstacles = [];
 let nextObstacleX = 700;
 
+const GA_GAME = 'hello_run';
+// ---------- GA4 이벤트 ----------
+// 세 게임 공통 이벤트 이름: game_start / game_over / score_submit / share_click
+// (game 파라미터로 게임 구분, score = 헬로런 m · 헬로버드 점수 · 헬로타워 층수)
+function track(name, params){
+  try{ if(typeof gtag === 'function') gtag('event', name, Object.assign({ game: GA_GAME }, params || {})); }catch(e){}
+}
+
 
 function resetGame(){
   scrollX = 0; score = 0; displayM = 0;
@@ -245,6 +261,7 @@ function resetGame(){
   obstacles = [];
   nextObstacleX = 700;
   state = 'playing';
+  track('game_start');
   startRunSound();
   playStationBgm(station.key);
   document.getElementById('gameoverPanel').style.display = 'none';
@@ -645,6 +662,7 @@ function update(dt){
 function gameOver(){
   if(state!=='playing') return;
   state = 'gameover';
+  track('game_over', { score: displayM });
   sfxHit();
   stopRunSound();
   if(displayM > bestToday){
@@ -683,7 +701,7 @@ document.getElementById('retryBtn').addEventListener('click', (e)=>{
         headers: {'Content-Type':'application/json'},
         body: JSON.stringify({ game:'hello_run', nickname:nick, contact:contact, meters:displayM })
       });
-      if(res.ok){ msg.textContent = '등록 완료! 행운을 빌어요 🍀'; }
+      if(res.ok){ msg.textContent = '등록 완료! 행운을 빌어요 🍀'; track('score_submit', { score: displayM }); }
       else{ msg.textContent = '등록에 실패했어요. 잠시 후 다시 시도해주세요.'; }
     }catch(e){
       msg.textContent = '네트워크 오류로 등록에 실패했어요.';
@@ -859,6 +877,7 @@ function setShareBtnLoading(loading){
 }
 
 async function shareCard(){
+  track('share_click', { score: displayM });
   setShareBtnLoading(true);
   // 배경 이미지가 아직 안 불러와졌으면 최대 3초까지 기다렸다가 만든다 — 이게 없으면
   // 게임을 짧게 하고 바로 공유 눌렀을 때 옛날 방식(화면 블러)으로 조용히 폴백되어버림

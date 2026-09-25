@@ -2,6 +2,14 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5YPGVVP49T"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag("js", new Date());
+  gtag("config", "G-5YPGVVP49T");
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>헬로타워 | 헬로 대부도 오락실</title>
 <style>
@@ -955,6 +963,14 @@ function playThudClip() {
 }
 
 // ---------- 게임 시작 / 게임 오버 효과음 ----------
+const GA_GAME = 'hello_tower';
+// ---------- GA4 이벤트 ----------
+// 세 게임 공통 이벤트 이름: game_start / game_over / score_submit / share_click
+// (game 파라미터로 게임 구분, score = 헬로런 m · 헬로버드 점수 · 헬로타워 층수)
+function track(name, params){
+  try{ if(typeof gtag === 'function') gtag('event', name, Object.assign({ game: GA_GAME }, params || {})); }catch(e){}
+}
+
 const gameStartSoundSrc = new Audio('assets/sfx/game_start.mp3');
 gameStartSoundSrc.volume = 0.8;
 function playGameStartSound() {
@@ -1188,6 +1204,7 @@ document.getElementById('retryBtn').addEventListener('click', () => {
         body: JSON.stringify({ game: 'hello_tower', nickname: nick, contact: contact, meters: floorCount }),
       });
       msg.textContent = res.ok ? '등록됐어요! 🎉' : '등록에 실패했어요. 다시 시도해주세요.';
+      if (res.ok) track('score_submit', { score: floorCount });
     } catch (e) {
       msg.textContent = '네트워크 오류예요. 다시 시도해주세요.';
     }
@@ -1335,6 +1352,7 @@ function setShareBtnLoading(loading) {
   }
 }
 async function shareCard() {
+  track('share_click', { score: floorCount });
   setShareBtnLoading(true);
   // 배경 이미지가 아직 안 불러와졌으면 최대 3초까지 기다렸다가 만든다(짧게 하고 바로
   // 공유 누르면 아직 로드 중일 수 있음 — 이게 없으면 조용히 블러 폴백으로 넘어가버림)
@@ -1469,6 +1487,7 @@ function endGame() {
   state = 'gameover';
   stopPendulumSound();
   playGameOverSound();
+  track('game_over', { score: floorCount, ending: false });
   document.getElementById('finalFloorNum').textContent = floorCount + '층';
   document.getElementById('overlay').classList.add('show');
   // TODO(다음 세션): /api/score 제출 (game: 'hello_tower', score: floorCount)
@@ -1486,6 +1505,7 @@ function startEndingIntro() {
 }
 function showEnding() {
   state = 'gameover';
+  track('game_over', { score: floorCount, ending: true });
   stopPendulumSound();
   const overlay = document.getElementById('overlay');
   overlay.classList.add('show', 'ending');
@@ -2407,6 +2427,7 @@ function revealGame() {
   // 블록의 귀여운 소리를 함께 재생. 브라우저 자동재생 정책 때문에 막힐 수 있는데,
   // 그런 경우 위에서 등록한 첫 입력 시 unlockAudioOnFirstInput이 배경음악은
   // 되살리고, 이 시작 사운드 자체는 한 번뿐이라 놓쳐도 게임 진행에는 지장 없음.
+  track('game_start');
   playGameStartSound();
   playBlockCuteSound(currentType);
   updateBgmForFloor(floorCount);

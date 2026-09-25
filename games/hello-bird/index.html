@@ -349,6 +349,14 @@ let heartActive = false; // true while a spawned mercy heart is still out there 
 let heartNextTryScore = 0; // score must reach this before another mercy heart attempt (cooldown after a catch or a miss)
 let bestToday = Number(localStorage.getItem('hb_best_today')||0);
 
+const GA_GAME = 'hello_bird';
+// ---------- GA4 이벤트 ----------
+// 세 게임 공통 이벤트 이름: game_start / game_over / score_submit / share_click
+// (game 파라미터로 게임 구분, score = 헬로런 m · 헬로버드 점수 · 헬로타워 층수)
+function track(name, params){
+  try{ if(typeof gtag === 'function') gtag('event', name, Object.assign({ game: GA_GAME }, params || {})); }catch(e){}
+}
+
 function resetGame(){
   hello = { y: H/2 - 100, vy: 0 };
   obstacles = [];
@@ -377,6 +385,7 @@ function resetGame(){
   gatePending = false;
   isEnding = false;
   state = 'playing';
+  track('game_start');
   document.getElementById('gameoverPanel').style.display = 'none';
   const rm = document.getElementById('rankMsg'); if(rm) rm.textContent = '';
 }
@@ -634,6 +643,7 @@ function update(dt){
   } else if(hy > H + 60 || hy < -80 || energy<=0){
     if(state !== 'gameover'){
       playSfx('sfx_die');
+      track('game_over', { score: score });
       if(score > bestToday){ bestToday = score; localStorage.setItem('hb_best_today', String(bestToday)); }
       document.getElementById('gameoverPanel').style.display = 'flex';
     }
@@ -1185,6 +1195,7 @@ function setShareBtnLoading(loading){
 }
 
 async function shareCard(){
+  track('share_click', { score: score });
   setShareBtnLoading(true);
   await Promise.race([shareCardBgReady, new Promise(r=>setTimeout(r, 3000))]);
   const sc = buildShareCard();
@@ -1286,7 +1297,7 @@ document.getElementById('retryBtn').addEventListener('click', (e)=>{
         headers: {'Content-Type':'application/json'},
         body: JSON.stringify({ game:'hello_bird', nickname:nick, contact:contact, meters:score })
       });
-      if(res.ok){ msg.textContent = '등록 완료! 행운을 빌어요 🍀'; }
+      if(res.ok){ msg.textContent = '등록 완료! 행운을 빌어요 🍀'; track('score_submit', { score: score }); }
       else{ msg.textContent = '등록에 실패했어요. 잠시 후 다시 시도해주세요.'; }
     }catch(e){
       msg.textContent = '네트워크 오류로 등록에 실패했어요.';
