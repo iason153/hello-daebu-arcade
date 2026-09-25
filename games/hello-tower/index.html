@@ -207,7 +207,7 @@ if (new URLSearchParams(location.search).get('dev') === '1') {
 }
 
 // ---------- Matter.js 세팅 ----------
-const { Engine, World, Bodies, Body, Composite, Vector, Events } = Matter;
+const { Engine, World, Bodies, Body, Composite, Vector, Events, Query } = Matter;
 
 const engine = Engine.create();
 engine.gravity.y = 3.2; // 더 더 박진감 있게 — 계속 루즈하다는 피드백이라 확 올림
@@ -1546,6 +1546,35 @@ function overlapWithSupport(body) {
   return { dx, overlapAmount, supportHalfW, pieceHalfW };
 }
 
+// 멈춘 블록이 정말 "현재 맨 위 블록" 위에 얹혀 있는지 확인.
+//  1) 맨 위 블록과 실제로 맞닿아 있어야 하고(살짝 아래로 내려서 닿는지 검사 — 정지 접촉은
+//     침투량이 거의 0이라 그대로 검사하면 놓칠 수 있음),
+//  2) 바닥이나 그 아래 블록에는 닿아 있지 않아야 하고,
+//  3) 블록 바닥이 맨 위 블록의 윗면보다 한참 아래로 내려가 있으면 안 된다
+//     (옆구리에 매달리거나 옆으로 흘러내린 경우).
+function isRestingOnTop(body) {
+  const sup = currentSupport();
+  const probe = 3;
+  Body.translate(body, { x: 0, y: probe });
+  const touchingTop = Query.collides(body, [sup]).length > 0;
+  Body.translate(body, { x: 0, y: -probe });
+  if (!touchingTop) return false;
+
+  const others = settledBodies.filter((b) => b !== sup);
+  if (Query.collides(body, others).length > 0) return false;
+
+  if (sup.label !== 'ground') {
+    // 맨 위 블록이 기울어 있으면 윗면의 가장 낮은 지점이 bounds.min.y보다 아래일 수 있으니 여유를 줌
+    const supHalfW = (sup.bounds.max.x - sup.bounds.min.x) / 2;
+    const tolerance = 12 + Math.abs(Math.sin(sup.angle)) * supHalfW * 2;
+    const pieceHalfW = (body.bounds.max.x - body.bounds.min.x) / 2;
+    const pieceTilt = Math.abs(Math.sin(body.angle)) * pieceHalfW * 2;
+    // 기울어진 조각은 아래쪽 모서리가 더 내려가 있으므로 그만큼 제외하고 비교
+    if (body.bounds.max.y - pieceTilt > sup.bounds.min.y + tolerance) return false;
+  }
+  return true;
+}
+
 // 안착이 최종 확정될 때 공통으로 하는 일(안정 착지든, 위태롭게 버텨낸 착지든 공통).
 // x축과 각도는 절대 안 건드리고(진짜 물리 결과 그대로 유지) 세로 위치만 조정한다.
 // [추가] 정확히 0으로만 붙이면, 블록이 살짝 기울어서 한쪽 모서리만 걸친 경우 나머지
@@ -1835,6 +1864,22 @@ function settlePiece(body) {
 // 낙하 중인 조각이 "현재 탑의 맨 위"와 실제로 부딪히는 그 순간을 감지.
 // 맨 위가 아닌 다른 블록/지면에 부딪히면 탑을 완전히 빗나간 것이므로 바로 게임오버.
 Events.on(engine, 'collisionStart', (event) => {
+  // [버그 수정 2026-09-25] 모서리를 스쳐 "닿음" 판정을 받은 뒤(wobbling) 옆으로 미끄러져
+  // 바닥이나 아래층에 떨어진 경우, 예전엔 이 단계에서 아무 검사도 안 해서 바닥에 평평하게
+  // 멈춘 블록이 "버텨냈다"로 안착 처리되고, finalizeSettle이 탑 꼭대기 높이로 끌어올려
+  // 공중에 붙은 것처럼 보였다. 이제 흔들림 단계에서도 맨 위 블록 말고 다른 것에 닿으면
+  // 즉시 무너진 것으로 본다.
+  if (state === 'wobbling' && activeBody) {
+    for (const pair of event.pairs) {
+      const other = pair.bodyA === activeBody ? pair.bodyB : pair.bodyB === activeBody ? pair.bodyA : null;
+      if (!other || other === currentSupport()) continue;
+      if (other.label === 'ground' || settledBodies.indexOf(other) !== -1) {
+        endGame();
+        return;
+      }
+    }
+    return;
+  }
   if (state !== 'falling' || !activeBody || !activeHasFallen) return;
   for (const pair of event.pairs) {
     let other = null;
@@ -1953,9 +1998,14 @@ function loop(now) {
     } else if (activeBody.speed < 0.4 && Math.abs(activeBody.angularVelocity) < 0.03) {
       wobbleTimer += dt;
       if (wobbleTimer > 100) {
-        // 버텨냈음 — 지금 자세/위치 그대로 안착 인정 (억지로 안 붙임, 진짜 그 자리)
-        Body.setStatic(activeBody, true);
-        finalizeSettle(activeBody);
+        // 버텨냈음 — 단, 진짜로 "맨 위 블록 위에" 얹혀서 멈춘 건지 마지막으로 확인한다.
+        // (옆으로 떨어져 바닥에 멈춘 걸 안착으로 착각하던 버그 방지 — isRestingOnTop 참고)
+        if (!isRestingOnTop(activeBody)) {
+          endGame();
+        } else {
+          Body.setStatic(activeBody, true);
+          finalizeSettle(activeBody);
+        }
       }
     } else {
       wobbleTimer = 0;
