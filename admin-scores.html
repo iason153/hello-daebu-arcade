@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>랭킹 관리 | 헬로 대부도 오락실</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Malgun Gothic", sans-serif; background:#111; color:#eee; margin:0; padding:20px; }
+  h1 { font-size:18px; }
+  select, input, button { font-size:15px; padding:8px; border-radius:6px; border:1px solid #444; background:#222; color:#eee; }
+  button { cursor:pointer; }
+  #loadBtn { background:#2a6fdb; border:none; color:#fff; font-weight:bold; }
+  table { width:100%; border-collapse:collapse; margin-top:16px; }
+  th, td { padding:8px; border-bottom:1px solid #333; text-align:left; font-size:14px; }
+  th { color:#999; font-weight:normal; }
+  .delBtn { background:#c0392b; border:none; color:#fff; padding:6px 12px; border-radius:6px; font-size:13px; }
+  #msg { margin-top:10px; font-size:13px; color:#9ad; min-height:18px; }
+  .row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:8px; }
+</style>
+</head>
+<body>
+<h1>🏆 랭킹 관리 (관리자 전용)</h1>
+
+<div class="row">
+  <input id="secretInput" type="password" placeholder="관리자 비밀키" style="flex:1; min-width:200px;">
+</div>
+<div class="row">
+  <select id="gameSelect">
+    <option value="hello_tower">🗼 헬로타워</option>
+    <option value="hello_run">🏃 헬로런</option>
+    <option value="hello_bird">🐦 헬로버드</option>
+  </select>
+  <button id="loadBtn">불러오기</button>
+</div>
+<div id="msg"></div>
+<table id="resultTable" style="display:none;">
+  <thead><tr><th>순위</th><th>닉네임</th><th>기록</th><th></th></tr></thead>
+  <tbody id="resultBody"></tbody>
+</table>
+
+<script>
+const secretInput = document.getElementById('secretInput');
+const gameSelect = document.getElementById('gameSelect');
+const msg = document.getElementById('msg');
+const table = document.getElementById('resultTable');
+const tbody = document.getElementById('resultBody');
+
+// 편의상 비밀키는 이 브라우저에만 기억해둠(다른 사람 기기엔 안 남음)
+try {
+  const saved = localStorage.getItem('ht_admin_secret');
+  if (saved) secretInput.value = saved;
+} catch (e) {}
+
+async function loadList() {
+  const secret = secretInput.value.trim();
+  const game = gameSelect.value;
+  if (!secret) { msg.textContent = '비밀키를 입력해주세요.'; return; }
+  try { localStorage.setItem('ht_admin_secret', secret); } catch (e) {}
+  msg.textContent = '불러오는 중...';
+  table.style.display = 'none';
+  try {
+    const res = await fetch(`/api/score?game=${encodeURIComponent(game)}&limit=50&admin=${encodeURIComponent(secret)}`);
+    const data = await res.json();
+    if (!res.ok) { msg.textContent = '오류: ' + (data.error || res.status); return; }
+    tbody.innerHTML = '';
+    data.leaderboard.forEach((e) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${e.rank}</td><td>${escapeHtml(e.nickname)}</td><td>${e.meters}</td><td></td>`;
+      const delBtn = document.createElement('button');
+      delBtn.className = 'delBtn';
+      delBtn.textContent = '삭제';
+      delBtn.addEventListener('click', () => deleteEntry(e.id, tr));
+      tr.lastElementChild.appendChild(delBtn);
+      tbody.appendChild(tr);
+    });
+    table.style.display = data.leaderboard.length ? 'table' : 'none';
+    msg.textContent = data.leaderboard.length ? `${data.leaderboard.length}건 불러왔어요.` : '기록이 없어요.';
+  } catch (e) {
+    msg.textContent = '네트워크 오류: ' + e.message;
+  }
+}
+
+async function deleteEntry(id, rowEl) {
+  if (!id) { msg.textContent = '이 기록엔 id가 없어요(비밀키 확인 필요).'; return; }
+  if (!confirm('이 기록을 정말 삭제할까요?')) return;
+  const secret = secretInput.value.trim();
+  const game = gameSelect.value;
+  msg.textContent = '삭제 중...';
+  try {
+    const res = await fetch(`/api/score?action=delete&game=${encodeURIComponent(game)}&id=${encodeURIComponent(id)}&admin=${encodeURIComponent(secret)}`);
+    const data = await res.json();
+    if (res.ok && data.ok) {
+      rowEl.remove();
+      msg.textContent = '삭제됐어요. (제거된 건수: ' + data.removed + ')';
+    } else {
+      msg.textContent = '삭제 실패: ' + (data.error || res.status);
+    }
+  } catch (e) {
+    msg.textContent = '네트워크 오류: ' + e.message;
+  }
+}
+
+function escapeHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+document.getElementById('loadBtn').addEventListener('click', loadList);
+</script>
+</body>
+</html>
