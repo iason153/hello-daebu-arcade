@@ -508,6 +508,9 @@ let nextType = pickRandomType();
 let pendX = GAME_W / 2;
 let pendDir = 1;
 let pendPhase = 0;
+let pendDirSign = 1; // 삼각파 진행 방향(+1/-1) — 미리보기 기울임 연출용
+let pendulumArmedAt = 0; // 이 시각이 지나야 탭이 먹힘 — 연타로 거의 안 움직인 채 드랍하는 꼼수 방지
+const PENDULUM_ARM_DELAY = 380; // ms
 // 첫 블록은 시계추 없이 화면 정중앙 위에서 바로 낙하 시작 (두 번째 블록부터 탭 조작)
 let activeBody = makeBody(currentType, pendX, towerTopY - PREVIEW_CLEARANCE);
 World.add(world, activeBody);
@@ -1114,16 +1117,20 @@ let gustDir = 1;
 let lightningUntil = 0; // 번쩍임 연출 종료 시각
 let gustIntensity = 0;  // 0~1, 타워 흔들림/화면 틴트 세기(블로우 동안 서서히 오르내림)
 
-// 층수에 따른 시계추 속도 (헬로런처럼 상한선 존재)
+// 층수에 따른 시계추 속도 — 예전엔 29층쯤에서 상한선에 닿아 그 뒤로 안 빨라지고,
+// 왕복 폭도 63층쯤이면 더 안 좁아져서 60층 근처부터 갑자기 쉬워지는 느낌이 났음.
+// 이제 100층(엔딩) 근처까지 계속 조금씩 더 빡빡해지도록 늘림.
 function pendulumSpeed() {
-  const base = 2.2;   // 1.5 → 2.2, 더 확실하게 박진감 있게
-  const growth = 0.08;
-  const cap = 4.5;     // 3.6 → 4.5
-  return Math.min(base + floorCount * growth, cap);
+  const base = 2.2;
+  const growth = 0.045;
+  const cap = 6.2;
+  return Math.min(base + floorCount * growth, cap); // 상한선까지 대략 90층 걸림
 }
 function pendulumRange() {
-  // 초반엔 넓게 왕복, 층수가 오를수록 살짝 좁아져 난이도 보완(너무 가혹하지 않게)
-  return Math.max(GAME_W * 0.42 - floorCount * 1.2, GAME_W * 0.22);
+  // 초반엔 넓게 왕복, 층수가 오를수록 좁아짐 — 최소폭 도달도 100층 근처까지 늘어지게
+  const startRange = GAME_W * 0.42, minRange = GAME_W * 0.17;
+  const shrinkPerFloor = (startRange - minRange) / 92;
+  return Math.max(startRange - floorCount * shrinkPerFloor, minRange);
 }
 
 // =========================================================================
@@ -1132,6 +1139,7 @@ function pendulumRange() {
 function onTap() {
   if (state === 'gameover') return;
   if (state !== 'pendulum') return;
+  if (performance.now() < pendulumArmedAt) return; // 너무 빨리 연타 — 아직 안 받아줌
 
   document.getElementById('hint').style.opacity = '0';
   stopPendulumSound();
@@ -1459,6 +1467,15 @@ function endGame() {
 }
 
 // [엔딩] 하늘나라(HEAVEN_FLOOR)에 도달하면 무너짐이 아니라 "완주" 엔딩으로 끝낸다.
+// [수정] 예전엔 도달하는 그 프레임에 바로 엔딩 화면을 띄워버려서, 카메라가 미처
+// 신들 위치까지 못 따라간 경우 신들이 안 보이거나 한 프레임만 스치고 지나갔음.
+// 이제 "인트로" 상태로 잠깐 멈춰서(조작 막힘) 카메라가 확실히 신들 쪽으로 다 붙을
+// 때까지 기다린 다음에 엔딩 화면을 띄움.
+function startEndingIntro() {
+  state = 'ending_intro';
+  stopPendulumSound();
+  setTimeout(showEnding, 2600);
+}
 function showEnding() {
   state = 'gameover';
   stopPendulumSound();
@@ -1538,7 +1555,7 @@ function finalizeSettle(body) {
   }
 
   if (floorCount >= HEAVEN_FLOOR) {
-    showEnding();
+    startEndingIntro();
     return;
   }
   if (isMilestoneFloor(floorCount)) {
@@ -1552,6 +1569,7 @@ function finalizeSettle(body) {
   nextType = pickRandomType();
   activeBody = null;
   state = 'pendulum';
+  pendulumArmedAt = performance.now() + PENDULUM_ARM_DELAY; // 이 시각 전엔 탭해도 안 떨어짐(연타 악용 방지)
   startPendulumSound(currentType);
   if (floorCount === 1) {
     document.getElementById('hint').style.opacity = '1';
@@ -1804,10 +1822,17 @@ function loop(now) {
   Engine.update(engine, dt);
 
   // --- 시계추 갱신 ---
+  // [수정] sin() 곡선은 양 끝(가장자리)에서 속도가 자연스럽게 0에 가까워져서 "잠깐 멈추는"
+  // 구간이 생김 — 거기 맞춰 드랍하면 거의 항상 가장자리에 안착하는 꼼수가 통했음.
+  // 대신 끝에서 끝까지 항상 일정한 속도로 움직이는 삼각파(왕복 직선 운동)로 바꿔서
+  // 멈추는 구간 자체를 없앰.
   if (state === 'pendulum') {
     pendPhase += pendulumSpeed() * (dt / 1000);
     const range = pendulumRange();
-    pendX = GAME_W / 2 + Math.sin(pendPhase) * range;
+    const cyclePos = ((pendPhase % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI) / (2 * Math.PI); // 0~1
+    const tri = cyclePos < 0.5 ? (-1 + 4 * cyclePos) : (3 - 4 * cyclePos); // -1~1 삼각파
+    pendX = GAME_W / 2 + tri * range;
+    pendDirSign = cyclePos < 0.5 ? 1 : -1; // 시계추 미리보기 기울임 연출용
   }
 
   // --- 돌풍 이벤트(테스트) ---
@@ -1890,8 +1915,15 @@ function loop(now) {
   // [조정] 예전엔 42% 지점에서 따라가기 시작 + 느린 추적(0.08) — 위쪽 여백이 부족하고
   // 반응도 느렸음. 55% 지점(탑이 화면에서 더 아래쪽에 유지 = 위쪽 하늘 여백 더 넓게
   // 보임)으로 늘리고, 추적 속도도 0.08→0.14로 빠르게.
-  const desiredCamY = Math.min(0, towerTopY - GAME_H * 0.55);
-  cameraY += (desiredCamY - cameraY) * 0.14;
+  // [엔딩 인트로 중엔] 신들이 확실히 화면 안에 들어오도록 카메라 목표 자체를 신
+  // 무리 위치로 고정하고, 더 빠르게 그쪽으로 당겨줌.
+  if (state === 'ending_intro') {
+    const godDesiredCamY = GOD_GROUP_WORLD_Y - GAME_H * 0.42;
+    cameraY += (godDesiredCamY - cameraY) * 0.1;
+  } else {
+    const desiredCamY = Math.min(0, towerTopY - GAME_H * 0.55);
+    cameraY += (desiredCamY - cameraY) * 0.14;
+  }
 
   // --- 구름: 위쪽에 계속 채워 넣고, 살짝 옆으로도 흘러가게 ---
   maybeSpawnClouds();
@@ -2236,8 +2268,8 @@ function render() {
     const y = towerTopY - PREVIEW_CLEARANCE - cameraY;
     // 진자가 왕복하는 방향으로 살짝 기울여서(진행 방향의 반대쪽 위로) 진짜 매달려 흔들리는 느낌을 줌
     // (정적인 그림 1장뿐이라 날개를 실제로 퍼덕이게 할 수는 없어서, 대신 흔들림 자체를 손맛있게)
-    const swingVel = Math.cos(pendPhase) * pendulumSpeed(); // sin(phase)의 순간 변화율 = 스윙 속도/방향
-    const lean = Math.max(-0.22, Math.min(0.22, -swingVel * 0.12));
+    // [수정] 삼각파로 바뀌면서 속도가 항상 일정해져서, 이젠 방향(pendDirSign)만으로 기울임 결정
+    const lean = -pendDirSign * 0.16;
     ctx.save();
     ctx.translate(pendX, y);
     ctx.rotate(lean);
