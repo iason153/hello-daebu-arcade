@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>관리실 | 헬로 대부도 오락실</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+  :root {
+    --tide: #e9f1f4;      /* 바탕: 물 빠진 갯벌 위 하늘빛 */
+    --surface: #ffffff;
+    --ink: #1c2748;       /* 공유카드 하단 남색 바와 같은 계열 */
+    --ink-soft: #5b6784;
+    --line: #d5e0e6;
+    --sun: #f4b63f;       /* 대부도 노을 */
+    --coral: #d9493a;     /* 삭제 */
+    --sea: #2b7a8c;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    font-family: "Pretendard", -apple-system, BlinkMacSystemFont, "Malgun Gothic", sans-serif;
+    background: var(--tide); color: var(--ink);
+    font-size: 15px; line-height: 1.5;
+    padding: env(safe-area-inset-top, 0px) 0 env(safe-area-inset-bottom, 0px);
+  }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 20px 16px 60px; }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  :focus-visible { outline: 3px solid var(--sun); outline-offset: 2px; }
+
+  /* 머리 */
+  header { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
+  header h1 { margin: 0; font-size: 26px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.15; }
+  header h1 small { display: block; font-size: 13px; font-weight: 500; color: var(--ink-soft); letter-spacing: 0; }
+  .ghost { background: none; border: 1px solid var(--line); border-radius: 8px; padding: 6px 12px; font-size: 13px; color: var(--ink-soft); }
+
+  /* 잠금 화면 */
+  #gate { background: var(--ink); color: #fff; border-radius: 18px; padding: 28px 22px; }
+  #gate h2 { margin: 0 0 6px; font-size: 20px; }
+  #gate p { margin: 0 0 18px; color: #b9c2dc; font-size: 14px; }
+  #gate .field { display: flex; gap: 8px; }
+  #gate input { flex: 1; min-width: 0; padding: 12px 14px; border-radius: 10px; border: none; color: var(--ink); }
+  .primary { background: var(--sun); color: var(--ink); border: none; border-radius: 10px; padding: 12px 18px; font-weight: 700; }
+  #gateMsg { margin-top: 10px; font-size: 13px; color: #ffd48a; min-height: 18px; }
+  label.remember { display: flex; gap: 6px; align-items: center; margin-top: 12px; font-size: 13px; color: #b9c2dc; }
+
+  /* 탭 */
+  nav.tabs { display: flex; gap: 6px; border-bottom: 2px solid var(--line); margin-bottom: 18px; }
+  nav.tabs button {
+    background: none; border: none; padding: 10px 4px; margin-right: 14px; font-weight: 700; color: var(--ink-soft);
+    border-bottom: 3px solid transparent; margin-bottom: -2px;
+  }
+  nav.tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--sun); }
+
+  .panel { background: var(--surface); border-radius: 14px; padding: 18px 16px; border: 1px solid var(--line); }
+  .panel + .panel { margin-top: 14px; }
+  .panel h3 { margin: 0 0 4px; font-size: 16px; }
+  .hint { margin: 0 0 14px; font-size: 13px; color: var(--ink-soft); }
+
+  /* 게임 선택 */
+  .games { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 14px; }
+  .games button { border: 1px solid var(--line); background: var(--tide); border-radius: 10px; padding: 10px 4px; font-weight: 600; font-size: 14px; }
+  .games button[aria-pressed="true"] { background: var(--ink); color: #fff; border-color: var(--ink); }
+
+  /* 랭킹 표 */
+  .table-scroll { overflow-x: auto; margin: 0 -16px; padding: 0 16px; }
+  table { width: 100%; border-collapse: collapse; min-width: 520px; }
+  th, td { text-align: left; padding: 10px 6px; border-bottom: 1px solid var(--line); font-size: 14px; vertical-align: middle; }
+  th { font-size: 12px; font-weight: 600; color: var(--ink-soft); }
+  td.rank { font-weight: 800; width: 36px; }
+  td.score { font-variant-numeric: tabular-nums; font-weight: 700; }
+  td.meta { font-size: 12px; color: var(--ink-soft); }
+  .del { background: none; border: 1px solid var(--coral); color: var(--coral); border-radius: 8px; padding: 5px 10px; font-size: 13px; font-weight: 600; }
+  .del:hover { background: var(--coral); color: #fff; }
+  .empty { padding: 28px 0; text-align: center; color: var(--ink-soft); }
+
+  /* 말풍선 편집 */
+  .preview { background: linear-gradient(#8fd0f0, #cdeaf7); border-radius: 12px; padding: 22px 14px 18px; text-align: center; margin-bottom: 14px; }
+  .bubble { display: inline-block; background: #fff; border: 2.5px solid #333; border-radius: 16px; padding: 8px 14px; font-weight: 700; font-size: 15px; position: relative; max-width: 100%; }
+  .bubble::after { content: ""; position: absolute; left: 50%; bottom: -10px; transform: translateX(-50%); border: 8px solid transparent; border-top-color: #333; border-bottom: 0; }
+  .lines { list-style: none; padding: 0; margin: 0 0 12px; }
+  .lines li { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; }
+  .lines input { flex: 1; min-width: 0; padding: 9px 11px; border: 1px solid var(--line); border-radius: 8px; }
+  .lines input.over { border-color: var(--coral); }
+  .lines .count { font-size: 11px; color: var(--ink-soft); width: 34px; text-align: right; font-variant-numeric: tabular-nums; }
+  .lines .rm { background: none; border: none; font-size: 18px; color: var(--ink-soft); padding: 4px 8px; }
+  .lines .rm:hover { color: var(--coral); }
+  .add { background: none; border: 1.5px dashed var(--line); border-radius: 8px; padding: 9px; width: 100%; color: var(--sea); font-weight: 600; }
+  .chance { display: flex; align-items: center; gap: 12px; }
+  .chance input { flex: 1; accent-color: var(--sea); }
+  .chance output { font-weight: 800; width: 48px; text-align: right; font-variant-numeric: tabular-nums; }
+  .actions { display: flex; gap: 8px; justify-content: space-between; align-items: center; margin-top: 16px; flex-wrap: wrap; }
+  .save { background: var(--ink); color: #fff; border: none; border-radius: 10px; padding: 12px 22px; font-weight: 700; }
+  .save:disabled { opacity: .4; cursor: default; }
+
+  #toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%) translateY(20px);
+    background: var(--ink); color: #fff; padding: 10px 16px; border-radius: 10px; font-size: 14px; opacity: 0; pointer-events: none; transition: .2s; max-width: calc(100% - 32px); }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  #toast.err { background: var(--coral); }
+  [hidden] { display: none !important; }
+  @media (prefers-reduced-motion: reduce) { #toast { transition: none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1><small>헬로 대부도 오락실</small>관리실</h1>
+    <button class="ghost" id="logoutBtn" hidden>잠그기</button>
+  </header>
+
+  <!-- 잠금 화면 -->
+  <section id="gate">
+    <h2>관리자 비밀키를 입력하세요</h2>
+    <p>Vercel 환경변수 ADMIN_SECRET 에 등록한 값이에요.</p>
+    <form id="gateForm" onsubmit="return false">
+      <div class="field">
+        <input id="secretInput" type="password" autocomplete="current-password" placeholder="비밀키" aria-label="관리자 비밀키">
+        <button class="primary" id="unlockBtn" type="submit">열기</button>
+      </div>
+      <label class="remember"><input type="checkbox" id="rememberChk"> 이 기기에서 기억하기</label>
+    </form>
+    <div id="gateMsg" role="status"></div>
+  </section>
+
+  <!-- 관리 화면 -->
+  <main id="app" hidden>
+    <nav class="tabs" role="tablist">
+      <button role="tab" aria-selected="true" data-tab="ranking">랭킹</button>
+      <button role="tab" aria-selected="false" data-tab="whispers">헬로타워 말풍선</button>
+    </nav>
+
+    <!-- 랭킹 -->
+    <section data-panel="ranking">
+      <div class="panel">
+        <div class="games" id="gamePicker">
+          <button aria-pressed="true" data-game="hello_tower">🗼 헬로타워</button>
+          <button aria-pressed="false" data-game="hello_run">🏃 헬로런</button>
+          <button aria-pressed="false" data-game="hello_bird">🐦 헬로버드</button>
+        </div>
+        <p class="hint" id="rankHint">상위 200건까지 보여요. 삭제한 기록은 되돌릴 수 없어요.</p>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>순위</th><th>닉네임</th><th>기록</th><th></th><th>연락처</th><th>등록</th></tr></thead>
+            <tbody id="rankBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 말풍선 -->
+    <section data-panel="whispers" hidden>
+      <div class="panel">
+        <h3>미리보기</h3>
+        <p class="hint">블록이 착지할 때 이 중 하나가 무작위로 떠요. 누르면 다른 문구가 나와요.</p>
+        <div class="preview"><button class="bubble" id="previewBubble" type="button" style="font:inherit;font-weight:700;cursor:pointer">…</button></div>
+
+        <h3>문구 목록</h3>
+        <p class="hint">한 줄에 한 문구, 30자까지. 너무 길면 휴대폰 화면에서 말풍선이 커져요(15자 안팎 권장).</p>
+        <ul class="lines" id="lineList"></ul>
+        <button class="add" id="addLineBtn" type="button">+ 문구 추가</button>
+      </div>
+
+      <div class="panel">
+        <h3>말풍선 뜨는 확률</h3>
+        <p class="hint">블록 하나가 착지할 때마다 이 확률로 말풍선이 떠요.</p>
+        <div class="chance">
+          <input type="range" id="chanceRange" min="0" max="100" step="5" aria-label="말풍선 확률">
+          <output id="chanceOut">30%</output>
+        </div>
+
+        <div class="actions">
+          <button class="ghost" id="resetBtn" type="button">기본 문구로 되돌리기</button>
+          <button class="save" id="saveBtn" type="button" disabled>저장하기</button>
+        </div>
+        <p class="hint" id="savedAt" style="margin:10px 0 0"></p>
+      </div>
+    </section>
+  </main>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+// 게임 코드(games/hello-tower/index.html)의 WHISPER_LINES 기본값과 같게 유지.
+// "기본 문구로 되돌리기"를 누르면 서버 설정이 지워지고 게임은 코드의 기본값을 쓴다.
+const DEFAULT_WHISPERS = [
+  '고소공포증이 있어', '높은 건 딱 질색이야', '태풍아 제발 오지마', '대부도에 놀러 가고 싶어',
+  '하늘 위에는 뭐가 있을까?', '구름 위를 우리가 갈 수 있을까?', '정말 우리가 해낼 수 있을까?',
+  '삶은 원래 고통이라지??', '고통 없는 삶은 진짜 삶이 아니래', '고통과 행복은 같이 오는 거야',
+  '어디까지 올라가나 한 번 해보자!', '우리가 힘을 합치면 못할 게 없어!', '진정한 사랑은 존재를 인정하는 것!',
+];
+const DEFAULT_CHANCE = 0.3;
+const MAX_LEN = 30;
+const KEY_STORE = 'daebu_admin_secret';
+
+let secret = '';
+let currentGame = 'hello_tower';
+let whispers = [];
+let dirty = false;
+
+const $ = (id) => document.getElementById(id);
+
+function toast(text, isErr) {
+  const t = $('toast');
+  t.textContent = text;
+  t.className = 'show' + (isErr ? ' err' : '');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => { t.className = ''; }, 2600);
+}
+
+async function api(path, opts = {}) {
+  const res = await fetch(path, {
+    ...opts,
+    headers: { 'Content-Type': 'application/json', 'x-admin-secret': secret, ...(opts.headers || {}) },
+  });
+  let data = {};
+  try { data = await res.json(); } catch (e) {}
+  if (!res.ok) throw new Error(data.error || ('HTTP ' + res.status));
+  return data;
+}
+
+/* ---------- 잠금 ---------- */
+function readStoredSecret() {
+  try { return sessionStorage.getItem(KEY_STORE) || localStorage.getItem(KEY_STORE) || ''; } catch (e) { return ''; }
+}
+async function unlock(value, remember) {
+  secret = value.trim();
+  if (!secret) { $('gateMsg').textContent = '비밀키를 입력해주세요.'; return; }
+  $('gateMsg').textContent = '확인하는 중…';
+  try {
+    const data = await api('/api/score?game=hello_tower&limit=1');
+    if (!data.isAdmin) {
+      $('gateMsg').textContent = '비밀키가 맞지 않아요. Vercel의 ADMIN_SECRET 값과 같은지 확인해주세요.';
+      return;
+    }
+  } catch (e) {
+    $('gateMsg').textContent = '서버에 연결하지 못했어요: ' + e.message;
+    return;
+  }
+  try {
+    sessionStorage.setItem(KEY_STORE, secret);
+    if (remember) localStorage.setItem(KEY_STORE, secret);
+  } catch (e) {}
+  $('gate').hidden = true;
+  $('app').hidden = false;
+  $('logoutBtn').hidden = false;
+  loadRanking();
+  loadWhispers();
+}
+$('unlockBtn').addEventListener('click', () => unlock($('secretInput').value, $('rememberChk').checked));
+$('logoutBtn').addEventListener('click', () => {
+  try { sessionStorage.removeItem(KEY_STORE); localStorage.removeItem(KEY_STORE); } catch (e) {}
+  location.reload();
+});
+
+/* ---------- 탭 ---------- */
+document.querySelectorAll('nav.tabs button').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('nav.tabs button').forEach((b) => b.setAttribute('aria-selected', String(b === btn)));
+    document.querySelectorAll('[data-panel]').forEach((p) => { p.hidden = p.dataset.panel !== btn.dataset.tab; });
+  });
+});
+
+/* ---------- 랭킹 ---------- */
+document.querySelectorAll('#gamePicker button').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    currentGame = btn.dataset.game;
+    document.querySelectorAll('#gamePicker button').forEach((b) => b.setAttribute('aria-pressed', String(b === btn)));
+    loadRanking();
+  });
+});
+
+function formatWhen(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (isNaN(d)) return '';
+  return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
+
+async function loadRanking() {
+  const body = $('rankBody');
+  body.innerHTML = '<tr><td colspan="6" class="empty">불러오는 중…</td></tr>';
+  try {
+    const data = await api(`/api/score?game=${currentGame}&limit=200`);
+    body.innerHTML = '';
+    if (!data.leaderboard.length) {
+      body.innerHTML = '<tr><td colspan="6" class="empty">아직 등록된 기록이 없어요.</td></tr>';
+      return;
+    }
+    const unit = currentGame === 'hello_tower' ? '층' : currentGame === 'hello_run' ? 'm' : '점';
+    data.leaderboard.forEach((e) => {
+      const tr = document.createElement('tr');
+      const addCell = (cls, val) => {
+        const td = document.createElement('td');
+        if (cls) td.className = cls;
+        td.textContent = val;
+        tr.appendChild(td);
+      };
+      addCell('rank', e.rank);
+      addCell('', e.nickname);
+      addCell('score', e.meters + unit);
+      // 삭제 버튼은 휴대폰에서 스크롤 없이 보이도록 기록 바로 옆에
+      const td = document.createElement('td');
+      const del = document.createElement('button');
+      del.className = 'del';
+      del.textContent = '삭제';
+      del.addEventListener('click', () => deleteEntry(e, tr));
+      td.appendChild(del);
+      tr.appendChild(td);
+      addCell('meta', e.contact || '');
+      addCell('meta', formatWhen(e.submittedAt));
+      body.appendChild(tr);
+    });
+  } catch (err) {
+    body.innerHTML = '';
+    const tr = document.createElement('tr');
+    tr.innerHTML = '<td colspan="6" class="empty"></td>';
+    tr.firstChild.textContent = '불러오지 못했어요: ' + err.message;
+    body.appendChild(tr);
+  }
+}
+
+async function deleteEntry(entry, rowEl) {
+  if (!confirm(`${entry.rank}위 "${entry.nickname}" (${entry.meters}) 기록을 삭제할까요?\n되돌릴 수 없어요.`)) return;
+  try {
+    const data = await api('/api/score', {
+      method: 'POST',
+      body: JSON.stringify({ action: 'delete', game: currentGame, id: entry.id }),
+    });
+    if (data.removed) {
+      toast('삭제했어요.');
+      loadRanking(); // 순위 다시 매기기
+    } else {
+      toast('해당 기록을 찾지 못했어요. 새로고침해 보세요.', true);
+    }
+  } catch (err) {
+    toast('삭제하지 못했어요: ' + err.message, true);
+  }
+}
+
+/* ---------- 말풍선 ---------- */
+function markDirty(v = true) {
+  dirty = v;
+  $('saveBtn').disabled = !v;
+}
+
+function renderLines() {
+  const list = $('lineList');
+  list.innerHTML = '';
+  whispers.forEach((text, i) => {
+    const li = document.createElement('li');
+    const input = document.createElement('input');
+    input.value = text;
+    input.maxLength = 60; // 초과분은 입력은 되지만 빨갛게 표시하고 저장 시 막음
+    input.setAttribute('aria-label', `말풍선 문구 ${i + 1}`);
+    const count = document.createElement('span');
+    count.className = 'count';
+    const sync = () => {
+      whispers[i] = input.value;
+      count.textContent = `${input.value.length}/${MAX_LEN}`;
+      input.classList.toggle('over', input.value.length > MAX_LEN);
+    };
+    sync();
+    input.addEventListener('input', () => { sync(); markDirty(); });
+    input.addEventListener('focus', () => { $('previewBubble').textContent = input.value || '…'; });
+    const rm = document.createElement('button');
+    rm.className = 'rm';
+    rm.type = 'button';
+    rm.textContent = '×';
+    rm.setAttribute('aria-label', `문구 ${i + 1} 지우기`);
+    rm.addEventListener('click', () => { whispers.splice(i, 1); renderLines(); markDirty(); });
+    li.append(input, count, rm);
+    list.appendChild(li);
+  });
+  shufflePreview();
+}
+
+function shufflePreview() {
+  const pool = whispers.map((x) => x.trim()).filter(Boolean);
+  $('previewBubble').textContent = pool.length ? pool[Math.floor(Math.random() * pool.length)] : '문구가 없어요';
+}
+$('previewBubble').addEventListener('click', shufflePreview);
+
+$('addLineBtn').addEventListener('click', () => {
+  whispers.push('');
+  renderLines();
+  markDirty();
+  const inputs = $('lineList').querySelectorAll('input');
+  inputs[inputs.length - 1].focus();
+});
+
+function setChance(p) {
+  $('chanceRange').value = Math.round(p * 100);
+  $('chanceOut').textContent = Math.round(p * 100) + '%';
+}
+$('chanceRange').addEventListener('input', () => {
+  $('chanceOut').textContent = $('chanceRange').value + '%';
+  markDirty();
+});
+
+function showSavedAt(cfg) {
+  $('savedAt').textContent = cfg.updatedAt
+    ? `마지막 저장: ${formatWhen(cfg.updatedAt)} 게임에는 저장 후 30초 안에 반영돼요.`
+    : '아직 저장한 적 없어요. 지금 보이는 건 게임에 들어 있는 기본 문구예요.';
+}
+
+async function loadWhispers() {
+  try {
+    const { config } = await api('/api/config?game=hello_tower&fresh=1');
+    whispers = (config.whispers && config.whispers.length) ? [...config.whispers] : [...DEFAULT_WHISPERS];
+    setChance(Number.isFinite(config.whisperChance) ? config.whisperChance : DEFAULT_CHANCE);
+    showSavedAt(config);
+  } catch (e) {
+    whispers = [...DEFAULT_WHISPERS];
+    setChance(DEFAULT_CHANCE);
+    $('savedAt').textContent = '설정을 불러오지 못해 기본값을 보여주고 있어요: ' + e.message;
+  }
+  renderLines();
+  markDirty(false);
+}
+
+$('saveBtn').addEventListener('click', async () => {
+  const cleaned = whispers.map((x) => x.trim()).filter(Boolean);
+  const over = cleaned.find((x) => x.length > MAX_LEN);
+  if (over) { toast(`30자를 넘는 문구가 있어요: "${over.slice(0, 12)}…"`, true); return; }
+  if (!cleaned.length) { toast('문구가 최소 1개는 있어야 해요.', true); return; }
+  try {
+    const data = await api('/api/config', {
+      method: 'POST',
+      body: JSON.stringify({ game: 'hello_tower', config: { whispers: cleaned, whisperChance: $('chanceRange').value / 100 } }),
+    });
+    whispers = [...data.config.whispers];
+    renderLines();
+    showSavedAt(data.config);
+    markDirty(false);
+    toast('저장했어요.');
+  } catch (err) {
+    toast('저장하지 못했어요: ' + err.message, true);
+  }
+});
+
+$('resetBtn').addEventListener('click', async () => {
+  if (!confirm('저장한 문구와 확률을 지우고 게임 기본값으로 되돌릴까요?')) return;
+  try {
+    const data = await api('/api/config', {
+      method: 'POST',
+      body: JSON.stringify({ game: 'hello_tower', config: { whispers: null, whisperChance: null } }),
+    });
+    whispers = [...DEFAULT_WHISPERS];
+    setChance(DEFAULT_CHANCE);
+    renderLines();
+    showSavedAt({});
+    markDirty(false);
+    toast('기본값으로 되돌렸어요.');
+  } catch (err) {
+    toast('되돌리지 못했어요: ' + err.message, true);
+  }
+});
+
+window.addEventListener('beforeunload', (e) => { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
+
+/* ---------- 시작 ---------- */
+const stored = readStoredSecret();
+if (stored) {
+  $('secretInput').value = stored;
+  unlock(stored, false);
+}
+</script>
+</body>
+</html>
