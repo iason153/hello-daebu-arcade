@@ -1261,12 +1261,15 @@ function buildShareCard() {
   sctx.fillText('🗼 헬로타워 · 대부도 오락실', cw / 2, 320);
 
   // 캐릭터 — 배경의 노을 태양(원) 자리에, 표정 있는 블록 중 랜덤으로
+  // [수정] 실제 카드를 뽑아보니 캐릭터가 링의 중심보다 아래로 처져 보였음(태양 원반의
+  // "가장 밝은 픽셀"로 좌표를 잡았는데, 그 지점이 링 자체의 중심보다 낮았던 듯) —
+  // 중심 y를 575→450으로 올려서 링 한가운데에 오도록 보정.
   const charImg = pickRandomShareChar();
   if (charImg && charImg.complete && charImg.naturalWidth) {
-    const cs = 240;
+    const cs = 220;
     const ar = charImg.naturalWidth / charImg.naturalHeight;
     const dw = ar >= 1 ? cs : cs * ar, dh = ar >= 1 ? cs / ar : cs;
-    sctx.drawImage(charImg, cw / 2 - dw / 2, 575 - dh / 2, dw, dh);
+    sctx.drawImage(charImg, cw / 2 - dw / 2, 450 - dh / 2, dw, dh);
   }
 
   // 하단 CTA — 배경의 남색 바(y≈696~) 안에
