@@ -1,0 +1,25 @@
+{
+  "name": "헬로 대부도 오락실",
+  "short_name": "대부도 오락실",
+  "description": "대부도를 배경으로 한 가벼운 미니게임 모음 — 헬로타워·헬로런·헬로버드",
+  "id": "/",
+  "start_url": "/?utm_source=pwa&utm_medium=app_icon",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f1a30",
+  "theme_color": "#0f1a30",
+  "lang": "ko-KR",
+  "dir": "ltr",
+  "categories": ["games", "entertainment"],
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-192-maskable.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/icons/icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "헬로타워", "url": "/games/hello-tower/?utm_source=pwa&utm_medium=shortcut", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "헬로 신전", "url": "/hall-of-fame.html?utm_source=pwa&utm_medium=shortcut", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

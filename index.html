@@ -11,6 +11,16 @@ gtag("js", new Date());
 gtag("config", "G-5YPGVVP49T");
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#0f1a30">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="대부도 오락실">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="64x64" href="/icons/favicon-64.png">
+<script src="/pwa.js" defer></script>
+
 <title>헬로 대부도 오락실</title>
 <meta name="description" content="대부도 곳곳을 배경으로 한 가벼운 미니게임들. 헬로버드와 헬로런을 지금 바로 즐겨보세요.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -64,6 +74,8 @@ img{ max-width:100%; display:block; }
   max-width:38ch;
   margin-left:auto; margin-right:auto;
 }
+.pwa-slot{ margin-top:22px; min-height:0; }
+.pwa-slot:empty{ display:none; }
 .cabinet{
   margin:36px auto 0;
   max-width:280px;
@@ -238,6 +250,7 @@ footer{
   <div class="wrap">
     <h1 class="eyebrow-free-title">헬로 대부도<br><span class="title-accent">오락실</span></h1>
     <p class="tagline">대부도 곳곳을 배경으로 한 아주 가벼운 미니게임들을 하나씩 만들고 있어요.</p>
+    <div class="pwa-slot" data-pwa-install></div>
     <div class="cabinet">
       <div class="cabinet-frame">
         <div class="cabinet-slides">

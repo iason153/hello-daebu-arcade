@@ -11,6 +11,16 @@
   gtag("config", "G-5YPGVVP49T");
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#0f1a30">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="대부도 오락실">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="64x64" href="/icons/favicon-64.png">
+<script src="/pwa.js" defer></script>
+
 <title>헬로 신전 | 헬로 대부도 오락실 명예의 전당</title>
 <meta name="description" content="헬로 대부도 오락실 세 게임의 왕좌에 오른 1위들을 모시는 명예의 전당이에요.">
 <meta property="og:type" content="website">
@@ -57,6 +67,7 @@
   .facade { position: relative; max-width: 560px; margin: 0 auto; padding: 36px 16px 0; text-align: center; }
   .back { position: absolute; left: 16px; top: 14px; font-size: 13px; color: #dfe6f5; text-decoration: none; opacity: .85; }
   .back:hover { opacity: 1; text-decoration: underline; }
+  .pwa-corner { position: absolute; right: 12px; top: 8px; z-index: 3; }
   .athena { width: 118px; margin: 0 auto -18px; position: relative; z-index: 2; filter: drop-shadow(0 8px 18px rgba(255,220,140,.45)); }
   .pediment { position: relative; z-index: 1; }
   .pediment svg { width: 100%; height: auto; display: block; }
@@ -203,6 +214,7 @@
 
 <header class="facade">
   <a class="back" href="/">← 오락실로</a>
+  <div class="pwa-corner" data-pwa-install="small"></div>
   <img class="athena" src="games/hello-tower/assets/bg/gods/athena.png" alt="신전을 지키는 아테나">
   <div class="pediment">
     <svg viewBox="0 0 520 170" aria-hidden="true">
