@@ -18,6 +18,10 @@
 <meta property="og:description" content="헬로타워·헬로런·헬로버드의 왕좌에 오른 이름들을 확인하고 도전해 보세요.">
 <meta property="og:image" content="https://daebugame.com/games/hello-tower/assets/thumb-hellotower.jpg">
 <meta property="og:url" content="https://daebugame.com/hall-of-fame.html">
+<script src="https://t1.kakaocdn.net/kakao_js_sdk/2.8.1/kakao.min.js" crossorigin="anonymous"></script>
+<script>
+  try { if (window.Kakao && !window.Kakao.isInitialized()) window.Kakao.init('3994a3bda3b8146e709683fdb350c9cc'); } catch (e) {}
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Jua&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
@@ -134,6 +138,17 @@
     font-family: 'Jua', sans-serif; font-size: 17px; letter-spacing: .02em;
   }
   .challenge:hover { background: #3d3346; }
+  .share-card {
+    display: block; margin: 10px auto 0; padding: 9px 18px; border-radius: 999px;
+    background: #fee500; color: #191600; border: none; cursor: pointer;
+    font-family: 'Noto Sans KR', sans-serif; font-weight: 700; font-size: 14px;
+  }
+  .share-card:disabled { opacity: .6; cursor: default; }
+  .share-hint { font-size: 12px; color: var(--ink-soft); margin-top: 6px; }
+  #toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%);
+    background: rgba(43,36,51,.92); color: #fff; padding: 10px 16px; border-radius: 10px; font-size: 14px;
+    opacity: 0; pointer-events: none; transition: opacity .2s; max-width: calc(100% - 32px); z-index: 10; }
+  #toast.show { opacity: 1; }
 
   /* 신전 계단 — 성소 아래 받침 */
   .steps span { display: block; height: 9px; margin: 0 auto; background: var(--marble-shade); border-bottom: 1px solid var(--marble-deep); }
@@ -217,8 +232,10 @@
   <p class="loading">왕좌의 주인을 확인하는 중…</p>
 </main>
 
+<div id="toast" role="status" aria-live="polite"></div>
+
 <footer>
-  <p>기록은 1분마다 새로 새겨져요. 같은 기록이면 먼저 세운 사람이 왕좌에 앉아요.</p>
+  <p>기록은 1분마다 새로 새겨져요. 같은 기록이면 나중에 오른 사람이 왕좌를 가져가요. 지켜내려면 다시 올라야 해요!</p>
   <p style="margin-top:6px"><a href="games/hello-tower/ranking.html">전체 랭킹 보기</a> · <a href="/">오락실로 돌아가기</a></p>
 </footer>
 
@@ -297,7 +314,7 @@ function renderShrine(cfg, data) {
   const plaque = el('div', { class: 'plaque' + (champ ? '' : ' empty') });
   if (champ) {
     plaque.append(
-      el('div', { class: 'title', text: '현재 왕좌의 주인' }),
+      el('div', { class: 'title', text: champ.reign ? `제${champ.reign}대 왕좌의 주인` : '현재 왕좌의 주인' }),
       el('div', { class: 'name', text: champ.nickname }),
       el('div', { class: 'record', text: `${champ.score}${cfg.unit}` }),
       el('div', { class: 'reign', text: reignText(champ.at) }),
@@ -313,6 +330,13 @@ function renderShrine(cfg, data) {
   const cta = el('a', { class: 'challenge', href: cfg.href, text: champ ? '왕좌에 도전하기' : '첫 주인 되기' });
   cta.addEventListener('click', () => track('hall_challenge_click', { game: cfg.key }));
   niche.appendChild(cta);
+
+  if (champ) {
+    const share = el('button', { class: 'share-card', type: 'button', text: '👑 왕좌 카드 카톡으로 자랑하기' });
+    share.addEventListener('click', () => shareThroneCard(cfg, champ, share));
+    niche.appendChild(share);
+    niche.appendChild(el('p', { class: 'share-hint', text: '왕좌에 오른 기념 카드를 친구들에게 보내 보세요' }));
+  }
 
   const frame = el('div', { class: 'shrine-frame' },
     el('div', { class: 'column', 'aria-hidden': 'true' }), niche, el('div', { class: 'column', 'aria-hidden': 'true' }));
@@ -331,9 +355,9 @@ function renderShrine(cfg, data) {
       list));
   }
 
-  if (data && data.podium && data.podium.length > 1) {
+  if (data && data.podium && data.podium.filter((e) => !champ || e.nickname !== champ.nickname).length) {
     const list = el('ol', { class: 'podium' });
-    data.podium.slice(1).forEach((e, i) => {
+    data.podium.filter((e) => !champ || e.nickname !== champ.nickname).slice(0, 2).forEach((e, i) => {
       list.appendChild(el('li', {},
         el('span', { class: 'who' }, el('span', { class: 'rank-mark', text: `${i + 2}위` }), e.nickname),
         el('span', { class: 'pts', text: `${e.score}${cfg.unit}` })));
@@ -345,10 +369,10 @@ function renderShrine(cfg, data) {
     const list = el('ol', { class: 'history' });
     data.history.forEach((e) => {
       list.appendChild(el('li', {},
-        el('span', {}, `${e.nickname} `, el('b', { text: `${e.score}${cfg.unit}` })),
+        el('span', {}, e.reign ? `제${e.reign}대 ${e.nickname} ` : `${e.nickname} `, el('b', { text: `${e.score}${cfg.unit}` })),
         el('span', { class: 'when', text: fmtDate(e.at) })));
     });
-    const det = el('details', {}, el('summary', { text: `왕좌의 역사 (신기록 ${data.history.length}번)` }), list);
+    const det = el('details', {}, el('summary', { text: `왕좌의 역사 (지금까지 ${data.reign || data.history.length}대)` }), list);
     records.appendChild(el('section', {}, det));
   }
 
@@ -356,7 +380,7 @@ function renderShrine(cfg, data) {
     records.appendChild(el('p', { class: 'note', text: `지금까지 ${data.players}명이 이 왕좌에 도전했어요.` }));
   }
 
-  const shrine = el('article', { class: 'shrine', 'aria-label': `${cfg.name} 성소` }, frame, steps);
+  const shrine = el('article', { class: 'shrine', id: `shrine-${cfg.key}`, 'aria-label': `${cfg.name} 성소` }, frame, steps);
   if (records.childNodes.length) shrine.appendChild(records);
   return shrine;
 }
@@ -369,11 +393,210 @@ async function load() {
     const { games } = await res.json();
     root.innerHTML = '';
     SHRINES.forEach((cfg) => root.appendChild(renderShrine(cfg, games[cfg.key])));
+    const g = new URLSearchParams(location.search).get('g');
+    const target = g && document.getElementById(`shrine-${g}`);
+    if (target) setTimeout(() => target.scrollIntoView({ behavior: 'smooth', block: 'start' }), 150);
   } catch (e) {
     root.innerHTML = '';
     root.appendChild(el('p', { class: 'error', text: '신전 문이 잠시 닫혀 있어요. 잠시 후 새로고침해 주세요.' }));
   }
 }
+
+// =====================================================================
+// 왕좌 카드 — 캔버스로 그려서 카카오톡으로 공유(안 되면 기기 공유 → 이미지 저장 순서로 폴백).
+// 흐름은 게임들의 "친구에게 자랑하기"와 같고, 이미지 업로드도 같은 /api/kakao-upload를 쓴다.
+// =====================================================================
+const CARD_W = 640, CARD_H = 800;
+const SITE = 'https://daebugame.com';
+
+function loadImg(src) {
+  return new Promise((ok, fail) => { const i = new Image(); i.onload = () => ok(i); i.onerror = fail; i.src = src; });
+}
+
+// 흰 캐릭터 그림 → 금빛 조각상(선은 살리고 몸통만 금색)
+function goldStatue(img, w, h) {
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  const x = c.getContext('2d');
+  x.drawImage(img, 0, 0, w, h);
+  x.globalCompositeOperation = 'source-in';
+  const g = x.createLinearGradient(0, 0, w, h);
+  g.addColorStop(0, '#fff1b8'); g.addColorStop(.3, '#f2c14e'); g.addColorStop(.55, '#b9811f'); g.addColorStop(.75, '#f7d77a'); g.addColorStop(1, '#9a6614');
+  x.fillStyle = g; x.fillRect(0, 0, w, h);
+  x.globalCompositeOperation = 'multiply';
+  x.drawImage(img, 0, 0, w, h);
+  x.globalCompositeOperation = 'destination-in';
+  x.drawImage(img, 0, 0, w, h);
+  return c;
+}
+
+function fitText(ctx, text, maxW, startPx, font) {
+  let px = startPx;
+  do { ctx.font = `700 ${px}px ${font}`; px -= 2; } while (ctx.measureText(text).width > maxW && px > 18);
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+}
+
+async function buildThroneCard(cfg, champ) {
+  try {
+    await Promise.all([
+      document.fonts.load('700 40px "Gowun Batang"'),
+      document.fonts.load('40px "Jua"'),
+    ]);
+  } catch (e) { /* 글꼴이 없으면 기본 글꼴로 */ }
+  const [statueImg, godImg] = await Promise.all([loadImg(cfg.statue), loadImg(cfg.god)]);
+
+  const c = document.createElement('canvas'); c.width = CARD_W; c.height = CARD_H;
+  const ctx = c.getContext('2d');
+  const SERIF = '"Gowun Batang", serif', ROUND = '"Jua", sans-serif';
+
+  // 하늘
+  const sky = ctx.createLinearGradient(0, 0, 0, CARD_H);
+  sky.addColorStop(0, '#233f7a'); sky.addColorStop(.35, '#6f88bf'); sky.addColorStop(.62, '#f6d49a'); sky.addColorStop(1, '#f8ecd4');
+  ctx.fillStyle = sky; ctx.fillRect(0, 0, CARD_W, CARD_H);
+
+  // 조각상 뒤 후광
+  const cx = CARD_W / 2, cy = 360;
+  ctx.save(); ctx.translate(cx, cy);
+  for (let i = 0; i < 18; i++) {
+    ctx.rotate(Math.PI * 2 / 18);
+    ctx.fillStyle = i % 2 ? 'rgba(255,236,170,.22)' : 'rgba(255,255,255,.10)';
+    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-26, -330); ctx.lineTo(26, -330); ctx.closePath(); ctx.fill();
+  }
+  const halo = ctx.createRadialGradient(0, 0, 10, 0, 0, 170);
+  halo.addColorStop(0, 'rgba(255,248,215,.95)'); halo.addColorStop(1, 'rgba(255,248,215,0)');
+  ctx.fillStyle = halo; ctx.beginPath(); ctx.arc(0, 0, 170, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+
+  // 신전 박공
+  ctx.fillStyle = '#f5f0e6'; ctx.strokeStyle = '#b3a68f'; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(40, 132); ctx.lineTo(cx, 34); ctx.lineTo(CARD_W - 40, 132); ctx.closePath(); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#e8dfcd'; ctx.fillRect(28, 132, CARD_W - 56, 18); ctx.strokeRect(28, 132, CARD_W - 56, 18);
+  ctx.fillStyle = '#5a4a36'; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+  ctx.font = `700 34px ${SERIF}`; ctx.fillText('헬로 신전', cx, 118);
+
+  // 게임 + 대수 리본
+  const ribbon = `${cfg.name} 제${champ.reign || 1}대 왕좌`;
+  ctx.font = `28px ${ROUND}`;
+  const rw = ctx.measureText(ribbon).width + 48;
+  ctx.fillStyle = '#2b2433'; roundRect(ctx, cx - rw / 2, 170, rw, 48, 24); ctx.fill();
+  ctx.fillStyle = '#f2c14e'; ctx.fillText(ribbon, cx, 204);
+
+  // 금빛 조각상 + 지키는 신
+  const sh = 200, sw = Math.min(260, statueImg.width * sh / statueImg.height);
+  const shh = statueImg.height * sw / statueImg.width;
+  ctx.save(); ctx.shadowColor = 'rgba(110,70,10,.45)'; ctx.shadowBlur = 18; ctx.shadowOffsetY = 8;
+  ctx.drawImage(goldStatue(statueImg, Math.round(sw), Math.round(shh)), cx - sw / 2, 460 - shh, sw, shh);
+  ctx.restore();
+  const gw = 118, gh = godImg.height * gw / godImg.width;
+  const gx = cfg.godSide === 'right' ? CARD_W - gw - 26 : 26;
+  ctx.drawImage(godImg, gx, 470 - gh, gw, gh);
+
+  // 받침대
+  ctx.fillStyle = '#c9bfae'; ctx.fillRect(cx - 150, 460, 300, 18);
+
+  // 명판
+  const px = 70, py = 488, pw = CARD_W - 140, ph = 196;
+  const plate = ctx.createLinearGradient(0, py, 0, py + ph);
+  plate.addColorStop(0, '#fff6df'); plate.addColorStop(1, '#f0dcae');
+  ctx.fillStyle = plate; roundRect(ctx, px, py, pw, ph, 8); ctx.fill();
+  ctx.strokeStyle = '#c9922c'; ctx.lineWidth = 4; ctx.stroke();
+  ctx.strokeStyle = 'rgba(201,146,44,.5)'; ctx.lineWidth = 1.5; roundRect(ctx, px + 9, py + 9, pw - 18, ph - 18, 5); ctx.stroke();
+
+  ctx.fillStyle = '#c9922c'; ctx.font = `500 20px 'Noto Sans KR', sans-serif`;
+  ctx.fillText('왕좌의 주인', cx, py + 44);
+  ctx.fillStyle = '#2b2433'; fitText(ctx, champ.nickname, pw - 60, 54, SERIF);
+  ctx.fillText(champ.nickname, cx, py + 108);
+  ctx.fillStyle = '#7a5412'; ctx.font = `700 32px ${SERIF}`;
+  ctx.fillText(`${champ.score}${cfg.unit}`, cx, py + 150);
+  const d = champ.at ? new Date(champ.at) : null;
+  if (d && !isNaN(d)) {
+    ctx.fillStyle = '#6a5f70'; ctx.font = `400 18px 'Noto Sans KR', sans-serif`;
+    ctx.fillText(`${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일 즉위`, cx, py + 180);
+  }
+
+  // 하단 바
+  ctx.fillStyle = '#1c2748'; ctx.fillRect(0, CARD_H - 92, CARD_W, 92);
+  ctx.fillStyle = '#ffd166'; ctx.font = `28px ${ROUND}`;
+  ctx.fillText('이 왕좌, 빼앗을 수 있을까?', cx, CARD_H - 50);
+  ctx.fillStyle = 'rgba(255,255,255,.75)'; ctx.font = `400 17px 'Noto Sans KR', sans-serif`;
+  ctx.fillText('헬로 대부도 오락실 · daebugame.com', cx, CARD_H - 20);
+  return c;
+}
+
+function blobToBase64(blob) {
+  return new Promise((ok, fail) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = fail; r.readAsDataURL(blob); });
+}
+
+function toast(text) {
+  const t = document.getElementById('toast');
+  t.textContent = text; t.classList.add('show');
+  clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+async function shareThroneCard(cfg, champ, btn) {
+  track('throne_card_share', { game: cfg.key });
+  const label = btn.textContent;
+  btn.disabled = true; btn.textContent = '카드 만드는 중…';
+  try {
+    const canvas = await buildThroneCard(cfg, champ);
+    const blob = await new Promise((ok) => canvas.toBlob(ok, 'image/png'));
+    if (!blob) throw new Error('no blob');
+    const hallUrl = `${SITE}/hall-of-fame.html?g=${cfg.key}`;
+    const gameUrl = `${SITE}/${cfg.href}`;
+
+    // 1) 카카오톡
+    if (window.Kakao && window.Kakao.isInitialized && window.Kakao.isInitialized()) {
+      try {
+        const up = await fetch('/api/kakao-upload', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ imageBase64: await blobToBase64(blob) }),
+        });
+        if (up.ok) {
+          const { url } = await up.json();
+          window.Kakao.Share.sendDefault({
+            objectType: 'feed',
+            content: {
+              title: `👑 ${champ.nickname}님, ${cfg.name} 제${champ.reign || 1}대 왕좌에 오르다! (${champ.score}${cfg.unit})`,
+              description: '헬로 신전에 이름이 새겨졌어요. 이 왕좌, 빼앗을 수 있을까요?',
+              imageUrl: url,
+              link: { mobileWebUrl: hallUrl, webUrl: hallUrl },
+            },
+            buttons: [
+              { title: '왕좌 빼앗으러 가기', link: { mobileWebUrl: gameUrl, webUrl: gameUrl } },
+              { title: '신전 구경하기', link: { mobileWebUrl: hallUrl, webUrl: hallUrl } },
+            ],
+          });
+          toast('카카오톡 공유창을 열었어요 👑');
+          return;
+        }
+      } catch (e) { /* 아래 폴백으로 */ }
+    }
+    // 2) 기기 공유 시트
+    const file = new File([blob], `throne-${cfg.key}.png`, { type: 'image/png' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], title: `${cfg.name} 왕좌 카드`, text: `${champ.nickname}님이 ${cfg.name} 왕좌에 올랐어요! ${hallUrl}` });
+        toast('공유했어요 👑');
+        return;
+      } catch (e) { if (e && e.name === 'AbortError') return; }
+    }
+    // 3) 이미지 저장
+    const u = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = u; a.download = `throne-${cfg.key}.png`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(u), 4000);
+    toast('왕좌 카드를 이미지로 저장했어요');
+  } catch (e) {
+    toast('카드를 만들지 못했어요. 잠시 후 다시 눌러 주세요.');
+  } finally {
+    btn.disabled = false; btn.textContent = label;
+  }
+}
+
 load();
 </script>
 </body>

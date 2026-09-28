@@ -79,9 +79,19 @@ async function handleSubmit(req, res) {
       meters: score,
       submittedAt: new Date().toISOString(),
     };
+    // 왕좌 판정(명예의 전당 /hall-of-fame.html 규칙과 동일): 지금 최고 기록 "이상"이면
+    // 이 기록이 새 왕좌의 주인이 된다(같은 기록이면 나중에 오른 사람이 왕좌를 가져감).
+    // 게임 화면이 이 값을 보고 "왕좌에 올랐어요! 왕좌 카드 받기" 안내를 띄운다.
+    let throne = false;
+    try {
+      const top = await kv.zrange(`score:${game}`, 0, 0, { rev: true, withScores: true });
+      const topScore = top && top.length >= 2 ? Number(top[1]) : -Infinity;
+      throne = score >= topScore;
+    } catch (e) { /* 판정 실패해도 등록은 계속 */ }
+
     await kv.zadd(`score:${game}`, { score, member: JSON.stringify(entry) });
 
-    return res.status(200).json({ ok: true });
+    return res.status(200).json({ ok: true, throne });
   } catch (e) {
     return res.status(500).json({ error: 'server error' });
   }
