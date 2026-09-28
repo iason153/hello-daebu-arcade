@@ -110,7 +110,7 @@ const DEFAULTS = {
   WEATHER_BADGE_OFFSET_X: 92, // horizontal distance from the stopwatch center to the weather badge center
   WEATHER_BADGE_R: 45,   // Iason's live-tuned value (was 29)
   HOLD_THRESHOLD_MS: 160, // no longer used (screen split replaced tap/hold), kept only so any saved localStorage value doesn't error
-  CROUCH_ZONE_MARGIN: 0, // extra px of touch zone extending ABOVE the visible ground line — the zone's bottom edge is always the ground line itself, this just makes the target a bit taller/more forgiving if needed
+  CROUCH_ZONE_MARGIN: 70, // [2026-09-28 난이도 하향] 0이면 숙이기 구역이 화면 맨 아래 60px(약 6%)뿐이라 폰에서 누르기 어려웠음 → 바닥선 위로 70px 더 넓힘 // extra px of touch zone extending ABOVE the visible ground line — the zone's bottom edge is always the ground line itself, this just makes the target a bit taller/more forgiving if needed
   AIR_GAP: 45,          // was 60 — with the new smaller HELLO_SIZE(58), 60 was taller than
                          // standing height, so hello passed under while standing without
                          // ever needing to duck. must sit between CROUCH_HEIGHT(31) and
@@ -119,17 +119,17 @@ const DEFAULTS = {
   OBSTACLE_GAP_MIN: 280, // was 230 — more breathing room between obstacles
   OBSTACLE_GAP_MAX: 400,
   DIFFICULTY_RAMP: 1200, // Iason's live-tuned value (was 1300)
-  EASY_TIER_END: 20,   // below this displayM, no tall/long obstacles at all
-  MEDIUM_TIER_END: 50, // below this, a light mix of tall/long; at/above, the full hard mix
+  EASY_TIER_END: 35,   // [2026-09-28] 20→35 — 2단점프 장애물이 나오기 전 적응 구간을 늘림   // below this displayM, no tall/long obstacles at all
+  MEDIUM_TIER_END: 80, // [2026-09-28] 50→80 // below this, a light mix of tall/long; at/above, the full hard mix
   JUMP_SAFETY_MULT: 1.8, // Iason's live-tuned value (was 1.6)
-  LOW_OBSTACLE_H: 65,   // rescaled with HELLO_SIZE (was 85 at the old 78 standing height)
-  LOW_OBSTACLE_W: 70,   // rescaled with HELLO_SIZE (was 90) — fixed footprint, independent
+  LOW_OBSTACLE_H: 60,   // [2026-09-28] 65→60 (was:   // rescaled with HELLO_SIZE (was 85 at the old 78 standing height)
+  LOW_OBSTACLE_W: 64,   // [2026-09-28] 70→64 (was:   // rescaled with HELLO_SIZE (was 90) — fixed footprint, independent
                          // of source art aspect — this is the
                          // "규격화": every low obstacle is exactly this size, always safely
                          // clearable, instead of varying with whatever the source image's
                          // proportions happened to be
-  MID_OBSTACLE_H: 112,  // rescaled with HELLO_SIZE (was 145) — still comfortably under single-jump apex
-  MID_OBSTACLE_W: 73,   // rescaled with HELLO_SIZE (was 95)
+  MID_OBSTACLE_H: 100,  // [2026-09-28] 112→100 (was:  // rescaled with HELLO_SIZE (was 145) — still comfortably under single-jump apex
+  MID_OBSTACLE_W: 66,   // [2026-09-28] 73→66 (was:   // rescaled with HELLO_SIZE (was 95)
   GROUND_OVERLAP: 4,  // was 10 — raised obstacles up so they sit mostly above the ground line, with just a thin edge overlapping the sand
   JUMP_DRAW_W: 70, // Iason's live-tuned value (was 71)
   JUMP_WINDUP: 5,          // was 2 — this now doubles as the crouch-swipe cancel window
@@ -137,20 +137,22 @@ const DEFAULTS = {
                            // swipe to actually register before liftoff happens. 2 was likely
                            // too short for that even though it read fine as a squash beat
   LAND_SQUASH_TIME: 20,   // Iason's live-tuned value (was 18)
-  TALL_OBSTACLE_H: 260,  // taller than any single jump (~221px apex) can clear — needs the double jump
-  TALL_OBSTACLE_W: 95,
-  LONG_OBSTACLE_H: 145,  // same height as MID, but...
-  LONG_OBSTACLE_W: 250,  // ...much wider, so a single jump's hangtime can't cover it — needs the double jump's extra airtime
-  HITBOX_PAD: 10,
-  HITBOX_MARGIN_X: 10, // was an implicit 24 — that extra margin was making the "must be
+  TALL_OBSTACLE_H: 245,  // [2026-09-28] 260→245, 여전히 1단점프로는 못 넘음(시뮬레이션 확인) —  // taller than any single jump (~221px apex) can clear — needs the double jump
+  TALL_OBSTACLE_W: 86,   // [2026-09-28] 95→86
+  LONG_OBSTACLE_H: 132,  // [2026-09-28] 145→132 —  // same height as MID, but...
+  LONG_OBSTACLE_W: 225,  // [2026-09-28] 250→225, 여전히 2단점프 필요 —  // ...much wider, so a single jump's hangtime can't cover it — needs the double jump's extra airtime
+  HITBOX_PAD: 16,      // [2026-09-28] 10→16 — 발끝이 살짝 스친 정도는 봐주는 관대한 판정
+  HITBOX_MARGIN_X: 4,  // [2026-09-28] 10→4 — // was an implicit 24 — that extra margin was making the "must be
                         // high enough" window longer than the obstacle actually looks
 };
+// [2026-09-28] 저장 키를 hr_tune → hr_tune_v2로 변경. 설정 패널은 값 "전체"를 저장하기 때문에,
+// 예전에 패널을 한 번이라도 연 기기에서는 옛 수치가 그대로 고정돼 새 난이도가 적용되지 않았음.
 let T = Object.assign({}, DEFAULTS);
 try{
-  const saved = JSON.parse(localStorage.getItem('hr_tune')||'{}');
+  const saved = JSON.parse(localStorage.getItem('hr_tune_v2')||'{}');
   T = Object.assign({}, DEFAULTS, saved);
 }catch(e){}
-function saveTune(){ localStorage.setItem('hr_tune', JSON.stringify(T)); }
+function saveTune(){ localStorage.setItem('hr_tune_v2', JSON.stringify(T)); }
 // derived each time from JUMP_HEIGHT + JUMP_HANGTIME — the closed-form solution for
 // "what gravity/launch-velocity gives exactly this apex height over exactly this hangtime"
 function effGravity(){ return 8*T.JUMP_HEIGHT/(T.JUMP_HANGTIME*T.JUMP_HANGTIME); }

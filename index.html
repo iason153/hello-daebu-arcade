@@ -154,6 +154,15 @@ img{ max-width:100%; display:block; }
 
 /* ---------- second game card (stacked below featured) ---------- */
 .game-featured + .game-featured{ margin-top:20px; }
+.temple-link{
+  display:flex; align-items:center; gap:14px; margin-top:24px; padding:16px 18px;
+  border-radius:16px; text-decoration:none; color:#2b2433;
+  background:linear-gradient(135deg,#fbf3dc 0%,#f2d489 55%,#d9a441 100%);
+  box-shadow:0 10px 26px -14px rgba(242,193,78,.6);
+}
+.temple-link img{ width:54px; height:auto; flex:none; }
+.temple-link .t{ font-family:'Jua',sans-serif; font-size:20px; line-height:1.2; }
+.temple-link .d{ font-size:13px; color:#5c4a2c; }
 
 /* ---------- teaser (coming soon) ---------- */
 .game-teaser{
@@ -277,6 +286,14 @@ footer{
         <a class="btn-play" href="games/hello-tower/">플레이하기</a>
       </div>
     </div>
+
+    <a class="temple-link" href="hall-of-fame.html">
+      <img src="games/hello-tower/assets/bg/gods/zeus.png" alt="" loading="lazy">
+      <div>
+        <div class="t">헬로 신전</div>
+        <div class="d">명예의 전당 — 세 게임의 왕좌에 오른 1위들이 모셔진 곳</div>
+      </div>
+    </a>
 
   </div>
 </section>

@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5YPGVVP49T"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag("js", new Date());
+  gtag("config", "G-5YPGVVP49T");
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>헬로 신전 | 헬로 대부도 오락실 명예의 전당</title>
+<meta name="description" content="헬로 대부도 오락실 세 게임의 왕좌에 오른 1위들을 모시는 명예의 전당이에요.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="헬로 신전 — 대부도 오락실 명예의 전당">
+<meta property="og:description" content="헬로타워·헬로런·헬로버드의 왕좌에 오른 이름들을 확인하고 도전해 보세요.">
+<meta property="og:image" content="https://daebugame.com/games/hello-tower/assets/thumb-hellotower.jpg">
+<meta property="og:url" content="https://daebugame.com/hall-of-fame.html">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Jua&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --lapis: #233f7a;        /* 신전 위 높은 하늘 */
+    --dawn: #f6d49a;         /* 헬로타워 천국 구간의 황금빛 */
+    --marble: #f5f0e6;
+    --marble-shade: #d9cfbd;
+    --marble-deep: #b3a68f;
+    --gold: #c9922c;
+    --gold-bright: #f2c14e;
+    --ink: #2b2433;
+    --ink-soft: #6a5f70;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+    color: var(--ink);
+    background: linear-gradient(180deg, var(--lapis) 0%, #4f6fae 18%, #a9b9d8 36%, var(--dawn) 60%, #f8ecd4 100%);
+    background-attachment: scroll;
+    min-height: 100vh;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+  a { color: inherit; }
+  img { display: block; max-width: 100%; }
+  .carved { font-family: 'Gowun Batang', serif; font-weight: 700; }
+  :focus-visible { outline: 3px solid var(--gold-bright); outline-offset: 3px; }
+
+  /* ---------- 신전 정면 ---------- */
+  .facade { position: relative; max-width: 560px; margin: 0 auto; padding: 36px 16px 0; text-align: center; }
+  .back { position: absolute; left: 16px; top: 14px; font-size: 13px; color: #dfe6f5; text-decoration: none; opacity: .85; }
+  .back:hover { opacity: 1; text-decoration: underline; }
+  .athena { width: 118px; margin: 0 auto -18px; position: relative; z-index: 2; filter: drop-shadow(0 8px 18px rgba(255,220,140,.45)); }
+  .pediment { position: relative; z-index: 1; }
+  .pediment svg { width: 100%; height: auto; display: block; }
+  .pediment .inscription {
+    position: absolute; left: 0; right: 0; bottom: 20%;
+    font-family: 'Gowun Batang', serif; font-weight: 700;
+    font-size: clamp(26px, 8vw, 38px); letter-spacing: .12em; color: #5a4a36;
+    text-shadow: 0 1px 0 rgba(255,255,255,.8), 0 -1px 0 rgba(0,0,0,.18);
+  }
+  .dedication { margin: 14px auto 0; max-width: 30em; font-size: 14px; color: #fff; text-shadow: 0 1px 6px rgba(20,30,70,.45); }
+
+  /* ---------- 성소(게임별) ---------- */
+  main { max-width: 560px; margin: 0 auto; padding: 22px 16px 40px; }
+  .shrine { position: relative; margin-top: 26px; }
+  .shrine-frame {
+    position: relative;
+    display: grid; grid-template-columns: 26px 1fr 26px;
+    background: var(--marble);
+    border-radius: 6px 6px 4px 4px;
+    box-shadow: 0 18px 40px -18px rgba(60,40,10,.45);
+  }
+  .column {
+    background:
+      repeating-linear-gradient(90deg, var(--marble) 0 4px, var(--marble-shade) 4px 6px, var(--marble) 6px 9px);
+    border-left: 1px solid var(--marble-shade); border-right: 1px solid var(--marble-shade);
+  }
+  .column::before, .column::after { content: ""; display: block; height: 12px; background: var(--marble-shade); margin: 0 -4px; border-radius: 2px; }
+  .column { display: flex; flex-direction: column; justify-content: space-between; }
+  .niche { padding: 18px 12px 20px; text-align: center; position: relative; overflow: hidden; }
+  .niche::before { /* 벽감 안쪽의 아치 그림자 */
+    content: ""; position: absolute; left: 12%; right: 12%; top: 58px; height: 200px;
+    border-radius: 999px 999px 0 0;
+    background: radial-gradient(ellipse at 50% 30%, #fff9e8 0%, #ede3cf 55%, #e2d5bc 100%);
+    box-shadow: inset 0 10px 24px rgba(120,95,50,.22);
+  }
+  .niche > * { position: relative; }
+  .game-name { font-family: 'Jua', sans-serif; font-size: 22px; color: var(--ink); }
+  .guardian { font-size: 12px; color: var(--ink-soft); margin-top: -2px; }
+
+  .statue-wrap { position: relative; height: 200px; margin: 8px auto 0; display: flex; align-items: flex-end; justify-content: center; }
+  /* 황금 조각상: 캐릭터 그림 모양대로 금빛 그라디언트를 오려내고(mask), 원래 그림을 곱하기로
+     얹어서 선은 살리고 흰 몸통만 금으로 바꾼다 */
+  .statue {
+    position: relative; display: inline-block; line-height: 0;
+    background: linear-gradient(135deg, #fff1b8 0%, #f2c14e 28%, #b9811f 55%, #f7d77a 72%, #9a6614 100%);
+    background-size: 220% 220%;
+    -webkit-mask-image: var(--src); mask-image: var(--src);
+    -webkit-mask-size: 100% 100%; mask-size: 100% 100%;
+    -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+  }
+  .statue img { max-height: 150px; max-width: 100%; width: auto; mix-blend-mode: multiply; }
+  .statue-cell { max-width: 54%; filter: drop-shadow(0 8px 10px rgba(110,70,10,.4)); }
+  .god {
+    position: absolute; bottom: 0; width: 76px; opacity: .96;
+    filter: drop-shadow(0 4px 8px rgba(80,60,20,.25));
+  }
+  .god.left { left: -10px; }
+  .god.right { right: -10px; }
+  .pedestal {
+    width: 72%; margin: 0 auto; height: 16px;
+    background: linear-gradient(var(--marble-shade), var(--marble-deep));
+    border-radius: 3px 3px 0 0;
+  }
+  .plaque {
+    width: 84%; margin: 0 auto; padding: 14px 12px 16px;
+    background: linear-gradient(160deg, #fff6df, #f0dcae);
+    border: 2px solid var(--gold); border-radius: 4px;
+    box-shadow: inset 0 0 0 4px #fff6df, inset 0 0 0 5px rgba(201,146,44,.55);
+  }
+  .plaque .title { font-size: 12px; color: var(--gold); letter-spacing: .08em; }
+  .plaque .name { font-family: 'Gowun Batang', serif; font-weight: 700; font-size: clamp(22px, 6.4vw, 28px); line-height: 1.25; word-break: break-all; margin: 2px 0; }
+  .plaque .record { font-family: 'Gowun Batang', serif; font-weight: 700; font-size: 17px; color: #7a5412; }
+  .plaque .reign { font-size: 12px; color: var(--ink-soft); margin-top: 4px; }
+  .plaque.empty .name { font-size: 18px; color: var(--ink-soft); }
+
+  .challenge {
+    display: inline-block; margin-top: 16px; padding: 11px 22px; border-radius: 999px;
+    background: var(--ink); color: var(--gold-bright); text-decoration: none;
+    font-family: 'Jua', sans-serif; font-size: 17px; letter-spacing: .02em;
+  }
+  .challenge:hover { background: #3d3346; }
+
+  /* 신전 계단 — 성소 아래 받침 */
+  .steps span { display: block; height: 9px; margin: 0 auto; background: var(--marble-shade); border-bottom: 1px solid var(--marble-deep); }
+  .steps span:nth-child(1) { width: 96%; }
+  .steps span:nth-child(2) { width: 100%; background: var(--marble-deep); }
+
+  /* ---------- 성소 아래 기록 ---------- */
+  .records { background: rgba(255,251,242,.92); border-radius: 0 0 10px 10px; padding: 16px 16px 18px; font-size: 14px; }
+  .records h3 { font-family: 'Gowun Batang', serif; font-weight: 700; font-size: 15px; margin: 0 0 8px; }
+  .records section + section { margin-top: 16px; padding-top: 14px; border-top: 1px solid #eadfc9; }
+  .podium { list-style: none; display: grid; gap: 4px; }
+  .podium li { display: flex; justify-content: space-between; gap: 10px; }
+  .podium .who { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .podium .pts { font-variant-numeric: tabular-nums; font-weight: 700; color: #7a5412; }
+  .rank-mark { display: inline-block; margin-right: 8px; font-weight: 700; color: var(--gold); }
+
+  .ascended { list-style: none; display: flex; flex-wrap: wrap; gap: 6px; }
+  .ascended li {
+    padding: 4px 10px 4px 8px; border-radius: 999px; font-size: 13px;
+    background: linear-gradient(#fff4d6, #f3dfa6); border: 1px solid #e0bf6b;
+  }
+  .ascended li b { color: var(--gold); font-weight: 700; margin-right: 4px; }
+
+  details summary { cursor: pointer; font-family: 'Gowun Batang', serif; font-weight: 700; font-size: 15px; list-style: none; }
+  details summary::-webkit-details-marker { display: none; }
+  details summary::after { content: " ＋"; color: var(--gold); }
+  details[open] summary::after { content: " －"; }
+  .history { list-style: none; margin-top: 10px; border-left: 2px solid #e6d3a3; padding-left: 14px; }
+  .history li { position: relative; padding: 3px 0; display: flex; gap: 10px; justify-content: space-between; }
+  .history li::before { content: ""; position: absolute; left: -19px; top: 11px; width: 8px; height: 8px; border-radius: 50%; background: var(--gold); }
+  .history li:first-child::before { background: var(--gold-bright); box-shadow: 0 0 0 3px rgba(242,193,78,.35); }
+  .history .when { color: var(--ink-soft); font-size: 12px; white-space: nowrap; }
+  .note { font-size: 12px; color: var(--ink-soft); }
+
+  .loading, .error { text-align: center; color: #fff; padding: 40px 0; text-shadow: 0 1px 6px rgba(20,30,70,.4); }
+
+  footer { max-width: 560px; margin: 0 auto; padding: 8px 16px 48px; text-align: center; font-size: 13px; color: var(--ink-soft); }
+  footer a { color: var(--ink); }
+
+  @media (min-width: 520px) {
+    .god { width: 104px; }
+    .statue img { max-height: 164px; }
+    .god.left { left: 0; } .god.right { right: 0; }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .statue { animation: glint 6s ease-in-out infinite; }
+    @keyframes glint { 0%, 100% { background-position: 0% 0%; } 50% { background-position: 100% 100%; } }
+  }
+</style>
+</head>
+<body>
+
+<header class="facade">
+  <a class="back" href="/">← 오락실로</a>
+  <img class="athena" src="games/hello-tower/assets/bg/gods/athena.png" alt="신전을 지키는 아테나">
+  <div class="pediment">
+    <svg viewBox="0 0 520 170" aria-hidden="true">
+      <defs>
+        <linearGradient id="stone" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#fbf7ee"/><stop offset="1" stop-color="#e3d8c4"/>
+        </linearGradient>
+      </defs>
+      <!-- 박공(삼각 지붕) -->
+      <polygon points="10,120 260,8 510,120" fill="url(#stone)" stroke="#b3a68f" stroke-width="2"/>
+      <polygon points="44,112 260,24 476,112" fill="none" stroke="#cfc3ad" stroke-width="2"/>
+      <!-- 처마돌 -->
+      <rect x="0" y="120" width="520" height="16" fill="#e8dfcd" stroke="#b3a68f" stroke-width="2"/>
+      <rect x="14" y="136" width="492" height="22" fill="#f3ede1" stroke="#c9bda7" stroke-width="1.5"/>
+      <g fill="#d6cab3">
+        <rect x="30" y="140" width="8" height="14"/><rect x="90" y="140" width="8" height="14"/><rect x="150" y="140" width="8" height="14"/>
+        <rect x="210" y="140" width="8" height="14"/><rect x="302" y="140" width="8" height="14"/><rect x="362" y="140" width="8" height="14"/>
+        <rect x="422" y="140" width="8" height="14"/><rect x="482" y="140" width="8" height="14"/>
+      </g>
+    </svg>
+    <div class="inscription">헬로 신전</div>
+  </div>
+  <p class="dedication">대부도 오락실 세 게임의 왕좌에 오른 이름을 이곳에 새깁니다. 더 높은 기록이 나오면 이름은 새로 새겨지고, 앞선 주인은 역사로 남아요.</p>
+</header>
+
+<main id="shrines">
+  <p class="loading">왕좌의 주인을 확인하는 중…</p>
+</main>
+
+<footer>
+  <p>기록은 1분마다 새로 새겨져요. 같은 기록이면 먼저 세운 사람이 왕좌에 앉아요.</p>
+  <p style="margin-top:6px"><a href="games/hello-tower/ranking.html">전체 랭킹 보기</a> · <a href="/">오락실로 돌아가기</a></p>
+</footer>
+
+<script>
+// 게임별 성소 구성 — 게임을 추가하면 여기에 한 줄 더 넣으면 된다.
+const SHRINES = [
+  {
+    key: 'hello_tower', name: '헬로타워', unit: '층', href: 'games/hello-tower/',
+    statue: 'games/hello-tower/assets/blocks/hello.png',
+    god: 'games/hello-tower/assets/bg/gods/zeus.png', godName: '제우스', godSide: 'left',
+    guardian: '하늘의 신 제우스가 지키는 성소',
+    ascendedTitle: '천상에 오른 자들',
+    ascendedNote: '100층, 신들의 나라에 닿은 이들이에요. 먼저 닿은 순서대로 새겼어요.',
+  },
+  {
+    key: 'hello_run', name: '헬로런', unit: 'm', href: 'games/hello-run/',
+    statue: 'games/hello-run/assets/hello_jump_peak.png',
+    god: 'games/hello-tower/assets/bg/gods/poseidon.png', godName: '포세이돈', godSide: 'right',
+    guardian: '바다의 신 포세이돈이 지키는 성소',
+  },
+  {
+    key: 'hello_bird', name: '헬로버드', unit: '점', href: 'games/hello-bird/',
+    statue: 'games/hello-bird/assets/hello_flap_up.png',
+    god: 'games/hello-tower/assets/bg/gods/apollo.png', godName: '아폴론', godSide: 'left',
+    guardian: '태양의 신 아폴론이 지키는 성소',
+  },
+];
+
+function el(tag, attrs = {}, ...children) {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === 'class') n.className = v;
+    else if (k === 'text') n.textContent = v;
+    else n.setAttribute(k, v);
+  }
+  for (const c of children) if (c) n.appendChild(typeof c === 'string' ? document.createTextNode(c) : c);
+  return n;
+}
+
+function fmtDate(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (isNaN(d)) return '';
+  return `${d.getMonth() + 1}월 ${d.getDate()}일`;
+}
+function reignText(iso) {
+  if (!iso) return '';
+  const start = new Date(iso);
+  if (isNaN(start)) return '';
+  const days = Math.floor((Date.now() - start.getTime()) / 86400000);
+  if (days < 1) return `${fmtDate(iso)} 즉위, 오늘 새로 오른 왕좌예요`;
+  return `${fmtDate(iso)} 즉위, ${days}일째 왕좌를 지키는 중`;
+}
+
+function track(name, params) {
+  try { if (typeof gtag === 'function') gtag('event', name, params || {}); } catch (e) {}
+}
+
+function renderShrine(cfg, data) {
+  const champ = data && data.champion;
+
+  const niche = el('div', { class: 'niche' },
+    el('h2', { class: 'game-name', text: cfg.name }),
+    el('p', { class: 'guardian', text: cfg.guardian }),
+  );
+
+  const statueWrap = el('div', { class: 'statue-wrap' },
+    el('img', { class: `god ${cfg.godSide}`, src: cfg.god, alt: cfg.godName, loading: 'lazy' }),
+    el('div', { class: 'statue-cell' },
+      el('div', { class: 'statue', style: `--src:url('${cfg.statue}')` },
+        el('img', { src: cfg.statue, alt: `${cfg.name} 1위를 기리는 황금 헬로 조각상` }))),
+  );
+  niche.appendChild(statueWrap);
+  niche.appendChild(el('div', { class: 'pedestal' }));
+
+  const plaque = el('div', { class: 'plaque' + (champ ? '' : ' empty') });
+  if (champ) {
+    plaque.append(
+      el('div', { class: 'title', text: '현재 왕좌의 주인' }),
+      el('div', { class: 'name', text: champ.nickname }),
+      el('div', { class: 'record', text: `${champ.score}${cfg.unit}` }),
+      el('div', { class: 'reign', text: reignText(champ.at) }),
+    );
+  } else {
+    plaque.append(
+      el('div', { class: 'title', text: '비어 있는 왕좌' }),
+      el('div', { class: 'name', text: '첫 번째 주인을 기다려요' }),
+    );
+  }
+  niche.appendChild(plaque);
+
+  const cta = el('a', { class: 'challenge', href: cfg.href, text: champ ? '왕좌에 도전하기' : '첫 주인 되기' });
+  cta.addEventListener('click', () => track('hall_challenge_click', { game: cfg.key }));
+  niche.appendChild(cta);
+
+  const frame = el('div', { class: 'shrine-frame' },
+    el('div', { class: 'column', 'aria-hidden': 'true' }), niche, el('div', { class: 'column', 'aria-hidden': 'true' }));
+
+  const steps = el('div', { class: 'steps', 'aria-hidden': 'true' }, el('span'), el('span'));
+
+  // 성소 아래 기록들
+  const records = el('div', { class: 'records' });
+
+  if (cfg.ascendedTitle && data && data.ascended && data.ascended.length) {
+    const list = el('ol', { class: 'ascended' });
+    data.ascended.forEach((e, i) => list.appendChild(el('li', {}, el('b', { text: `제${i + 1}호` }), e.nickname)));
+    records.appendChild(el('section', {},
+      el('h3', { text: `${cfg.ascendedTitle} (${data.ascended.length}명)` }),
+      el('p', { class: 'note', text: cfg.ascendedNote, style: 'margin:-4px 0 8px' }),
+      list));
+  }
+
+  if (data && data.podium && data.podium.length > 1) {
+    const list = el('ol', { class: 'podium' });
+    data.podium.slice(1).forEach((e, i) => {
+      list.appendChild(el('li', {},
+        el('span', { class: 'who' }, el('span', { class: 'rank-mark', text: `${i + 2}위` }), e.nickname),
+        el('span', { class: 'pts', text: `${e.score}${cfg.unit}` })));
+    });
+    records.appendChild(el('section', {}, el('h3', { text: '왕좌 곁을 지키는 이들' }), list));
+  }
+
+  if (data && data.history && data.history.length) {
+    const list = el('ol', { class: 'history' });
+    data.history.forEach((e) => {
+      list.appendChild(el('li', {},
+        el('span', {}, `${e.nickname} `, el('b', { text: `${e.score}${cfg.unit}` })),
+        el('span', { class: 'when', text: fmtDate(e.at) })));
+    });
+    const det = el('details', {}, el('summary', { text: `왕좌의 역사 (신기록 ${data.history.length}번)` }), list);
+    records.appendChild(el('section', {}, det));
+  }
+
+  if (data && data.players) {
+    records.appendChild(el('p', { class: 'note', text: `지금까지 ${data.players}명이 이 왕좌에 도전했어요.` }));
+  }
+
+  const shrine = el('article', { class: 'shrine', 'aria-label': `${cfg.name} 성소` }, frame, steps);
+  if (records.childNodes.length) shrine.appendChild(records);
+  return shrine;
+}
+
+async function load() {
+  const root = document.getElementById('shrines');
+  try {
+    const res = await fetch('/api/hall');
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const { games } = await res.json();
+    root.innerHTML = '';
+    SHRINES.forEach((cfg) => root.appendChild(renderShrine(cfg, games[cfg.key])));
+  } catch (e) {
+    root.innerHTML = '';
+    root.appendChild(el('p', { class: 'error', text: '신전 문이 잠시 닫혀 있어요. 잠시 후 새로고침해 주세요.' }));
+  }
+}
+load();
+</script>
+</body>
+</html>
