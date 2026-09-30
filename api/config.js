@@ -46,6 +46,7 @@ const SCHEMAS = {
   },
   hello_run: {},
   hello_bird: {},
+  hello_munch: {},
 };
 
 export default async function handler(req, res) {

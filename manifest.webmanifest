@@ -19,6 +19,7 @@
     { "src": "/icons/icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ],
   "shortcuts": [
+    { "name": "헬로 먼치", "url": "/games/hello-munch/?utm_source=pwa&utm_medium=shortcut", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] },
     { "name": "헬로타워", "url": "/games/hello-tower/?utm_source=pwa&utm_medium=shortcut", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] },
     { "name": "헬로 신전", "url": "/hall-of-fame.html?utm_source=pwa&utm_medium=shortcut", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] }
   ]

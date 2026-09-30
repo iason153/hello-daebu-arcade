@@ -22,6 +22,7 @@ const GAMES = {
   hello_tower: { maxScore: 100 }, // 100층 = 천국 엔딩
   hello_run: {},
   hello_bird: {},
+  hello_munch: { maxScore: 500 }, // 500m = 신들의 나라 도착
 };
 
 function parseEntries(raws) {

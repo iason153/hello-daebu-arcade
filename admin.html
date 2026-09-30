@@ -138,6 +138,7 @@
           <button aria-pressed="true" data-game="hello_tower">🗼 헬로타워</button>
           <button aria-pressed="false" data-game="hello_run">🏃 헬로런</button>
           <button aria-pressed="false" data-game="hello_bird">🐦 헬로버드</button>
+          <button aria-pressed="false" data-game="hello_munch">👾 헬로먼치</button>
         </div>
         <p class="hint" id="rankHint">상위 200건까지 보여요. 삭제한 기록은 되돌릴 수 없어요.</p>
         <div class="table-scroll">
@@ -288,7 +289,7 @@ async function loadRanking() {
       body.innerHTML = '<tr><td colspan="6" class="empty">아직 등록된 기록이 없어요.</td></tr>';
       return;
     }
-    const unit = currentGame === 'hello_tower' ? '층' : currentGame === 'hello_run' ? 'm' : '점';
+    const unit = currentGame === 'hello_tower' ? '층' : (currentGame === 'hello_run' || currentGame === 'hello_munch') ? 'm' : '점';
     data.leaderboard.forEach((e) => {
       const tr = document.createElement('tr');
       const addCell = (cls, val) => {
