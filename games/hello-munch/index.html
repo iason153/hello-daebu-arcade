@@ -16,7 +16,7 @@
 <meta property="og:type" content="website">
 <meta property="og:title" content="헬로 먼치 — 우주괴물에게서 살아남아라!">
 <meta property="og:description" content="좌우 탭으로 발판을 밟고 위로! 괴물 입에서 얼마나 멀리 도망칠 수 있을까요? · daebugame.com">
-<meta property="og:image" content="https://daebugame.com/games/hello-munch/assets/thumb-hellomunch.jpg">
+<meta property="og:image" content="https://daebugame.com/games/hello-munch/assets/thumb-hellomunch-wide.jpg">
 <meta property="og:url" content="https://daebugame.com/games/hello-munch/">
 <meta name="theme-color" content="#0b1430">
 <link rel="manifest" href="/manifest.webmanifest">
@@ -1414,10 +1414,12 @@ function buildShareCard() {
   }
   c.textAlign = 'center';
   c.save(); c.shadowColor = 'rgba(255,190,60,.9)'; c.shadowBlur = 30; c.font = '900 92px sans-serif'; c.lineWidth = 8; c.strokeStyle = '#fff';
-  c.strokeText(score + 'm', cw / 2, 200); c.fillStyle = '#ff9d1f'; c.fillText(score + 'm', cw / 2, 200); c.restore();
-  c.font = '600 20px sans-serif'; c.fillStyle = shareBg.naturalWidth ? '#3a2a12' : '#fff';
-  c.fillText('👾 헬로 먼치 · 대부도 오락실', cw / 2, 320);
-  if (ready(IMG.hello_round)) c.drawImage(IMG.hello_round, cw / 2 - 110, 450 - 110, 220, 220);
+  c.strokeText(score + 'm', cw / 2, 190); c.fillStyle = '#ff9d1f'; c.fillText(score + 'm', cw / 2, 190); c.restore();
+  c.font = '800 24px sans-serif'; c.lineWidth = 6; c.strokeStyle = 'rgba(40,20,70,.85)'; c.fillStyle = '#fff';
+  c.strokeText('우주괴물에게서 도망쳤어요!', cw / 2, 262); c.fillText('우주괴물에게서 도망쳤어요!', cw / 2, 262);
+  c.font = '700 18px sans-serif'; c.lineWidth = 5;
+  c.strokeText('헬로 먼치 · 대부도 오락실', cw / 2, 296); c.fillText('헬로 먼치 · 대부도 오락실', cw / 2, 296);
+  if (ready(IMG.hello_round)) c.drawImage(IMG.hello_round, cw / 2 - 100, 470 - 100, 200, 200);
   const cta = '👉  daebugame.com 놀러가기'; c.font = '800 26px sans-serif';
   const w = Math.min(cw - 48, c.measureText(cta).width + 60), y = 720, h = 56;
   rr(c, cw / 2 - w / 2, y, w, h, h / 2); c.fillStyle = '#ffc857'; c.fill();
