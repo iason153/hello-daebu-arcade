@@ -509,7 +509,8 @@ async function buildThroneCard(cfg, champ) {
   const sh = 200, sw = Math.min(260, statueImg.width * sh / statueImg.height);
   const shh = statueImg.height * sw / statueImg.width;
   ctx.save(); ctx.shadowColor = 'rgba(110,70,10,.45)'; ctx.shadowBlur = 18; ctx.shadowOffsetY = 8;
-  ctx.drawImage(goldStatue(statueImg, Math.round(sw), Math.round(shh)), cx - sw / 2, 460 - shh, sw, shh);
+  // 받침대(460)에 붙지 않게 살짝 띄워서 후광 한가운데에 오도록
+  ctx.drawImage(goldStatue(statueImg, Math.round(sw), Math.round(shh)), cx - sw / 2, 440 - shh, sw, shh);
   ctx.restore();
   const gw = 118, gh = godImg.height * gw / godImg.width;
   const gx = cfg.godSide === 'right' ? CARD_W - gw - 26 : 26;
