@@ -413,7 +413,7 @@ function noise(dur, vol = .25) {
   s.connect(f).connect(g).connect(master); s.start();
 }
 const sfx = {
-  jump: () => tone(520, .08, 'square', .04, 300),
+  jump: () => tone(520, .1, 'square', .15, 300),   // 뿅 — 잘 들리게 크게(.04 → .15)
   land: () => tone(180, .06, 'triangle', .07),
   bonk: () => { tone(140, .18, 'sawtooth', .06, -80); },
   crack: () => noise(.18, .18),
@@ -434,7 +434,7 @@ const sfx = {
   },
   beat: () => tone(55, .12, 'sine', .22),
   near: () => tone(880, .12, 'triangle', .05, -300),
-  shell: () => tone(1320, .08, 'sine', .05),
+  shell: () => { if (BUF.shellget) play('shellget', .9); else { tone(1320, .09, 'triangle', .13); setTimeout(() => tone(1760, .14, 'triangle', .12), 70); } },   // 띠링! (대표님 조개 소리 파일이 오면 그걸로)
 };
 
 // ---------------------------------------------------------------- 입력

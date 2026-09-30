@@ -28,8 +28,8 @@
   header h1{font-size:22px; margin:0 0 4px; color:#ffe9b8; letter-spacing:-0.3px;}
   header p{font-size:13px; margin:0; color:rgba(255,255,255,0.55);}
 
-  .tabs{display:flex; gap:8px; margin-bottom:18px; background:rgba(255,255,255,0.06); padding:4px; border-radius:14px;}
-  .tab{flex:1; text-align:center; padding:10px 0; border-radius:11px; font-size:14px; font-weight:700; color:rgba(255,255,255,0.55); cursor:pointer; transition:background .15s,color .15s;}
+  .tabs{display:flex; gap:4px; margin-bottom:18px; background:rgba(255,255,255,0.06); padding:4px; border-radius:14px;}
+  .tab{flex:1; text-align:center; padding:10px 0; border-radius:11px; font-size:13px; white-space:nowrap; font-weight:700; color:rgba(255,255,255,0.55); cursor:pointer; transition:background .15s,color .15s;}
   .tab.active{background:#ffc857; color:#2a1c00;}
 
   .list{display:flex; flex-direction:column; gap:10px; min-height:160px;}
@@ -75,6 +75,8 @@
   </header>
 
   <div class="tabs">
+    <div class="tab" data-game="hello_munch">👾 헬로먼치</div>
+    <div class="tab" data-game="hello_tower">🗼 헬로타워</div>
     <div class="tab active" data-game="hello_run">🏃 헬로런</div>
     <div class="tab" data-game="hello_bird">🐦 헬로버드</div>
   </div>
@@ -85,7 +87,7 @@
 
   <div class="actions">
     <button class="btn ghost" id="refreshBtn">↻ 새로고침</button>
-    <a class="btn primary" href="./index.html">🏃 게임하러 가기</a>
+    <a class="btn primary" id="playBtn" href="/games/hello-run/">🏃 헬로런 하러 가기</a>
   </div>
   <a href="../../hall-of-fame.html" style="display:block;text-align:center;margin-top:10px;padding:12px 0;border-radius:999px;background:linear-gradient(135deg,#f7d77a,#c9922c);color:#2b2433;font-weight:700;font-size:13px;text-decoration:none;">🏛️ 헬로 신전(명예의 전당) 가기</a>
   <a href="../../index.html" style="display:block;text-align:center;margin-top:10px;padding:12px 0;border-radius:999px;background:rgba(255,255,255,0.08);border:1.5px solid rgba(255,255,255,0.2);color:#fff;font-weight:700;font-size:13px;text-decoration:none;">🏠 오락실로 돌아가기</a>
@@ -122,7 +124,8 @@ function renderList(entries){
     const topClass = rank<=3 ? ' top'+rank : '';
     const rankLabel = rank<=3 ? RANK_ICONS[rank-1] : rank;
     const nick = (e.nickname||'').toString().slice(0,12);
-    const meters = (e.meters!=null) ? e.meters+'m' : '-';
+    const unit = (currentGame==='hello_tower') ? '층' : (currentGame==='hello_bird') ? '점' : 'm';
+    const meters = (e.meters!=null) ? e.meters+unit : '-';
     return '<div class="row'+topClass+'"><div class="rank">'+rankLabel+'</div><div class="nick">'+escapeHtml(nick)+'</div><div class="meters">'+meters+'</div></div>';
   }).join('');
 }
@@ -148,12 +151,20 @@ document.querySelectorAll('.tab').forEach(tab=>{
     document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
     tab.classList.add('active');
     currentGame = tab.dataset.game;
+    updatePlayBtn();
     loadRanking();
   });
 });
+// 게임하러 가기 버튼 — 지금 보고 있는 탭의 게임으로 연결
+const PLAY = { hello_munch: ['👾 헬로먼치', '/games/hello-munch/'], hello_tower: ['🗼 헬로타워', '/games/hello-tower/'], hello_run: ['🏃 헬로런', '/games/hello-run/'], hello_bird: ['🐦 헬로버드', '/games/hello-bird/'] };
+function updatePlayBtn(){ const p = PLAY[currentGame]; const b = document.getElementById('playBtn'); if (p && b) { b.textContent = p[0] + ' 하러 가기'; b.href = p[1]; } }
+// 주소에 ?g=hello_run 처럼 붙어 오면 그 탭부터 보여줌
+try { const q = new URLSearchParams(location.search).get('g'); const tab = q && document.querySelector('.tab[data-game="' + q + '"]'); if (tab) { document.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); tab.classList.add('active'); currentGame = q; } } catch (e) {}
+updatePlayBtn();
 document.getElementById('refreshBtn').addEventListener('click', loadRanking);
 
 loadRanking();
 </script>
 </body>
 </html>
+
