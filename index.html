@@ -5,364 +5,1473 @@
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-5YPGVVP49T"></script>
 <script>
-window.dataLayer = window.dataLayer || [];
-function gtag(){dataLayer.push(arguments);}
-gtag("js", new Date());
-gtag("config", "G-5YPGVVP49T");
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag("js", new Date());
+  gtag("config", "G-5YPGVVP49T");
 </script>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>헬로 먼치 | 헬로 대부도 오락실</title>
+<meta name="description" content="우주괴물에게서 살아남아라! 화면 왼쪽·오른쪽을 탭해 발판을 밟고 위로 도망치는 대부도 오락실 게임이에요.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="헬로 먼치 — 우주괴물에게서 살아남아라!">
+<meta property="og:description" content="좌우 탭으로 발판을 밟고 위로! 괴물 입에서 얼마나 멀리 도망칠 수 있을까요? · daebugame.com">
+<meta property="og:image" content="https://daebugame.com/games/hello-munch/assets/thumb-hellomunch-wide.jpg">
+<meta property="og:url" content="https://daebugame.com/games/hello-munch/">
+<meta name="theme-color" content="#0b1430">
 <link rel="manifest" href="/manifest.webmanifest">
-<meta name="theme-color" content="#0f1a30">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="대부도 오락실">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="64x64" href="/icons/favicon-64.png">
-<script src="/pwa.js" defer></script>
-
-<title>헬로 대부도 오락실</title>
-<meta name="description" content="대부도 곳곳을 배경으로 한 가벼운 미니게임들. 헬로버드와 헬로런을 지금 바로 즐겨보세요.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>
-:root{
-  --navy-deep:#0f1a30;
-  --navy-card:#1a2947;
-  --navy-card-dim:#16213a;
-  --coral:#ff6b4a;
-  --gold:#ffc857;
-  --teal:#2ec4b6;
-  --cream:#f6efe0;
-  --dim:#8fa0c4;
-  --line: rgba(246,239,224,0.1);
-}
-*{box-sizing:border-box; margin:0; padding:0;}
-html{-webkit-text-size-adjust:100%;}
-body{
-  background:var(--navy-deep);
-  color:var(--cream);
-  font-family:'Noto Sans KR', sans-serif;
-  line-height:1.6;
-  overflow-x:hidden;
-}
-.display{ font-family:'Jua', sans-serif; }
-a{ color:inherit; }
-img{ max-width:100%; display:block; }
-.wrap{ max-width:640px; margin:0 auto; padding:0 24px; }
-
-/* ---------- hero ---------- */
-.hero{
-  padding:56px 24px 40px;
-  text-align:center;
-  background:
-    radial-gradient(ellipse 120% 60% at 50% 0%, rgba(255,107,74,0.18), transparent 60%),
-    var(--navy-deep);
-}
-.hero .eyebrow-free-title{
-  font-family:'Jua', sans-serif;
-  font-size:clamp(32px, 8vw, 44px);
-  letter-spacing:-0.01em;
-  color:var(--cream);
-}
-.hero .title-accent{ color:var(--coral); }
-.hero p.tagline{
-  margin-top:14px;
-  color:var(--dim);
-  font-size:16px;
-  max-width:38ch;
-  margin-left:auto; margin-right:auto;
-}
-.pwa-slot{ margin-top:22px; min-height:0; }
-.pwa-slot:empty{ display:none; }
-.cabinet{
-  margin:36px auto 0;
-  max-width:280px;
-  position:relative;
-}
-.cabinet-frame{
-  background:linear-gradient(160deg, #24345c, #16213a);
-  border-radius:22px;
-  padding:14px;
-  box-shadow:
-    0 30px 60px -20px rgba(0,0,0,0.6),
-    0 0 0 1px var(--line);
-  animation: floaty 5s ease-in-out infinite;
-}
-.cabinet-slides{
-  position:relative;
-  width:100%;
-  aspect-ratio: 480 / 1038;
-  border-radius:12px;
-  overflow:hidden;
-}
-.cabinet-slides img{
-  position:absolute; inset:0;
-  width:100%; height:100%;
-  object-fit:cover;
-  display:block;
-  opacity:0;
-  transition:opacity 0.9s ease;
-}
-.cabinet-slides img.active{ opacity:1; }
-@keyframes floaty{
-  0%,100%{ transform: translateY(0) rotate(-1.2deg); }
-  50%{ transform: translateY(-10px) rotate(1deg); }
-}
-
-/* ---------- section headings ---------- */
-.section{ padding:8px 24px 48px; }
-.section h2{
-  font-family:'Jua', sans-serif;
-  font-size:22px;
-  margin-bottom:18px;
-  color:var(--cream);
-}
-
-/* ---------- featured game ---------- */
-.game-featured{
-  background:var(--navy-card);
-  border-radius:20px;
-  overflow:hidden;
-  border:1px solid var(--line);
-}
-.game-featured .shot{
-  aspect-ratio: 900 / 514;
-  background:#0c1526;
-  display:flex; align-items:center; justify-content:center;
-  overflow:hidden;
-}
-.game-featured .shot img{ width:100%; height:100%; object-fit:cover; }
-.new-badge{ display:inline-block; margin-left:6px; padding:2px 8px; border-radius:999px; background:#ff5a4f; color:#fff; font-size:12px; font-weight:800; vertical-align:middle; letter-spacing:.5px; }
-.game-featured .body{ padding:22px 22px 24px; }
-.game-featured h3{
-  font-family:'Jua', sans-serif;
-  font-size:24px;
-  margin-bottom:8px;
-}
-.game-featured p{
-  color:var(--dim);
-  font-size:15px;
-  margin-bottom:18px;
-}
-.btn-play{
-  display:inline-flex;
-  align-items:center;
-  gap:8px;
-  background:var(--gold);
-  color:#2a1c00;
-  font-family:'Jua', sans-serif;
-  font-size:17px;
-  padding:13px 26px;
-  border-radius:999px;
-  text-decoration:none;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-  box-shadow: 0 8px 0 0 #c99425;
-}
-.btn-play:active{
-  transform: translateY(6px);
-  box-shadow: 0 2px 0 0 #c99425;
-}
-
-/* ---------- second game card (stacked below featured) ---------- */
-.game-featured + .game-featured{ margin-top:20px; }
-.temple-link{
-  display:flex; align-items:center; gap:14px; margin-top:24px; padding:16px 18px;
-  border-radius:16px; text-decoration:none; color:#2b2433;
-  background:linear-gradient(135deg,#fbf3dc 0%,#f2d489 55%,#d9a441 100%);
-  box-shadow:0 10px 26px -14px rgba(242,193,78,.6);
-}
-.temple-link img{ width:54px; height:auto; flex:none; }
-.temple-link .t{ font-family:'Jua',sans-serif; font-size:20px; line-height:1.2; }
-.temple-link .d{ font-size:13px; color:#5c4a2c; }
-
-/* ---------- teaser (coming soon) ---------- */
-.game-teaser{
-  margin-top:14px;
-  display:flex;
-  align-items:center;
-  gap:14px;
-  padding:16px 18px;
-  border-radius:16px;
-  border:1px dashed var(--line);
-  color:var(--dim);
-}
-.game-teaser .icon{
-  width:44px; height:44px;
-  border-radius:10px;
-  background:var(--navy-card-dim);
-  display:flex; align-items:center; justify-content:center;
-  font-size:20px;
-  flex-shrink:0;
-}
-.game-teaser .txt strong{
-  display:block;
-  color:var(--cream);
-  font-family:'Jua', sans-serif;
-  font-size:16px;
-  font-weight:normal;
-  margin-bottom:2px;
-}
-.game-teaser .txt span{ font-size:13px; }
-
-/* ---------- cross links ---------- */
-.crosslinks p.lead{ color:var(--dim); font-size:15px; margin-bottom:16px; }
-.linklist{ display:flex; flex-direction:column; gap:10px; }
-.linklist a{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  background:var(--navy-card);
-  border:1px solid var(--line);
-  border-radius:14px;
-  padding:16px 18px;
-  text-decoration:none;
-}
-.linklist .name{
-  font-family:'Jua', sans-serif;
-  font-size:16px;
-}
-.linklist .desc{
-  font-size:13px;
-  color:var(--dim);
-  margin-top:2px;
-}
-.linklist .go{
-  font-size:20px;
-  color:var(--teal);
-}
-
-footer{
-  text-align:center;
-  padding:20px 24px 40px;
-  color:var(--dim);
-  font-size:12px;
-}
-
-@media (min-width:520px){
-  .hero{ padding:72px 24px 48px; }
-}
+  /* 한 화면 게임: 세로 고정 캔버스를 화면에 맞춰 레터박스 */
+  :root {
+    --night: #0b1430;      /* 레터박스 바깥 */
+    --ink: #eef3ff;
+    --panel: #16213f;
+    --line: #2c3a63;
+    --warn: #ff5a4f;
+    --gold: #ffc857;
+    --ui: "Jua", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    --body: "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    color-scheme: dark;
+  }
+  [hidden] { display: none !important; }
+  html, body { height: 100%; }
+  body { background: var(--night); color: var(--ink); font-family: var(--body); overflow: hidden; touch-action: manipulation; -webkit-user-select: none; user-select: none; }
+  #stage { position: relative; height: 100%; display: flex; align-items: center; justify-content: center; }
+  canvas { display: block; touch-action: none; }
+  #gear { position: absolute; top: 10px; right: 10px; width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line); background: rgba(22,33,63,.8); color: var(--ink); font-size: 18px; cursor: pointer; z-index: 5; }
+  #snd { position: absolute; top: 10px; right: 58px; width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line); background: rgba(22,33,63,.8); color: var(--ink); font-size: 17px; cursor: pointer; z-index: 5; }
+  #snd:focus-visible, #gear:focus-visible, #tune button:focus-visible, #tune input:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+  #tune { position: absolute; top: 58px; right: 10px; width: min(300px, calc(100% - 20px)); background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; z-index: 5; font-size: 13px; display: grid; gap: 12px; }
+  #tune h2 { font-family: var(--ui); font-weight: 400; font-size: 17px; margin: 0; }
+  #tune label { display: grid; gap: 4px; }
+  #tune .row { display: flex; justify-content: space-between; gap: 8px; }
+  #tune output { font-variant-numeric: tabular-nums; color: var(--gold); }
+  #tune input { width: 100%; accent-color: var(--gold); }
+  #tune p { margin: 0; color: #9fb0d8; font-size: 12px; line-height: 1.5; }
+  #tune button { justify-self: start; border: 1px solid var(--line); background: transparent; color: var(--ink); border-radius: 8px; padding: 6px 12px; cursor: pointer; font-family: var(--body); }
+  #snd { right: 10px !important; }
+  /* 결과 화면 — 랭킹 등록·공유·신전 */
+  #overlay { position: fixed; inset: 0; z-index: 20; background: rgba(6,10,26,.62); display: flex; align-items: center; justify-content: center; overflow-y: auto; padding: 20px 0; box-sizing: border-box; }
+  #overlay .card { width: min(300px, 86vw); text-align: center; margin: auto; }
+  #overlay h1 { font-family: var(--ui); font-weight: 400; font-size: 34px; color: var(--gold); margin: 0; }
+  #overlay .final { font-family: var(--ui); font-size: 56px; color: #fff; margin: 2px 0 0; text-shadow: 0 0 18px rgba(255,200,87,.6); }
+  #overlay .sub { font-size: 13px; color: #c9d3f2; margin: 4px 0 16px; line-height: 1.6; }
+  #overlay button { font-family: var(--body); cursor: pointer; }
+  #retryBtn { width: 100%; background: var(--gold); border: none; border-radius: 999px; padding: 13px 0; font-size: 18px; font-weight: 700; color: #2a1c00; box-shadow: 0 4px 0 #b8862b; }
+  #retryBtn:active { transform: translateY(2px); box-shadow: 0 2px 0 #b8862b; }
+  #shareBtn { width: 100%; margin-top: 10px; background: #2a2f45; color: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 11px 0; font-size: 14px; font-weight: 700; }
+  #rankPanel { margin-top: 14px; background: rgba(10,14,24,.92); border-radius: 12px; padding: 12px; text-align: left; }
+  #rankPanel .lbl { font-size: 12px; margin-bottom: 6px; color: var(--gold); font-weight: 700; }
+  #rankPanel input { width: 100%; box-sizing: border-box; padding: 9px; border-radius: 6px; border: none; margin-bottom: 6px; font-size: 14px; -webkit-user-select: text; user-select: text; }
+  #rankSubmitBtn { width: 100%; padding: 10px; border: none; border-radius: 8px; background: var(--gold); color: #2a1c00; font-weight: 700; font-size: 14px; }
+  #rankMsg { font-size: 12px; margin-top: 6px; color: rgba(255,255,255,.85); min-height: 14px; }
+  #rankMsg a { color: #ffd166; font-weight: 700; }
+  .ovLink { display: block; margin-top: 10px; padding: 11px 0; border-radius: 999px; background: rgba(255,255,255,.1); border: 1.5px solid rgba(255,255,255,.3); color: #fff; font-weight: 700; font-size: 13px; text-decoration: none; }
+  #overlay button:focus-visible, .ovLink:focus-visible, #rankPanel input:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+  #toast { position: fixed; left: 50%; bottom: 12%; transform: translateX(-50%); z-index: 40; background: rgba(0,0,0,.88); color: #fff; padding: 11px 20px; border-radius: 999px; font-size: 13px; font-weight: 700; opacity: 0; transition: opacity .25s; pointer-events: none; white-space: nowrap; }
 </style>
 </head>
 <body>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;700&display=swap">
 
-<section class="hero">
-  <div class="wrap">
-    <h1 class="eyebrow-free-title">헬로 대부도<br><span class="title-accent">오락실</span></h1>
-    <p class="tagline">대부도 곳곳을 배경으로 한 아주 가벼운 미니게임들을 하나씩 만들고 있어요.</p>
-    <div class="pwa-slot" data-pwa-install></div>
-    <div class="cabinet">
-      <div class="cabinet-frame">
-        <div class="cabinet-slides">
-          <img class="active" src="games/hello-bird/assets/start_screen.png" alt="헬로버드 시작 화면" loading="eager">
-          <img src="games/hello-run/assets/hero-card.jpg" alt="헬로런 타이틀 화면" loading="eager">
-          <img src="games/hello-tower/assets/thumb-hellotower.jpg" alt="헬로타워 타이틀 화면" loading="eager">
-          <img src="games/hello-munch/assets/thumb-hellomunch.jpg" alt="헬로 먼치 타이틀 화면" loading="eager">
-        </div>
+<div id="stage">
+  <canvas id="c" aria-label="헬로 먼치 게임 화면. 화면 왼쪽을 누르면 왼쪽 발판으로, 오른쪽을 누르면 오른쪽 발판으로 뛴다."></canvas>
+  <button id="snd" type="button" aria-label="소리 켜고 끄기">🔊</button>
+  <div id="overlay" hidden>
+    <div class="card" role="dialog" aria-labelledby="ovTitle">
+      <h1 id="ovTitle">덥석!</h1>
+      <div class="final" id="ovScore">0m</div>
+      <div class="sub" id="ovSub"></div>
+      <button id="retryBtn" type="button">다시 하기</button>
+      <button id="shareBtn" type="button">📤 친구에게 자랑하기!</button>
+      <div id="rankPanel">
+        <div class="lbl">🏆 이벤트 랭킹 등록</div>
+        <input id="rankNickname" aria-label="닉네임" placeholder="닉네임" maxlength="12" autocomplete="nickname">
+        <input id="rankContact" aria-label="카카오톡 ID" placeholder="카카오톡 ID (당첨 연락용)" maxlength="30">
+        <button id="rankSubmitBtn" type="button">기록 등록하기</button>
+        <div id="rankMsg" role="status"></div>
       </div>
+      <a class="ovLink" href="./ranking.html">🏆 랭킹 확인</a>
+      <a class="ovLink" href="../../hall-of-fame.html?g=hello_munch">🏛️ 헬로 신전 가기</a>
+      <a class="ovLink" href="../../index.html">🏠 오락실로 돌아가기</a>
     </div>
   </div>
-</section>
+  <div id="toast" role="status"></div>
+</div>
 
-<section class="section">
-  <div class="wrap">
-    <h2>지금 할 수 있는 게임</h2>
-
-    <div class="game-featured">
-      <div class="shot">
-        <img src="games/hello-munch/assets/thumb-hellomunch-wide.jpg" alt="헬로 먼치 — 아래에서 올라오는 우주괴물을 피해 위로 도망치는 헬로" loading="lazy">
-      </div>
-      <div class="body">
-        <h3>헬로 먼치 <span class="new-badge">NEW</span></h3>
-        <p>아래에서 거대한 우주괴물이 올라와요! 화면 왼쪽·오른쪽을 탭해 발판을 밟고 위로 도망치세요. 황금조개 10개를 모으면 헬로 로켓이 발사돼요.</p>
-        <a class="btn-play" href="games/hello-munch/">플레이하기</a>
-      </div>
-    </div>
-
-    <div class="game-featured">
-      <div class="shot">
-        <img src="assets/thumb-hellobird.png" alt="헬로버드 — 시화방조제에서 방아머리로 향하는 포탈 장면" loading="lazy">
-      </div>
-      <div class="body">
-        <h3>헬로버드</h3>
-        <p>시화방조제부터 탄도항까지, 대부도 다섯 곳을 날아서 통과하는 플래피버드 스타일 게임이에요.</p>
-        <a class="btn-play" href="games/hello-bird/">플레이하기</a>
-      </div>
-    </div>
-
-    <div class="game-featured">
-      <div class="shot">
-        <img src="games/hello-run/assets/thumb-hellorun.jpg" alt="헬로런 — 대부도 해안을 달리는 헬로" loading="lazy">
-      </div>
-      <div class="body">
-        <h3>헬로런</h3>
-        <p>대부도 다섯 곳을 매일 실제 날씨·시간대에 맞게 달리는 원버튼 러너 게임이에요. 장애물을 피해 최대한 멀리 가보세요.</p>
-        <a class="btn-play" href="games/hello-run/">플레이하기</a>
-      </div>
-    </div>
-
-    <div class="game-featured">
-      <div class="shot">
-        <img src="games/hello-tower/assets/thumb-hellotower.jpg" alt="헬로타워 — 대부도 캐릭터들을 하늘 끝까지 쌓아 올리는 균형 게임" loading="lazy">
-      </div>
-      <div class="body">
-        <h3>헬로타워</h3>
-        <p>대부도 캐릭터들을 쓰러지지 않게 하나씩 쌓아 올려 하늘 끝까지 도전하는 균형 게임이에요. 태풍도 조심하세요!</p>
-        <a class="btn-play" href="games/hello-tower/">플레이하기</a>
-      </div>
-    </div>
-
-    <a class="temple-link" href="hall-of-fame.html">
-      <img src="games/hello-tower/assets/bg/gods/zeus.png" alt="" loading="lazy">
-      <div>
-        <div class="t">헬로 신전</div>
-        <div class="d">명예의 전당 — 네 게임의 왕좌에 오른 1위들이 모셔진 곳</div>
-      </div>
-    </a>
-
-  </div>
-</section>
-
-<section class="section crosslinks">
-  <div class="wrap">
-    <h2>대부도를 더 알아보고 싶다면</h2>
-    <p class="lead">게임 말고도 대부도 소식과 실시간 정보를 이 두 곳에서 확인할 수 있어요.</p>
-    <div class="linklist">
-      <a href="https://daebutalk.com" target="_blank" rel="noopener">
-        <div>
-          <div class="name">헬로대부도</div>
-          <div class="desc">대부도 소식과 이야기</div>
-        </div>
-        <div class="go">↗</div>
-      </a>
-      <a href="https://daebuseatime.com" target="_blank" rel="noopener">
-        <div>
-          <div class="name">대부도타임</div>
-          <div class="desc">지금 물때·날씨 확인하기</div>
-        </div>
-        <div class="go">↗</div>
-      </a>
-    </div>
-  </div>
-</section>
-
-<footer>© 헬로 대부도 오락실</footer>
-
+<script src="https://t1.kakaocdn.net/kakao_js_sdk/2.8.1/kakao.min.js" crossorigin="anonymous"></script>
 <script>
-// 상단 게임 미리보기 카드를 몇 초마다 자동으로 바꿔서(크로스페이드), 헬로버드/헬로런
-// 둘 다 눈에 띄게 한다 — 게임이 늘어나면 이 배열에만 추가하면 됨
-(function(){
-  const slides = document.querySelectorAll('.cabinet-slides img');
-  if(slides.length < 2) return;
-  let i = 0;
-  setInterval(()=>{
-    slides[i].classList.remove('active');
-    i = (i+1) % slides.length;
-    slides[i].classList.add('active');
-  }, 3800);
+try { if (window.Kakao && !window.Kakao.isInitialized()) window.Kakao.init('3994a3bda3b8146e709683fdb350c9cc'); } catch (e) {}
+(() => {
+'use strict';
+// =====================================================================
+// 헬로 샤크 — 도형 프로토타입 (그림 없이 손맛·속도·발판 규칙만 확인하는 용도)
+// 설계문서 v0.1 기준: 좌/우 탭 → 바로 윗층 그쪽 발판으로 점프, 실수하면 한 층 추락,
+// 상어는 고무줄처럼 따라붙고 화면 바닥에서 들썩이며 가끔 돌진해 "덥석".
+// =====================================================================
+const W = 380, H = 820;               // 게임 좌표(헬로타워와 같은 세로 캔버스)
+const ROW = 112;                       // 발판 한 칸 높이 = 1m (100도 다닥다닥 → 112로 벌림)
+const WALL = 30;                       // 양쪽 벽 두께
+const LW = 104, LH = 16;               // 발판 크기
+const HERO_Y = 380;                    // 헬로가 서 있는 화면 높이(카메라 기준)
+const SHARK_REST = H - 220;            // 상어가 멀리 있을 때 화면에 머무는 높이
+
+const LUNGE_T = .9;   // 덥석 한 번 걸리는 시간(초) — 조금 느리게 해서 육중함을 보이게
+const DEFAULTS = { speed: 1, rubber: 3.5, jump: 200, lunge: 0.3 };
+let TUNE = { ...DEFAULTS };
+
+// ---------------------------------------------------------------- 구간
+const ZONES = [
+  { from: 0,  name: '앞바다', top: '#7cc8ee', bot: '#bfe7f5', wall: '#6b5a4a', seam: '#57493c' },
+  { from: 60, name: '하늘',        top: '#6fb4e6', bot: '#a9daf2', wall: '#9aa3ad', seam: '#7c858f' },
+  { from: 150, name: '구름 위',       top: '#4f7fd0', bot: '#9cc3ee', wall: '#e8eef8', seam: '#c3cfe2' },
+  { from: 270, name: '우주',          top: '#0e1440', bot: '#2a2f6e', wall: '#6d7390', seam: '#555a74' },
+  { from: 400, name: '우주 너머',      top: '#2a1850', bot: '#5a3a86', wall: '#f1e2b8', seam: '#d1bd87' },
+  { from: 500, name: '신들의 나라',   top: '#f7d27a', bot: '#fff1c9', wall: '#fff6de', seam: '#e9d8a8' },
+];
+const zoneAt = (f) => { let z = ZONES[0]; for (const q of ZONES) if (f >= q.from) z = q; return z; };
+
+// 상어 기본 속도(층/초) — 문서의 구간 표
+function sharkBase(f) {
+  const pts = [[0, .8], [60, 1.3], [150, 1.9], [270, 2.6], [400, 3.1], [500, 3.4]];
+  if (f >= 500) return 3.4 + Math.min(.8, (f - 500) * .004);   // 신들의 나라 이후엔 아주 천천히 계속 빨라짐
+  for (let i = 0; i < pts.length - 1; i++) {
+    const [a, va] = pts[i], [b, vb] = pts[i + 1];
+    if (f < b) return va + (vb - va) * ((f - a) / (b - a));
+  }
+  return 3.4;
+}
+// 구간이 바뀌는 곳마다 쉼터(넓은 양쪽 발판 4칸, 괴물이 숨을 고름)
+const REST_LEN = 4;
+const isRest = (f) => ZONES.some(z => z.from > 0 && f >= z.from && f < z.from + REST_LEN);
+
+// ---------------------------------------------------------------- 발판 생성
+let floors, lastSides;
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function makeLedge(f, allowHazard) {
+  const r = Math.random();
+  let type = 'rock';
+  // 새 요소 등장: 60m 금 간 통나무 · 150m 미끄러운 발판 · 210m 갈매기 · 270m 움직이는 발판 · 400m부터 비율 상승
+  const hard = f >= 400 ? 1.25 : 1;
+  if (f >= 270 && r < .16 * hard) type = 'move';
+  else if (f >= 210 && allowHazard && r < .28 * hard) type = 'gull';
+  else if (f >= 150 && r < .40 * hard) type = 'weed';
+  else if (f >= 60 && r < .58 * hard) type = 'crack';
+  const l = { type, broken: false, phase: Math.random() * Math.PI * 2 };
+  // 황금조개: 위험한 발판 위에 더 자주 → 욕심 vs 안전
+  if (f >= 5 && Math.random() < (type === 'rock' ? .06 : .26)) l.item = 'shell';
+  return l;
+}
+function genFloor(f) {
+  if (floors[f]) return;
+  if (f <= 0) { floors[f] = { L: { type: 'rock' }, R: { type: 'rock' } }; return; }
+  if (isRest(f)) { floors[f] = { L: { type: 'rock', rest: true }, R: { type: 'rock', rest: true }, rest: true }; lastSides.push('B'); return; }
+  const forced = floors[f] && floors[f].force;
+  const bothP = Math.max(.18, .62 - f * .0016);   // 초반엔 양쪽 발판이 많아 여유 → 점점 한쪽만
+  let sides;
+  if (Math.random() < bothP) sides = ['L', 'R'];
+  else {
+    let s = pick(['L', 'R']);
+    // 같은 쪽 3층 연속 금지 → 좌우를 계속 오가게
+    // (150m부터는 가끔 같은 쪽 3연속 허용 → 읽고 누르는 실력)
+    if (lastSides.length >= 2 && lastSides.slice(-2).every(x => x === s) && !(f >= 150 && Math.random() < .35)) s = s === 'L' ? 'R' : 'L';
+    sides = [s];
+  }
+  lastSides.push(sides.length === 1 ? sides[0] : 'B');
+  const fl = { L: null, R: null };
+  for (const s of sides) fl[s] = makeLedge(f, sides.length === 2);
+  // 양쪽이면 둘 다 위험(갈매기)인 층은 만들지 않음
+  if (fl.L && fl.R && fl.L.type === 'gull' && fl.R.type === 'gull') fl.R.type = 'rock';
+  // 한쪽뿐이면 그 발판은 반드시 밟을 수 있는 것
+  if (sides.length === 1 && fl[sides[0]].type === 'gull') fl[sides[0]].type = 'rock';
+  // 부표(3층 위로 튕김) — 착지할 3층 위에 바위 발판을 미리 확보
+  if (f >= 110 && sides.length === 1 && Math.random() < .07 && ![1, 2, 3].some(k => isRest(f + k))) {
+    fl[sides[0]].type = 'buoy';
+    floors[f + 3] = { L: { type: 'rock', broken: false }, R: null, reserved: true };
+  }
+  floors[f] = fl;
+}
+// ---------------------------------------------------------------- 하늘을 지나가는 것들(헬로 타워와 같은 방식)
+// 앞바다·하늘: 새(가끔 철새 V자 편대, 가까이 나는 큰 새) · 구름 위: 비행기 · 우주부터: 우주선
+let trav = {};
+function genTrav(f) {
+  const list = [];
+  const add = (o) => list.push(Object.assign({ off: Math.random(), xOffset: Math.random() * W, seed: Math.random() * 1000 }, o));
+  const dir = () => (Math.random() < .5 ? -1 : 1);
+  if (f < 150) {
+    if (Math.random() < .45) {
+      if (Math.random() < .05) {                         // 철새 무리
+        const d = dir(), sp = d * (20 + Math.random() * 10), bx = Math.random() * W, n = 5 + Math.floor(Math.random() * 5), off = Math.random();
+        for (let i = 0; i < n; i++) { const side = i % 2 ? -1 : 1, rank = Math.ceil(i / 2); list.push({ type: 'bird', off: off + rank * .03, xOffset: (bx + rank * 16 * side + W) % W, speed: sp, seed: i * 3, size: 7 + Math.random() * 2 }); }
+      } else { const big = Math.random() < .15; add({ type: 'bird', speed: dir() * (big ? 30 + Math.random() * 10 : 16 + Math.random() * 14), size: big ? 14 + Math.random() * 4 : 6 + Math.random() * 4 }); }
+    }
+  } else if (f < 270) { if (Math.random() < .16) add({ type: 'plane', speed: dir() * (34 + Math.random() * 16), size: 13 + Math.random() * 5 }); }
+  else if (Math.random() < .16) add({ type: 'ship', speed: dir() * (26 + Math.random() * 18), size: 10 + Math.random() * 5 });
+  trav[f] = list;
+}
+// ---------------------------------------------------------------- 신들의 나라: 도착하면 신들이 구름을 타고 내려와 반김
+// 발판에 가리지 않게 화면 위쪽(헬로 머리 위)에 고정해서 그림 → 괴물이 멈춘 5초 동안 환영하고 다시 하늘로
+const GODS = [
+  { k: 'god_zeus', xf: .15, dy: 6, w: 102 },
+  { k: 'god_athena', xf: .385, dy: -10, w: 92 },
+  { k: 'god_poseidon', xf: .615, dy: 4, w: 95 },
+  { k: 'god_apollo', xf: .85, dy: -8, w: 94 },
+];
+const GODS_MS = 6000;
+function drawGods() {
+  if (!hero.godsAt) return;
+  const t = now - hero.godsAt;
+  if (t > GODS_MS) return;
+  const enter = Math.min(1, t / 900), exit = Math.max(0, (t - (GODS_MS - 900)) / 900);
+  const back = (x) => 1 + 2.2 * Math.pow(x - 1, 3) + 1.2 * Math.pow(x - 1, 2);   // 살짝 튕기며 내려앉음
+  const off = -330 * (1 - back(enter)) - 360 * exit * exit;
+  const alpha = 1 - exit;
+  const base = 262 + off;                     // 구름 바닥선(헬로 머리 위, 머리를 가리지 않게)
+  ctx.save(); ctx.globalAlpha = alpha;
+  // 금빛 후광 + 구름 띠
+  const gl = ctx.createRadialGradient(W / 2, base - 70, 20, W / 2, base - 70, 280);
+  gl.addColorStop(0, 'rgba(255,244,190,.85)'); gl.addColorStop(1, 'rgba(255,230,150,0)');
+  ctx.fillStyle = gl; ctx.fillRect(0, base - 360, W, 460);
+  ctx.fillStyle = 'rgba(255,255,255,.92)';
+  for (let i = 0; i < 9; i++) { const cx = (i + .5) * W / 9, r = 26 + (i % 3) * 8; ctx.beginPath(); ctx.arc(cx, base + 6 + Math.sin(now / 900 + i) * 2, r, 0, Math.PI * 2); ctx.fill(); }
+  const cheer = t < 4200;
+  GODS.forEach((g, i) => {
+    const im = IMG[g.k]; if (!ready(im)) return;
+    const h = g.w * im.naturalHeight / im.naturalWidth;
+    const bob = Math.sin(now / 700 + i * 1.7) * 3 + (cheer ? -Math.abs(Math.sin(now / 170 + i * .8)) * 10 : 0);
+    const x = W * g.xf - g.w / 2, y = base + g.dy - h + 18 + bob;
+    ctx.drawImage(im, x, y, g.w, h);
+    if (cheer && (now / 320 + i * .25) % 1 < .35) star(x + g.w * (.2 + .6 * ((i * 37) % 10) / 10), y + 18, 7);
+  });
+  // 제우스 말풍선
+  if (t > 700 && t < GODS_MS - 900) {
+    const bx = W * .15 + 34, by = base - 160;
+    ctx.fillStyle = '#fff'; ctx.strokeStyle = '#6a4a10'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.roundRect(bx, by, 146, 38, 14); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(bx + 16, by + 38); ctx.lineTo(bx + 8, by + 52); ctx.lineTo(bx + 30, by + 38); ctx.fill();
+    ctx.font = '18px Jua, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#5a3a10';
+    ctx.fillText('어서 와, 헬로!', bx + 73, by + 20); ctx.textBaseline = 'alphabetic';
+  }
+  ctx.restore();
+}
+function drawTravelers() {
+  const f0 = Math.max(0, Math.floor(cam - (H - HERO_Y) / ROW) - 1), f1 = Math.ceil(cam + HERO_Y / ROW) + 1;
+  ctx.save();
+  for (let f = f0; f <= f1; f++) {
+    for (const t of trav[f] || []) {
+      const y = screenY(f + t.off);
+      if (y < -40 || y > H + 40) continue;
+      const x = ((t.xOffset + (now / 1000) * t.speed) % (W + 80) + (W + 80)) % (W + 80) - 40;
+      if (t.type === 'bird') {
+        const flap = Math.sin(now * .01 + t.seed) * .6;
+        ctx.strokeStyle = 'rgba(70,70,80,.75)'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(x - t.size, y - flap * t.size); ctx.lineTo(x, y); ctx.lineTo(x + t.size, y - flap * t.size); ctx.stroke();
+      } else if (t.type === 'plane') {
+        const d = t.speed > 0 ? 1 : -1, s = t.size;
+        ctx.save(); ctx.translate(x, y);
+        ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(-d * s * 2.6, 0); ctx.lineTo(-d * s, 0); ctx.stroke();
+        ctx.fillStyle = 'rgba(225,230,240,.95)'; ctx.strokeStyle = 'rgba(85,90,105,.9)'; ctx.lineWidth = 1;
+        const poly = (pts) => { ctx.beginPath(); pts.forEach(([px, py], i) => i ? ctx.lineTo(d * px * s, py * s) : ctx.moveTo(d * px * s, py * s)); ctx.closePath(); ctx.fill(); ctx.stroke(); };
+        poly([[1.15, 0], [.25, -.11], [-.95, -.09], [-1.1, 0], [-.95, .09], [.25, .11]]);                                   // 동체
+        poly([[.05, -.06], [-.15, -.95], [-.35, -.95], [-.2, -.06], [-.2, .06], [-.35, .95], [-.15, .95], [.05, .06]]);     // 주날개
+        poly([[-.75, -.04], [-.95, -.32], [-1.02, -.32], [-.9, -.04], [-.9, .04], [-1.02, .32], [-.95, .32]]);               // 꼬리날개
+        ctx.restore();
+      } else {
+        ctx.save(); ctx.translate(x, y);
+        ctx.fillStyle = 'rgba(210,220,235,.95)'; ctx.strokeStyle = 'rgba(80,90,110,.9)'; ctx.lineWidth = 1.2;
+        ctx.beginPath(); ctx.ellipse(0, 0, t.size, t.size * .45, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        ctx.beginPath(); ctx.arc(0, -t.size * .15, t.size * .35, Math.PI, 0); ctx.fillStyle = 'rgba(140,220,255,.85)'; ctx.fill();
+        if (Math.sin(now * .006 + t.seed) > .4) { ctx.fillStyle = '#ff5c5c'; ctx.beginPath(); ctx.arc(t.size * .75, 0, 1.6, 0, Math.PI * 2); ctx.fill(); }
+        ctx.restore();
+      }
+    }
+  }
+  ctx.restore();
+}
+function ensureFloors(upTo) {
+  for (let f = 0; f <= upTo; f++) {
+    if (!trav[f]) genTrav(f);
+    if (!floors[f] || (floors[f].reserved && !floors[f].done)) {
+      if (floors[f] && floors[f].reserved) { floors[f].done = true; lastSides.push('L'); continue; }
+      genFloor(f);
+    }
+  }
+}
+function ledgeUsable(l) {
+  if (!l || l.broken) return false;
+  if (l.type === 'move') return moveExtent(l) > .45;
+  return true;
+}
+function moveExtent(l) { return .5 + .5 * Math.sin(now / 520 + l.phase); }
+
+// ---------------------------------------------------------------- 상태
+let crumbleAcc = 0;
+let rocket = null, shellsTotal = 0, rays = 0;
+let state, hero, shark, cam, score, nearMiss, particles, popups, shake, startedAt, endingShown, best, queued, lastNearAt, shells, flash;
+let now = performance.now();
+try { best = Number(localStorage.getItem('hm_best') || 0); } catch (e) { best = 0; }
+
+function reset() {
+  floors = {}; lastSides = []; trav = {};
+  ensureFloors(30);
+  hero = { zone: '앞바다', floor: 0, side: 'L', anim: null, pos: 0, face: 'calm', standSince: now, js: 0, jv: 0, hs: 0, hv: 0, lastX: 0, skew: 0, splat: 0 };
+  shark = { base: -2.6, lunge: 0, lungeT: -1, nextLunge: 2600, open: .6, chompAt: 0, paused: 0, roarUntil: 0, roarCool: 0 };
+  cam = 0; score = 0; nearMiss = 0; particles = []; popups = []; shake = 0; flash = 0;
+  endingShown = false; queued = null; lastNearAt = 0; shells = 0; shellsTotal = 0; rocket = null; rays = 0;
+  state = 'ready';
+  const ov = document.getElementById('overlay'); if (ov) ov.hidden = true;
+}
+
+const SND_SRC = {hello:"assets/snd/hello.mp3",rstart:"assets/snd/rstart.mp3",rloop:"assets/snd/rloop.mp3",bgm:"assets/snd/bgm.mp3",quake:"assets/snd/quake.mp3",growl:"assets/snd/growl.mp3",lunge:"assets/snd/lunge.mp3",chomp:"assets/snd/chomp.mp3"};
+// ---------------------------------------------------------------- 소리(첫 탭 이후)
+let ac = null;
+let master = null, muted = false;
+try { muted = localStorage.getItem('munch-mute') === '1'; } catch (e) {}
+const BUF = {};            // 디코딩된 대표님 효과음
+let bgmNode = null, bgmGain = null, quakeGain = null;
+function audio() {
+  if (!ac) {
+    try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return; }
+    master = ac.createGain(); master.gain.value = muted ? 0 : 1; master.connect(ac.destination);
+    for (const k in SND_SRC) {
+      fetch(SND_SRC[k]).then(r => r.arrayBuffer()).then(ab => new Promise((ok, no) => ac.decodeAudioData(ab, ok, no))).then((b) => { BUF[k] = b; if (k === 'quake') startQuake(); if (k === 'bgm' && state === 'play') startBgm(); }).catch(() => {});
+    }
+  }
+  if (ac.state === 'suspended') ac.resume();
+}
+// 한 번 재생(offset/dur로 긴 파일의 일부만 쓸 수 있음)
+function play(k, vol = 1, offset = 0, dur, rate = 1) {
+  if (!ac || !BUF[k]) return;
+  const s = ac.createBufferSource(), g = ac.createGain();
+  s.buffer = BUF[k]; s.playbackRate.value = rate; g.gain.value = vol;
+  s.connect(g).connect(master);
+  if (dur) { g.gain.setValueAtTime(vol, ac.currentTime + Math.max(0, dur - .25)); g.gain.linearRampToValueAtTime(0, ac.currentTime + dur); s.start(0, offset, dur); }
+  else s.start(0, offset);
+}
+// 긴장감 있는 배경음(무한 반복)
+function startBgm() {
+  if (!ac || !BUF.bgm || bgmNode) return;
+  bgmNode = ac.createBufferSource(); bgmNode.buffer = BUF.bgm; bgmNode.loop = true;
+  bgmGain = ac.createGain(); bgmGain.gain.value = 0;
+  bgmNode.connect(bgmGain).connect(master); bgmNode.start();
+  bgmGain.gain.linearRampToValueAtTime(.22, ac.currentTime + 1.5);
+}
+// 지진 우르르: 늘 깔려 있고, 괴물이 가까울수록 커짐(거리감의 핵심)
+function startQuake() {
+  if (!ac || !BUF.quake || quakeGain) return;
+  const n = ac.createBufferSource(); n.buffer = BUF.quake; n.loop = true;
+  quakeGain = ac.createGain(); quakeGain.gain.value = 0;
+  n.connect(quakeGain).connect(master); n.start();
+}
+function setLevel(g, v) { if (g) g.gain.setTargetAtTime(v, ac.currentTime, .12); }
+// 헬로 대기음: 발판에 가만히 있을 때만 반복, 움직이면 바로 끊음
+let helloSrc = null, helloG = null, helloNext = 0;
+function helloIdle(idle) {
+  if (!ac || !BUF.hello) return;
+  if (idle) {
+    if (!helloSrc && now > helloNext) {
+      helloSrc = ac.createBufferSource(); helloG = ac.createGain(); helloG.gain.value = .75;
+      helloSrc.buffer = BUF.hello; helloSrc.connect(helloG).connect(master); helloSrc.start();
+      const me = helloSrc; helloSrc.onended = () => { if (helloSrc === me) { helloSrc = null; helloNext = now + 500; } };
+    }
+  } else if (helloSrc) {
+    helloG.gain.setTargetAtTime(0, ac.currentTime, .02); const s0 = helloSrc; setTimeout(() => { try { s0.stop(); } catch (e) {} }, 120);
+    helloSrc = null; helloNext = 0;
+  }
+}
+// 로켓 비행음(짧은 파일의 가운데를 이어 반복)
+let rloopSrc = null, rloopG = null;
+function rocketLoop(on) {
+  if (!ac || !BUF.rloop) return;
+  if (on && !rloopSrc) {
+    rloopSrc = ac.createBufferSource(); rloopG = ac.createGain(); rloopG.gain.value = .9;
+    rloopSrc.buffer = BUF.rloop; rloopSrc.loop = true; rloopSrc.loopStart = .08; rloopSrc.loopEnd = 1.05;
+    rloopSrc.connect(rloopG).connect(master); rloopSrc.start();
+  } else if (!on && rloopSrc) {
+    rloopG.gain.setTargetAtTime(0, ac.currentTime, .12); const s0 = rloopSrc; setTimeout(() => { try { s0.stop(); } catch (e) {} }, 600);
+    rloopSrc = null;
+  }
+}
+// 괴물 소리 파일(11초)에서 쓸 만한 울음 구간들
+const GROWLS = [[0.1, 3.9], [4.7, 3.6], [9.2, 1.8]];
+function tone(freq, dur, type = 'square', vol = .06, slide = 0) {
+  if (!ac) return;
+  const o = ac.createOscillator(), g = ac.createGain();
+  o.type = type; o.frequency.setValueAtTime(freq, ac.currentTime);
+  if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(30, freq + slide), ac.currentTime + dur);
+  g.gain.setValueAtTime(vol, ac.currentTime); g.gain.exponentialRampToValueAtTime(.0001, ac.currentTime + dur);
+  o.connect(g).connect(master); o.start(); o.stop(ac.currentTime + dur);
+}
+function noise(dur, vol = .25) {
+  if (!ac) return;
+  const b = ac.createBuffer(1, ac.sampleRate * dur, ac.sampleRate), d = b.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length);
+  const s = ac.createBufferSource(), g = ac.createGain(), f = ac.createBiquadFilter();
+  f.type = 'lowpass'; f.frequency.value = 700; s.buffer = b; g.gain.value = vol;
+  s.connect(f).connect(g).connect(master); s.start();
+}
+const sfx = {
+  jump: () => tone(520, .08, 'square', .04, 300),
+  land: () => tone(180, .06, 'triangle', .07),
+  bonk: () => { tone(140, .18, 'sawtooth', .06, -80); },
+  crack: () => noise(.18, .18),
+  boing: () => tone(300, .25, 'sine', .08, 600),
+  chomp: () => { if (BUF.chomp) play('chomp', 1); else { noise(.35, .45); tone(70, .3, 'sawtooth', .12, -30); } },
+  lunge: () => play('lunge', .8),
+  roar: () => { if (BUF.growl) play('growl', .95, GROWLS[0][0], GROWLS[0][1]); else { noise(.9, .3); tone(90, .9, 'sawtooth', .1, -50); } },
+  growl: () => { const g = GROWLS[1 + Math.floor(Math.random() * 2)]; play('growl', .55, g[0], g[1], .9 + Math.random() * .2); },
+  rocket: () => {   // 로켓: 솟구치는 바람 소리 + 팡파르
+    if (!ac) return;
+    const d = 2.6, b = ac.createBuffer(1, ac.sampleRate * d, ac.sampleRate), x = b.getChannelData(0);
+    for (let i = 0; i < x.length; i++) x[i] = (Math.random() * 2 - 1) * Math.min(1, i / 4000) * (1 - i / x.length);
+    const s = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain();
+    f.type = 'bandpass'; f.Q.value = 1.2; f.frequency.setValueAtTime(300, ac.currentTime); f.frequency.exponentialRampToValueAtTime(3200, ac.currentTime + d);
+    g.gain.value = .5; s.buffer = b; s.connect(f).connect(g).connect(master); s.start();
+    [523, 659, 784, 1047, 1319].forEach((fq, i) => setTimeout(() => tone(fq, .35, 'triangle', .07), i * 90));
+    setTimeout(() => { tone(1047, .9, 'triangle', .06); tone(1568, .9, 'sine', .04); }, 520);
+  },
+  beat: () => tone(55, .12, 'sine', .22),
+  near: () => tone(880, .12, 'triangle', .05, -300),
+  shell: () => tone(1320, .08, 'sine', .05),
+};
+
+// ---------------------------------------------------------------- 입력
+function press(side) {
+  audio();
+  if (state === 'ready') { if (!assetsLoaded()) return; state = 'play'; startedAt = now; track('game_start'); }
+  if (state === 'over') return;
+  if (rocket) return;
+  if (hero.anim) { queued = side; return; }   // 점프 중이면 한 번 기억했다 착지 즉시 실행
+  jump(side);
+}
+function jump(side) {
+  helloIdle(false);
+  const target = hero.floor + 1;
+  ensureFloors(target + 25);
+  const l = floors[target] && floors[target][side];
+  const fromFloor = hero.floor, fromSide = hero.side;
+  if (ledgeUsable(l)) {
+    hero.anim = { kind: 'jump', t0: now, dur: TUNE.jump, from: fromFloor, fromSide, to: target, toSide: side };
+    jelly(-.22, 11);   // 움츠렸다가 쭉 늘어나며 튀어오름
+    sfx.jump();
+  } else {
+    // 발판 없는 쪽 → 벽에 부딪혀 미끄러짐
+    hero.anim = { kind: 'bonk', t0: now, dur: TUNE.jump * .9, from: fromFloor, fromSide, toSide: side };
+    jelly(.1, 4);
+    sfx.bonk();
+  }
+}
+// 아슬아슬: 상어 입이 1층 안까지 왔다가, 다시 2층 넘게 벌려 도망친 순간
+function checkNearMiss() {
+  const d = hero.pos - sharkTop();
+  if (d < 1) hero.danger = true;
+  if (hero.danger && d > 2 && now - lastNearAt > 1200 && state === 'play') {
+    hero.danger = false; jelly(.35, 6);   // 아슬아슬하게 빠져나가며 쭈욱
+    nearMiss++; lastNearAt = now; sfx.near();
+    popups.push({ text: '아슬아슬!', x: W / 2, y: HERO_Y - 70, t0: now, big: true });
+  }
+}
+
+canvas_input: {
+  const cv = document.getElementById('c');
+  cv.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    if (state === 'over') return;
+    const r = cv.getBoundingClientRect();
+    press((e.clientX - r.left) < r.width / 2 ? 'L' : 'R');
+  });
+  addEventListener('keydown', (e) => {
+    if (e.target.closest && e.target.closest('#overlay')) return;
+    if (e.key === 'ArrowLeft') press('L');
+    else if (e.key === 'ArrowRight') press('R');
+  });
+}
+
+// ---------------------------------------------------------------- 진행
+function jelly(s, v) { hero.js = s; hero.jv = v; }
+function landOn(floor, side) {
+  hero.floor = floor; hero.side = side; hero.standSince = now; hero.anim = null;
+  const l = floors[floor][side];
+  if (floor > score) score = floor;
+  if (l.item) { if (l.item === 'shell') { shells++; shellsTotal++; sfx.shell(); popups.push({ text: shells >= 10 ? '황금조개 10개!' : `+1 황금조개 ${shells}/10`, x: ledgeX(side), y: screenY(floor) - 46, t0: now, gold: true }); } l.item = null; }
+  sfx.land(); spawnPuff(ledgeX(side), screenY(floor)); jelly(-.4, -2);   // 철퍼덕 찌부 → 탱글탱글 흔들림
+  if (l.type === 'crack') l.breakAt = now + 600;
+  if (l.type === 'weed') l.slipAt = now + 800;
+  if (l.type === 'gull') { l.gullKick = now + 160; }
+  if (l.type === 'buoy') {
+    sfx.boing();
+    const to = floor + 3; ensureFloors(to + 25);
+    const side2 = floors[to].L ? 'L' : 'R';
+    hero.anim = { kind: 'jump', t0: now, dur: TUNE.jump * 2.2, from: floor, fromSide: side, to, toSide: side2, big: true };
+  }
+  // 새 구간 진입 → 구간 이름 + 쉼터 안내
+  const zNew = zoneAt(floor);
+  if (zNew.from > 0 && hero.zone !== zNew.name) {
+    hero.zone = zNew.name;
+    if (zNew.from < 500) {
+      popups.push({ text: zNew.name, x: W / 2, y: 170, t0: now, big: true, long: true, zone: true });
+      popups.push({ text: '쉼터 · 괴물이 잠깐 숨을 고릅니다', x: W / 2, y: 214, t0: now, long: true });
+    }
+  }
+  if (floor >= 500 && !endingShown) {
+    endingShown = true; shark.paused = now + 5000; shark.base = Math.min(shark.base, floor - 5);
+    flash = 1;
+    popups.push({ text: '신들의 나라 도착!', x: W / 2, y: HERO_Y + 110, t0: now, big: true, long: true });
+    popups.push({ text: '신들이 헬로를 반겨요!', x: W / 2, y: HERO_Y + 150, t0: now, long: true });
+    hero.godsAt = now;
+  }
+  if (shells >= 10 && !hero.anim && state === 'play') { startRocket(); return; }
+  if (queued && !hero.anim) { const q = queued; queued = null; jump(q); }
+}
+const ROCKET_UP = 30, ROCKET_CHARGE = 1000, ROCKET_MS = 2400;
+function startRocket() {
+  shells = 0; queued = null; track('rocket', { score: hero.floor });
+  const from = hero.floor, to = from + ROCKET_UP;
+  ensureFloors(to + 25);
+  // 도착 층은 양쪽 모두 튼튼한 바위(착지 보장)
+  floors[to] = { L: { type: 'rock', broken: false }, R: { type: 'rock', broken: false } };
+  rocket = { t0: now, from, to, fromSide: hero.side, toSide: hero.side === 'L' ? 'R' : 'L', sparks: [], lines: [], motes: [], rings: [], lifted: false };
+  hero.anim = { kind: 'rocket', t0: now + ROCKET_CHARGE, dur: ROCKET_MS, from, to, fromSide: hero.side, toSide: rocket.toSide };
+  helloIdle(false);
+  flash = 1; shake = 12; jelly(-.45, 4);
+  if (BUF.rstart) play('rstart', 1); else sfx.rocket();
+  popups.push({ text: '헬로 로켓!!', x: W / 2, y: 560, t0: now, rocket: true, long: true });
+}
+function fallFrom(floor, side) {
+  // 한 층 아래(부서진 층이면 더 아래)의 밟을 수 있는 발판으로 추락
+  let g = floor - 1;
+  while (g >= 0 && !(ledgeUsable(floors[g] && floors[g][side]) || ledgeUsable(floors[g] && floors[g][side === 'L' ? 'R' : 'L']))) g--;
+  if (g < 0) g = 0;
+  const s = ledgeUsable(floors[g][side]) ? side : (side === 'L' ? 'R' : 'L');
+  helloIdle(false);
+  hero.anim = { kind: 'fall', t0: now, dur: 260 + (floor - g) * 60, from: floor, fromSide: side, to: g, toSide: s };
+  queued = null;
+}
+function sharkTop() { return shark.base + shark.lunge; }
+
+let overAt = 0;
+function gameOver() {
+  helloIdle(false); rocketLoop(false);
+  state = 'over'; overAt = now; shake = 22; sfx.chomp(); setTimeout(() => sfx.roar(), 350); shark.chompAt = now;
+  spawnDebris(W / 2, HERO_Y, 26);
+  track('game_over', { score, shells: shellsTotal });
+  setTimeout(showOverlay, 1300);
+  if (score > best) { best = score; try { localStorage.setItem('hm_best', String(best)); } catch (e) {} }
+}
+
+function spawnDebris(x, y, n, color) {
+  for (let i = 0; i < n; i++) {
+    particles.push({ x: x + (Math.random() - .5) * 120, y: y + (Math.random() - .5) * 30,
+      vx: (Math.random() - .5) * 6, vy: -3 - Math.random() * 6, s: 5 + Math.random() * 10,
+      r: Math.random() * 6, vr: (Math.random() - .5) * .4, c: color || pick(['#6b5a4a', '#8a7866', '#4d4136', '#b9a58f']), born: now, k: 1 });
+  }
+}
+// 벽·발판이 부서져 떨어지는 조각 하나 (k = 깊이감: 입속으로 들어가면 작아지며 멀어짐)
+function spawnChunk(x, y, color, size, vx, vy) {
+  particles.push({ x, y, vx, vy, s: size, r: Math.random() * 6, vr: (Math.random() - .5) * .5, c: color, born: now, k: 1, chunk: true });
+}
+// 착지 먼지
+let puffs = [];
+function spawnPuff(x, y) {
+  for (let i = 0; i < 6; i++) puffs.push({ x: x + (Math.random() - .5) * 40, y, vx: (Math.random() - .5) * 1.6, vy: -Math.random() * .8, r: 4 + Math.random() * 5, born: now });
+}
+
+function update(dt) {
+  const z = zoneAt(hero.floor);
+  // 헬로 찰짐(스프링): js = 세로 늘어남(+) / 찌부(-), hs = 벽에 철썩 붙은 납작함
+  {
+    const k = 300, c = 10;
+    hero.jv += (-k * hero.js - c * hero.jv) * dt; hero.js += hero.jv * dt;
+    hero.hv += (-k * hero.hs - c * hero.hv) * dt; hero.hs += hero.hv * dt;
+    if (hero.anim && hero.anim.kind === 'fall') hero.jv += 6 * dt * 10 * (.18 - hero.js);   // 떨어질 땐 길게 늘어짐
+    const dd0 = hero.pos - sharkTop();
+    if (state === 'play' && dd0 < 2.2) hero.jv += (Math.random() - .5) * 60 * dt * 10;     // 겁먹으면 부들부들
+    hero.js = Math.max(-.5, Math.min(.5, hero.js)); hero.hs = Math.max(-.6, Math.min(.4, hero.hs));
+  }
+  // 헬로 애니메이션
+  if (hero.anim) {
+    const a = hero.anim, t = Math.min(1, (now - a.t0) / a.dur);
+    if (a.kind === 'jump') {
+      hero.pos = a.from + (a.to - a.from) * easeOut(t);
+      if (t >= 1) landOn(a.to, a.toSide);
+    } else if (a.kind === 'bonk') {
+      hero.pos = a.from + Math.sin(t * Math.PI) * .45;
+      if (t >= 1) { spawnDebris(a.toSide === 'L' ? WALL + 6 : W - WALL - 6, screenY(a.from + .4), 4, z.seam); hero.splat = now; hero.hv -= 14; fallFrom(a.from, a.fromSide); }
+    } else if (a.kind === 'rocket' && now < a.t0) {
+      // 차지(1초): 발판 위에서 잔뜩 웅크리고 부들부들 — 빛이 모여듦
+      hero.pos = a.from;
+      hero.js = -.32 + Math.sin(now / 35) * .06; hero.jv = 0;
+      shake = Math.max(shake, 5 + (1 - (a.t0 - now) / ROCKET_CHARGE) * 8);
+      if (now - (rocket.lastRing || 0) > 200) { rocket.lastRing = now; rocket.rings.push({ born: now }); }
+    } else if (a.kind === 'rocket') {
+      if (!rocket.lifted) { rocket.lifted = true; flash = 1; shake = 22; jelly(.5, 10); rocketLoop(true); spawnDebris(ledgeX(a.fromSide), screenY(a.from), 10, '#ffe08a'); }
+      // 쭉 가속 → 끝에서 부드럽게 멈춤
+      const e = t < .15 ? (t / .15) * (t / .15) * .04 : .04 + .96 * (1 - Math.pow(1 - (t - .15) / .85, 3));
+      hero.pos = a.from + (a.to - a.from) * e;
+      hero.floor = Math.floor(hero.pos);
+      if (hero.pos > score) score = Math.floor(hero.pos);
+      hero.jv += (Math.random() - .5) * 20 * dt * 10;
+      if (t >= 1) {
+        rocket = null; hero.anim = null; rocketLoop(false);
+        // 괴물은 한참 아래(화면 밖) → 잠깐 뒤 다시 추격
+        shark.base = a.to - 9; shark.lunge = 0; shark.lungeT = -1; shark.paused = now + 1200;
+        shake = 10; flash = .6;
+        landOn(a.to, a.toSide);
+        popups.push({ text: `+${ROCKET_UP}m!`, x: W / 2, y: HERO_Y - 70, t0: now, big: true });
+      }
+    } else if (a.kind === 'fall') {
+      hero.pos = a.from + (a.to - a.from) * (t * t);
+      hero.floor = a.from;
+      if (t >= 1) { hero.floor = a.to; hero.side = a.toSide; hero.standSince = now; hero.anim = null; sfx.land(); const l = floors[a.to][a.toSide]; if (l.type === 'crack' && !l.breakAt) l.breakAt = now + 600; if (queued) { const q = queued; queued = null; jump(q); } }
+    }
+  } else {
+    hero.pos = hero.floor;
+    const l = floors[hero.floor][hero.side];
+    if (l.broken && !l.breakAt) { fallFrom(hero.floor, hero.side); }
+    else if (l.breakAt && now >= l.breakAt && !l.broken) {
+      l.broken = true; sfx.crack(); spawnDebris(ledgeX(hero.side) , screenY(hero.floor), 8, '#8a7866'); fallFrom(hero.floor, hero.side);
+    } else if (l.slipAt && now >= l.slipAt) {
+      l.slipAt = 0; popups.push({ text: '미끄덩!', x: ledgeX(hero.side), y: screenY(hero.floor) - 40, t0: now }); fallFrom(hero.floor, hero.side);
+    } else if (l.gullKick && now >= l.gullKick) {
+      l.gullKick = 0; l.gullFly = now; l.type = 'rock'; popups.push({ text: '끼악!', x: ledgeX(hero.side), y: screenY(hero.floor) - 50, t0: now }); fallFrom(hero.floor, hero.side);
+    } else if (l.type === 'move' && moveExtent(l) < .35) {
+      popups.push({ text: '으악!', x: ledgeX(hero.side), y: screenY(hero.floor) - 40, t0: now }); fallFrom(hero.floor, hero.side);
+    }
+  }
+
+  // 상어
+  if (state === 'play' && now - startedAt > 2000 && now > shark.paused && !rocket) {
+    const d = hero.pos - shark.base;
+    let v = sharkBase(hero.floor) * TUNE.speed;
+    // 살아있는 추격: 속도가 일정하지 않고 들쑥날쑥(숨 고르듯 느려졌다 몰아쳤다)
+    v *= 1 + .3 * Math.sin(now / 1700) + .15 * Math.sin(now / 630 + 1);
+    // 많이 뒤처지면 포효하며 몰아쳐 올라옴(1.4초간 2배)
+    const resting = floors[hero.floor] && floors[hero.floor].rest;
+    if (resting) v *= .35;
+    if (d > 5.5 && now > shark.roarCool && !resting) { shark.roarUntil = now + 1400; shark.roarCool = now + 6000; shake = Math.max(shake, 6); sfx.roar(); popups.push({ text: '크아아앙!', x: W / 2, y: H - 120, t0: now, big: true }); }
+    if (now < shark.roarUntil) v *= 2.1;
+    // 거리감: 가까울 땐 기본 속도만 → 헬로가 팍팍 오르면 점점 벌어짐.
+    // 일정 거리보다 멀어지면 멀어진 만큼만 서서히 빨라져서(완만한 고무줄) 결국 다시 쫓아옴. 9층 넘게는 못 벌어짐.
+    if (d > TUNE.rubber) v += 0.55 * (d - TUNE.rubber);
+    shark.base += v * dt;
+    if (hero.pos - shark.base > 10) shark.base = hero.pos - 10;
+    // 돌진: 가까울수록 자주. 올라갔다 "덥석" 닫고 내려옴
+    shark.nextLunge -= dt * 1000;
+    if (shark.lungeT < 0 && shark.nextLunge <= 0) {
+      shark.lungeT = 0;
+      if (hero.pos - sharkTop() < 5) sfx.lunge();
+      shark.nextLunge = d < 2.5 ? 1100 + Math.random() * 900 : 2300 + Math.random() * 1700;
+    }
+  }
+  if (shark.lungeT >= 0) {
+    shark.lungeT += dt;
+    const T = LUNGE_T, t = shark.lungeT / T;
+    shark.lunge = TUNE.lunge * Math.sin(Math.min(1, t) * Math.PI);
+    shark.open = t < .45 ? .6 + t * .9 : Math.max(.05, 1 - (t - .45) * 5);
+    if (t > .58 && !shark.didChomp) {
+      shark.didChomp = true; shark.chompAt = now; shake = Math.max(shake, 9); sfx.chomp();
+      // 이빨에 걸린 벽·발판이 부서져 입속으로
+      const y = sharkDrawTop();
+      spawnDebris(W / 2, y, 12, zoneAt(Math.floor(shark.base)).seam);
+    }
+    if (t >= 1) { shark.lungeT = -1; shark.lunge = 0; shark.didChomp = false; }
+  } else {
+    shark.open += ((hero.pos - sharkTop() < 2 ? 1 : .72) - shark.open) * Math.min(1, dt * 4) + Math.sin(now / 300) * .004;
+  }
+  // 상어가 지나간 층은 먹힘
+  for (let f = Math.floor(sharkTop()); f >= Math.floor(sharkTop()) - 3; f--) {
+    const fl = floors[f]; if (!fl || fl.eaten) continue;
+    if (f < sharkTop() - .2) { fl.eaten = true; for (const s of ['L', 'R']) if (fl[s] && !fl[s].broken) spawnDebris(ledgeX(s), screenY(f), 3, '#7a6a58'); }
+  }
+  checkNearMiss();
+  // 잡혔나
+  if (state === 'play' && !rocket && hero.pos - sharkTop() <= .05) gameOver();
+
+  // 소리: 지진 우르르는 거리에 따라, 배경음은 게임 중에만, 가끔 으르렁
+  const dd = hero.pos - sharkTop();
+  if (ac && now - (update.lastMix || 0) > 100) {
+    update.lastMix = now;
+    if (state === 'play') startBgm();
+    const near = rocket ? 0 : Math.max(0, Math.min(1, (7 - dd) / 6));
+    setLevel(quakeGain, state === 'play' ? .08 + near * .85 + (now < shark.roarUntil ? .3 : 0) : state === 'over' ? .15 : .05);
+    setLevel(bgmGain, state === 'play' ? .22 : .1);
+    helloIdle(state === 'play' && !hero.anim && !rocket && now - hero.standSince > 250);
+    if (state === 'play' && !rocket && dd < 4 && now > (update.nextGrowl || 0)) { update.nextGrowl = now + 7000 + Math.random() * 6000; if (now - startedAt > 3000) sfx.growl(); }
+  }
+  // 심장박동
+  if (state === 'play' && dd < 2) {
+    const every = 250 + dd * 260;
+    if (now - (update.lastBeat || 0) > every) { update.lastBeat = now; sfx.beat(); }
+  }
+
+  // 카메라(헬로를 따라감)
+  if (rocket) cam += ((hero.pos - .5) - cam) * Math.min(1, dt * 10);   // 로켓 땐 헬로를 화면 가운데 위쪽에 두고 바짝 따라감
+  else cam += (hero.pos - cam) * Math.min(1, dt * 2.6);
+  const maxAhead = (HERO_Y - (rocket ? 280 : 150)) / ROW;       // 헬로가 화면 위쪽 150 넘게는 못 올라가게
+  if (hero.pos - cam > maxAhead) cam = hero.pos - maxAhead;
+  if (cam - hero.pos > 1.2) cam = hero.pos + 1.2;
+  ensureFloors(hero.floor + 25);
+
+  // 파편: 튀었다가 상어 입으로 빨려 들어감
+  const M = mouthGeom();
+  for (const p of particles) {
+    if (!p.inMouth) {
+      p.vx += (W / 2 - p.x) * .0015; p.vy += .38;
+      const ux = (p.x - M.cx) / (M.mw / 2), uy = (p.y - M.jawY) / (M.mh / 2);
+      if (ux * ux + uy * uy < .8 && p.vy > 0) p.inMouth = true;
+    } else {
+      // 목구멍 속으로: 가운데로 빨려들고, 작아지고(멀어짐), 어두워짐
+      p.vx = p.vx * .85 + ((M.vpX || M.cx) - p.x) * .06; p.vy = p.vy * .85 + (M.vpY - p.y) * .06; p.k *= .93;
+    }
+    p.x += p.vx; p.y += p.vy; p.r += p.vr;
+  }
+  particles = particles.filter(p => p.y < H + 40 && now - p.born < 3500 && p.k > .12);
+  updateDrips(dt, M); updateTents(dt);
+  for (const q of puffs) { q.x += q.vx; q.y += q.vy; q.r += .25; }
+  puffs = puffs.filter(q => now - q.born < 450);
+
+  // 괴물이 다가오면 입 바로 위의 벽이 계속 무너져 입속으로 떨어짐
+  if (state === 'play') {
+    const rate = 7 + (shark.lungeT >= 0 ? 40 : 0) + Math.max(0, 3 - (hero.pos - sharkTop())) * 6;
+    crumbleAcc += dt * rate;
+    const z = zoneAt(Math.max(0, Math.floor(cam - 4)));
+    while (crumbleAcc >= 1) {
+      crumbleAcc--;
+      const left = Math.random() < .5;
+      const x = left ? Math.random() * (WALL + 6) : W - Math.random() * (WALL + 6);
+      spawnChunk(x, rimTop(M, x) - 2 - Math.random() * 30, Math.random() < .6 ? z.wall : z.seam, 6 + Math.random() * 12, (left ? 1 : -1) * (1 + Math.random() * 2.5), -1 - Math.random() * 2);
+    }
+  }
+  // 입 가까이 내려온 발판은 조각나서 입속으로
+  for (let f = Math.max(0, Math.floor(cam - 12)); f <= Math.floor(cam); f++) {
+    const fl = floors[f]; if (!fl || fl.eaten) continue;
+    if (screenY(f) > Math.min(rimTop(M, WALL + LW / 2), rimTop(M, W - WALL - LW / 2)) - 6) {
+      fl.eaten = true;
+      for (const s2 of ['L', 'R']) {
+        const l = fl[s2]; if (!l || l.broken) continue;
+        l.broken = true;
+        const x0 = s2 === 'L' ? WALL : W - WALL - LW;
+        for (let i = 0; i < 7; i++) spawnChunk(x0 + Math.random() * LW, screenY(f) + Math.random() * LH, ledgeColor(l), 7 + Math.random() * 9, (s2 === 'L' ? 1 : -1) * Math.random() * 2.5, -2 - Math.random() * 3);
+      }
+    }
+  }
+  popups = popups.filter(p => now - p.t0 < (p.long ? 2600 : 900));
+  shake *= .86; flash *= .92;
+}
+const easeOut = (t) => 1 - (1 - t) * (1 - t);
+
+// ---------------------------------------------------------------- 그리기
+const cv = document.getElementById('c'), ctx = cv.getContext('2d');
+let scale = 1;
+function fit() {
+  const vw = innerWidth, vh = innerHeight;
+  scale = Math.min(vw / W, vh / H);
+  const dpr = Math.min(3, devicePixelRatio || 1);
+  cv.style.width = W * scale + 'px'; cv.style.height = H * scale + 'px';
+  cv.width = Math.round(W * scale * dpr); cv.height = Math.round(H * scale * dpr);
+  ctx.setTransform(scale * dpr, 0, 0, scale * dpr, 0, 0);
+}
+addEventListener('resize', fit);
+
+const screenY = (f) => HERO_Y - (f - cam) * ROW;
+const ledgeX = (side) => side === 'L' ? WALL + LW / 2 : W - WALL - LW / 2;
+function sharkDrawTop() {
+  const actual = screenY(sharkTop());
+  const bob = Math.sin(now / 520) * 10 + Math.sin(now / 210) * 3;          // 들썩들썩(육중하게 천천히)
+  return Math.min(actual + bob * .4, H + 260);
+}
+
+function lerpColor(a, b, t) {
+  const pa = parseInt(a.slice(1), 16), pb = parseInt(b.slice(1), 16);
+  const r = (pa >> 16) + (((pb >> 16) - (pa >> 16)) * t), g = ((pa >> 8) & 255) + ((((pb >> 8) & 255) - ((pa >> 8) & 255)) * t), bl = (pa & 255) + (((pb & 255) - (pa & 255)) * t);
+  return `rgb(${r | 0},${g | 0},${bl | 0})`;
+}
+function skyColors(f) {
+  let i = 0; for (let k = 0; k < ZONES.length; k++) if (f >= ZONES[k].from) i = k;
+  const a = ZONES[i], b = ZONES[Math.min(ZONES.length - 1, i + 1)];
+  const span = Math.max(1, b.from - a.from), t = b === a ? 0 : Math.min(1, Math.max(0, (f - a.from - span * .6) / (span * .4)));
+  return [lerpColor(a.top, b.top, t), lerpColor(a.bot, b.bot, t)];
+}
+
+function draw() {
+  ctx.save();
+  if (shake > .5) ctx.translate((Math.random() - .5) * shake, (Math.random() - .5) * shake);
+
+  // 하늘
+  const [top, bot] = skyColors(cam);
+  const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, top); g.addColorStop(1, bot);
+  ctx.fillStyle = g; ctx.fillRect(-20, -20, W + 40, H + 40);
+  if (cam > 45) { // 별
+    ctx.fillStyle = `rgba(255,255,255,${Math.min(.9, (cam - 45) / 20)})`;
+    for (let i = 0; i < 40; i++) { const x = (i * 97) % W, y = ((i * 211 + cam * 6) % H); ctx.fillRect(x, y, 2, 2); }
+  }
+  // 시작 배경: 대부도(바다향기 테마파크·방아머리) — 세계와 함께 스크롤, 0층 발판이 모래 위에
+  if (ready(IMG.bg_start)) {
+    const bh = W * 2200 / 1140, by = screenY(0) + 120 - W * 1400 / 1140;   // 윗부분 위치는 그대로, 아래로 더 길어짐
+    if (by < H) { ctx.drawImage(IMG.bg_start, 0, by, W, bh); ctx.fillStyle = '#fbc157'; ctx.fillRect(0, by + bh - 1, W, H); }
+  }
+
+  drawTravelers();
+  // 발판
+  const fTop = Math.ceil(cam + HERO_Y / ROW) + 1, fBot = Math.floor(cam - (H - HERO_Y) / ROW) - 1;
+  for (let f = Math.max(0, fBot); f <= fTop; f++) {
+    const fl = floors[f]; if (!fl || fl.eaten) continue;
+    for (const s of ['L', 'R']) { const l = fl[s]; if (l && !l.broken) drawLedge(l, s, screenY(f), f); }
+  }
+
+  // 벽(구간 색, 이음새가 카메라 따라 흐름)
+  // 벽은 괴물 입 윗테두리에서 들쭉날쭉 부서진 채 끝난다 → 그 아래는 입속(drawShark의 wallStubs)으로 이어짐
+  {
+    const M = mouthGeom();
+    ctx.save();
+    ctx.beginPath(); ctx.moveTo(-20, -30); ctx.lineTo(W + 20, -30);
+    for (let x = W + 20; x >= -20; x -= 5) ctx.lineTo(x, rimTop(M, x) - 4 + biteNoise(x));
+    ctx.closePath(); ctx.clip();
+    for (const s of ['L', 'R']) {
+      const x0 = s === 'L' ? 0 : W - WALL;
+      const z = zoneAt(Math.floor(cam));
+      ctx.fillStyle = z.wall; ctx.fillRect(x0, -20, WALL, H + 40);
+      ctx.fillStyle = z.seam;
+      const off = ((cam * ROW) % 36 + 36) % 36;
+      for (let y = -36 + off; y < H; y += 36) { ctx.fillRect(x0, y, WALL, 3); ctx.fillRect(x0 + ((y / 36) % 2 ? 10 : 20), y, 3, 36); }
+      // 입 가까운 곳은 금이 가고 흔들림
+      ctx.strokeStyle = 'rgba(20,10,20,.55)'; ctx.lineWidth = 2;
+      const rt = rimTop(M, x0 + WALL / 2);
+      for (let i = 0; i < 4; i++) {
+        const cy = rt - 12 - i * 26, jx = (Math.random() - .5) * 1.5;
+        ctx.beginPath(); ctx.moveTo(x0 + jx, cy); ctx.lineTo(x0 + WALL * .5 + jx, cy - 10); ctx.lineTo(x0 + WALL * .2 + jx, cy - 22); ctx.lineTo(x0 + WALL + jx, cy - 30); ctx.stroke();
+      }
+    }
+    ctx.restore();
+  }
+
+  // 파편
+  ctx.fillStyle = 'rgba(255,255,255,.7)';
+  for (const q of puffs) { ctx.globalAlpha = 1 - (now - q.born) / 450; ctx.beginPath(); ctx.arc(q.x, q.y, q.r, 0, Math.PI * 2); ctx.fill(); }
+  ctx.globalAlpha = 1;
+  drawParticles(false);
+
+  drawRocketBack();
+  if (rocket) { drawShark(); drawRocketFront(); drawHero(); }   // 로켓 땐 헬로가 맨 앞
+  else { drawHero(); drawShark(); }                            // 평소엔 괴물 입이 헬로를 덮침
+
+  drawGods();
+  // 괴물이 화면 밖(아래)에 있으면: 바닥이 붉게 달아오르고 거리 표시
+  { const M = mouthGeom(), dd2 = hero.pos - sharkTop();
+    if (state === 'play' && M.top > H - 30 && !(rocket && now - rocket.t0 < 600)) {
+      const heat = Math.max(0, Math.min(1, (9 - dd2) / 5));
+      const gl = ctx.createLinearGradient(0, H - 140, 0, H);
+      gl.addColorStop(0, 'rgba(255,40,60,0)'); gl.addColorStop(1, `rgba(255,40,60,${.15 + heat * .45 + Math.sin(now / 120) * .05})`);
+      ctx.fillStyle = gl; ctx.fillRect(0, H - 140, W, 140);
+      ctx.font = '20px Jua, sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = '#fff'; ctx.strokeStyle = 'rgba(80,0,20,.7)'; ctx.lineWidth = 4;
+      const txt = rocket && rocket.lifted ? '▼ 괴물이 저 아래로 멀어진다!' : `▼ 괴물 ${dd2.toFixed(0)}m 아래`; ctx.strokeText(txt, W / 2, H - 22); ctx.fillText(txt, W / 2, H - 22);
+    } }
+  // 위험 가장자리
+  const dd = hero.pos - sharkTop();
+  if (state !== 'ready' && dd < 2) {
+    const a = (2 - dd) / 2 * (.35 + .15 * Math.sin(now / 90));
+    const v = ctx.createRadialGradient(W / 2, H / 2, H * .3, W / 2, H / 2, H * .75);
+    v.addColorStop(0, 'rgba(255,40,40,0)'); v.addColorStop(1, `rgba(255,40,40,${a})`);
+    ctx.fillStyle = v; ctx.fillRect(0, 0, W, H);
+  }
+  if (flash > .02) { ctx.fillStyle = `rgba(255,248,220,${flash * .8})`; ctx.fillRect(0, 0, W, H); }
+  ctx.restore();
+
+  drawHud(dd);
+}
+
+function ledgeColor(l) {
+  return ({ ledge_grass: '#7a5230', ledge_rock: '#8a8f99', ledge_log: '#9a6034', ledge_slime: '#3f8a4f', ledge_ice: '#bfe6ff', ledge_tube: '#ff7a3d' })[l.skin] || '#7d6b58';
+}
+function drawParticles(inMouth) {
+  for (const p of particles) {
+    if (!!p.inMouth !== inMouth) continue;
+    ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.r); ctx.scale(p.k, p.k);
+    ctx.globalAlpha = inMouth ? Math.min(1, p.k * 1.4) : 1;
+    ctx.fillStyle = p.c; ctx.fillRect(-p.s / 2, -p.s / 2, p.s, p.s * .8);
+    ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.fillRect(-p.s / 2, p.s * .15, p.s, p.s * .25);                   // 조각 아랫면(입체감)
+    if (inMouth) { ctx.fillStyle = `rgba(20,0,15,${1 - p.k})`; ctx.fillRect(-p.s / 2, -p.s / 2, p.s, p.s * .8); } // 깊이 들어갈수록 어두워짐
+    ctx.restore();
+  }
+  ctx.globalAlpha = 1;
+}
+// ---------------------------------------------------------------- 헬로 눈 효과
+const IDLE_SEQ = ['hello_flat', 'hello_mid', 'hello_tall', 'hello_round', 'hello_mid', 'hello_flat'];
+const IDLE_MS = 115;
+// 그림별 두 눈 위치(원본 300px 기준, 측정값)와 반지름
+const EYE_POS = { hello_flat: [[95, 250], [203, 250]], hello_mid: [[98, 222], [203, 222]], hello_tall: [[102, 150], [195, 150]], hello_round: [[98, 171], [202, 170]] };
+const SKIN = '#fbf6ee';
+let nextBlink = 2500, blinkAt = -1;
+function drawHelloEyes(key, HS, scared) {
+  const k = HS / 300, eyes = EYE_POS[key];
+  if (!eyes) return;
+  if (now > nextBlink) { blinkAt = now; nextBlink = now + 1800 + Math.random() * 2600; }
+  const blinking = now - blinkAt < 130;
+  const over = state === 'over';
+  for (const [ex0, ey0] of eyes) {
+    const ex = -HS / 2 + ex0 * k, ey = -HS + ey0 * k, r = 9.5 * k;
+    if (over || blinking) {                   // 눈 감기(게임오버 땐 X_X)
+      ctx.fillStyle = SKIN; ctx.beginPath(); ctx.arc(ex, ey, r * 1.35, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#1a1a1a'; ctx.lineWidth = 2; ctx.lineCap = 'round';
+      if (over) { ctx.beginPath(); ctx.moveTo(ex - r, ey - r); ctx.lineTo(ex + r, ey + r); ctx.moveTo(ex + r, ey - r); ctx.lineTo(ex - r, ey + r); ctx.stroke(); }
+      else { ctx.beginPath(); ctx.moveTo(ex - r * 1.1, ey); ctx.quadraticCurveTo(ex, ey + r * .8, ex + r * 1.1, ey); ctx.stroke(); }
+    } else if (scared) {                      // 겁먹은 눈: 커다란 흰자 + 떨리는 작은 눈동자(아래 괴물을 봄)
+      const R = r * 1.9;
+      ctx.fillStyle = '#fff'; ctx.strokeStyle = '#1a1a1a'; ctx.lineWidth = 1.6;
+      ctx.beginPath(); ctx.arc(ex, ey, R, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#1a1a1a'; ctx.beginPath(); ctx.arc(ex + (Math.random() - .5) * 1.2, ey + R * .38, r * .6, 0, Math.PI * 2); ctx.fill();
+    } else {                                  // 평소: 반짝이는 하이라이트(괴물 쪽으로 살짝 쏠림)
+      ctx.fillStyle = 'rgba(255,255,255,.95)';
+      ctx.beginPath(); ctx.arc(ex - r * .3, ey - r * .35 + r * .15, r * .32, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+}
+function ledgeSkin(l, f) {
+  if (!l.skin) {
+    const sky = f >= 150;
+    l.skin = l.type === 'crack' ? 'ledge_log' : l.type === 'weed' ? (sky ? 'ledge_ice' : 'ledge_slime') : l.type === 'buoy' ? 'ledge_tube'
+      : sky ? 'ledge_rock' : (Math.random() < .5 ? 'ledge_grass' : 'ledge_rock');
+    if (l.type === 'gull') l.pose = Math.random() < .3 ? 'gull_lie' : 'gull_sit';
+  }
+  return l.skin;
+}
+function drawLedge(l, side, y, f) {
+  let w = LW;
+  if (l.type === 'move') w = LW * moveExtent(l);
+  const x = side === 'L' ? WALL : W - WALL - w;
+  let jx = 0;
+  if (l.breakAt && !l.broken) jx = (Math.random() - .5) * 4;           // 부서지기 직전 떨림
+  const im = IMG[ledgeSkin(l, f)];
+  const iw = w * 1.12, ih = iw * 120 / 330;
+  if (ready(im)) ctx.drawImage(im, x - (iw - w) / 2 + jx, y - ih * .2, iw, ih);
+  else { ctx.fillStyle = ledgeColor(l); ctx.fillRect(x, y, w, LH); }
+  // 갈매기: 앉아 있거나 드러누워 있음(밟으면 퍼덕이며 헬로를 쳐냄)
+  if (l.type === 'gull' || (l.gullFly && now - l.gullFly < 900)) {
+    const flying = !!l.gullFly;
+    const t = flying ? (now - l.gullFly) / 900 : 0;
+    const gim = IMG[flying ? 'gull_flap' : (l.pose || 'gull_sit')];
+    const gw = 60, gh = 50;
+    const gx = x + w / 2 - gw / 2 + (flying ? (side === 'L' ? 1 : -1) * t * 90 : 0);
+    const gy = y - gh + 6 - (flying ? t * 110 : 0);
+    ctx.save(); ctx.globalAlpha = flying ? 1 - t * .6 : 1;
+    if (side === 'R') { ctx.translate(gx + gw, gy); ctx.scale(-1, 1); if (ready(gim)) ctx.drawImage(gim, 0, 0, gw, gh); }
+    else if (ready(gim)) ctx.drawImage(gim, gx, gy, gw, gh);
+    ctx.restore();
+  }
+  if (l.item) {
+    const ix = x + w / 2, iy = y - 18;
+    if (l.item === 'shell') {
+      const bob = Math.sin(now / 300 + f) * 3, sz = 34;
+      // 반짝이는 후광
+      const hg = ctx.createRadialGradient(ix, iy - 4 + bob, 2, ix, iy - 4 + bob, 26);
+      hg.addColorStop(0, 'rgba(255,236,150,.75)'); hg.addColorStop(1, 'rgba(255,236,150,0)');
+      ctx.fillStyle = hg; ctx.beginPath(); ctx.arc(ix, iy - 4 + bob, 26, 0, Math.PI * 2); ctx.fill();
+      if (ready(IMG.shell_gold)) ctx.drawImage(IMG.shell_gold, ix - sz / 2, iy - sz / 2 - 6 + bob, sz, sz * 185 / 192);
+      if ((now / 700 + f) % 1 < .12) star(ix + 9, iy - 16 + bob, 5);
+    }
+  }
+}
+
+function star(x, y, r) {   // 반짝 ✦
+  ctx.fillStyle = '#fffbe0'; ctx.beginPath();
+  ctx.moveTo(x, y - r); ctx.quadraticCurveTo(x, y, x + r, y); ctx.quadraticCurveTo(x, y, x, y + r); ctx.quadraticCurveTo(x, y, x - r, y); ctx.quadraticCurveTo(x, y, x, y - r); ctx.fill();
+}
+// ---------------------------------------------------------------- 헬로 로켓 연출
+function drawRocketBack() {   // 헬로 뒤: 금빛 하늘, 회전하는 빛줄기, 쏟아지는 속도선
+  if (!rocket) return;
+  const total = ROCKET_CHARGE + ROCKET_MS, t = (now - rocket.t0) / total, fade = Math.min(1, t * 8, (1 - t) * 4);
+  const charging = now - rocket.t0 < ROCKET_CHARGE, ct = Math.min(1, (now - rocket.t0) / ROCKET_CHARGE);
+  const hx = heroScreenX(), hy = screenY(hero.pos) - 30;
+  ctx.save();
+  if (charging) {   // 차지: 주변이 어두워지고 헬로에게만 빛이 모임 + 금빛 번쩍임 박동
+    ctx.fillStyle = `rgba(20,8,40,${.45 * ct})`; ctx.fillRect(0, 0, W, H);
+    const pulse = Math.max(0, Math.sin(ct * Math.PI * 7));
+    ctx.fillStyle = `rgba(255,214,90,${.22 * pulse})`; ctx.fillRect(0, 0, W, H);
+  } else ctx.fillStyle = `rgba(255,196,60,${.28 * fade})`, ctx.fillRect(0, 0, W, H);
+  ctx.translate(hx, hy); ctx.rotate(now / (charging ? 260 : 900));
+  const rayLen = charging ? 120 + ct * 520 : 620, rayN = charging ? 20 : 14;
+  for (let i = 0; i < rayN; i++) {
+    ctx.rotate(Math.PI * 2 / rayN);
+    const g = ctx.createLinearGradient(0, 0, 0, -rayLen);
+    g.addColorStop(0, `rgba(255,250,210,${(charging ? .8 : .55) * fade})`); g.addColorStop(1, 'rgba(255,220,120,0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-32, -rayLen); ctx.lineTo(32, -rayLen); ctx.closePath(); ctx.fill();
+  }
+  ctx.restore();
+  if (charging) {
+    // 퍼져나가는 금빛 충격파 고리
+    for (const r of rocket.rings) {
+      const k = (now - r.born) / 600; if (k > 1) continue;
+      ctx.strokeStyle = `rgba(255,236,150,${1 - k})`; ctx.lineWidth = 6 * (1 - k) + 1;
+      ctx.beginPath(); ctx.arc(hx, hy, 20 + k * 230, 0, Math.PI * 2); ctx.stroke();
+    }
+    // 사방에서 헬로에게 빨려드는 빛 알갱이
+    for (let i = 0; i < 5; i++) { const a = Math.random() * Math.PI * 2, R = 180 + Math.random() * 120; rocket.motes.push({ a, R, born: now }); }
+    rocket.motes = rocket.motes.filter(m => now - m.born < 500);
+    for (const m of rocket.motes) {
+      const k = (now - m.born) / 500, R = m.R * (1 - k * k);
+      star(hx + Math.cos(m.a) * R, hy + Math.sin(m.a) * R, 3 + k * 5);
+    }
+    return;
+  }
+  // 속도선(아래로 쏟아짐)
+  while (rocket.lines.length < 26) rocket.lines.push({ x: Math.random() * W, y: Math.random() * H - H, len: 60 + Math.random() * 140, v: 28 + Math.random() * 30, w: 1 + Math.random() * 3 });
+  ctx.save(); ctx.globalAlpha = fade;
+  for (const ln of rocket.lines) {
+    ln.y += ln.v; if (ln.y > H) { ln.y = -ln.len - Math.random() * 200; ln.x = Math.random() * W; }
+    ctx.strokeStyle = 'rgba(255,255,255,.75)'; ctx.lineWidth = ln.w; ctx.beginPath(); ctx.moveTo(ln.x, ln.y); ctx.lineTo(ln.x, ln.y + ln.len); ctx.stroke();
+  }
+  ctx.restore();
+}
+function drawRocketFront() {  // 헬로 아래 불꽃 꼬리 + 불티, 큰 글씨
+  if (!rocket || now - rocket.t0 < ROCKET_CHARGE) {
+    if (rocket) {   // 차지 중: 발밑에서 불씨가 튀기 시작
+      const hx = heroScreenX(), hy = screenY(hero.pos) + 2, ct = (now - rocket.t0) / ROCKET_CHARGE;
+      const g = ctx.createRadialGradient(hx, hy, 2, hx, hy, 30 + ct * 40);
+      g.addColorStop(0, 'rgba(255,255,220,.95)'); g.addColorStop(1, 'rgba(255,170,60,0)');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(hx, hy, 30 + ct * 40, 0, Math.PI * 2); ctx.fill();
+    }
+    return;
+  }
+  const t = (now - rocket.t0 - ROCKET_CHARGE) / ROCKET_MS;
+  const hx = heroScreenX(), hy = screenY(hero.pos) + 2;
+  // 불티
+  for (let i = 0; i < 4; i++) rocket.sparks.push({ x: hx + (Math.random() - .5) * 26, y: hy, vx: (Math.random() - .5) * 3, vy: 4 + Math.random() * 6, born: now, c: pick(['#fff4b0', '#ffc857', '#ff8a3d', '#ff5a4f']) });
+  rocket.sparks = rocket.sparks.filter(p => now - p.born < 700);
+  for (const p of rocket.sparks) {
+    p.x += p.vx; p.y += p.vy; const k = 1 - (now - p.born) / 700;
+    ctx.fillStyle = p.c; ctx.globalAlpha = k; ctx.beginPath(); ctx.arc(p.x, p.y, 2 + k * 4, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+  // 헬로를 감싸는 금빛 광채
+  const rg = ctx.createRadialGradient(hx, hy - 30, 10, hx, hy - 30, 90);
+  rg.addColorStop(0, 'rgba(255,250,210,.8)'); rg.addColorStop(1, 'rgba(255,210,90,0)');
+  ctx.fillStyle = rg; ctx.beginPath(); ctx.arc(hx, hy - 30, 90, 0, Math.PI * 2); ctx.fill();
+  // 불꽃 기둥
+  const fl = 90 + Math.sin(now / 40) * 14 + (t < .15 ? 0 : 90);
+  const g = ctx.createLinearGradient(0, hy, 0, hy + fl);
+  g.addColorStop(0, 'rgba(255,255,230,.95)'); g.addColorStop(.3, 'rgba(255,200,70,.9)'); g.addColorStop(1, 'rgba(255,80,40,0)');
+  ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(hx - 24, hy); ctx.quadraticCurveTo(hx, hy + fl * 1.2, hx + 24, hy); ctx.closePath(); ctx.fill();
+}
+function drawRocketTitle(p, tt) {  // "헬로 로켓!!" — 커졌다가 자리 잡는 금빛 글씨
+  const pop = tt < .12 ? .4 + tt / .12 * .9 : tt < .2 ? 1.3 - (tt - .12) / .08 * .3 : 1;
+  ctx.save(); ctx.translate(p.x, p.y); ctx.scale(pop, pop); ctx.rotate(Math.sin(now / 160) * .03);
+  ctx.font = '54px Jua, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const g = ctx.createLinearGradient(0, -30, 0, 30); g.addColorStop(0, '#fff7c2'); g.addColorStop(.5, '#ffc857'); g.addColorStop(1, '#e8892b');
+  ctx.lineWidth = 10; ctx.strokeStyle = '#6a2e0a'; ctx.strokeText(p.text, 0, 0);
+  ctx.shadowColor = 'rgba(255,220,120,.9)'; ctx.shadowBlur = 24; ctx.fillStyle = g; ctx.fillText(p.text, 0, 0);
+  ctx.shadowBlur = 0; ctx.font = '18px Jua, sans-serif'; ctx.fillStyle = '#fff'; ctx.lineWidth = 5; ctx.strokeStyle = 'rgba(80,30,0,.7)';
+  ctx.strokeText('황금조개 10개의 힘!', 0, 44); ctx.fillText('황금조개 10개의 힘!', 0, 44);
+  for (let i = 0; i < 6; i++) { const a = now / 400 + i * Math.PI / 3; star(Math.cos(a) * 150, Math.sin(a) * 40, 6 + (i % 2) * 4); }
+  ctx.restore();
+}
+let heroX = 0;
+const heroScreenX = () => heroX;
+function drawHero() {
+  const a = hero.anim;
+  let x = ledgeX(hero.side), y = screenY(hero.pos);
+  if (a) {
+    let t = Math.min(1, (now - a.t0) / a.dur);
+    if (a.kind === 'jump') x = ledgeX(a.fromSide) + (ledgeX(a.toSide) - ledgeX(a.fromSide)) * easeOut(t);
+    else if (a.kind === 'bonk') x = ledgeX(a.fromSide) + ((a.toSide === 'L' ? WALL + 18 : W - WALL - 18) - ledgeX(a.fromSide)) * Math.sin(t * Math.PI / 2);
+    else if (a.kind === 'rocket') {
+      const cx = W / 2 + Math.sin(now / 90) * 3;
+      t = Math.max(0, t);
+      x = t < .2 ? ledgeX(a.fromSide) + (cx - ledgeX(a.fromSide)) * (t / .2) : t > .85 ? cx + (ledgeX(a.toSide) - cx) * ((t - .85) / .15) : cx;
+    }
+    else x = ledgeX(a.fromSide) + (ledgeX(a.toSide) - ledgeX(a.fromSide)) * t;
+    if (a.kind === 'jump') y -= Math.sin(t * Math.PI) * (a.big ? 70 : 36);
+  }
+  heroX = x;
+  const d = hero.pos - sharkTop();
+  const scared = !rocket && (state === 'over' || d < 2.2);
+  const hvx = x - hero.lastX; hero.lastX = x;
+  hero.skew += (Math.max(-1, Math.min(1, -hvx * .08)) - hero.skew) * .25;
+  // 늘어남 정도에 따라 대표님 그림 4장 중 고름: 납작 · 살짝 눌림 · 동그람 · 길쭉
+  const js = hero.js;
+  let key = js < -.28 ? 'hello_flat' : js < -.08 ? 'hello_mid' : js > .14 ? 'hello_tall' : 'hello_round';
+  // 가만히 서 있을 땐 대표님 순서(1 납작 → 2 눌림 → 3 길쭉 → 4 동그람 → 5 눌림 → 6 납작)로 쫀득쫀득
+  const standing = !hero.anim && Math.abs(hero.js) < .1 && state !== 'over';
+  if (standing) key = IDLE_SEQ[Math.floor(now / IDLE_MS) % IDLE_SEQ.length];
+  const sy = 1 + js * .3, sx = (1 / Math.sqrt(sy)) * (1 + hero.hs);   // 그림이 이미 변형돼 있어서 코드 변형은 살짝만
+  const HS = 66;                                                        // 헬로 크기(게임 단위)
+  ctx.save(); ctx.translate(x, y + 4);
+  if (now - hero.splat < 160) ctx.translate((hero.side === 'L' ? -1 : 1) * 6, 0);
+  if (scared && state !== 'over') ctx.translate((Math.random() - .5) * 2.5, 0);
+  ctx.scale(sx, sy);
+  ctx.transform(1, 0, hero.skew * .3, 1, 0, 0);
+  const im = IMG[key];
+  if (ready(im)) ctx.drawImage(im, -HS / 2, -HS, HS, HS);
+  drawHelloEyes(key, HS, scared);
+  if (scared && state !== 'over') {   // 땀
+    ctx.fillStyle = '#7fd3ff'; ctx.strokeStyle = '#2a6f99'; ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.ellipse(HS * .36, -HS * .78 + Math.sin(now / 80) * 2, 3.5, 5.5, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  }
+  ctx.restore();
+}
+
+// ---------------------------------------------------------------- 그림 자원
+const ASSET_SRC = {god_zeus:"assets/god_zeus.webp",god_athena:"assets/god_athena.webp",god_poseidon:"assets/god_poseidon.webp",god_apollo:"assets/god_apollo.webp",shell_gold:"assets/shell_gold.webp",m0_wide:"assets/m0_wide.webp",m1_open:"assets/m1_open.webp",m2_half:"assets/m2_half.webp",m3_closing:"assets/m3_closing.webp",m4_shut:"assets/m4_shut.webp",m_body:"assets/m_body.webp",gull_sit:"assets/gull_sit.webp",gull_flap:"assets/gull_flap.webp",gull_lie:"assets/gull_lie.webp",ledge_ice:"assets/ledge_ice.webp",ledge_slime:"assets/ledge_slime.webp",ledge_log:"assets/ledge_log.webp",ledge_grass:"assets/ledge_grass.webp",ledge_rock:"assets/ledge_rock.webp",ledge_tube:"assets/ledge_tube.webp",hello_flat:"assets/hello_flat.webp",hello_mid:"assets/hello_mid.webp",hello_tall:"assets/hello_tall.webp",hello_round:"assets/hello_round.webp",bg_start:"assets/bg_start.webp"};
+const IMG = {};
+for (const k in ASSET_SRC) { const im = new Image(); im.src = ASSET_SRC[k]; IMG[k] = im; }
+const ready = (im) => im && im.complete && im.naturalWidth > 0;
+
+// ---------------------------------------------------------------- 우주괴물(대표님 스프라이트 5장 + 몸통)
+// 0 크게 벌림 · 1 벌림 · 2 반쯤 · 3 닫히는 중 · 4 다묾. 원본 1140×900.
+// 거대함: 입이 화면 폭을 가득 채우도록 G배로 키움(스프라이트 양옆은 화면 밖으로 넘침)
+const G = 1.45;
+const S = W * G / 1140;                          // 원본 1px → 게임 단위
+const SPR_W = 1140 * S, SPR_H = 900 * S;
+const SPR_LEFT = W / 2 - 605 * S;                // 입 중심(원본 x≈605)을 화면 가운데에
+const MONSTER_KEYS = ['m0_wide', 'm1_open', 'm2_half', 'm3_closing', 'm4_shut'];
+const MOUTHS = [
+  { cx: 575, cy: 470, rx: 340, ry: 290, vx: 570, vy: 560, lip: 820 },
+  { cx: 600, cy: 480, rx: 350, ry: 250, vx: 590, vy: 530, lip: 800 },
+  { cx: 630, cy: 480, rx: 360, ry: 160, vx: 620, vy: 480, lip: 740 },
+  { cx: 630, cy: 470, rx: 330, ry: 80,  vx: 620, vy: 470, lip: 650 },
+  { cx: 640, cy: 380, rx: 300, ry: 20,  vx: 640, vy: 380, lip: 520 },
+];
+// 프레임별 윗 실루엣(게임 x마다 스프라이트 위에서의 깊이) — 벽이 괴물 몸에 먹혀 끝나는 선
+const monsterTop = MONSTER_KEYS.map(() => null);
+MONSTER_KEYS.forEach((k, i) => {
+  const im = IMG[k];
+  const build = () => {
+    const c = document.createElement('canvas'); c.width = 570; c.height = 450;
+    const x = c.getContext('2d'); x.drawImage(im, 0, 0, 570, 450);
+    const d = x.getImageData(0, 0, 570, 450).data, arr = new Float32Array(380);
+    for (let gx = 0; gx < 380; gx++) {
+      const sx = (gx - SPR_LEFT) / S;
+      if (sx < 0 || sx >= 1140) { arr[gx] = 99999; continue; }
+      const col = Math.floor(sx / 2); let y = 0;
+      while (y < 450 && d[(y * 570 + col) * 4 + 3] < 60) y++;
+      arr[gx] = y * 2 * S;
+    }
+    monsterTop[i] = arr;
+  };
+  if (ready(im)) build(); else im.addEventListener('load', build);
+});
+// 몸통 그림: 아랫입술 아래(원본 y 620~1114)만 잘라, 위쪽 60px을 투명하게 번지게 만든 캔버스
+let bodyCanvas = null;
+function buildBody() {
+  const im = IMG.m_body, sw = im.naturalWidth, sh = im.naturalHeight;   // 680 × 1242 (입술 아래 몸통)
+  const c = document.createElement('canvas'); c.width = sw; c.height = sh;
+  const x = c.getContext('2d'); x.drawImage(im, 0, 0);
+  x.globalCompositeOperation = 'destination-in';
+  // 입 그림 아래 끝선보다 먼저 완전히 불투명해짐
+  const g = x.createLinearGradient(0, 0, 0, 135); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,1)');
+  x.fillStyle = g; x.fillRect(0, 0, sw, sh);
+  bodyCanvas = c;
+}
+// 디코딩이 끝난 뒤에 만들어야 빈 캔버스가 안 됨
+IMG.m_body.decode().then(buildBody).catch(() => IMG.m_body.addEventListener('load', buildBody));
+
+function monsterFrame() {
+  if (state === 'over') { const t = now - overAt; return t < 1600 ? (Math.floor(t / 220) % 2 ? 3 : 4) : 4; }   // 우물우물
+  if (shark.lungeT >= 0) {
+    const t = shark.lungeT / LUNGE_T;
+    if (t < .45) return 0; if (t < .52) return 2; if (t < .58) return 3; if (t < .76) return 4; if (t < .86) return 3; if (t < .94) return 2; return 1;
+  }
+  return hero.pos - sharkTop() < 2 ? 0 : 1;
+}
+function spriteTop() { return sharkDrawTop() - (MOUTHS[1].cy - MOUTHS[1].ry) * S; }
+function mouthGeom() {
+  const f = monsterFrame(), m = MOUTHS[f], top0 = spriteTop();
+  const jawY = top0 + m.cy * S, mh = m.ry * 2 * S;
+  return { top: jawY - mh / 2, cx: SPR_LEFT + m.cx * S, mw: m.rx * 2 * S, mh, jawY,
+           vpX: SPR_LEFT + m.vx * S, vpY: top0 + m.vy * S, lipY: top0 + m.lip * S, frame: f, spriteTop: top0 };
+}
+function rimTop(M, x) {
+  const arr = monsterTop[M.frame], gx = Math.max(0, Math.min(379, Math.round(x)));
+  if (arr) return M.spriteTop + arr[gx] + 4;
+  const u = Math.max(-1, Math.min(1, (x - M.cx) / (M.mw / 2)));
+  return M.jawY - (M.mh / 2) * Math.sqrt(1 - u * u);
+}
+function biteNoise(x) { return Math.sin(x * .9) * 4 + Math.sin(x * 2.3 + 1) * 3; }
+
+// 입술에서 떨어지는 침
+let drips = [];
+function updateDrips(dt, M) {
+  if (Math.random() < dt * (M.frame <= 1 ? 3 : 1.2)) drips.push({ x: M.cx + (Math.random() - .5) * M.mw * .8, y: M.lipY - 4, vy: 0, len: 4, born: now });
+  for (const d of drips) { d.vy += 9 * dt; d.y += d.vy; d.len = Math.min(18, d.len + dt * 20); }
+  drips = drips.filter(d => d.y < H + 20 && now - d.born < 2500);
+}
+
+// 괴물 주변에서 언뜻언뜻 솟았다 들어가는 촉수
+let tents = [], nextTent = 1200;
+function updateTents(dt) {
+  nextTent -= dt * 1000;
+  if (nextTent <= 0 && state !== 'ready') {
+    const left = Math.random() < .5;
+    tents.push({ left, x: left ? 12 + Math.random() * 60 : W - 12 - Math.random() * 60, born: now, life: 1500 + Math.random() * 900, len: 150 + Math.random() * 90, p: Math.random() * 6 });
+    nextTent = 1400 + Math.random() * 2200;
+  }
+  tents = tents.filter(t => now - t.born < t.life);
+}
+function drawTents(M) {
+  for (const t of tents) {
+    const k = (now - t.born) / t.life;
+    const grow = k < .3 ? easeOut(k / .3) : k > .7 ? easeOut((1 - k) / .3) : 1;
+    const segs = 16, len = t.len * grow, side = t.left ? 1 : -1;
+    let x = t.x, y = rimTop(M, t.x) + 40, ang = -Math.PI / 2 + side * .25;
+    const pts = [[x, y]];
+    for (let i = 1; i <= segs; i++) {
+      const q = i / segs;
+      ang += Math.sin(now / 300 + t.p + q * 3.4) * .17 * (1 + q) + side * .03 * q;
+      x += Math.cos(ang) * len / segs; y += Math.sin(ang) * len / segs; pts.push([x, y]);
+    }
+    for (const [col, extra] of [['#2a0c16', 4], ['#e2553f', 0]]) {       // 테두리 → 몸
+      for (let i = 0; i < segs; i++) {
+        ctx.strokeStyle = col; ctx.lineCap = 'round';
+        ctx.lineWidth = 28 * (1 - i / segs) + 4 + extra;
+        ctx.beginPath(); ctx.moveTo(pts[i][0], pts[i][1]); ctx.lineTo(pts[i + 1][0], pts[i + 1][1]); ctx.stroke();
+      }
+    }
+    ctx.strokeStyle = 'rgba(255,190,150,.5)'; ctx.lineWidth = 3;             // 광택
+    ctx.beginPath(); ctx.moveTo(pts[1][0] - side * 5, pts[1][1]); for (let i = 2; i < segs - 2; i++) ctx.lineTo(pts[i][0] - side * 5 * (1 - i / segs), pts[i][1]); ctx.stroke();
+    for (let i = 2; i < segs - 2; i += 2) {                                   // 빨판
+      const r = 5 * (1 - i / segs) + 1.5;
+      ctx.fillStyle = '#ffd9cf'; ctx.strokeStyle = '#8a2a2a'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.arc(pts[i][0] + side * r * 1.2, pts[i][1], r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    }
+  }
+}
+
+function drawShark() {
+  const M = mouthGeom();
+  const img = IMG[MONSTER_KEYS[M.frame]];
+  const close = hero.pos - sharkTop() < 2.2;
+  const top0 = M.spriteTop;
+  drawTents(M);
+  // 숨쉬기 + 덥석 찌부 (발밑 기준으로 늘였다 줄임)
+  const breath = Math.sin(now / 520);
+  let sx = 1 + breath * .01, sy = 1 - breath * .014;
+  if (M.frame === 4) { sx *= 1.03; sy *= .955; }
+  if (M.frame === 0 && close) { sx *= 1.012; sy *= 1.018; }
+  const baseY = top0 + SPR_H;
+  ctx.save();
+  ctx.translate(W / 2, baseY); ctx.scale(sx, sy); ctx.translate(-W / 2, -baseY);
+  // 몸통 이어 붙이기 → 그 아래는 어둡게
+  // 새 몸통: 폭을 입 그림 몸통 폭(원본 약 1100px)에 맞추고 입 중심에 정렬
+  const BK = 1100 / 680 * S, bodyW = 680 * BK, bodyH = 1242 * BK;
+  const bodyX = SPR_LEFT + 605 * S - bodyW / 2, bodyY = baseY - 230 * S;   // 입 그림 아래쪽과 넉넉히 겹쳐 그림
+  const g = ctx.createLinearGradient(0, baseY + bodyH * .7, 0, baseY + bodyH + 60);
+  g.addColorStop(0, 'rgba(29,20,48,0)'); g.addColorStop(1, 'rgba(29,20,48,1)');
+  ctx.fillStyle = g; ctx.fillRect(-20, baseY + bodyH * .7, W + 40, bodyH * .3 + 60);
+  ctx.fillStyle = '#1d1430'; ctx.fillRect(-20, baseY + bodyH + 58, W + 40, Math.max(0, H - (baseY + bodyH)) + 40);
+  if (close) { ctx.shadowColor = 'rgba(255,40,60,.5)'; ctx.shadowBlur = 26 + Math.sin(now / 110) * 8; }
+  if (ready(img)) ctx.drawImage(img, SPR_LEFT, top0, SPR_W, SPR_H);
+  ctx.shadowBlur = 0;
+  // 몸통은 입 그림 '위에' 덮되 윗부분이 서서히 투명 → 경계선 없이 스며들듯 이어짐
+  if (bodyCanvas) ctx.drawImage(bodyCanvas, bodyX, bodyY, bodyW, bodyH);
+  ctx.restore();
+  // 삼켜지는 파편 — 목구멍 안에서만 보이게
+  ctx.save(); ctx.beginPath(); ctx.ellipse(M.cx, M.jawY, M.mw * .44, M.mh * .42, 0, 0, Math.PI * 2); ctx.clip();
+  drawParticles(true); ctx.restore();
+  ctx.fillStyle = '#ff5f86';
+  for (const d of drips) { ctx.beginPath(); ctx.ellipse(d.x, d.y, 3, d.len / 2 + 2, 0, 0, Math.PI * 2); ctx.fill(); }
+  if (now - shark.chompAt < 260) {   // 쿵! 효과선
+    ctx.strokeStyle = 'rgba(255,255,255,.85)'; ctx.lineWidth = 5;
+    for (let i = 0; i < 7; i++) { const a = Math.PI + (i / 6) * Math.PI; ctx.beginPath(); ctx.moveTo(M.cx + Math.cos(a) * (M.mw / 2 + 20), M.jawY + Math.sin(a) * 70); ctx.lineTo(M.cx + Math.cos(a) * (M.mw / 2 + 60), M.jawY + Math.sin(a) * 115 - 10); ctx.stroke(); }
+  }
+}
+
+function drawHud(dd) {
+  ctx.save();
+  ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+  ctx.font = '38px Jua, sans-serif'; ctx.lineWidth = 6; ctx.strokeStyle = 'rgba(10,20,50,.55)'; ctx.fillStyle = '#fff';
+  ctx.strokeText(score + 'm', 46, 18); ctx.fillText(score + 'm', 46, 18);
+  ctx.font = '15px "Noto Sans KR", sans-serif'; ctx.fillStyle = 'rgba(255,255,255,.9)';
+  ctx.fillText(zoneAt(hero.floor).name, 48, 62);
+  // 황금조개 게이지(10칸) — 다 차면 헬로 로켓
+  { const gx0 = 76, gy0 = 88, cw = 13;
+    if (ready(IMG.shell_gold)) ctx.drawImage(IMG.shell_gold, 44, 80, 26, 25);
+    for (let i = 0; i < 10; i++) {
+      ctx.fillStyle = i < shells ? '#ffc857' : 'rgba(10,20,50,.4)';
+      ctx.beginPath(); ctx.roundRect(gx0 + i * (cw + 2), gy0, cw, 10, 3); ctx.fill();
+    }
+    if (shells >= 8 && !rocket) { ctx.fillStyle = `rgba(255,240,170,${.4 + .4 * Math.sin(now / 90)})`; ctx.beginPath(); ctx.roundRect(gx0 - 2, gy0 - 2, 10 * (cw + 2) + 2, 14, 4); ctx.fill(); }
+  }
+  // 상어 거리 게이지(오른쪽)
+  const gx = W - 22, gy = 110, gh = 220;
+  ctx.fillStyle = 'rgba(10,20,50,.35)'; ctx.beginPath(); ctx.roundRect(gx - 6, gy, 12, gh, 6); ctx.fill();
+  const frac = Math.max(0, Math.min(1, dd / 8));
+  ctx.fillStyle = dd < 2 ? '#ff5a4f' : dd < 4 ? '#ffc857' : '#6fe3a1';
+  ctx.beginPath(); ctx.roundRect(gx - 6, gy + gh * (1 - frac), 12, gh * frac, 6); ctx.fill();
+  ctx.textAlign = 'center'; ctx.font = '12px "Noto Sans KR", sans-serif'; ctx.fillStyle = '#fff';
+  ctx.fillText('괴물', gx, gy + gh + 6); ctx.fillText(Math.max(0, dd).toFixed(0) + 'm', gx, gy + gh + 22);
+
+  // 팝업
+  for (const p of popups) {
+    const t = (now - p.t0) / (p.long ? 2600 : 900);
+    if (p.rocket) { ctx.globalAlpha = Math.min(1, (1 - t) * 3); drawRocketTitle(p, t); ctx.globalAlpha = 1; continue; }
+    if (p.zone) {   // 새 구간 이름: 가운데 띠
+      ctx.globalAlpha = Math.min(1, t * 6, (1 - t) * 3);
+      ctx.fillStyle = 'rgba(11,20,48,.55)'; ctx.fillRect(0, p.y - 28, W, 56);
+      ctx.font = '38px Jua, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#ffe9a8';
+      ctx.fillText('— ' + p.text + ' —', W / 2, p.y); ctx.textBaseline = 'top'; ctx.globalAlpha = 1; continue;
+    }
+    ctx.globalAlpha = Math.min(1, (1 - t) * 2);
+    ctx.font = (p.big ? '34px' : '20px') + ' Jua, sans-serif'; ctx.textAlign = 'center';
+    ctx.strokeStyle = 'rgba(0,0,0,.5)'; ctx.lineWidth = 5; ctx.fillStyle = p.big || p.gold ? '#ffc857' : '#fff';
+    const y = p.y - t * 30;
+    ctx.strokeText(p.text, p.x, y); ctx.fillText(p.text, p.x, y);
+  }
+  ctx.globalAlpha = 1;
+
+  if (state === 'ready') {
+    panel('헬로 먼치', ['우주괴물이 올라와요! 위로 도망치세요', '화면 왼쪽 탭 → 왼쪽 윗발판', '화면 오른쪽 탭 → 오른쪽 윗발판', '황금조개 10개 모으면 헬로 로켓!'], assetsLoaded() ? '아무 데나 탭해서 시작' : '불러오는 중...');
+    // 좌우 구분선
+    ctx.setLineDash([6, 8]); ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(W / 2, 560); ctx.lineTo(W / 2, 800); ctx.stroke(); ctx.setLineDash([]);
+  }
+  ctx.restore();
+}
+function panel(title, lines, cta) {
+  const pw = 300, ph = 150 + lines.length * 26, px = (W - pw) / 2, py = 150;
+  ctx.fillStyle = 'rgba(11,20,48,.86)'; ctx.beginPath(); ctx.roundRect(px, py, pw, ph, 18); ctx.fill();
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  ctx.fillStyle = '#ffc857'; ctx.font = '36px Jua, sans-serif'; ctx.fillText(title, W / 2, py + 20);
+  ctx.fillStyle = '#eef3ff'; ctx.font = '16px "Noto Sans KR", sans-serif';
+  lines.forEach((l, i) => ctx.fillText(l, W / 2, py + 76 + i * 26));
+  ctx.fillStyle = '#6fe3a1'; ctx.font = '19px Jua, sans-serif'; ctx.fillText(cta, W / 2, py + ph - 40);
+}
+
+const sndBtn = document.getElementById('snd');
+function syncSnd() { sndBtn.textContent = muted ? '🔇' : '🔊'; sndBtn.setAttribute('aria-pressed', String(muted)); }
+sndBtn.addEventListener('click', (e) => {
+  e.stopPropagation(); muted = !muted; syncSnd(); audio();
+  if (master) master.gain.value = muted ? 0 : 1;
+  try { localStorage.setItem('munch-mute', muted ? '1' : '0'); } catch (er) {}
+});
+syncSnd();
+
+// ---------------------------------------------------------------- 루프
+let last = performance.now();
+function frame(t) {
+  now = t;
+  const dt = Math.min(.05, (t - last) / 1000); last = t;
+  update(dt); draw();
+  requestAnimationFrame(frame);
+}
+
+// ---------------------------------------------------------------- 정식 버전: 로딩·GA4·결과·랭킹·공유
+const GA_GAME = 'hello_munch';
+function track(name, params) { try { if (typeof gtag === 'function') gtag('event', name, Object.assign({ game: GA_GAME }, params || {})); } catch (e) {} }
+const CRITICAL = ['m1_open', 'hello_round', 'bg_start', 'ledge_grass', 'ledge_rock'];
+function assetsLoaded() { return CRITICAL.every(k => ready(IMG[k])); }
+document.addEventListener('visibilitychange', () => { if (!ac) return; if (document.hidden) ac.suspend(); else ac.resume(); });
+
+function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.style.opacity = '1'; clearTimeout(t._h); t._h = setTimeout(() => { t.style.opacity = '0'; }, 2500); }
+function showOverlay() {
+  if (state !== 'over') return;
+  document.getElementById('ovScore').textContent = score + 'm';
+  document.getElementById('ovSub').textContent = `${zoneAt(score).name}까지 도망쳤어요 · 황금조개 ${shellsTotal}개\n최고 기록 ${best}m`;
+  document.getElementById('ovSub').style.whiteSpace = 'pre-line';
+  document.getElementById('rankMsg').textContent = '';
+  document.getElementById('overlay').hidden = false;
+  document.getElementById('retryBtn').focus({ preventScroll: true });
+}
+document.getElementById('retryBtn').addEventListener('click', () => { reset(); });
+
+// 랭킹 등록 — 다른 게임과 같은 /api/score (점수 필드 이름은 공용 "meters")
+(function () {
+  try {
+    const n = localStorage.getItem('hm_nickname') || localStorage.getItem('ht_nickname');
+    const c = localStorage.getItem('hm_contact') || localStorage.getItem('ht_contact');
+    if (n) document.getElementById('rankNickname').value = n;
+    if (c) document.getElementById('rankContact').value = c;
+  } catch (e) {}
+  let sentFor = -1;
+  document.getElementById('rankSubmitBtn').addEventListener('click', async () => {
+    const nick = document.getElementById('rankNickname').value.trim();
+    const contact = document.getElementById('rankContact').value.trim();
+    const msg = document.getElementById('rankMsg');
+    if (!nick || !contact) { msg.textContent = '닉네임과 연락처를 모두 입력해주세요.'; return; }
+    if (score <= 0) { msg.textContent = '1m 이상 올라가야 등록할 수 있어요.'; return; }
+    if (sentFor === overAt) { msg.textContent = '이번 기록은 이미 등록했어요.'; return; }
+    try { localStorage.setItem('hm_nickname', nick); localStorage.setItem('hm_contact', contact); } catch (e) {}
+    msg.textContent = '등록 중...';
+    try {
+      const res = await fetch('/api/score', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ game: 'hello_munch', nickname: nick, contact, meters: score }) });
+      if (!res.ok) { msg.textContent = '등록에 실패했어요. 다시 시도해주세요.'; return; }
+      sentFor = overAt;
+      msg.textContent = '등록됐어요! 🎉';
+      track('score_submit', { score });
+      try {
+        const data = await res.json();
+        if (data && data.throne) { msg.innerHTML = '👑 왕좌에 올랐어요! <a href="../../hall-of-fame.html?g=hello_munch">헬로 신전에서 왕좌 카드 받기</a>'; track('throne_won', { score }); }
+      } catch (e) {}
+    } catch (e) { msg.textContent = '네트워크 오류예요. 다시 시도해주세요.'; }
+  });
+})();
+
+// 카카오톡 공유 — 결과 카드(640×800)를 그려서 올림
+const shareBg = new Image();
+const shareBgReady = new Promise((ok) => { shareBg.onload = () => ok(true); shareBg.onerror = () => ok(false); });
+shareBg.src = 'assets/share-card-bg.jpg';
+function rr(c, x, y, w, h, r) { c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); }
+function buildShareCard() {
+  const cw = 640, ch = 800, sc = document.createElement('canvas'); sc.width = cw; sc.height = ch;
+  const c = sc.getContext('2d');
+  rr(c, 0, 0, cw, ch, 28); c.save(); c.clip();
+  if (shareBg.complete && shareBg.naturalWidth > 0) c.drawImage(shareBg, 0, 0, cw, ch);
+  else {   // 전용 배경이 오기 전: 우주 밤하늘 + 괴물 입
+    const g = c.createLinearGradient(0, 0, 0, ch); g.addColorStop(0, '#0e1440'); g.addColorStop(1, '#5a3a86'); c.fillStyle = g; c.fillRect(0, 0, cw, ch);
+    c.fillStyle = 'rgba(255,255,255,.8)'; for (let i = 0; i < 70; i++) c.fillRect((i * 97) % cw, (i * 211) % 560, 2, 2);
+    if (ready(IMG.m0_wide)) c.drawImage(IMG.m0_wide, -140, 470, cw + 280, (cw + 280) * 900 / 1140);
+  }
+  c.textAlign = 'center';
+  c.save(); c.shadowColor = 'rgba(255,190,60,.9)'; c.shadowBlur = 30; c.font = '900 92px sans-serif'; c.lineWidth = 8; c.strokeStyle = '#fff';
+  c.strokeText(score + 'm', cw / 2, 190); c.fillStyle = '#ff9d1f'; c.fillText(score + 'm', cw / 2, 190); c.restore();
+  c.font = '800 24px sans-serif'; c.lineWidth = 6; c.strokeStyle = 'rgba(40,20,70,.85)'; c.fillStyle = '#fff';
+  c.strokeText('우주괴물에게서 도망쳤어요!', cw / 2, 262); c.fillText('우주괴물에게서 도망쳤어요!', cw / 2, 262);
+  c.font = '700 18px sans-serif'; c.lineWidth = 5;
+  c.strokeText('헬로 먼치 · 대부도 오락실', cw / 2, 296); c.fillText('헬로 먼치 · 대부도 오락실', cw / 2, 296);
+  if (ready(IMG.hello_round)) c.drawImage(IMG.hello_round, cw / 2 - 100, 470 - 100, 200, 200);
+  const cta = '👉  daebugame.com 놀러가기'; c.font = '800 26px sans-serif';
+  const w = Math.min(cw - 48, c.measureText(cta).width + 60), y = 720, h = 56;
+  rr(c, cw / 2 - w / 2, y, w, h, h / 2); c.fillStyle = '#ffc857'; c.fill();
+  c.fillStyle = '#2a1c00'; c.fillText(cta, cw / 2, y + h / 2 + 9);
+  c.restore(); rr(c, 2, 2, cw - 4, ch - 4, 28); c.lineWidth = 4; c.strokeStyle = 'rgba(255,200,87,.55)'; c.stroke();
+  return sc;
+}
+const blobToB64 = (b) => new Promise((ok, no) => { const r = new FileReader(); r.onloadend = () => ok(r.result); r.onerror = no; r.readAsDataURL(b); });
+document.getElementById('shareBtn').addEventListener('click', async (e) => {
+  e.stopPropagation();
+  const btn = e.currentTarget, label = btn.textContent;
+  track('share_click', { score });
+  btn.disabled = true; btn.textContent = '⏳ 카드 만드는 중...';
+  await Promise.race([shareBgReady, new Promise((r) => setTimeout(r, 3000))]);
+  const sc = buildShareCard();
+  sc.toBlob(async (blob) => {
+    try {
+      if (!blob) { toast('카드 생성에 실패했어요 😢'); return; }
+      if (window.Kakao && window.Kakao.isInitialized && window.Kakao.isInitialized()) {
+        try {
+          const up = await fetch('/api/kakao-upload', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ imageBase64: await blobToB64(blob) }) });
+          if (up.ok) {
+            const { url } = await up.json();
+            const link = { mobileWebUrl: 'https://daebugame.com/games/hello-munch/', webUrl: 'https://daebugame.com/games/hello-munch/' };
+            window.Kakao.Share.sendDefault({ objectType: 'feed',
+              content: { title: `헬로 먼치에서 ${score}m 도망쳤어요!`, description: '우주괴물에게서 살아남아라! · daebugame.com', imageUrl: url, link },
+              buttons: [{ title: '나도 도전하기', link }] });
+            toast('카카오톡 공유창을 열었어요! 📤'); return;
+          }
+        } catch (er) {}
+      }
+      const file = new File([blob], `hello-munch-${score}m.png`, { type: 'image/png' });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try { await navigator.share({ files: [file], title: `헬로 먼치 ${score}m`, text: `헬로 먼치에서 ${score}m 도망쳤어요! daebugame.com` }); return; }
+        catch (er) { if (er && er.name === 'AbortError') return; }
+      }
+      const u = URL.createObjectURL(blob), a = document.createElement('a');
+      a.href = u; a.download = file.name; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(u), 4000); toast('이미지로 저장했어요! 📥');
+    } finally { btn.disabled = false; btn.textContent = label; }
+  }, 'image/png');
+});
+reset(); fit(); requestAnimationFrame(frame);
 })();
 </script>
-
-</body>
-</html>
