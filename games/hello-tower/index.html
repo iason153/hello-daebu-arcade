@@ -142,6 +142,53 @@
     background: rgba(255,255,255,0.1); border: 1.5px solid rgba(255,255,255,0.3);
     color: #fff; font-weight: 700; font-size: 13px; text-decoration: none;
   }
+
+  /* [2막] 안내 띠 · 도감 카드 획득 팝업 */
+  #banner { position: fixed; left: 50%; top: 30%; transform: translate(-50%, -50%) scale(0.6); opacity: 0;
+    pointer-events: none; z-index: 30; text-align: center; padding: 14px 22px; border-radius: 18px;
+    background: rgba(40, 22, 70, 0.78); border: 2px solid #ffd76a; box-shadow: 0 0 24px rgba(255, 215, 106, 0.6);
+    width: max-content; max-width: 86vw; }
+  #banner .bTitle { color: #ffe9a8; font-weight: 900; font-size: 22px; text-shadow: 0 2px 6px rgba(0,0,0,0.5); }
+  #banner .bSub { color: #fff; font-size: 13px; margin-top: 5px; font-weight: 700; }
+  #banner.show { animation: bannerPop 2.4s ease forwards; }
+  @keyframes bannerPop {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.6); }
+    12% { opacity: 1; transform: translate(-50%, -50%) scale(1.06); }
+    20% { transform: translate(-50%, -50%) scale(1); }
+    82% { opacity: 1; }
+    100% { opacity: 0; transform: translate(-50%, -60%) scale(1); }
+  }
+  #cardPop { position: fixed; left: 50%; top: 42%; transform: translate(-50%, -50%) rotateY(90deg); opacity: 0;
+    pointer-events: none; z-index: 31; width: 170px; padding: 10px 10px 12px; border-radius: 16px;
+    background: linear-gradient(160deg, #fffaf0, #f3e3c0); border: 5px solid #c0c6cf; text-align: center;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.35); }
+  #cardPop.grade-rare { border-color: #e6b422; box-shadow: 0 0 26px rgba(255, 200, 60, 0.85); }
+  #cardPop.grade-legend { border-color: #ff7ad9; box-shadow: 0 0 30px rgba(140, 200, 255, 0.95), 0 0 12px #ff7ad9 inset; }
+  #cardPop .cHead { font-size: 12px; font-weight: 900; color: #7a4b00; margin-bottom: 6px; }
+  #cardPop img { width: 140px; height: 120px; object-fit: contain; display: block; margin: 0 auto; }
+  #cardPop .cName { font-size: 20px; font-weight: 900; color: #3a2a10; margin-top: 6px; }
+  #cardPop .cTitle { font-size: 12px; color: #7a6040; font-weight: 700; }
+  #cardPop.show { animation: cardFlip 2.6s ease forwards; }
+  @keyframes cardFlip {
+    0% { opacity: 0; transform: translate(-50%, -50%) rotateY(90deg) scale(0.7); }
+    15% { opacity: 1; transform: translate(-50%, -50%) rotateY(0deg) scale(1.08); }
+    25% { transform: translate(-50%, -50%) rotateY(0deg) scale(1); }
+    80% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, -50%) translateY(-40px) scale(0.6); }
+  }
+  /* [테스트 모드] 시작 층 고르기 */
+  #testPanel { position: fixed; inset: 0; z-index: 50; display: none; align-items: center; justify-content: center;
+    background: rgba(10, 14, 30, 0.82); font-family: sans-serif; }
+  #testPanel.show { display: flex; }
+  #testPanel .box { background: #fff; border-radius: 16px; padding: 16px; width: 330px; max-width: 92vw; max-height: 92vh; overflow: auto; }
+  #testPanel h2 { margin: 0 0 4px; font-size: 18px; }
+  #testPanel .note { font-size: 12px; color: #a33; margin-bottom: 10px; font-weight: 700; }
+  #testPanel .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  #testPanel .grid button { padding: 9px 4px; border-radius: 10px; border: 1.5px solid #ccd; background: #f4f6ff; font-size: 13px; font-weight: 700; color: #223; }
+  #testPanel .grid button.act2 { background: #fff6d9; border-color: #e6c25a; }
+  #testPanel label { display: block; font-size: 13px; margin-top: 10px; font-weight: 700; color: #334; }
+  #testBadge { position: fixed; left: 8px; bottom: 8px; z-index: 20; display: none; background: #e0245e; color: #fff;
+    font-size: 12px; font-weight: 800; padding: 6px 10px; border-radius: 999px; text-decoration: none; }
 </style>
 </head>
 <body>
@@ -160,6 +207,16 @@
 <a id="rankLinkBtn" href="./ranking.html">🏆 랭킹 확인</a>
 <div id="hint">화면을 탭해서 조각을 떨어뜨리세요</div>
 <div id="milestone"></div>
+<div id="banner"></div>
+<div id="cardPop"><div class="cHead">🎴 도감 카드 획득!</div><img alt=""><div class="cName"></div><div class="cTitle"></div></div>
+<a id="testBadge" href="?test=1">🧪 테스트 메뉴로</a>
+<div id="testPanel"><div class="box">
+  <h2>🧪 헬로타워 테스트 모드</h2>
+  <div class="note">랭킹 등록·통계·도감 저장이 모두 꺼진 확인용 모드예요.</div>
+  <div class="grid" id="testFloorBtns"></div>
+  <label><input type="checkbox" id="testGodsOnly"> 2막에서 신 블록만 떨어뜨리기</label>
+  <label><input type="checkbox" id="testShapes"> 물리 모양(빨간 선) 보기</label>
+</div></div>
 
 <div id="overlay">
   <h1 id="overlayTitle">타워가 무너졌어요!</h1>
@@ -202,6 +259,11 @@ try {
 // ---------- ?dev=1 일 때만 설정 버튼 노출 (오락실 표준 패턴) ----------
 // [테스트 중] 물리박스 접촉 여부를 확실히 확인하기 위해 지금은 항상 디버그 테두리 표시
 const DEBUG_MODE = false; // 버셀 배포 앞두고 끔(디버그 박스/층수 스킵 버튼 숨김) — 필요하면 다시 true로
+// [테스트 모드] ?test=1 — 시작 층을 골라서(예: 101층) 바로 시작할 수 있는 확인용 모드.
+// 랭킹 등록·통계·도감 저장은 전부 꺼짐(실제 기록과 섞이지 않게).
+const TEST_MODE = new URLSearchParams(location.search).get('test') === '1';
+let testGodsOnly = false;   // 2막에서 신 블록만 떨어뜨리기
+let testShowShapes = false; // 물리 모양(빨간 선) 보기
 if (new URLSearchParams(location.search).get('dev') === '1') {
   document.getElementById('devBtn').style.display = 'block';
 }
@@ -351,7 +413,65 @@ const PIECES = {
     canvas: { w: 1020, h: 312 }
   }
 };
-// 새 에셋(12종, idle/impact 각 2장씩) 전부 받았으니 다시 전부 등장하게 복구.
+// =========================================================================
+// [2막] 신들 블록 10종 (101~200층) — 2026-10-01
+// 그림은 대표님이 그려온 그대로 쓰고(투명 PNG → webp), 물리 모양은 그림 외곽을
+// 자동으로 따서(얇은 창·지팡이·반짝이는 제외) 위·아래를 평평하게 깎은 다각형.
+// 윗면이 평평해야 다음 블록이 정확히 얹힌다(finalizeSettle의 towerTopY 기준).
+// verts/drawW/drawH 단위는 게임 유닛, 원점은 그림 왼쪽 위.
+// =========================================================================
+const GOD_ORDER = ['zeus','athena','hermes','poseidon','aphrodite','apollo','hades','artemis','dionysus','hera'];
+const GOD_INFO = {
+  zeus:      { name: '제우스',     title: '번개의 왕',       trait: '넓고 든든해요 · 착지하면 번쩍!',          grade: 'normal' },
+  athena:    { name: '아테나',     title: '지혜의 여신',     trait: '끈적해요 · 위에 놓인 블록이 잘 안 미끄러져요', grade: 'normal' },
+  hermes:    { name: '헤르메스',   title: '날개 달린 전령',  trait: '납작해요 · 매달려 있으면 시계추가 빨라져요', grade: 'normal' },
+  poseidon:  { name: '포세이돈',   title: '바다의 왕',       trait: '착지하면 파도처럼 출렁출렁',              grade: 'normal' },
+  aphrodite: { name: '아프로디테', title: '사랑의 여신',     trait: '매끈매끈 미끄러워요',                    grade: 'normal' },
+  apollo:    { name: '아폴론',     title: '태양과 음악의 신', trait: '착지하면 통통 튀어요',                   grade: 'rare' },
+  hades:     { name: '하데스',     title: '저승의 왕',       trait: '무거워요 · 착지하면 탑이 쿵!',            grade: 'rare' },
+  artemis:   { name: '아르테미스', title: '달과 사냥의 여신', trait: '키가 커서 균형 잡기가 어려워요',          grade: 'rare' },
+  dionysus:  { name: '디오니소스', title: '포도와 축제의 신', trait: '머리 위 포도가 무거워 잘 넘어가요',      grade: 'rare' },
+  hera:      { name: '헤라',       title: '신들의 여왕',     trait: '깃털처럼 천천히 떨어져 바람에 날려요',    grade: 'legend' },
+};
+const GOD_PROPS = {
+  zeus:      { fricMul: 1.2, landFlash: true },
+  athena:    { fricMul: 1.4, sticky: true },
+  hermes:    { pendMul: 1.3 },
+  poseidon:  { sway: true },
+  aphrodite: { fricMul: 0.45 },
+  apollo:    { restitution: 0.3 },
+  hades:     { density: 2.2, heavy: true },
+  artemis:   {},
+  dionysus:  { fricMul: 0.85 },
+  hera:      { slowFall: true, gustMul: 1.7 },
+};
+const GOD_SHAPES = {
+  zeus: {"drawW":150.5,"drawH":79.6,"verts":[[141.6,76.6],[150.1,62.0],[150.4,26.4],[133.6,4.1],[16.9,4.1],[0.4,25.1],[0.8,65.3],[9.4,77.0]],"w":150.0,"h":72.9},
+  athena: {"drawW":130.8,"drawH":107.0,"verts":[[128.8,103.6],[129.2,46.3],[114.5,4.4],[15.3,4.4],[4.4,17.8],[1.2,28.1],[1.4,103.6]],"w":128.0,"h":99.2},
+  hermes: {"drawW":198.2,"drawH":66.5,"verts":[[186.4,61.6],[188.2,54.7],[181.8,21.4],[169.8,8.4],[26.1,6.7],[23.2,53.7],[28.4,60.3]],"w":165.0,"h":54.8},
+  poseidon: {"drawW":120.3,"drawH":131.3,"verts":[[113.3,125.5],[116.2,121.8],[117.6,111.5],[120.1,57.6],[117.2,38.9],[104.8,6.5],[18.9,5.8],[10.7,19.3],[3.0,42.0],[2.1,104.7],[7.4,125.9]],"w":118.0,"h":120.1},
+  aphrodite: {"drawW":160.2,"drawH":81.0,"verts":[[156.8,76.2],[160.0,62.0],[158.9,32.8],[154.5,19.4],[141.2,4.9],[18.6,4.9],[8.0,15.8],[1.4,29.2],[0.0,55.9],[5.9,77.6]],"w":160.0,"h":72.6},
+  apollo: {"drawW":118.9,"drawH":129.4,"verts":[[116.5,122.9],[118.1,92.8],[112.3,25.4],[104.5,7.7],[101.2,5.3],[17.2,5.3],[14.9,6.9],[6.4,25.0],[2.2,60.6],[2.1,124.0]],"w":116.0,"h":118.7},
+  hades: {"drawW":160.3,"drawH":85.5,"verts":[[157.5,82.4],[160.1,67.0],[158.6,27.1],[156.1,20.0],[136.1,4.4],[23.6,4.4],[8.1,11.5],[2.4,22.5],[0.1,66.5],[3.4,82.7]],"w":160.0,"h":78.4},
+  artemis: {"drawW":113.1,"drawH":123.6,"verts":[[110.4,119.4],[113.0,31.5],[99.0,11.5],[94.2,6.2],[25.7,6.2],[14.3,22.0],[3.3,56.1],[1.0,119.7]],"w":112.0,"h":113.5},
+  dionysus: {"drawW":121.8,"drawH":142.2,"verts":[[120.8,136.1],[120.5,35.4],[114.3,17.8],[108.6,11.1],[14.8,11.1],[0.8,38.0],[2.0,136.5]],"w":120.0,"h":125.4},
+  hera: {"drawW":172.5,"drawH":75.1,"verts":[[165.1,72.3],[172.2,55.2],[168.4,31.1],[150.7,7.6],[21.8,7.6],[4.2,30.8],[0.2,55.1],[8.5,72.6]],"w":172.0,"h":65.0}
+};
+GOD_ORDER.forEach((k) => {
+  const g = GOD_SHAPES[k];
+  const verts = g.verts.map(([x, y]) => ({ x, y }));
+  const c = Matter.Vertices.centre(verts); // Matter가 바디 위치로 쓰는 무게중심과 같은 값
+  PIECES[k] = Object.assign({
+    file: `assets/gods/${k}.webp`,
+    fileImpact: `assets/gods/${k}_impact.webp`,
+    shape: 'poly', god: true,
+    w: g.w, h: g.h, verts, drawW: g.drawW, drawH: g.drawH, cx: c.x, cy: c.y,
+  }, GOD_PROPS[k]);
+});
+const HEAVEN_FLOOR = 100; // 신들의 환영 → 2막 시작 층
+const FINAL_FLOOR = 200; // 2막 끝 — 올림포스 정상(최종 엔딩)
+
+// 새 에셋(12종 + 신들 10종) 전부 미리 불러옴
 const PIECE_KEYS = Object.keys(PIECES);
 
 // ---------- 스프라이트 이미지 프리로드 (평소용 + 착지 임팩트용 둘 다) ----------
@@ -418,7 +538,13 @@ const DIFFICULTY_STAGES = [
   { floor: 52,  frictionMul: 0.54, tiltDeg: 20 },
   { floor: 68,  frictionMul: 0.46, tiltDeg: 18 },
   { floor: 84,  frictionMul: 0.40, tiltDeg: 16 },
-  { floor: 100, frictionMul: 0.35, tiltDeg: 14 },
+  { floor: 100, frictionMul: 0.35, tiltDeg: 14 }, // (이 값은 실제로 쓰이지 않음 — 아래 2막 단계가 덮어씀)
+  // [2막] 101층부터는 1막 끝보다 살짝 풀어줌 — 블록 모양 자체가 달라서 이미 충분히 까다로움.
+  // 선물 구간(제우스~헤르메스) → 변칙 구간 → 시련 구간 순으로 다시 조여감.
+  { floor: 100, frictionMul: 0.55, tiltDeg: 20 },
+  { floor: 130, frictionMul: 0.48, tiltDeg: 18 },
+  { floor: 160, frictionMul: 0.42, tiltDeg: 16 },
+  { floor: 180, frictionMul: 0.38, tiltDeg: 15 },
 ];
 function difficultyStage(floor) {
   let stage = DIFFICULTY_STAGES[0];
@@ -434,11 +560,17 @@ function makeBody(type, x, y) {
   const mult = spec.sizeMultiplier || 1;
   const pw = spec.w * mult, ph = spec.h * mult; // 실제 물리박스 크기(크기 배율 반영)
   const stage = difficultyStage(floorCount); // 지금 층수 기준 난이도 단계
+  let fricMul = stage.frictionMul * (spec.fricMul || 1);
+  // [아테나] 끈적한 블록 위에 떨어지는 블록은 잘 안 미끄러짐(Matter는 두 바디 중 작은 마찰을 쓰므로 떨어지는 쪽을 올려줌)
+  if (settledBodies && settledBodies.length && PIECES[currentSupport().pieceType] && PIECES[currentSupport().pieceType].sticky) {
+    fricMul = Math.max(fricMul, 1.4);
+  }
   const fricOpts = {
-    friction: 1.5 * stage.frictionMul,
-    frictionStatic: 2.0 * stage.frictionMul,
-    frictionAir: 0.035 * stage.frictionMul
+    friction: 1.5 * fricMul,
+    frictionStatic: 2.0 * fricMul,
+    frictionAir: spec.slowFall ? 0.12 : 0.035 * stage.frictionMul
   };
+  if (spec.restitution) fricOpts.restitution = spec.restitution;
   let body;
 
   if (spec.shape === 'rect') {
@@ -470,6 +602,10 @@ function makeBody(type, x, y) {
     ];
     body = Bodies.fromVertices(x, y, [verts], fricOpts, true);
 
+  } else if (spec.shape === 'poly') {
+    // [2막 신들 블록] 그림에서 딴 볼록 다각형 — 위치(x,y)는 다각형의 무게중심
+    body = Bodies.fromVertices(x, y, [spec.verts.map(v => ({ x: v.x, y: v.y }))], fricOpts);
+    if (spec.density) Body.setDensity(body, 0.001 * spec.density);
   }
 
   body.tiltLimitRad = stage.tiltDeg * Math.PI / 180; // 이 블록이 스폰될 때의 층수 기준 난이도로 고정
@@ -491,7 +627,23 @@ const SHAPE_TIER_EASY = ['gull', 'shell', 'starfish', 'goby', 'crab', 'plank']; 
 const SHAPE_TIER_MEDIUM = ['jellyfish', 'longbar']; // 폭 100~110
 const SHAPE_TIER_HARD = ['hello', 'conch', 'mini', 'pillar']; // 폭 40~90 — 제일 좁은 것들
 
+// [2막] 101층부터 10층마다 신 하나씩 해금. 그 구간에선 새로 해금된 신이 30%,
+// 이미 해금된 신들이 15%, 나머지는 기존 블록(가장 어려운 구성)으로 떨어진다.
+function unlockedGodCount() {
+  if (floorCount < HEAVEN_FLOOR) return 0;
+  return Math.min(GOD_ORDER.length, Math.floor((floorCount - HEAVEN_FLOOR) / 10) + 1);
+}
 function pickRandomType() {
+  const nGods = unlockedGodCount();
+  if (nGods > 0) {
+    const newest = GOD_ORDER[nGods - 1];
+    const r = Math.random();
+    if (testGodsOnly) {
+      return r < 0.5 ? newest : GOD_ORDER[Math.floor(Math.random() * nGods)];
+    }
+    if (r < 0.30) return newest;
+    if (r < 0.45 && nGods > 1) return GOD_ORDER[Math.floor(Math.random() * (nGods - 1))];
+  }
   let pool;
   if (floorCount < 8) {
     pool = SHAPE_TIER_EASY; // 초반: 쉬운 것만
@@ -524,8 +676,13 @@ let pendDirSign = 1; // 삼각파 진행 방향(+1/-1) — 미리보기 기울�
 let pendulumArmedAt = 0; // 이 시각이 지나야 탭이 먹힘 — 연타로 거의 안 움직인 채 드랍하는 꼼수 방지
 const PENDULUM_ARM_DELAY = 380; // ms
 // 첫 블록은 시계추 없이 화면 정중앙 위에서 바로 낙하 시작 (두 번째 블록부터 탭 조작)
-let activeBody = makeBody(currentType, pendX, towerTopY - PREVIEW_CLEARANCE);
-World.add(world, activeBody);
+let activeBody = null;
+if (TEST_MODE) {
+  state = 'testmenu'; // 시작 층을 고를 때까지 대기
+} else {
+  activeBody = makeBody(currentType, pendX, towerTopY - PREVIEW_CLEARANCE);
+  World.add(world, activeBody);
+}
 let activeHasFallen = false; // 스폰 직후(아직 중력 못 받아 속도 0)에 오정착 판정되는 것 방지
 let settleTimer = 0;
 let impactTime = -99999; // 마지막 착지 시각 — 탑 전체가 살짝 짜부됐다 펴지는 연출용
@@ -545,7 +702,9 @@ let highestCloudSpawnedY = GROUND_Y; // 이 y보다 위쪽엔 아직 구름을 �
 function maybeSpawnClouds() {
   // 구름층 위(고도 높은 층)에서는 구름 자체가 없어야 하니, 일정 층수 이상에서는
   // 더 이상 새 구름을 안 심는다(이미 심어둔 건 자연스럽게 흘러 내려가며 사라짐).
-  if (floorCount >= CLOUD_CEILING_FLOOR) return;
+  // [2막] 100층부터는 천상의 구름이 다시 떠다님
+  if (floorCount >= CLOUD_CEILING_FLOOR && floorCount < HEAVEN_FLOOR) return;
+  if (floorCount >= HEAVEN_FLOOR && highestCloudSpawnedY > towerTopY) highestCloudSpawnedY = towerTopY;
   // 카메라가 올라간 만큼(=탑이 높아진 만큼) 위쪽에 구름을 계속 채워 넣는다
   const spawnAheadTo = towerTopY - GAME_H * 1.5; // 화면보다 한참 위쪽까지 미리 심어둠
   while (highestCloudSpawnedY > spawnAheadTo) {
@@ -611,8 +770,14 @@ const SKY_STAGES = [
   { floor: 78,  top: '#000008', bottom: '#050512' },  // 완전한 우주
   { floor: 89,  top: '#3a2f6e', bottom: '#c98bd6' },  // 우주 너머 — 신비로운 보랏빛 여명(천국 예고)
   { floor: 100, top: '#ffe9a8', bottom: '#fff6d5' },  // 천국 — 황금빛으로 가득한 하늘
+  // [2막] 신들의 탑 101~200층 — 파스텔 천상 하늘이 구간마다 천천히 바뀜
+  { floor: 120, top: '#ffd0a8', bottom: '#fff0dc' },  // 새벽빛 복숭아
+  { floor: 140, top: '#ffbfd6', bottom: '#ffeef5' },  // 장밋빛
+  { floor: 160, top: '#c9b6ff', bottom: '#f2ecff' },  // 라벤더
+  { floor: 180, top: '#9ed6ff', bottom: '#eaf7ff' },  // 천상의 하늘색
+  { floor: 200, top: '#ffe48a', bottom: '#fffbe8' },  // 올림포스 정상 — 다시 눈부신 금빛
 ];
-const HEAVEN_FLOOR = 100; // 이 층수에 도달하면 엔딩(신들의 환영) — 드물지만 너무 길지는 않게
+// HEAVEN_FLOOR(100)는 위쪽 신들 블록 정의부로 옮김(첫 블록 고를 때 이미 필요해서)
 
 function hexToRgb(hex) {
   const n = parseInt(hex.slice(1), 16);
@@ -670,7 +835,8 @@ function maybeSpawnStars() {
 
 function drawStars() {
   if (floorCount < STAR_START_FLOOR) return;
-  const alpha = Math.min((floorCount - STAR_START_FLOOR) / (STAR_FULL_FLOOR - STAR_START_FLOOR), 1);
+  let alpha = Math.min((floorCount - STAR_START_FLOOR) / (STAR_FULL_FLOOR - STAR_START_FLOOR), 1);
+  if (floorCount > HEAVEN_FLOOR) alpha *= 0.4; // 2막 밝은 하늘에선 반짝이 정도로만
   ctx.save();
   const now = performance.now();
   for (const s of stars) {
@@ -968,6 +1134,7 @@ const GA_GAME = 'hello_tower';
 // 세 게임 공통 이벤트 이름: game_start / game_over / score_submit / share_click
 // (game 파라미터로 게임 구분, score = 헬로런 m · 헬로버드 점수 · 헬로타워 층수)
 function track(name, params){
+  if (TEST_MODE) return; // 테스트 기록이 실제 통계에 섞이지 않게
   try{ if(typeof gtag === 'function') gtag('event', name, Object.assign({ game: GA_GAME }, params || {})); }catch(e){}
 }
 
@@ -1445,7 +1612,7 @@ if (DEBUG_MODE) {
     floorCount += 10;
     towerTopY -= 850; // 평균 블록 높이 대략치 × 10
     document.getElementById('floorCounter').textContent = floorCount + '층';
-    if (floorCount >= HEAVEN_FLOOR && state !== 'gameover') showEnding();
+    if (floorCount >= FINAL_FLOOR && state !== 'gameover') showEnding();
   });
 }
 
@@ -1468,6 +1635,7 @@ function checkGameOver() {
 // (천국 도착 층수와 겹치면 안 띄움, 그쪽은 showEnding()이 따로 더 크게 축하해줌)
 function isMilestoneFloor(floor) {
   if (floor <= 0) return false;
+  if (floor > HEAVEN_FLOOR) return false; // 2막은 10층마다 카드 획득 연출이 대신함
   if (floor < 30) return floor % 5 === 0;
   if (floor < 60) return floor % 10 === 0;
   return floor % 20 === 0;
@@ -1508,6 +1676,8 @@ function endGame() {
 function startEndingIntro() {
   state = 'ending_intro';
   stopPendulumSound();
+  spawnMilestoneBurst();
+  lightningUntil = performance.now() + 140;
   setTimeout(showEnding, 2600);
 }
 function showEnding() {
@@ -1516,7 +1686,9 @@ function showEnding() {
   stopPendulumSound();
   const overlay = document.getElementById('overlay');
   overlay.classList.add('show', 'ending');
-  document.getElementById('overlayTitle').textContent = '🎉 신들의 환영을 받으며 하늘나라에 도착했어요!';
+  document.getElementById('overlayTitle').textContent = floorCount >= FINAL_FLOOR
+    ? '🏛️ 올림포스 정상 정복! 신들의 탑을 완성했어요!'
+    : '🎉 신들의 환영을 받으며 하늘나라에 도착했어요!';
   document.getElementById('finalFloorNum').textContent = floorCount + '층';
 }
 
@@ -1618,19 +1790,38 @@ function finalizeSettle(body) {
     spawnWhisper(whisperX, body.bounds.min.y - 26);
   }
 
-  if (floorCount >= HEAVEN_FLOOR) {
-    startEndingIntro();
+  if (floorCount >= FINAL_FLOOR) {
+    startEndingIntro(); // 200층 — 올림포스 정상(최종 엔딩)
     return;
   }
-  if (isMilestoneFloor(floorCount)) {
+  if (floorCount === HEAVEN_FLOOR) {
+    startAct2Intro(); // 100층 — 신들의 환영 후 2막으로 계속
+    return;
+  }
+  if (floorCount > HEAVEN_FLOOR && floorCount % 10 === 0) {
+    awardGodCard(GOD_ORDER[(floorCount - HEAVEN_FLOOR) / 10 - 1]); // 110층=제우스 카드 …
+  } else if (isMilestoneFloor(floorCount)) {
     showMilestone(floorCount);
   }
   if (checkGameOver()) {
     endGame();
     return;
   }
+  advanceTurn();
+}
+
+// 다음 조각으로 넘어가기(시계추 상태로). 2막에선 새 구간이 시작될 때(101·111·…·191층)
+// 그 구간의 새 신을 첫 조각으로 확정해서 "해금" 느낌이 확실히 나게 한다.
+function advanceTurn() {
   currentType = nextType;
   nextType = pickRandomType();
+  if (floorCount >= HEAVEN_FLOOR && floorCount < FINAL_FLOOR && floorCount % 10 === 0) {
+    const g = GOD_ORDER[(floorCount - HEAVEN_FLOOR) / 10];
+    currentType = g;
+    // 110층부터는 방금 카드 획득 팝업이 떠 있으므로, 카드가 사라진 뒤에 등장 안내를 띄움
+    if (floorCount > HEAVEN_FLOOR) setTimeout(() => showGodUnlock(g), 2300);
+    else showGodUnlock(g);
+  }
   activeBody = null;
   state = 'pendulum';
   pendulumArmedAt = performance.now() + PENDULUM_ARM_DELAY; // 이 시각 전엔 탭해도 안 떨어짐(연타 악용 방지)
@@ -1638,6 +1829,62 @@ function finalizeSettle(body) {
   if (floorCount === 1) {
     document.getElementById('hint').style.opacity = '1';
   }
+}
+
+// ---------- [2막] 100층: 신들이 반겨준 뒤 계속 쌓기 ----------
+function startAct2Intro() {
+  state = 'ending_intro'; // 카메라가 신들 쪽으로 붙는 기존 연출 재사용(조작 잠김)
+  stopPendulumSound();
+  track('act2_start', { score: floorCount });
+  spawnMilestoneBurst();
+  milestoneFlashUntil = performance.now() + 500;
+  setTimeout(() => {
+    showBanner('🏛️ 2막 시작! 신들의 탑', '이제부터 10층마다 신이 한 명씩 내려와요', 2600);
+    setTimeout(() => { if (state === 'ending_intro') advanceTurn(); }, 900);
+  }, 2600);
+}
+
+// 화면 가운데 큰 안내 띠(조작은 막지 않음)
+let bannerTimer = null;
+function showBanner(title, sub, ms) {
+  const el = document.getElementById('banner');
+  el.innerHTML = `<div class="bTitle">${title}</div>` + (sub ? `<div class="bSub">${sub}</div>` : '');
+  el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+  if (bannerTimer) clearTimeout(bannerTimer);
+  bannerTimer = setTimeout(() => el.classList.remove('show'), ms || 2200);
+}
+function showGodUnlock(key) {
+  const info = GOD_INFO[key];
+  showBanner(`✨ ${info.name} 등장!`, info.trait, 2400);
+  track('god_unlock', { god: key, score: floorCount });
+}
+
+// ---------- [2막] 도감 카드 — 그 구간(10층)을 다 쌓으면 획득 ----------
+// 지금은 기기에만 저장(localStorage 'ht_cards'). 로그인/보관함은 다음 단계.
+function loadCards() {
+  try { return JSON.parse(localStorage.getItem('ht_cards') || '{}'); } catch (e) { return {}; }
+}
+function awardGodCard(key) {
+  const info = GOD_INFO[key];
+  const cards = loadCards();
+  const isNew = !cards[key];
+  if (!TEST_MODE) {
+    if (isNew) cards[key] = { at: new Date().toISOString() };
+    cards[key].count = (cards[key].count || 0) + 1;
+    try { localStorage.setItem('ht_cards', JSON.stringify(cards)); } catch (e) { /* 무시 */ }
+  }
+  track('card_get', { god: key, score: floorCount, first: isNew });
+  const el = document.getElementById('cardPop');
+  el.className = 'grade-' + info.grade;
+  el.querySelector('img').src = PIECES[key].file;
+  el.querySelector('.cName').textContent = info.name;
+  el.querySelector('.cTitle').textContent = info.title;
+  el.querySelector('.cHead').textContent = isNew || TEST_MODE ? '🎴 도감 카드 획득!' : '🎴 카드 한 장 더!';
+  void el.offsetWidth;
+  el.classList.add('show');
+  spawnMilestoneBurst();
+  milestoneFlashUntil = performance.now() + 350;
+  setTimeout(() => el.classList.remove('show'), 2600);
 }
 
 // ---------- 착지 손맛 연출 헬퍼 ----------
@@ -1853,6 +2100,10 @@ function settlePiece(body) {
   spawnDustBurst(dustX, body.bounds.max.y);
   stopDropSound(); // 떨어지는 소리는 닿는 순간 바로 끊고
   playThudClip();  // 그 자리에서 "쿵" 소리로 넘어감
+  const landSpec = PIECES[body.pieceType];
+  if (landSpec.landFlash) { lightningUntil = now + 140; playThunderClip(); } // [제우스] 번쩍
+  if (landSpec.heavy) { setTimeout(() => { shakeTime = performance.now(); impactTime = performance.now(); }, 140); } // [하데스] 쿵 한 번 더
+  if (landSpec.sway) body.swayUntil = now + 1500; // [포세이돈] 출렁
 
   // [추가] 닿는 순간 남아있던 가로 방향 관성(특히 돌풍에 밀린 경우)이 그대로 남아서
   // 착지 후에도 한참 미끄러지는 문제가 있었음 — 닿자마자 가로 속도를 확 깎아서
@@ -1927,7 +2178,7 @@ function loop(now) {
   // 대신 끝에서 끝까지 항상 일정한 속도로 움직이는 삼각파(왕복 직선 운동)로 바꿔서
   // 멈추는 구간 자체를 없앰.
   if (state === 'pendulum') {
-    pendPhase += pendulumSpeed() * (dt / 1000);
+    pendPhase += pendulumSpeed() * (PIECES[currentType].pendMul || 1) * (dt / 1000); // [헤르메스] 매달려 있으면 더 빠름
     const range = pendulumRange();
     const cyclePos = ((pendPhase % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI) / (2 * Math.PI); // 0~1
     const tri = cyclePos < 0.5 ? (-1 + 4 * cyclePos) : (3 - 4 * cyclePos); // -1~1 삼각파
@@ -1964,7 +2215,7 @@ function loop(now) {
     // 휘어지도록 함(이미 정착해서 버티는 wobbling 상태는 마찰이 강해서 밀어도
     // 티가 잘 안 나므로, 아직 진짜로 낙하 중인 조각에만 적용).
     if (activeBody && state === 'falling') {
-      const gustPushPerSec = 4.5 + Math.min(floorCount * 0.04, 3.5); // 더 세게, 층수 오를수록 더더욱
+      const gustPushPerSec = (4.5 + Math.min(floorCount * 0.04, 3.5)) * (PIECES[activeBody.pieceType].gustMul || 1); // [헤라] 깃털처럼 더 날림
       Body.setVelocity(activeBody, {
         x: activeBody.velocity.x + gustDir * gustPushPerSec * (dt / 1000),
         y: activeBody.velocity.y
@@ -1989,7 +2240,7 @@ function loop(now) {
     const mult = spec.sizeMultiplier || 1;
     const area = spec.w * spec.h * mult * mult;
     const sizeFactor = area / 9000; // 평균 크기 근방이 1이 되도록 대략 스케일
-    const extraGravity = 1.1 * sizeFactor; // 0.75 → 1.1, 계속 루즈하다는 피드백이라 더 올림
+    const extraGravity = spec.slowFall ? 0 : 1.1 * sizeFactor; // [헤라] 깃털처럼 천천히
     Body.setVelocity(activeBody, {
       x: activeBody.velocity.x,
       y: activeBody.velocity.y + extraGravity * (dt / 1000)
@@ -1997,6 +2248,15 @@ function loop(now) {
   }
 
   // --- 위태롭게 걸친 블록: 진짜 물리로 버티는지, 넘어가는지 지켜봄 ---
+  if (state === 'wobbling' && activeBody && activeBody.swayUntil && performance.now() < activeBody.swayUntil) {
+    // [포세이돈] 착지 후 잠깐 파도처럼 좌우로 출렁 — 점점 잦아듦
+    const left = (activeBody.swayUntil - performance.now()) / 1500;
+    Body.setVelocity(activeBody, {
+      x: activeBody.velocity.x + Math.sin(performance.now() / 85) * 0.22 * left,
+      y: activeBody.velocity.y
+    });
+    wobbleTimer = 0;
+  }
   if (state === 'wobbling' && activeBody) {
     const tiltLimit = activeBody.tiltLimitRad || TILT_LIMIT; // 스폰 시점 층수 기준 난이도
     if (Math.abs(activeBody.angle) > tiltLimit) {
@@ -2025,7 +2285,7 @@ function loop(now) {
   // 보임)으로 늘리고, 추적 속도도 0.08→0.14로 빠르게.
   // [엔딩 인트로 중엔] 신들이 확실히 화면 안에 들어오도록 카메라 목표 자체를 신
   // 무리 위치로 고정하고, 더 빠르게 그쪽으로 당겨줌.
-  if (state === 'ending_intro') {
+  if (state === 'ending_intro' && floorCount < FINAL_FLOOR) {
     const godDesiredCamY = GOD_GROUP_WORLD_Y - GAME_H * 0.42;
     cameraY += (godDesiredCamY - cameraY) * 0.1;
   } else {
@@ -2081,6 +2341,10 @@ function spriteDrawSize(type) {
 // 항상 일관됨. 아직 구 에셋인 블록은 기존 boxFrac 방식으로 계속 그린다.
 function overlapDrawSize(type) {
   const spec = PIECES[type];
+  if (spec.shape === 'poly') {
+    // 신들 블록: 바디 위치=다각형 무게중심 → 그림 왼쪽 위는 (-cx, -cy)
+    return { w: spec.drawW, h: spec.drawH, offsetX: -spec.cx, offsetY: -spec.cy };
+  }
   if (spec.canvas) {
     const mult = spec.sizeMultiplier || 1; // 물리박스와 항상 같은 배율로 그림도 같이 커지고 작아짐(정렬 유지)
     const w = (spec.canvas.w / IMG_SCALE_K) * mult;
@@ -2096,6 +2360,7 @@ function overlapDrawSize(type) {
 const IMPACT_FACE_DURATION = 380; // 착지 후 이 시간(ms) 동안만 찌푸린 표정으로 보여줌
 
 function drawPiece(body) {
+  if (body.isPedestal) { drawPedestal(body); return; }
   const useImpact = body.landTime && (performance.now() - body.landTime) < IMPACT_FACE_DURATION;
   const img = useImpact ? spritesImpact[body.pieceType] : sprites[body.pieceType];
   const pos = body.position, ang = body.angle;
@@ -2116,7 +2381,24 @@ function drawPiece(body) {
   ctx.drawImage(img, offsetX, offsetY, sw, sh);
   ctx.restore();
 
-  if (DEBUG_MODE) drawDebugBox(body);
+  if (DEBUG_MODE || testShowShapes) drawDebugBox(body);
+}
+
+// [테스트 모드] 원하는 층에서 시작할 때 탑 대신 깔아주는 황금 시작대
+function drawPedestal(body) {
+  const b = body.bounds;
+  const x = b.min.x, y = b.min.y - cameraY, w = b.max.x - b.min.x, h = b.max.y - b.min.y;
+  ctx.save();
+  const g = ctx.createLinearGradient(0, y, 0, y + h + 400);
+  g.addColorStop(0, '#fff1b8'); g.addColorStop(0.15, '#e7c35a'); g.addColorStop(1, 'rgba(231,195,90,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(x + 18, y + h - 2, w - 36, 400); // 아래로 이어지는 기둥(가짜 탑)
+  ctx.fillStyle = '#f3d36b'; ctx.strokeStyle = '#8a6a1e'; ctx.lineWidth = 3;
+  roundRectPath(ctx, x, y, w, h, 8); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#5b4210'; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText(`🧪 테스트 시작대 (${body.startFloor}층)`, x + w / 2, y + h / 2 + 5);
+  ctx.restore();
+  if (testShowShapes) drawDebugBox(body);
 }
 
 // 물리박스(실제 충돌·안착 기준이 되는 영역)를 빨간 테두리로 그려서
@@ -2467,6 +2749,54 @@ function render() {
 }
 
 // [로딩 개선] 예전엔 이미지가 준비되기 전에 렌더링이 먼저 시작돼서, 빈 배경 →
+// =========================================================================
+// [테스트 모드] ?test=1 — 시작 층 고르기. 그 층 바로 아래에 황금 시작대(정적 바디)를
+// 깔고 층수/카메라를 옮겨서, 100층을 직접 쌓지 않아도 2막·신 블록을 확인할 수 있다.
+// =========================================================================
+function startTestAt(n) {
+  testGodsOnly = document.getElementById('testGodsOnly').checked;
+  testShowShapes = document.getElementById('testShapes').checked;
+  document.getElementById('testPanel').classList.remove('show');
+  if (n <= 1) {
+    activeBody = makeBody(currentType, pendX, towerTopY - PREVIEW_CLEARANCE);
+    World.add(world, activeBody);
+    state = 'falling';
+    return;
+  }
+  const top = GROUND_Y - (n - 1) * UNITS_PER_FLOOR;
+  const ped = Bodies.rectangle(GAME_W / 2, top + 18, 170, 36, { isStatic: true, friction: 1.5, frictionStatic: 2.0 });
+  ped.isPedestal = true;
+  ped.startFloor = n - 1;
+  World.add(world, ped);
+  settledBodies.push(ped);
+  floorCount = n - 1;
+  towerTopY = ped.bounds.min.y;
+  cameraY = Math.min(0, towerTopY - GAME_H * 0.55);
+  highestCloudSpawnedY = Math.min(highestCloudSpawnedY, towerTopY);
+  highestStarSpawnedY = Math.min(highestStarSpawnedY, towerTopY + GAME_H);
+  highestTravelerSpawnedY = Math.min(highestTravelerSpawnedY, towerTopY + GAME_H);
+  document.getElementById('floorCounter').textContent = floorCount + '층';
+  nextType = pickRandomType();
+  advanceTurn();
+}
+if (TEST_MODE) {
+  document.getElementById('testBadge').style.display = 'block';
+  document.getElementById('rankPanel').style.display = 'none';
+  document.getElementById('shareBtn').style.display = 'none';
+  const wrap = document.getElementById('testFloorBtns');
+  const opts = [[1, '1층 (처음부터)'], [96, '96층 (2막 직전)']]
+    .concat(GOD_ORDER.map((k, i) => [HEAVEN_FLOOR + 1 + i * 10, `${HEAVEN_FLOOR + 1 + i * 10}층 ${GOD_INFO[k].name}`]))
+    .concat([[198, '198층 (최종 직전)']]);
+  opts.forEach(([n, label]) => {
+    const b = document.createElement('button');
+    b.textContent = label;
+    if (n > HEAVEN_FLOOR) b.className = 'act2';
+    b.addEventListener('click', (e) => { e.stopPropagation(); startTestAt(n); });
+    wrap.appendChild(b);
+  });
+  document.getElementById('testPanel').classList.add('show');
+}
+
 // 배경만 뜬 상태 → 흰 박스 → 표정 생김 순으로 뚝뚝 끊겨 보였음. 이제 핵심
 // 이미지(바닥·받침대·처음 두 블록)가 실제로 로드될 때까지 로딩 화면으로 가려두고,
 // 다 준비된 다음에야 화면을 보여주고 시작 연출(효과음 등)을 튼다.
