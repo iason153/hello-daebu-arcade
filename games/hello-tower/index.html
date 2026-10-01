@@ -176,6 +176,19 @@
     80% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
     100% { opacity: 0; transform: translate(-50%, -50%) translateY(-40px) scale(0.6); }
   }
+  /* [재설계 C] 퍼펙트 */
+  #perfectPop { position: fixed; left: 50%; top: 38%; transform: translate(-50%, -50%); opacity: 0; pointer-events: none;
+    z-index: 29; font: 900 34px sans-serif; color: #fff7d6; letter-spacing: 1px; white-space: nowrap;
+    -webkit-text-stroke: 2px #8a4a00; paint-order: stroke fill;
+    text-shadow: 0 0 12px #ffcf3a, 0 0 26px #ff9f1a, 0 4px 0 #8a4a00; }
+  #perfectPop.show { animation: perfectPop 0.9s ease-out forwards; }
+  @keyframes perfectPop {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+    10% { opacity: 1; }
+    20% { opacity: 1; transform: translate(-50%, -50%) scale(1.15); }
+    35% { transform: translate(-50%, -50%) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, -90%) scale(1); }
+  }
   /* [테스트 모드] 시작 층 고르기 */
   #testPanel { position: fixed; inset: 0; z-index: 50; display: none; align-items: center; justify-content: center;
     background: rgba(10, 14, 30, 0.82); font-family: sans-serif; }
@@ -208,6 +221,7 @@
 <div id="hint">화면을 탭해서 조각을 떨어뜨리세요</div>
 <div id="milestone"></div>
 <div id="banner"></div>
+<div id="perfectPop"></div>
 <div id="cardPop"><div class="cHead">🎴 도감 카드 획득!</div><img alt=""><div class="cName"></div><div class="cTitle"></div></div>
 <a id="testBadge" href="?test=1">🧪 테스트 메뉴로</a>
 <div id="testPanel"><div class="box">
@@ -269,10 +283,15 @@ if (new URLSearchParams(location.search).get('dev') === '1') {
 }
 
 // ---------- Matter.js 세팅 ----------
-const { Engine, World, Bodies, Body, Composite, Vector, Events, Query } = Matter;
+const { Engine, World, Bodies, Body, Composite, Vector, Events, Query, Sleeping } = Matter;
 
 const engine = Engine.create();
 engine.gravity.y = 3.2; // 더 더 박진감 있게 — 계속 루즈하다는 피드백이라 확 올림
+// [2026-10-01 재설계] 꼭대기 블록 몇 개가 굳지 않고 실제로 흔들리므로(살아있는 꼭대기),
+// 쌓인 블록끼리 덜 떨리도록 계산 정밀도를 올림
+engine.positionIterations = 16;
+engine.velocityIterations = 10;
+engine.enableSleeping = true; // 멈춘 블록은 잠재워서 미세한 떨림이 쌓이지 않게(태풍·충돌 때 다시 깨움)
 const world = engine.world;
 
 const canvas = document.getElementById('gameCanvas');
@@ -539,12 +558,13 @@ const DIFFICULTY_STAGES = [
   { floor: 68,  frictionMul: 0.46, tiltDeg: 18 },
   { floor: 84,  frictionMul: 0.40, tiltDeg: 16 },
   { floor: 100, frictionMul: 0.35, tiltDeg: 14 }, // (이 값은 실제로 쓰이지 않음 — 아래 2막 단계가 덮어씀)
-  // [2막] 101층부터는 1막 끝보다 살짝 풀어줌 — 블록 모양 자체가 달라서 이미 충분히 까다로움.
-  // 선물 구간(제우스~헤르메스) → 변칙 구간 → 시련 구간 순으로 다시 조여감.
-  { floor: 100, frictionMul: 0.55, tiltDeg: 20 },
-  { floor: 130, frictionMul: 0.48, tiltDeg: 18 },
-  { floor: 160, frictionMul: 0.42, tiltDeg: 16 },
-  { floor: 180, frictionMul: 0.38, tiltDeg: 15 },
+  // [2막] 101층부터: 1막 끝과 같은 수준에서 시작해 점점 조임. 진짜 어려움은
+  // "살아있는 꼭대기"(흔들리는 블록 2~3개)와 빨라진 시계추가 만든다.
+  // 기울기 판정은 이제 '순간'이 아니라 '0.45초 이상 지속'이라 운으로 죽지 않음.
+  { floor: 100, frictionMul: 0.40, tiltDeg: 16 },
+  { floor: 130, frictionMul: 0.36, tiltDeg: 15 },
+  { floor: 160, frictionMul: 0.32, tiltDeg: 14 },
+  { floor: 180, frictionMul: 0.30, tiltDeg: 13 },
 ];
 function difficultyStage(floor) {
   let stage = DIFFICULTY_STAGES[0];
@@ -1774,6 +1794,90 @@ function isRestingOnTop(body) {
 // 블록을 살짝 덮게) 만들어서, 약간의 기울어짐이 있어도 시각적으로 확실히 붙어 보이게 함.
 const SETTLE_OVERLAP = 5; // 10은 너무 많이 겹쳐서 5로 조정
 
+// =========================================================================
+// [재설계 A] 살아있는 꼭대기 — 맨 위 N개 블록은 바로 굳히지 않고 실제 물리로 흔들리게 둔다.
+// 삐뚤게 쌓으면 그 기울어짐이 쌓여 꼭대기가 휘청이다 무너진다(예전엔 착지 즉시 고정돼서
+// 100층이 "쉬운 한 번 × 100번"이었음). 아래로 N개를 넘어간 블록부터 다시 굳힌다.
+//   1~49층: 0개(예전과 동일) / 50~99층: 1개 / 2막 101~159층: 2개 / 160층~: 3개
+// (4개까지 늘려봤더니 블록끼리 미세하게 처지는 현상이 쌓여 잘 놓아도 가끔 넘어가서 3개가 상한)
+// [재설계 C] 퍼펙트 — 아래 블록과 거의 정확히 맞추면 탑 전체가 즉시 굳어 안정됨(실력 보상).
+// =========================================================================
+function liveDepth() {
+  if (floorCount < 50) return 0;
+  if (floorCount < HEAVEN_FLOOR) return 1;
+  if (floorCount < 160) return 2;
+  return 3;
+}
+function releaseTempStatic() {
+  for (const b of settledBodies) {
+    if (b.tempStatic) { b.tempStatic = false; Body.setStatic(b, false); b.restY = b.position.y; }
+  }
+}
+function freezeBody(b) {
+  b.tempStatic = false;
+  Body.setVelocity(b, { x: 0, y: 0 });
+  Body.setAngularVelocity(b, 0);
+  Body.setStatic(b, true);
+  b.live = false;
+}
+function refreezeTower(freezeAll) {
+  const d = freezeAll ? 0 : liveDepth();
+  let count = 0;
+  for (let i = settledBodies.length - 1; i >= 0; i--) {
+    const b = settledBodies[i];
+    if (b.label === 'ground' || b.isPedestal) break;
+    if (b.isStatic) continue;
+    count++;
+    if (count > d) freezeBody(b);
+  }
+}
+const PERFECT_PX = 7; // 아래 블록 중심과 이만큼 이내로 맞추면 퍼펙트
+let perfectCombo = 0;
+function showPerfect(combo) {
+  const el = document.getElementById('perfectPop');
+  el.textContent = combo >= 2 ? `PERFECT ×${combo}` : 'PERFECT!';
+  el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+  playPerfectSound(combo);
+}
+function playPerfectSound(combo) {
+  if (!SOUND_ENABLED) return;
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const now = audioCtx.currentTime;
+    const base = 660 * Math.pow(1.06, Math.min(combo, 8)); // 콤보가 이어질수록 음이 올라감
+    [0, 0.07].forEach((delay, k) => {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(base * (k ? 1.5 : 1), now + delay);
+      gain.gain.setValueAtTime(0.14, now + delay);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + delay + 0.22);
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.start(now + delay); osc.stop(now + delay + 0.25);
+    });
+  } catch (e) { /* 무시 */ }
+}
+// [재설계 B] 흔들리는 꼭대기 감시 — 한도보다 많이 기운 상태가 0.45초 넘게 이어지거나,
+// 블록이 아래로 미끄러져 내려앉으면 무너진 것으로 본다(순간 흔들림으로는 안 죽음).
+const TILT_HOLD_MS = 450;
+let lastCollapseReason = '';
+function liveTowerCollapsed() {
+  const now = performance.now();
+  for (const b of settledBodies) {
+    if (!b.live) continue;
+    const lim = (b.tiltLimitRad || TILT_LIMIT) + 0.06;
+    if (Math.abs(b.angle) > lim) {
+      if (!b.overSince) b.overSince = now;
+      if (now - b.overSince > TILT_HOLD_MS) { lastCollapseReason = 'tilt'; return true; }
+    } else {
+      b.overSince = 0;
+    }
+    if (b.position.y > b.restY + 28) { lastCollapseReason = 'sink ' + (b.position.y - b.restY).toFixed(0) + ' ' + b.pieceType; return true; }
+    if (b.position.x < -OFFSCREEN_MARGIN || b.position.x > GAME_W + OFFSCREEN_MARGIN) { lastCollapseReason = 'off'; return true; }
+  }
+  return false;
+}
+
 function finalizeSettle(body) {
   const bounds = body.bounds;
   // 블록이 살짝 기울어진 채로 정착하면, 가장 낮은 모서리만 겹침 기준으로 삼을 경우
@@ -1787,11 +1891,33 @@ function finalizeSettle(body) {
   // 만들고 있었음(겹침이 아니라 틈이 생기는 부호였음). +로 고침.
   const targetMaxY = towerTopY + SETTLE_OVERLAP + tiltExtra;
   const gap = targetMaxY - bounds.max.y;
-  if (gap !== 0) {
-    Body.translate(body, { x: 0, y: gap });
+  const supportIsStatic = currentSupport().isStatic;
+  if (gap !== 0 && supportIsStatic) {
+    Body.translate(body, { x: 0, y: gap }); // 받침이 흔들리는 중이면 위치를 강제로 옮기지 않음(물리 폭주 방지)
   }
 
   settledBodies.push(body);
+  body.restY = body.position.y;
+  releaseTempStatic(); // 착지 끝 — 받침 다시 흔들리게
+  if (body.perfect) {
+    perfectCombo++;
+    refreezeTower(true); // 퍼펙트 — 꼭대기까지 전부 굳혀서 안정
+    freezeBody(body);
+    const nf = floorCount + 1; // 이번에 올라갈 층 — 카드 획득/2막 전환 층이면 그 연출이 우선(문구 겹침 방지)
+    if (!(nf >= HEAVEN_FLOOR && nf % 10 === 0)) showPerfect(perfectCombo);
+    track('perfect', { score: floorCount + 1, combo: perfectCombo });
+  } else {
+    perfectCombo = 0;
+    if (liveDepth() === 0) freezeBody(body);
+    else {
+      // 흔들리는 블록은 "미끄러지지 않고 기울어서 넘어가는" 것만 남김 — 미끄러짐까지 살아 있으면
+      // 위에서 떨어지는 블록 충격에 아래 블록이 같이 튀어서, 잘 놓아도 운으로 죽었음.
+      body.live = true;
+      body.friction = Math.max(body.friction, 1.2);
+      body.frictionStatic = 8;
+      refreezeTower(false);
+    }
+  }
   floorCount++;
   document.getElementById('floorCounter').textContent = floorCount + '층';
   towerTopY = body.bounds.min.y;
@@ -1846,6 +1972,7 @@ function advanceTurn() {
 
 // ---------- [2막] 100층: 신들이 반겨준 뒤 계속 쌓기 ----------
 function startAct2Intro() {
+  refreezeTower(true); // 연출 동안 꼭대기가 혼자 무너지지 않게 전부 굳힘
   state = 'ending_intro'; // 카메라가 신들 쪽으로 붙는 기존 연출 재사용(조작 잠김)
   stopPendulumSound();
   track('act2_start', { score: floorCount });
@@ -2087,6 +2214,9 @@ function settlePiece(body) {
   if (state !== 'falling' || body !== activeBody) return; // 이미 처리됐거나 대상이 아니면 무시(중복 호출 방지)
 
   const { overlapAmount } = overlapWithSupport(body);
+  // [재설계 C] 퍼펙트 판정 — 닿는 순간 아래 블록 중심과의 가로 차이
+  const supForPerfect = currentSupport();
+  body.perfect = supForPerfect.label !== 'ground' && Math.abs(body.position.x - supForPerfect.position.x) <= PERFECT_PX;
 
   if (overlapAmount <= 0) {
     // 받침과 전혀 안 겹침 — 완전히 빗나간 것으로 보고 게임오버
@@ -2122,6 +2252,13 @@ function settlePiece(body) {
   // 착지 후에도 한참 미끄러지는 문제가 있었음 — 닿자마자 가로 속도를 확 깎아서
   // "쭉 미끄러지는" 느낌을 줄인다(완전히 0으로 죽이진 않아서 관성 자체는 살짝 남음).
   Body.setVelocity(body, { x: body.velocity.x * 0.15, y: body.velocity.y });
+  // [재설계 A] 흔들리는 블록 위에 떨어질 때는 충격을 줄여서 아래 블록이 튀지 않게
+  if (currentSupport().live) {
+    Body.setVelocity(body, { x: body.velocity.x, y: body.velocity.y * 0.3 });
+    Body.setAngularVelocity(body, body.angularVelocity * 0.3);
+    // (예전엔 여기서 받침을 잠깐 굳혔다가 착지 후 풀었는데, 푸는 순간 물리 엔진이 쌓아둔 충격을
+    //  한꺼번에 쏟아내서 블록 위치가 깨지는(NaN) 오류가 났음 → 제거. 짓눌림은 착지 직전 속도 맞추기로 해결)
+  }
 
   // [설계 변경] "잘 조준하면 위치/각도를 강제로 맞춰주는" 확실 안착 경로를 완전히 없앰.
   // 이 경로가 오히려 물리박스끼리 틈이 남는 버그의 원인이었고, 탭한 그대로 안 내려오고
@@ -2182,7 +2319,21 @@ let lastTime = performance.now();
 function loop(now) {
   const dt = Math.min(now - lastTime, 32);
   lastTime = now;
+  // [안전장치] 프레임 간격이 0이면 물리 계산을 건너뜀 — 이때 엔진 내부 시간이 0이 되고,
+  // 바로 뒤에 Body.setVelocity를 부르면 0÷0으로 위치가 NaN이 되어 블록이 깨질 수 있음
+  if (!(dt >= 1)) { render(); requestAnimationFrame(loop); return; }
 
+  // [재설계 B] 착지 직전 파고듦 방지 — 블록이 너무 빠르게 떨어져서 한 번에 받침 속으로 깊이
+  // 들어가면, 물리 엔진이 밀어내면서 옆으로 튕기고 15~40° 기울게 만들었음(가운데 잘 놓아도
+  // 이유 없이 미끄러져 죽던 원인). 다음 계산에서 받침에 닿을 만큼 가까우면 그만큼만 내려오게 맞춤.
+  if (state === 'falling' && activeBody && activeHasFallen && dt > 1) { // dt가 0이면 0으로 나누기 → 위치가 NaN으로 깨짐(방지)
+    const stepScale = dt / (1000 / 60);
+    const gapToTop = towerTopY - activeBody.bounds.max.y;
+    const stepFall = activeBody.velocity.y * stepScale;
+    if (gapToTop > -2 && stepFall > gapToTop + 1) {
+      Body.setVelocity(activeBody, { x: activeBody.velocity.x, y: Math.max(gapToTop + 1, 0.5) / stepScale });
+    }
+  }
   Engine.update(engine, dt);
 
   // --- 시계추 갱신 ---
@@ -2203,7 +2354,7 @@ function loop(now) {
   // --- 돌풍 이벤트(테스트) ---
   // 지금 공중에 떠 있는 조각(낙하 중 또는 위태롭게 버티는 중)이 있을 때만 발동.
   // 정착된 블록들은 static이라 안 건드림 — 조준 중인/막 착지한 조각만 옆으로 밀림.
-  const gustHasTarget = activeBody && (state === 'falling' || state === 'wobbling');
+  const gustHasTarget = (activeBody && (state === 'falling' || state === 'wobbling')) || (state === 'pendulum' && currentSupport().live);
   if (gustState === 'idle' && gustHasTarget && performance.now() > nextGustAt) {
     gustDir = Math.random() < 0.5 ? -1 : 1;
     gustState = 'warning';
@@ -2234,6 +2385,16 @@ function loop(now) {
         x: activeBody.velocity.x + gustDir * gustPushPerSec * (dt / 1000),
         y: activeBody.velocity.y
       });
+    }
+    // [재설계 A] 태풍은 흔들리는 꼭대기 블록들도 민다(위쪽일수록 세게)
+    let liveIdx = 0;
+    for (let i = settledBodies.length - 1; i >= 0; i--) {
+      const b = settledBodies[i];
+      if (!b.live) continue;
+      liveIdx++;
+      const push = 1.6 * gustIntensity * (1.2 - liveIdx * 0.2);
+      if (b.isSleeping) Sleeping.set(b, false);
+      Body.setVelocity(b, { x: b.velocity.x + gustDir * push * (dt / 1000), y: b.velocity.y });
     }
     const blowElapsed = performance.now() - (gustBlowUntil - 900);
     const blowT = Math.min(blowElapsed / 900, 1);
@@ -2274,9 +2435,12 @@ function loop(now) {
   if (state === 'wobbling' && activeBody) {
     const tiltLimit = activeBody.tiltLimitRad || TILT_LIMIT; // 스폰 시점 층수 기준 난이도
     if (Math.abs(activeBody.angle) > tiltLimit) {
-      // 기울어짐 한도 초과 — 진짜로 무너진 것으로 보고 게임오버
-      endGame();
+      // [재설계 B] 착지 충격으로 순간 기우는 건 봐줌 — 한도 초과가 0.45초 넘게 이어지면 무너진 것
+      if (!activeBody.overSince) activeBody.overSince = performance.now();
+      if (performance.now() - activeBody.overSince > TILT_HOLD_MS) endGame();
+      wobbleTimer = 0;
     } else if (activeBody.speed < 0.4 && Math.abs(activeBody.angularVelocity) < 0.03) {
+      activeBody.overSince = 0;
       wobbleTimer += dt;
       if (wobbleTimer > 100) {
         // 버텨냈음 — 단, 진짜로 "맨 위 블록 위에" 얹혀서 멈춘 건지 마지막으로 확인한다.
@@ -2284,12 +2448,20 @@ function loop(now) {
         if (!isRestingOnTop(activeBody)) {
           endGame();
         } else {
-          Body.setStatic(activeBody, true);
-          finalizeSettle(activeBody);
+          finalizeSettle(activeBody); // 굳힐지/흔들리게 둘지는 finalizeSettle이 정함
         }
       }
     } else {
       wobbleTimer = 0;
+    }
+  }
+
+  // --- [재설계 A] 흔들리는 꼭대기 감시 + 탑 꼭대기 높이 갱신 ---
+  if (state === 'pendulum' || state === 'falling' || state === 'wobbling') {
+    if (liveTowerCollapsed()) {
+      endGame();
+    } else if (currentSupport().live) {
+      towerTopY = currentSupport().bounds.min.y;
     }
   }
 
