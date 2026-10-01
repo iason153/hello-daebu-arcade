@@ -2323,18 +2323,13 @@ function loop(now) {
   // 바로 뒤에 Body.setVelocity를 부르면 0÷0으로 위치가 NaN이 되어 블록이 깨질 수 있음
   if (!(dt >= 1)) { render(); requestAnimationFrame(loop); return; }
 
-  // [재설계 B] 착지 직전 파고듦 방지 — 블록이 너무 빠르게 떨어져서 한 번에 받침 속으로 깊이
-  // 들어가면, 물리 엔진이 밀어내면서 옆으로 튕기고 15~40° 기울게 만들었음(가운데 잘 놓아도
-  // 이유 없이 미끄러져 죽던 원인). 다음 계산에서 받침에 닿을 만큼 가까우면 그만큼만 내려오게 맞춤.
-  if (state === 'falling' && activeBody && activeHasFallen && dt > 1) { // dt가 0이면 0으로 나누기 → 위치가 NaN으로 깨짐(방지)
-    const stepScale = dt / (1000 / 60);
-    const gapToTop = towerTopY - activeBody.bounds.max.y;
-    const stepFall = activeBody.velocity.y * stepScale;
-    if (gapToTop > -2 && stepFall > gapToTop + 1) {
-      Body.setVelocity(activeBody, { x: activeBody.velocity.x, y: Math.max(gapToTop + 1, 0.5) / stepScale });
-    }
-  }
-  Engine.update(engine, dt);
+  // [착지 튕김 방지 — 2026-10-02 방식 변경] 블록이 빠르게 떨어지면 한 번의 계산에 받침 속으로
+  // 깊이 파고들고, 물리 엔진이 밀어내면서 옆으로 튕겨 15~40° 기울었음(잘 놓아도 죽던 원인).
+  // 처음엔 닿기 직전에 속도를 줄여 맞췄는데, 그러면 착지 전에 잠깐 느려지는 게 눈에 보였음.
+  // → 속도는 전혀 건드리지 않고, 블록이 떨어지거나 흔들리는 동안에는 한 프레임의 물리 계산을
+  //   4번으로 잘게 나눠서(한 번에 움직이는 거리가 1/4) 파고듦 자체가 얕게 일어나게 함.
+  const physSteps = (state === 'falling' || state === 'wobbling') ? 4 : 1;
+  for (let ps = 0; ps < physSteps; ps++) Engine.update(engine, dt / physSteps);
 
   // --- 시계추 갱신 ---
   // [수정] sin() 곡선은 양 끝(가장자리)에서 속도가 자연스럽게 0에 가까워져서 "잠깐 멈추는"
