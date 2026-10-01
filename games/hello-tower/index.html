@@ -1309,16 +1309,29 @@ let gustIntensity = 0;  // 0~1, 타워 흔들림/화면 틴트 세기(블로우 
 // 속도·범위 둘 다 상한선(사람이 훈련하면 반응 가능한 수준)에 도달해서 거기서
 // 고정되고, 그 뒤(48~100층) 난이도는 마찰/기울기(난이도 단계)·블록 모양·태풍
 // 쪽에서 계속 세지도록 함 — "더 빨리"가 아니라 "다른 방식으로 더 어렵게".
-function pendulumSpeed() {
-  const base = 2.2;
-  const growth = 0.055;
-  const cap = 4.8;
-  return Math.min(base + floorCount * growth, cap); // 상한선까지 대략 48층
+// [2026-10-01 재설계] 예전엔 "왕복 빠르기"는 오르고 "폭"은 좁아져서 두 효과가 상쇄 —
+// 블록이 실제로 움직이는 속도가 1층(초당 약 224)과 48층 이후(약 232)가 거의 같았고,
+// 오히려 가운데에서만 왔다갔다 해서 더 쉬워졌음. 이제 "실제 이동 속도(게임유닛/초)"와
+// "폭"을 직접 정한다.
+//  - 1막(1~100층): 체감이 거의 없을 만큼만 살짝 어렵게 (속도 224→약 255, 폭은 덜 좁아짐)
+//  - 2막(101층~): 화면 끝까지 넓게 + 확실히 빠르게 + 왕복마다 속도가 조금씩 달라짐(리듬 타이밍 금지)
+function pendulumLinearSpeed() {
+  if (floorCount < HEAVEN_FLOOR) return 224 + floorCount * 0.32;          // 1층 224 → 99층 약 256
+  return Math.min(300 + (floorCount - HEAVEN_FLOOR) * 1.1, 420);          // 101층 300 → 200층 410
 }
 function pendulumRange() {
-  const startRange = GAME_W * 0.42, minRange = GAME_W * 0.20;
-  const shrinkPerFloor = (startRange - minRange) / 48;
-  return Math.max(startRange - floorCount * shrinkPerFloor, minRange);
+  if (floorCount < HEAVEN_FLOOR) {
+    const startRange = GAME_W * 0.42, minRange = GAME_W * 0.28;           // 예전 최소 0.20 → 0.28
+    return Math.max(startRange - floorCount * (startRange - minRange) / 48, minRange);
+  }
+  return GAME_W / 2 - 40;                                                  // 2막: 블록 중심이 양 끝 40 안쪽까지
+}
+// [2막] 왕복할 때마다 속도 배율을 새로 뽑음 — 박자만 세서 맞추는 꼼수 방지
+let swingMul = 1;
+function newSwingMul() {
+  if (floorCount < HEAVEN_FLOOR) { swingMul = 1; return; }
+  const spread = floorCount < 160 ? 0.15 : 0.22;                         // 160층부터 더 들쑥날쑥
+  swingMul = 1 - spread + Math.random() * spread * 2;
 }
 
 // =========================================================================
@@ -2178,12 +2191,13 @@ function loop(now) {
   // 대신 끝에서 끝까지 항상 일정한 속도로 움직이는 삼각파(왕복 직선 운동)로 바꿔서
   // 멈추는 구간 자체를 없앰.
   if (state === 'pendulum') {
-    pendPhase += pendulumSpeed() * (PIECES[currentType].pendMul || 1) * (dt / 1000); // [헤르메스] 매달려 있으면 더 빠름
+    // 일정 속도로 끝에서 끝까지 왕복(삼각파와 같은 움직임) — 끝에 닿으면 방향 전환
     const range = pendulumRange();
-    const cyclePos = ((pendPhase % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI) / (2 * Math.PI); // 0~1
-    const tri = cyclePos < 0.5 ? (-1 + 4 * cyclePos) : (3 - 4 * cyclePos); // -1~1 삼각파
-    pendX = GAME_W / 2 + tri * range;
-    pendDirSign = cyclePos < 0.5 ? 1 : -1; // 시계추 미리보기 기울임 연출용
+    const v = pendulumLinearSpeed() * swingMul * (PIECES[currentType].pendMul || 1); // [헤르메스] 더 빠름
+    pendX += pendDirSign * v * (dt / 1000);
+    const L = GAME_W / 2 - range, R = GAME_W / 2 + range;
+    if (pendX > R) { pendX = Math.max(L, R - (pendX - R)); pendDirSign = -1; newSwingMul(); }
+    else if (pendX < L) { pendX = Math.min(R, L + (L - pendX)); pendDirSign = 1; newSwingMul(); }
   }
 
   // --- 돌풍 이벤트(테스트) ---
