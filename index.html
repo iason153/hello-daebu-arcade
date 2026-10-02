@@ -167,6 +167,12 @@ img{ max-width:100%; display:block; }
 
 /* ---------- second game card (stacked below featured) ---------- */
 .game-featured + .game-featured{ margin-top:20px; }
+.member-chip{
+  display:inline-flex; align-items:center; gap:6px; margin-bottom:14px; padding:8px 14px; border-radius:999px;
+  background:#fff; border:2px solid #2b2433; color:#2b2433; font-weight:700; font-size:14px; text-decoration:none;
+  box-shadow:0 3px 0 #2b2433;
+}
+.member-chip.kakao{ background:#fee500; }
 .temple-link{
   display:flex; align-items:center; gap:14px; margin-top:24px; padding:16px 18px;
   border-radius:16px; text-decoration:none; color:#2b2433;
@@ -249,6 +255,7 @@ footer{
 
 <section class="hero">
   <div class="wrap">
+    <a class="member-chip" id="memberChip" href="cardbook.html" hidden></a>
     <h1 class="eyebrow-free-title">헬로 대부도<br><span class="title-accent">오락실</span></h1>
     <p class="tagline">대부도 곳곳을 배경으로 한 아주 가벼운 미니게임들을 하나씩 만들고 있어요.</p>
     <div class="pwa-slot" data-pwa-install></div>
@@ -372,5 +379,20 @@ footer{
 })();
 </script>
 
+<script>
+// 로그인 상태 표시 — 로그인했으면 "🎴 닉네임님 카드첩", 아니면 "카카오 로그인" 버튼
+(async function () {
+  const chip = document.getElementById('memberChip');
+  if (!chip) return;
+  try {
+    const r = await fetch('/api/auth', { credentials: 'same-origin', cache: 'no-store' });
+    const d = await r.json();
+    if (d.loggedIn) { chip.textContent = `🎴 ${d.nick}님 · 카드 ${d.cardCount}장`; chip.href = 'cardbook.html'; chip.title = '내 올림포스 카드첩 열기'; }
+    else if (d.ready) { chip.textContent = '💬 카카오 로그인'; chip.classList.add('kakao'); chip.href = '/api/auth?action=login&next=' + encodeURIComponent('/'); }
+    else return;
+    chip.hidden = false;
+  } catch (e) { /* 로그인 기능이 꺼져 있으면 표시하지 않음 */ }
+})();
+</script>
 </body>
 </html>

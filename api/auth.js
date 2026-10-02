@@ -46,7 +46,7 @@ export default async function handler(req, res) {
           await kv.del(`cards:${u.wid}`);
           await kv.del(`wid:${u.wid}`);
           await kv.del(`visits:${u.wid}`);
-          await kv.zrem('collectors', u.wid);
+          await kv.hdel('members', u.wid);
           await kv.del(`user:${kid}`);
         }
         res.setHeader('Set-Cookie', clearSessionCookie());

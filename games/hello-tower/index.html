@@ -234,6 +234,20 @@
   #testPanel .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
   #testPanel .grid button { padding: 9px 4px; border-radius: 10px; border: 1.5px solid #ccd; background: #f4f6ff; font-size: 13px; font-weight: 700; color: #223; }
   #testPanel .grid button.act2 { background: #fff6d9; border-color: #e6c25a; }
+  #testPanel .adminBox { margin-top: 14px; padding: 10px; border-radius: 12px; background: #f3f0ff; border: 1.5px solid #c9bff5; font-size: 13px; color: #334; }
+  #testPanel .adminBox input { width: 100%; margin-top: 6px; padding: 8px; border-radius: 8px; border: 1.5px solid #ccd; font-size: 14px; }
+  #testPanel .adminBox button { margin-top: 6px; padding: 8px 12px; border-radius: 8px; border: 0; background: #4b3fb5; color: #fff; font-weight: 700; font-size: 13px; }
+  #testPanel .adminBox #testAdminMsg { margin-top: 6px; font-weight: 700; color: #a33; white-space: pre-line; }
+  #overlay #memberBox { margin-top: 6px; font-size: 13px; color: #fff6d5; font-weight: 700; max-width: 300px; line-height: 1.45; }
+  #overlay #memberBox button { display: block; margin: 6px auto 0; background: #fee500; color: #191600; font-size: 14px; font-weight: 800; padding: 10px 18px; border: 0; border-radius: 999px; box-shadow: 0 3px 0 #c9b400; }
+  #pendingBox { position: fixed; inset: 0; z-index: 60; display: none; align-items: center; justify-content: center; background: rgba(10, 12, 30, 0.86); }
+  #pendingBox.show { display: flex; }
+  #pendingBox .box { background: #1b2249; color: #fff6d5; border: 2px solid #f2c14e; border-radius: 18px; padding: 18px; width: 310px; max-width: 92vw; text-align: center; }
+  #pendingBox .big { font-size: 34px; font-weight: 900; color: #ffd76a; margin: 4px 0 10px; }
+  #pendingBox input { width: 100%; margin-top: 6px; padding: 10px; border-radius: 10px; border: 0; font-size: 15px; }
+  #pendingBox button { margin-top: 10px; padding: 11px 18px; border-radius: 999px; border: 0; font-weight: 800; font-size: 15px; background: #ffd76a; color: #3a2a10; }
+  #pendingBox button.ghost { background: transparent; color: #9aa3c7; font-size: 13px; font-weight: 600; }
+  #pendingBox .msg { margin-top: 8px; font-size: 13px; min-height: 18px; }
   #testPanel label { display: block; font-size: 13px; margin-top: 10px; font-weight: 700; color: #334; }
   #testBadge { position: fixed; left: 8px; bottom: 8px; z-index: 20; display: none; background: #e0245e; color: #fff;
     font-size: 12px; font-weight: 800; padding: 6px 10px; border-radius: 999px; text-decoration: none; }
@@ -276,6 +290,23 @@
   <div class="grid" id="testFloorBtns"></div>
   <label><input type="checkbox" id="testGodsOnly"> 2막에서 신 블록만 떨어뜨리기</label>
   <label><input type="checkbox" id="testShapes"> 물리 모양(빨간 선) 보기</label>
+  <div class="adminBox">
+    <b>🔐 카드 발급 실제 테스트 (관리자)</b><br>
+    켜면 이 테스트 모드에서 얻은 카드가 <b>실제로 내 카드첩에 발급</b>돼요. 먼저 카드첩에서 카카오 로그인을 해 두세요.
+    <input id="testAdminPw" type="password" placeholder="관리자 비밀번호" autocomplete="off">
+    <button id="testAdminBtn">실제 발급 켜기</button>
+    <button id="testResetBtn" style="display:none;background:#b5453f">내 카드 모두 지우기(다시 테스트)</button>
+    <div id="testAdminMsg"></div>
+  </div>
+</div></div>
+<div id="pendingBox"><div class="box">
+  <div>로그인 완료! 방금 기록을 등록하세요</div>
+  <div class="big" id="pendingFloor">0층</div>
+  <input id="pendingNick" placeholder="닉네임" maxlength="12">
+  <input id="pendingContact" placeholder="카카오톡 ID (당첨 연락용)" maxlength="30">
+  <button id="pendingSubmit">기록 등록하기</button>
+  <div class="msg" id="pendingMsg"></div>
+  <button class="ghost" id="pendingClose">닫고 새 게임 하기</button>
 </div></div>
 
 <div id="overlay">
@@ -284,6 +315,7 @@
   <button id="retryBtn">다시 하기</button>
   <button id="shareBtn">📤 친구에게 자랑하기!</button>
   <a id="cardbookLink" href="/cardbook.html">🎴 올림포스 카드첩</a>
+  <div id="memberBox"></div>
   <div id="rankPanel">
     <div class="rankPanelLabel">🏆 이벤트 랭킹 등록</div>
     <input id="rankNickname" placeholder="닉네임" maxlength="12">
@@ -323,6 +355,9 @@ const DEBUG_MODE = false; // 버셀 배포 앞두고 끔(디버그 박스/층수
 // [테스트 모드] ?test=1 — 시작 층을 골라서(예: 101층) 바로 시작할 수 있는 확인용 모드.
 // 랭킹 등록·통계·도감 저장은 전부 꺼짐(실제 기록과 섞이지 않게).
 const TEST_MODE = new URLSearchParams(location.search).get('test') === '1';
+// [관리자] 테스트 모드에서도 카드를 "실제로" 발급해 보는 스위치 — 관리자 비밀번호를 서버가 확인해 줘야 켜진다
+let TEST_SAVE = false;
+const NO_SAVE = () => TEST_MODE && !TEST_SAVE; // 카드를 저장하지 않는 상태인가
 let testGodsOnly = false;   // 2막에서 신 블록만 떨어뜨리기
 let testShowShapes = false; // 물리 모양(빨간 선) 보기
 if (new URLSearchParams(location.search).get('dev') === '1') {
@@ -2079,18 +2114,77 @@ function showGodUnlock(key) {
 // 로그인하지 않은 사람의 카드는 기기에만 남아 있다가, 나중에 카드첩을 만들면 그때 옮겨진다.
 let member = null; // 로그인한 회원이면 { wid, nick }
 function claimCardsToServer(claims) {
-  if (!member || TEST_MODE || !claims.length) return;
-  fetch('/api/wallet', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'claim', cards: claims }) }).catch(() => {});
+  if (NO_SAVE() || !claims.length) return;
+  const say = (t) => { if (TEST_SAVE) { const b = document.querySelector('#cardReveal .crBook'); if (b) b.textContent = t; console.log('[카드 발급 테스트]', t); } };
+  if (!member) { say('❌ 로그인 상태가 아니라 서버에 등록하지 않았어요(기기에만 저장)'); return; }
+  fetch('/api/wallet', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'claim', cards: claims }) })
+    .then(async (r) => {
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) return say('❌ 서버 등록 실패 (응답 ' + r.status + ')');
+      say(d.added && d.added.length ? `✅ 카드첩에 발급됨: ${d.added.join(', ')} (지금 ${d.count}장)` : `ℹ️ 이미 카드첩에 있는 카드예요 (지금 ${d.count}장)`);
+    })
+    .catch(() => say('❌ 서버에 연결하지 못했어요'));
+}
+function localCardCount() { const c = loadCards(); return GOD_ORDER.filter((k) => c[k]).length; }
+// 게임오버 화면의 회원 안내 — 로그인했으면 이름을, 아니면 카카오 로그인 버튼을 보여준다
+function renderMemberBox() {
+  const box = document.getElementById('memberBox');
+  if (!box) return;
+  box.textContent = '';
+  if (TEST_MODE) return;
+  if (member) {
+    box.textContent = `✅ ${member.nick}님으로 로그인됨 · 기록을 등록하면 랭킹에서 내 카드첩으로 연결돼요`;
+    const n = document.getElementById('rankNickname');
+    if (n && !n.value) n.value = member.nick;
+    return;
+  }
+  const n = localCardCount();
+  const t = document.createElement('div');
+  t.textContent = n ? `이 기기에 신 카드 ${n}장이 있어요. 로그인해야 카드첩에 보관되고 랭킹에 🎴가 붙어요.` : '로그인하고 기록을 등록하면 랭킹에서 내 카드첩으로 연결돼요.';
+  const b = document.createElement('button');
+  b.textContent = '💬 카카오 로그인';
+  b.addEventListener('click', (e) => {
+    e.stopPropagation();
+    // 로그인하러 다녀오면 이 화면이 사라지므로, 방금 기록을 잠깐 적어 뒀다가 돌아와서 등록할 수 있게 한다
+    try { if (state === 'gameover' && floorCount > 0) sessionStorage.setItem('ht_pending', JSON.stringify({ floor: floorCount, at: Date.now() })); } catch (err) { /* 무시 */ }
+    track('login_click', { from: 'tower_gameover', score: floorCount });
+    location.href = '/api/auth?action=login&next=' + encodeURIComponent('/games/hello-tower/');
+  });
+  box.appendChild(t); box.appendChild(b);
+}
+// 로그인하고 돌아왔을 때: 적어 둔 방금 기록이 있으면 등록 창을 띄운다
+function showPendingScore() {
+  let p = null;
+  try { p = JSON.parse(sessionStorage.getItem('ht_pending') || 'null'); sessionStorage.removeItem('ht_pending'); } catch (e) { /* 무시 */ }
+  if (!p || !member || !(p.floor > 0) || Date.now() - p.at > 15 * 60 * 1000) return;
+  const box = document.getElementById('pendingBox');
+  document.getElementById('pendingFloor').textContent = p.floor + '층';
+  try { document.getElementById('pendingNick').value = localStorage.getItem('ht_nickname') || member.nick; document.getElementById('pendingContact').value = localStorage.getItem('ht_contact') || ''; } catch (e) { /* 무시 */ }
+  box.classList.add('show');
+  ['pointerdown', 'click', 'touchstart'].forEach((ev) => box.addEventListener(ev, (e) => e.stopPropagation()));
+  document.getElementById('pendingClose').addEventListener('click', () => box.classList.remove('show'));
+  document.getElementById('pendingSubmit').addEventListener('click', async () => {
+    const nick = document.getElementById('pendingNick').value.trim(), contact = document.getElementById('pendingContact').value.trim();
+    const msg = document.getElementById('pendingMsg');
+    if (!nick || !contact) { msg.textContent = '닉네임과 연락처를 모두 입력해주세요.'; return; }
+    try { localStorage.setItem('ht_nickname', nick); localStorage.setItem('ht_contact', contact); } catch (e) { /* 무시 */ }
+    msg.textContent = '등록 중...';
+    try {
+      const res = await fetch('/api/score', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ game: 'hello_tower', nickname: nick, contact, meters: p.floor }) });
+      msg.textContent = res.ok ? '등록됐어요! 🎉 랭킹에서 이름 옆 🎴를 확인해 보세요.' : '등록에 실패했어요. 다시 시도해주세요.';
+      if (res.ok) { track('score_submit', { score: p.floor, after_login: true }); document.getElementById('pendingSubmit').style.display = 'none'; document.getElementById('pendingClose').textContent = '닫기'; }
+    } catch (e) { msg.textContent = '네트워크 오류예요. 다시 시도해주세요.'; }
+  });
 }
 // 게임을 열 때 한 번: 로그인 상태를 확인하고, 카드첩과 이 기기의 카드를 서로 맞춘다.
 // (다른 기기에서 얻은 카드는 이 기기에도 표시해 획득 연출이 다시 뜨지 않게 하고, 이 기기에만 있던 카드는 카드첩에 등록)
 async function syncMember() {
-  if (TEST_MODE) return;
+  if (NO_SAVE()) return;
   try {
     const r = await fetch('/api/wallet', { credentials: 'same-origin', cache: 'no-store' });
     if (!r.ok) return;
     const w = await r.json();
-    if (!w || !w.isMine) return;
+    if (!w || !w.isMine) { renderMemberBox(); return; }
     member = { wid: w.wid, nick: w.nick };
     const cards = loadCards();
     let changed = false;
@@ -2104,8 +2198,18 @@ async function syncMember() {
     const link = document.getElementById('cardbookLink');
     if (link) link.textContent = '🎴 내 올림포스 카드첩';
   } catch (e) { /* 로그인 기능이 없거나 꺼져 있어도 게임은 그대로 진행 */ }
+  renderMemberBox();
 }
-syncMember();
+(function () {
+  // 로그인하고 돌아온 주소(?login=ok)는 깔끔하게 정리
+  let back = false;
+  try {
+    const q = new URLSearchParams(location.search);
+    if (q.has('login')) { back = q.get('login') === 'ok'; q.delete('login'); history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q.toString() : '')); }
+  } catch (e) { /* 무시 */ }
+  renderMemberBox();
+  syncMember().then(() => { if (back) showPendingScore(); });
+})();
 function loadCards() {
   try { return JSON.parse(localStorage.getItem('ht_cards') || '{}'); } catch (e) { return {}; }
 }
@@ -2114,14 +2218,14 @@ function loadCards() {
 function awardGodCard(key) {
   const cards = loadCards();
   const isNew = !cards[key];
-  if (!TEST_MODE) {
+  if (!NO_SAVE()) {
     if (isNew) cards[key] = { at: new Date().toISOString(), floor: floorCount };
     cards[key].count = (cards[key].count || 0) + 1;
     try { localStorage.setItem('ht_cards', JSON.stringify(cards)); } catch (e) { /* 무시 */ }
     if (isNew) claimCardsToServer([{ god: key, floor: 110 + GOD_ORDER.indexOf(key) * 10, at: cards[key].at }]);
   }
   track('card_get', { god: key, score: floorCount, first: isNew });
-  return isNew || TEST_MODE;
+  return isNew || NO_SAVE();
 }
 
 // ---------- 도감 카드 획득 연출 — 화면이 어두워지고 빛줄기가 퍼지며 카드가 뒤집혀 나타남 ----------
@@ -2140,7 +2244,7 @@ function showCardReveal(key, onDone) {
   const art = new Image();
   art.onload = () => { if (cardRevealDone) { crImg.src = art.src; crCard.classList.add('hasArt'); } };
   art.src = '/assets/cards/' + key + '.webp';
-  el.querySelector('.crBook').textContent = TEST_MODE ? '' : (member ? '🎴 내 올림포스 카드첩에 보관했어요' : '🎴 카드첩을 만들면 영원히 보관돼요 (게임이 끝난 뒤 안내)');
+  el.querySelector('.crBook').textContent = NO_SAVE() ? '' : TEST_SAVE ? '서버에 등록하는 중…' : (member ? '🎴 내 올림포스 카드첩에 보관했어요' : '🎴 카드첩을 만들면 영원히 보관돼요 (게임이 끝난 뒤 안내)');
   el.querySelector('.crName').textContent = info.name;
   el.querySelector('.crTitle').textContent = info.title;
   el.querySelector('.crNo').textContent = 'No.' + String(GOD_ORDER.indexOf(key) + 1).padStart(2, '0');
@@ -3121,7 +3225,7 @@ if (TEST_MODE) {
   const wrap = document.getElementById('testFloorBtns');
   const opts = [[1, '1층 (처음부터)'], [96, '96층 (2막 직전)']]
     .concat(GOD_ORDER.map((k, i) => [HEAVEN_FLOOR + 1 + i * 10, `${HEAVEN_FLOOR + 1 + i * 10}층 ${GOD_INFO[k].name}`]))
-    .concat([[198, '198층 (최종 직전)']]);
+    .concat([[110, '110층 (한 층 쌓으면 제우스 카드)'], [130, '130층 (한 층 쌓으면 헤르메스 카드)'], [198, '198층 (최종 직전)']]);
   opts.forEach(([n, label]) => {
     const b = document.createElement('button');
     b.textContent = label;
@@ -3130,6 +3234,36 @@ if (TEST_MODE) {
     wrap.appendChild(b);
   });
   document.getElementById('testPanel').classList.add('show');
+
+  // ---- 관리자: 카드 발급 실제 테스트 ----
+  const adminMsg = document.getElementById('testAdminMsg');
+  const adminCall = (action, pw) => fetch('/api/wallet', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json', 'x-admin-secret': pw }, body: JSON.stringify({ action }) });
+  const adminOn = async (pw) => {
+    adminMsg.textContent = '확인 중…';
+    try {
+      const r = await adminCall('admin_check', pw);
+      if (r.status === 401) { adminMsg.textContent = '❌ 로그인이 안 돼 있어요. 카드첩(/cardbook.html)에서 카카오 로그인을 먼저 해 주세요.'; return; }
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok || !d.ok) { adminMsg.textContent = '❌ 관리자 비밀번호가 맞지 않아요.'; try { sessionStorage.removeItem('ht_admin'); } catch (e) {} return; }
+      TEST_SAVE = true;
+      try { sessionStorage.setItem('ht_admin', pw); } catch (e) { /* 무시 */ }
+      await syncMember();
+      adminMsg.style.color = '#1a7a3a';
+      adminMsg.textContent = `✅ 실제 발급 켜짐 — ${d.nick}님 카드첩\n지금 이 기기 카드 ${localCardCount()}장. '110층' 버튼으로 시작해 한 층만 쌓으면 제우스 카드가 발급돼요.`;
+      document.getElementById('testResetBtn').style.display = 'inline-block';
+      document.querySelector('#testPanel .note').textContent = '랭킹 등록·통계는 꺼져 있고, 카드만 실제로 발급돼요(관리자 테스트).';
+    } catch (e) { adminMsg.textContent = '❌ 서버에 연결하지 못했어요.'; }
+  };
+  ['pointerdown', 'click', 'touchstart', 'keydown'].forEach((ev) => document.querySelector('#testPanel .adminBox').addEventListener(ev, (e) => e.stopPropagation()));
+  document.getElementById('testAdminBtn').addEventListener('click', () => { const pw = document.getElementById('testAdminPw').value; if (pw) adminOn(pw); });
+  document.getElementById('testResetBtn').addEventListener('click', async () => {
+    if (!confirm('내 카드첩의 카드를 모두 지울까요? (이 기기에 저장된 카드도 함께 지워요)')) return;
+    let pw = ''; try { pw = sessionStorage.getItem('ht_admin') || ''; } catch (e) {}
+    const r = await adminCall('admin_reset', pw).catch(() => null);
+    if (r && r.ok) { try { localStorage.removeItem('ht_cards'); } catch (e) {} adminMsg.textContent = '🧹 카드를 모두 지웠어요. 다시 테스트할 수 있어요.'; }
+    else adminMsg.textContent = '❌ 지우지 못했어요.';
+  });
+  try { const saved = sessionStorage.getItem('ht_admin'); if (saved) { document.getElementById('testAdminPw').value = saved; adminOn(saved); } } catch (e) { /* 무시 */ }
 }
 
 // 배경만 뜬 상태 → 흰 박스 → 표정 생김 순으로 뚝뚝 끊겨 보였음. 이제 핵심

@@ -11,7 +11,7 @@
 //   cards:{카드첩주소}     → { zeus: { at, floor, serial }, ... }
 //   cardserial:{신}        → 숫자                    (그 카드의 전체 획득 번호 — "전체 7번째")
 //   visits:{카드첩주소}    → 숫자                    (구경 온 횟수)
-//   collectors (정렬집합)  → 카드 수가 많은 순서     (수집가 순위)
+//   members (해시)         → 카드첩주소 → { nick, gods:[…], createdAt }   (수집가 광장 — 카드가 0장이어도 모든 회원)
 // 카카오 회원번호는 밖으로 절대 내보내지 않는다. 공개되는 건 무작위로 만든 카드첩 주소(wid)뿐.
 
 import { kv } from '@vercel/kv';
@@ -74,6 +74,35 @@ export async function sessionUser(req) {
   return u ? { kid, ...u } : null;
 }
 
+// 관리자 확인 — 요청 헤더 x-admin-secret 이 Vercel 환경변수 ADMIN_SECRET 과 같은지(코드에는 값이 없음)
+export function isAdminRequest(req) {
+  const expected = process.env.ADMIN_SECRET || '';
+  const given = String(req.headers['x-admin-secret'] || '');
+  if (!expected || !given) return false;
+  const a = Buffer.from(expected), b = Buffer.from(given);
+  return a.length === b.length && timingSafeEqual(a, b);
+}
+
+// 수집가 광장 명단의 한 줄을 최신 상태로 맞춘다(가입·이름 변경·카드 획득 때마다 호출)
+export async function saveMemberRow(u, cards) {
+  if (!u || !u.wid) return;
+  const c = cards || await getCards(u.wid);
+  await kv.hset('members', { [u.wid]: JSON.stringify({ nick: u.nick, gods: GODS.filter((g) => c[g]), createdAt: u.createdAt }) });
+}
+export async function listMembers() {
+  const all = (await kv.hgetall('members')) || {};
+  const rows = [];
+  for (const [wid, raw] of Object.entries(all)) {
+    try {
+      const r = typeof raw === 'string' ? JSON.parse(raw) : raw;
+      rows.push({ wid, nick: String(r.nick || ''), gods: Array.isArray(r.gods) ? r.gods : [], count: Array.isArray(r.gods) ? r.gods.length : 0, createdAt: r.createdAt || '' });
+    } catch (e) { /* 깨진 줄은 건너뜀 */ }
+  }
+  // 카드 많은 순, 같으면 먼저 가입한 순
+  rows.sort((a, b) => b.count - a.count || String(a.createdAt).localeCompare(String(b.createdAt)));
+  return rows;
+}
+
 export function cleanNick(s) {
   return String(s || '').replace(/[\u0000-\u001f<>]/g, '').trim().slice(0, 12);
 }
@@ -94,6 +123,7 @@ export async function upsertUser(kid, kakaoNick) {
     u.lastLoginAt = now;
   }
   await kv.set(`user:${kid}`, u);
+  await saveMemberRow(u);
   return u;
 }
 
@@ -123,7 +153,6 @@ export async function claimCards(wid, claims) {
   }
   if (added.length) {
     await kv.set(`cards:${wid}`, cards);
-    await kv.zadd('collectors', { score: Object.keys(cards).length, member: wid });
   }
   return { cards, added };
 }

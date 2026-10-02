@@ -133,6 +133,10 @@ gtag("config", "G-5YPGVVP49T");
   .card.locked .name { color: var(--dim); text-shadow: none; }
   .card.locked .title { color: #7f88ad; font-weight: 500; }
 
+  .diag { margin-top: 22px; padding: 12px 14px; border-radius: 14px; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--line); font-size: 13px; color: #dfe4f7; }
+  .diag summary { cursor: pointer; font-weight: 700; color: var(--cream); }
+  .diag p { margin-top: 8px; }
+  .diag .btn { margin-top: 10px; }
   .section-title { margin: 34px 0 10px; font-family: 'Gowun Batang', serif; font-weight: 700; font-size: 20px; color: var(--gold); display: flex; align-items: center; gap: 10px; }
   .section-title::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, var(--line), transparent); }
   .note { font-size: 13px; color: var(--dim); }
@@ -396,6 +400,7 @@ function renderBook(w) {
     app.appendChild(el('p', { class: 'note', style: 'text-align:center;margin-top:16px', text: '아직 카드가 없어요. 헬로타워에서 110층을 넘으면 첫 카드(제우스)를 얻어요!' }));
   }
   requestAnimationFrame(() => { const f = $('fill'); if (f) f.style.width = (w.count / w.total * 100) + '%'; });
+  if (w.isMine) app.appendChild(diagNode(w));
   renderCollectors(w.wid);
   renderFoot(w);
 }
@@ -403,6 +408,7 @@ function renderBook(w) {
 async function renderCollectors(currentWid) {
   const r = await api('/api/wallet?list=1');
   const list = (r.data && r.data.collectors) || [];
+  const total = (r.data && r.data.total) || list.length;
   if (!list.length) return;
   const ol = el('ol', { class: 'collectors' });
   list.forEach((c, i) => {
@@ -410,8 +416,8 @@ async function renderCollectors(currentWid) {
     ol.appendChild(el('li', {}, el('a', { href: '/cardbook.html?w=' + encodeURIComponent(c.wid), 'aria-current': c.wid === currentWid ? 'page' : null },
       el('span', { class: 'rk', text: String(i + 1) }), el('span', { class: 'nm', text: c.nick }), dots, el('span', { class: 'ct', text: `${c.count}장` }))));
   });
-  app.appendChild(el('h2', { class: 'section-title', text: '수집가들의 카드첩' }));
-  app.appendChild(el('p', { class: 'note', style: 'margin:-4px 0 10px', text: '이름을 누르면 그 사람의 카드첩을 구경할 수 있어요.' }));
+  app.appendChild(el('h2', { class: 'section-title', id: 'plaza', text: `수집가 광장 · ${total}명` }));
+  app.appendChild(el('p', { class: 'note', style: 'margin:-4px 0 10px', text: '카드첩을 만든 모든 회원이에요. 이름을 누르면 그 사람의 카드첩을 구경할 수 있어요.' }));
   app.appendChild(ol);
 }
 
@@ -457,6 +463,24 @@ async function share(w) {
   } catch (e) {}
   try { if (navigator.share) { await navigator.share({ title, url }); return; } } catch (e) { return; }
   try { await navigator.clipboard.writeText(url); toast('카드첩 주소를 복사했어요!'); } catch (e) { prompt('아래 주소를 복사하세요', url); }
+}
+
+// "카드가 안 보여요" 확인 창 — 이 기기에 저장된 카드와 카드첩(서버)에 있는 카드를 나란히 보여준다
+function diagNode(w) {
+  const local = localCards();
+  const names = (has) => GODS.filter(has).map((g) => g.name).join(', ') || '없음';
+  const box = el('details', { class: 'diag' },
+    el('summary', { text: '카드를 얻었는데 안 보이나요?' }),
+    el('p', {}, '이 기기에 저장된 카드: ', el('b', { text: names((g) => local[g.key]) })),
+    el('p', {}, '카드첩에 보관된 카드: ', el('b', { text: names((g) => w.cards[g.key]) })),
+    el('p', { class: 'note', text: '카드는 게임을 한 그 기기·그 브라우저에 먼저 저장돼요. 카페 앱 안에서 게임을 했다면 카드첩도 같은 앱 안에서 열어 로그인해야 옮겨져요. 테스트 모드(?test=1)에서 얻은 카드는 저장되지 않아요.' }),
+    el('button', { class: 'btn small', onclick: async () => {
+      const claims = GODS.filter((g) => local[g.key] && !w.cards[g.key]).map((g) => ({ god: g.key, floor: 110 + GODS.indexOf(g) * 10, at: local[g.key].at }));
+      if (!claims.length) { toast('옮길 카드가 없어요. 이 기기에는 새 카드가 없어요.'); return; }
+      const c = await post('/api/wallet', { action: 'claim', cards: claims });
+      if (c.ok && c.data.added && c.data.added.length) { toast(`카드 ${c.data.added.length}장을 옮겼어요!`); load(); } else toast('옮기지 못했어요. 잠시 뒤 다시 시도해 주세요.');
+    } }, '이 기기의 카드 다시 옮기기'));
+  return box;
 }
 
 // ---------- 시작 ----------
