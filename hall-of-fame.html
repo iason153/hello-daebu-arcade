@@ -276,8 +276,10 @@ const SHRINES = [
     statue: 'games/hello-tower/assets/blocks/hello.png',
     god: 'games/hello-tower/assets/bg/gods/zeus.png', godName: '제우스', godSide: 'left',
     guardian: '하늘의 신 제우스가 지키는 성소',
-    ascendedTitle: '천상에 오른 자들',
-    ascendedNote: '100층, 신들의 나라에 닿은 이들이에요. 먼저 닿은 순서대로 새겼어요.',
+    ascendedTitle: '올림포스 꼭대기에 선 자들',
+    ascendedNote: '200층, 신들의 여왕 헤라까지 만나고 탑을 끝까지 쌓은 이들이에요. 먼저 오른 순서대로 새겼어요.',
+    reachedTitle: '하늘나라에 닿은 자들',
+    reachedNote: '100층, 1막을 넘어 신들의 나라에 닿은 이들이에요. 먼저 닿은 순서대로 새겼어요.',
   },
   {
     key: 'hello_run', name: '헬로런', unit: 'm', href: 'games/hello-run/',
@@ -413,6 +415,15 @@ function renderShrine(cfg, data) {
     records.appendChild(el('section', {},
       el('h3', { text: `${cfg.ascendedTitle} (${data.ascended.length}명)` }),
       el('p', { class: 'note', text: cfg.ascendedNote, style: 'margin:-4px 0 8px' }),
+      list));
+  }
+
+  if (cfg.reachedTitle && data && data.reached && data.reached.length) {
+    const list = el('ol', { class: 'ascended' });
+    data.reached.forEach((e, i) => list.appendChild(el('li', {}, el('b', { text: `제${i + 1}호` }), e.nickname)));
+    records.appendChild(el('section', {},
+      el('h3', { text: `${cfg.reachedTitle} (${data.reached.length}명)` }),
+      el('p', { class: 'note', text: cfg.reachedNote, style: 'margin:-4px 0 8px' }),
       list));
   }
 

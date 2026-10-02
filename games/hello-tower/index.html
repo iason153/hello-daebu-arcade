@@ -89,8 +89,8 @@
 
   #overlay {
     position: fixed; inset: 0; background: rgba(0,0,0,0.55);
-    display: none; align-items: center; justify-content: center; flex-direction: column;
-    color: #fff; z-index: 20; text-align: center;
+    display: none; align-items: center; justify-content: safe center; flex-direction: column;
+    color: #fff; z-index: 20; text-align: center; overflow-y: auto; padding: 96px 0 24px; box-sizing: border-box;
   }
   #overlay.show { display: flex; }
   #overlay h1 { font-size: 28px; margin: 0 0 6px; }
@@ -114,7 +114,14 @@
   #cardReveal .crCard.hasArt .crPlate { position: absolute; left: 0; right: 0; bottom: 0; z-index: 1; padding: 34px 8px 14px; background: linear-gradient(to top, rgba(16,12,36,0.94) 50%, rgba(16,12,36,0)); }
   #cardReveal .crCard.hasArt .crName { color: #fff6d5; text-shadow: 0 0 10px var(--cr), 0 2px 3px #000; margin-top: 0; }
   #cardReveal .crCard.hasArt .crTitle { color: #ffe9a8; }
-  #cardReveal .crBook { position: relative; margin-top: 10px; color: #ffe9a8; font-size: 13px; font-weight: 700; text-align: center; min-height: 18px; }
+  #cardReveal .crBook { position: relative; margin-top: 10px; color: #ffe9a8; font-size: 13px; font-weight: 700; text-align: center; min-height: 18px; white-space: pre-line; max-width: 300px; line-height: 1.45; }
+  #cardReveal .crBook.warn { background: rgba(20, 16, 40, 0.86); border: 2px solid #fee500; border-radius: 14px; padding: 10px 14px; color: #fff; animation: crWarn 1.2s ease-in-out infinite alternate; }
+  #cardReveal .crBook.warn b { color: #fee500; }
+  @keyframes crWarn { from { box-shadow: 0 0 0 rgba(254, 229, 0, 0); } to { box-shadow: 0 0 18px rgba(254, 229, 0, 0.7); } }
+  #overlay #memberBox .mbCards { display: flex; justify-content: center; margin: 4px 0 6px; }
+  #overlay #memberBox .mbCards img { width: 46px; height: 69px; object-fit: cover; border-radius: 6px; border: 2px solid #ffd76a; margin: 0 -5px; box-shadow: 0 3px 8px rgba(0,0,0,0.5); background: #1a2148; }
+  #overlay #memberBox .mbCards img:nth-child(odd) { transform: rotate(-5deg); } #overlay #memberBox .mbCards img:nth-child(even) { transform: rotate(5deg) translateY(-3px); }
+  #overlay #memberBox.hot { background: rgba(20, 16, 40, 0.8); border: 2px solid #fee500; border-radius: 14px; padding: 10px 12px; }
   #overlay.ending {
     background: radial-gradient(circle, rgba(255,236,168,0.5), rgba(120,70,20,0.75));
   }
@@ -1800,6 +1807,7 @@ function endGame() {
   playGameOverSound();
   track('game_over', { score: floorCount, ending: false });
   document.getElementById('finalFloorNum').textContent = floorCount + '층';
+  renderMemberBox();
   document.getElementById('overlay').classList.add('show');
   // TODO(다음 세션): /api/score 제출 (game: 'hello_tower', score: floorCount)
 }
@@ -1821,6 +1829,7 @@ function showEnding() {
   track('game_over', { score: floorCount, ending: true });
   stopPendulumSound();
   const overlay = document.getElementById('overlay');
+  renderMemberBox();
   overlay.classList.add('show', 'ending');
   document.getElementById('overlayTitle').textContent = floorCount >= FINAL_FLOOR
     ? '🏛️ 올림포스 정상 정복! 신들의 탑을 완성했어요!'
@@ -2140,10 +2149,19 @@ function renderMemberBox() {
     return;
   }
   const n = localCardCount();
+  box.classList.toggle('hot', n > 0);
+  { const l = document.getElementById('cardbookLink'); if (l) l.style.display = n > 0 ? 'none' : ''; } // 카드 안내 상자가 대신함
+  if (n > 0) {
+    // 얻은 카드 그림을 보여 주며 "보관하세요"
+    const row = document.createElement('div'); row.className = 'mbCards';
+    const owned = loadCards();
+    GOD_ORDER.filter((k) => owned[k]).slice(-5).forEach((k) => { const im = new Image(); im.alt = ''; im.src = '/assets/cards/' + k + '.webp'; im.onerror = () => { im.onerror = null; im.src = PIECES[k].file; }; row.appendChild(im); });
+    box.appendChild(row);
+  }
   const t = document.createElement('div');
-  t.textContent = n ? `이 기기에 신 카드 ${n}장이 있어요. 로그인해야 카드첩에 보관되고 랭킹에 🎴가 붙어요.` : '로그인하고 기록을 등록하면 랭킹에서 내 카드첩으로 연결돼요.';
+  t.textContent = n ? `신 카드 ${n}장을 얻었어요! 아직 이 기기에만 있어요. 로그인하면 카드첩에 영원히 보관되고 랭킹에 🎴가 붙어요.` : '오락실 회원 혜택: 랭킹 이름 옆 🎴 표시 · 닉네임 자동 입력 · 올림포스 카드첩';
   const b = document.createElement('button');
-  b.textContent = '💬 카카오 로그인';
+  b.textContent = n ? '💬 카카오 로그인하고 카드 보관하기' : '💬 카카오 로그인하고 등록하기';
   b.addEventListener('click', (e) => {
     e.stopPropagation();
     // 로그인하러 다녀오면 이 화면이 사라지므로, 방금 기록을 잠깐 적어 뒀다가 돌아와서 등록할 수 있게 한다
@@ -2246,7 +2264,16 @@ function showCardReveal(key, onDone) {
   const art = new Image();
   art.onload = () => { if (cardRevealDone) { crImg.src = art.src; crCard.classList.add('hasArt'); } };
   art.src = '/assets/cards/' + key + '.webp';
-  el.querySelector('.crBook').textContent = NO_SAVE() ? '' : TEST_SAVE ? '서버에 등록하는 중…' : (member ? '🎴 내 올림포스 카드첩에 보관했어요' : '🎴 카드첩을 만들면 영원히 보관돼요 (게임이 끝난 뒤 안내)');
+  // 비회원에게는 지금이 가장 갖고 싶은 순간 — "아직 보관되지 않았다"는 걸 눈에 띄게 알린다(로그인은 게임이 끝난 뒤에)
+  const crBook = el.querySelector('.crBook');
+  crBook.classList.remove('warn');
+  if (NO_SAVE()) crBook.textContent = '';
+  else if (TEST_SAVE) crBook.textContent = '서버에 등록하는 중…';
+  else if (member) crBook.textContent = '🎴 내 올림포스 카드첩에 보관했어요';
+  else {
+    crBook.classList.add('warn');
+    crBook.innerHTML = '⚠️ 이 카드는 아직 <b>이 기기에만</b> 있어요.<br>게임이 끝나면 <b>카카오 로그인</b>으로 카드첩에 보관하세요!';
+  }
   el.querySelector('.crName').textContent = info.name;
   el.querySelector('.crTitle').textContent = info.title;
   el.querySelector('.crNo').textContent = 'No.' + String(GOD_ORDER.indexOf(key) + 1).padStart(2, '0');

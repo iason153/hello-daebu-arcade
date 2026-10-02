@@ -71,6 +71,7 @@
 </div>
 
 <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.8.1/kakao.min.js" crossorigin="anonymous"></script>
+<script src="/member.js"></script>
 <script>
 // 카카오톡 공유용 초기화. 헬로런과 같은 카카오 앱(JavaScript 키) 재사용 — 이미
 // daebugame.com 도메인으로 등록돼 있어서 별도 설정 없이 바로 쓸 수 있음.
@@ -1282,6 +1283,7 @@ document.getElementById('retryBtn').addEventListener('click', (e)=>{
     if(savedNick) document.getElementById('rankNickname').value = savedNick;
     if(savedContact) document.getElementById('rankContact').value = savedContact;
   }catch(e){}
+  try { if (window.HelloMember) HelloMember.init({ game: 'hello_bird', unit: '점', path: '/games/hello-bird/', getScore: () => score, keys: ['hr_nickname', 'hr_contact'] }); } catch (e) { /* 회원 안내가 실패해도 게임은 그대로 */ }
   document.getElementById('rankSubmitBtn').addEventListener('click', async (e)=>{
     e.stopPropagation();
     const nick = document.getElementById('rankNickname').value.trim();

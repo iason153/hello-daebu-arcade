@@ -101,6 +101,7 @@
 </div>
 
 <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.8.1/kakao.min.js" crossorigin="anonymous"></script>
+<script src="/member.js"></script>
 <script>
 try { if (window.Kakao && !window.Kakao.isInitialized()) window.Kakao.init('3994a3bda3b8146e709683fdb350c9cc'); } catch (e) {}
 (() => {
@@ -1383,6 +1384,7 @@ document.getElementById('retryBtn').addEventListener('click', () => { reset(); }
     if (c) document.getElementById('rankContact').value = c;
   } catch (e) {}
   let sentFor = -1;
+  try { if (window.HelloMember) HelloMember.init({ game: 'hello_munch', unit: 'm', path: '/games/hello-munch/', getScore: () => score, keys: ['hm_nickname', 'hm_contact'] }); } catch (e) { /* 회원 안내가 실패해도 게임은 그대로 */ }
   document.getElementById('rankSubmitBtn').addEventListener('click', async () => {
     const nick = document.getElementById('rankNickname').value.trim();
     const contact = document.getElementById('rankContact').value.trim();

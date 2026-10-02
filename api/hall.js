@@ -19,7 +19,7 @@
 import { kv } from '@vercel/kv';
 
 const GAMES = {
-  hello_tower: { maxScore: 100 }, // 100층 = 천국 엔딩
+  hello_tower: { maxScore: 200, midScore: 100 }, // 200층 = 올림포스 꼭대기(최종 엔딩), 100층 = 1막 완주(하늘나라 도착)
   hello_run: {},
   hello_bird: {},
   hello_munch: { maxScore: 500 }, // 500m = 신들의 나라 도착
@@ -44,7 +44,7 @@ function parseEntries(raws) {
 const timeOf = (e) => (e.at ? Date.parse(e.at) || 0 : 0);
 
 function summarize(entries, cfg) {
-  if (!entries.length) return { champion: null, reign: 0, ascended: [], podium: [], history: [], players: 0 };
+  if (!entries.length) return { champion: null, reign: 0, ascended: [], reached: [], podium: [], history: [], players: 0 };
 
   // 닉네임별 최고 기록(같은 기록을 여러 번 세웠다면 가장 최근 것 — 왕좌 규칙과 맞춤)
   const best = new Map();
@@ -83,7 +83,16 @@ function summarize(entries, cfg) {
         .sort((a, b) => timeOf(a) - timeOf(b))
     : [];
 
+  // 중간 고지(헬로타워 100층)에 닿은 사람들 — 닉네임별로 "처음 그 고지를 넘은" 기록 순서대로
+  let reached = [];
+  if (cfg.midScore) {
+    const first = new Map();
+    for (const e of chrono) if (e.score >= cfg.midScore && !first.has(e.nickname)) first.set(e.nickname, e);
+    reached = [...first.values()];
+  }
+
   return {
+    reached,
     champion: current,          // { nickname, score, at, reign }
     reign: history.length,
     ascended,
