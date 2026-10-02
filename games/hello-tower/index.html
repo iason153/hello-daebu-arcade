@@ -158,24 +158,49 @@
     82% { opacity: 1; }
     100% { opacity: 0; transform: translate(-50%, -60%) scale(1); }
   }
-  #cardPop { position: fixed; left: 50%; top: 42%; transform: translate(-50%, -50%) rotateY(90deg); opacity: 0;
-    pointer-events: none; z-index: 31; width: 170px; padding: 10px 10px 12px; border-radius: 16px;
-    background: linear-gradient(160deg, #fffaf0, #f3e3c0); border: 5px solid #c0c6cf; text-align: center;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.35); }
-  #cardPop.grade-rare { border-color: #e6b422; box-shadow: 0 0 26px rgba(255, 200, 60, 0.85); }
-  #cardPop.grade-legend { border-color: #ff7ad9; box-shadow: 0 0 30px rgba(140, 200, 255, 0.95), 0 0 12px #ff7ad9 inset; }
-  #cardPop .cHead { font-size: 12px; font-weight: 900; color: #7a4b00; margin-bottom: 6px; }
-  #cardPop img { width: 140px; height: 120px; object-fit: contain; display: block; margin: 0 auto; }
-  #cardPop .cName { font-size: 20px; font-weight: 900; color: #3a2a10; margin-top: 6px; }
-  #cardPop .cTitle { font-size: 12px; color: #7a6040; font-weight: 700; }
-  #cardPop.show { animation: cardFlip 2.6s ease forwards; }
-  @keyframes cardFlip {
-    0% { opacity: 0; transform: translate(-50%, -50%) rotateY(90deg) scale(0.7); }
-    15% { opacity: 1; transform: translate(-50%, -50%) rotateY(0deg) scale(1.08); }
-    25% { transform: translate(-50%, -50%) rotateY(0deg) scale(1); }
-    80% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-    100% { opacity: 0; transform: translate(-50%, -50%) translateY(-40px) scale(0.6); }
-  }
+  /* 도감 카드 획득 연출 */
+  #cardReveal { position: fixed; inset: 0; z-index: 40; display: none; align-items: center; justify-content: center;
+    flex-direction: column; background: rgba(6, 8, 22, 0.86); overflow: hidden; font-family: sans-serif;
+    --cr: #cfd6e2; --cr2: #ffffff; }
+  #cardReveal.grade-rare { --cr: #ffc93c; --cr2: #fff3b0; }
+  #cardReveal.grade-legend { --cr: #ff7ad9; --cr2: #8fd6ff; }
+  #cardReveal.show { display: flex; animation: crFade 0.35s ease both; }
+  @keyframes crFade { from { opacity: 0; } to { opacity: 1; } }
+  #cardReveal .crRays { position: absolute; left: 50%; top: 50%; width: 220vmax; height: 220vmax; margin: -110vmax 0 0 -110vmax;
+    background: repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--cr) 55%, transparent) 0deg 7deg, transparent 7deg 20deg);
+    -webkit-mask-image: radial-gradient(circle, #000 0%, transparent 42%); mask-image: radial-gradient(circle, #000 0%, transparent 42%);
+    animation: crSpin 14s linear infinite, crRaysIn 0.9s ease-out both; }
+  @keyframes crSpin { to { transform: rotate(360deg); } }
+  @keyframes crRaysIn { from { opacity: 0; } to { opacity: 0.85; } }
+  #cardReveal .crGlow { position: absolute; left: 50%; top: 50%; width: 520px; height: 520px; margin: -260px 0 0 -260px; border-radius: 50%;
+    background: radial-gradient(circle, color-mix(in srgb, var(--cr2) 80%, transparent) 0%, color-mix(in srgb, var(--cr) 45%, transparent) 30%, transparent 68%);
+    animation: crPulse 1.8s ease-in-out infinite; }
+  @keyframes crPulse { 0%, 100% { transform: scale(0.92); opacity: 0.75; } 50% { transform: scale(1.06); opacity: 1; } }
+  #cardReveal .crHead { position: relative; color: #fff6d5; font-weight: 900; font-size: 24px; letter-spacing: 1px; margin-bottom: 16px;
+    text-shadow: 0 0 14px var(--cr), 0 2px 4px rgba(0,0,0,0.6); animation: crUp 0.6s 0.2s ease-out both; }
+  @keyframes crUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+  #cardReveal .crCard { position: relative; width: 232px; padding: 10px 12px 16px; border-radius: 18px; text-align: center; overflow: hidden;
+    background: linear-gradient(165deg, #fffdf6 0%, #f6ead0 60%, #ecd9ae 100%);
+    border: 6px solid var(--cr); box-shadow: 0 0 0 2px rgba(255,255,255,0.7) inset, 0 0 34px var(--cr), 0 18px 40px rgba(0,0,0,0.55);
+    animation: crFlip 1s 0.15s cubic-bezier(0.2, 0.9, 0.3, 1.2) both, crFloat 3s 1.2s ease-in-out infinite; }
+  #cardReveal.grade-legend .crCard { border-image: linear-gradient(135deg, #ff7ad9, #ffd76a, #8fd6ff, #b8ff9a, #ff7ad9) 1; border-radius: 0; }
+  @keyframes crFlip { 0% { opacity: 0; transform: perspective(700px) rotateY(180deg) scale(0.35); }
+    60% { opacity: 1; transform: perspective(700px) rotateY(-12deg) scale(1.1); } 100% { opacity: 1; transform: perspective(700px) rotateY(0) scale(1); } }
+  @keyframes crFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
+  #cardReveal .crTop { display: flex; justify-content: space-between; font-size: 12px; font-weight: 900; color: #8a6a2a; margin-bottom: 6px; }
+  #cardReveal .crGrade { color: #fff; background: var(--cr); padding: 2px 9px; border-radius: 999px; text-shadow: 0 1px 1px rgba(0,0,0,0.35); }
+  #cardReveal .crArt { height: 176px; border-radius: 12px; display: flex; align-items: center; justify-content: center;
+    background: radial-gradient(circle at 50% 40%, #fff 0%, color-mix(in srgb, var(--cr) 35%, #fff) 55%, color-mix(in srgb, var(--cr) 60%, #d9c08a) 100%);
+    box-shadow: 0 0 0 2px rgba(255,255,255,0.8) inset; }
+  #cardReveal .crImg { max-width: 196px; max-height: 160px; filter: drop-shadow(0 6px 8px rgba(0,0,0,0.3)); }
+  #cardReveal .crName { font-size: 25px; font-weight: 900; color: #3a2a10; margin-top: 10px; }
+  #cardReveal .crTitle { font-size: 13px; color: #7a6040; font-weight: 700; margin-top: 2px; }
+  #cardReveal .crShine { position: absolute; inset: 0; pointer-events: none; mix-blend-mode: screen;
+    background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.85) 46%, rgba(255,160,230,0.5) 52%, rgba(140,220,255,0.5) 58%, transparent 72%);
+    background-size: 260% 100%; animation: crShine 2.4s 1s ease-in-out infinite; }
+  @keyframes crShine { 0% { background-position: 130% 0; } 60%, 100% { background-position: -130% 0; } }
+  #cardReveal .crHint { position: relative; margin-top: 22px; color: rgba(255,255,255,0.75); font-size: 13px; font-weight: 700;
+    animation: crUp 0.5s 1.1s ease-out both; }
   /* [재설계 C] 퍼펙트 */
   #perfectPop { position: fixed; left: 50%; top: 38%; transform: translate(-50%, -50%); opacity: 0; pointer-events: none;
     z-index: 29; font: 900 34px sans-serif; color: #fff7d6; letter-spacing: 1px; white-space: nowrap;
@@ -222,7 +247,17 @@
 <div id="milestone"></div>
 <div id="banner"></div>
 <div id="perfectPop"></div>
-<div id="cardPop"><div class="cHead">🎴 도감 카드 획득!</div><img alt=""><div class="cName"></div><div class="cTitle"></div></div>
+<div id="cardReveal">
+  <div class="crRays"></div><div class="crGlow"></div>
+  <div class="crHead">도감 카드 획득!</div>
+  <div class="crCard">
+    <div class="crTop"><span class="crNo"></span><span class="crGrade"></span></div>
+    <div class="crArt"><img class="crImg" alt=""></div>
+    <div class="crName"></div><div class="crTitle"></div>
+    <div class="crShine"></div>
+  </div>
+  <div class="crHint">화면을 누르면 계속</div>
+</div>
 <a id="testBadge" href="?test=1">🧪 테스트 메뉴로</a>
 <div id="testPanel"><div class="box">
   <h2>🧪 헬로타워 테스트 모드</h2>
@@ -561,10 +596,11 @@ const DIFFICULTY_STAGES = [
   // [2막] 101층부터: 1막 끝과 같은 수준에서 시작해 점점 조임. 진짜 어려움은
   // "살아있는 꼭대기"(흔들리는 블록 2~3개)와 빨라진 시계추가 만든다.
   // 기울기 판정은 이제 '순간'이 아니라 '0.45초 이상 지속'이라 운으로 죽지 않음.
-  { floor: 100, frictionMul: 0.40, tiltDeg: 16 },
-  { floor: 130, frictionMul: 0.36, tiltDeg: 15 },
-  { floor: 160, frictionMul: 0.32, tiltDeg: 14 },
-  { floor: 180, frictionMul: 0.30, tiltDeg: 13 },
+  // (2026-10-02 대표님 플레이 후: 2막이 쉽다 → 기울기 한도 16/15/14/13° → 15/13/12/12°)
+  { floor: 100, frictionMul: 0.40, tiltDeg: 15 },
+  { floor: 130, frictionMul: 0.36, tiltDeg: 13 },
+  { floor: 160, frictionMul: 0.32, tiltDeg: 12 },
+  { floor: 180, frictionMul: 0.30, tiltDeg: 12 },
 ];
 function difficultyStage(floor) {
   let stage = DIFFICULTY_STAGES[0];
@@ -1191,6 +1227,24 @@ Object.keys(BLOCK_SOUND_PATHS).forEach(key => {
   a.volume = 0.85;
   BLOCK_SOUND_SRC[key] = a;
 });
+// [2막] 신 등장 효과음(대표님 제작) — 그 신 블록이 시계추에 매달려 나타날 때 한 번 재생.
+// 길이가 1.3~2.4초라 기존 블록 소리처럼 반복하지 않음. 태풍 비명/공유카드 목록과 섞이지 않게 따로 보관.
+const GOD_SOUND_SRC = {};
+GOD_ORDER.forEach(key => {
+  const a = new Audio(`assets/sfx/gods/${key}.mp3`);
+  a.preload = 'auto';
+  GOD_SOUND_SRC[key] = a;
+});
+let godVoice = null;
+function playGodSound(type) {
+  if (!SOUND_ENABLED || !GOD_SOUND_SRC[type]) return;
+  try {
+    if (godVoice) { godVoice.pause(); }
+    godVoice = GOD_SOUND_SRC[type].cloneNode();
+    godVoice.volume = 0.9;
+    godVoice.play().catch(() => {});
+  } catch (e) { /* 무시 */ }
+}
 let pendulumSoundTimer = null;
 const PENDULUM_SOUND_GAP = 1500; // 반복 사이 텀(ms)
 
@@ -1206,6 +1260,7 @@ function playBlockCuteSound(type) {
 }
 function startPendulumSound(type) {
   stopPendulumSound();
+  if (GOD_SOUND_SRC[type]) { playGodSound(type); return; } // 신 블록: 등장할 때 한 번
   if (!BLOCK_SOUND_SRC[type]) return; // 표정도 소리도 없는 블록
   const loopPlay = () => {
     if (state !== 'pendulum' || currentType !== type) return; // 이미 떨어졌거나 종류가 바뀌면 자동 종료
@@ -1930,7 +1985,10 @@ function finalizeSettle(body) {
   }
 
   if (floorCount >= FINAL_FLOOR) {
-    startEndingIntro(); // 200층 — 올림포스 정상(최종 엔딩)
+    // 200층 — 마지막 신(헤라) 카드까지 받고 올림포스 정상(최종 엔딩)
+    refreezeTower(true);
+    if (awardGodCard(GOD_ORDER[GOD_ORDER.length - 1])) showCardReveal(GOD_ORDER[GOD_ORDER.length - 1], startEndingIntro);
+    else startEndingIntro();
     return;
   }
   if (floorCount === HEAVEN_FLOOR) {
@@ -1938,7 +1996,14 @@ function finalizeSettle(body) {
     return;
   }
   if (floorCount > HEAVEN_FLOOR && floorCount % 10 === 0) {
-    awardGodCard(GOD_ORDER[(floorCount - HEAVEN_FLOOR) / 10 - 1]); // 110층=제우스 카드 …
+    const cardKey = GOD_ORDER[(floorCount - HEAVEN_FLOOR) / 10 - 1]; // 110층=제우스 카드 …
+    if (awardGodCard(cardKey)) {
+      // 처음 얻는 카드 — 화려한 획득 연출을 보여준 뒤에 다음 조각으로
+      if (checkGameOver()) { endGame(); return; }
+      showCardReveal(cardKey, advanceTurn);
+      return;
+    }
+    showMilestone(floorCount); // 이미 가진 카드 — 획득 메시지 없이 층수 돌파만
   } else if (isMilestoneFloor(floorCount)) {
     showMilestone(floorCount);
   }
@@ -1957,9 +2022,7 @@ function advanceTurn() {
   if (floorCount >= HEAVEN_FLOOR && floorCount < FINAL_FLOOR && floorCount % 10 === 0) {
     const g = GOD_ORDER[(floorCount - HEAVEN_FLOOR) / 10];
     currentType = g;
-    // 110층부터는 방금 카드 획득 팝업이 떠 있으므로, 카드가 사라진 뒤에 등장 안내를 띄움
-    if (floorCount > HEAVEN_FLOOR) setTimeout(() => showGodUnlock(g), 2300);
-    else showGodUnlock(g);
+    showGodUnlock(g); // 카드 획득 연출은 이미 끝난 뒤(연출 동안 게임이 멈춰 있었음)
   }
   activeBody = null;
   state = 'pendulum';
@@ -2004,27 +2067,68 @@ function showGodUnlock(key) {
 function loadCards() {
   try { return JSON.parse(localStorage.getItem('ht_cards') || '{}'); } catch (e) { return {}; }
 }
+// 카드를 기록하고, "처음 얻은 카드인지"를 돌려줌. 이미 가진 카드는 획득 연출을 다시 띄우지 않는다.
+// (테스트 모드는 저장하지 않으므로 매번 연출을 보여줌 — 확인용)
 function awardGodCard(key) {
-  const info = GOD_INFO[key];
   const cards = loadCards();
   const isNew = !cards[key];
   if (!TEST_MODE) {
-    if (isNew) cards[key] = { at: new Date().toISOString() };
+    if (isNew) cards[key] = { at: new Date().toISOString(), floor: floorCount };
     cards[key].count = (cards[key].count || 0) + 1;
     try { localStorage.setItem('ht_cards', JSON.stringify(cards)); } catch (e) { /* 무시 */ }
   }
   track('card_get', { god: key, score: floorCount, first: isNew });
-  const el = document.getElementById('cardPop');
+  return isNew || TEST_MODE;
+}
+
+// ---------- 도감 카드 획득 연출 — 화면이 어두워지고 빛줄기가 퍼지며 카드가 뒤집혀 나타남 ----------
+// 연출 동안 게임은 잠깐 멈춤(state 'card_reveal'). 1초 뒤부터 화면을 누르면 닫히고, 5초 뒤 자동으로 닫힘.
+let cardRevealDone = null, cardRevealTimer = null, cardRevealOpenAt = 0;
+function showCardReveal(key, onDone) {
+  const info = GOD_INFO[key];
+  state = 'card_reveal';
+  stopPendulumSound();
+  const el = document.getElementById('cardReveal');
   el.className = 'grade-' + info.grade;
-  el.querySelector('img').src = PIECES[key].file;
-  el.querySelector('.cName').textContent = info.name;
-  el.querySelector('.cTitle').textContent = info.title;
-  el.querySelector('.cHead').textContent = isNew || TEST_MODE ? '🎴 도감 카드 획득!' : '🎴 카드 한 장 더!';
+  el.querySelector('.crImg').src = PIECES[key].file;
+  el.querySelector('.crName').textContent = info.name;
+  el.querySelector('.crTitle').textContent = info.title;
+  el.querySelector('.crNo').textContent = 'No.' + String(GOD_ORDER.indexOf(key) + 1).padStart(2, '0');
+  el.querySelector('.crGrade').textContent = { normal: '일반', rare: '희귀', legend: '전설' }[info.grade];
   void el.offsetWidth;
   el.classList.add('show');
-  spawnMilestoneBurst();
-  milestoneFlashUntil = performance.now() + 350;
-  setTimeout(() => el.classList.remove('show'), 2600);
+  cardRevealDone = onDone;
+  cardRevealOpenAt = performance.now();
+  playCardFanfare(info.grade);
+  cardRevealTimer = setTimeout(closeCardReveal, 5000);
+}
+function closeCardReveal() {
+  if (!cardRevealDone) return;
+  if (performance.now() - cardRevealOpenAt < 1000) return; // 너무 빨리 눌러서 못 보고 넘기는 것 방지
+  clearTimeout(cardRevealTimer);
+  document.getElementById('cardReveal').classList.remove('show');
+  const cb = cardRevealDone; cardRevealDone = null;
+  cb();
+}
+document.getElementById('cardReveal').addEventListener('pointerdown', (e) => { e.stopPropagation(); closeCardReveal(); });
+function playCardFanfare(grade) {
+  if (!SOUND_ENABLED) return;
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const now = audioCtx.currentTime;
+    const notes = grade === 'legend' ? [523, 659, 784, 1047, 1319, 1568] : grade === 'rare' ? [523, 659, 784, 1047, 1319] : [523, 659, 784, 1047];
+    notes.forEach((f, k) => {
+      const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+      osc.type = 'triangle';
+      const t = now + 0.25 + k * 0.09;
+      osc.frequency.setValueAtTime(f, t);
+      gain.gain.setValueAtTime(0.0001, t);
+      gain.gain.exponentialRampToValueAtTime(0.16, t + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + (k === notes.length - 1 ? 0.9 : 0.3));
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.start(t); osc.stop(t + 1);
+    });
+  } catch (e) { /* 무시 */ }
 }
 
 // ---------- 착지 손맛 연출 헬퍼 ----------
