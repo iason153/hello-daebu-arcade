@@ -411,9 +411,9 @@ footer{
     if (d.loggedIn) {
       const btn = document.createElement('button');
       btn.className = 'me-btn'; btn.type = 'button'; btn.setAttribute('aria-haspopup', 'true'); btn.setAttribute('aria-expanded', 'false');
-      btn.textContent = `🎴 ${d.nick}님 ▾`;
+      btn.textContent = `🎴 ${d.nick}님${d.newNotes ? ' 🔴' : ''} ▾`;
       const menu = document.createElement('div'); menu.className = 'me-menu';
-      const book = document.createElement('a'); book.href = 'cardbook.html'; book.textContent = `내 카드첩 (카드 ${d.cardCount}장)`;
+      const book = document.createElement('a'); book.href = 'cardbook.html'; book.textContent = `내 카드첩 (카드 ${d.cardCount}장)` + (d.newNotes ? ` · 새 방명록 ${d.newNotes}` : '');
       const plaza = document.createElement('a'); plaza.href = 'cardbook.html#plaza'; plaza.textContent = '수집가 광장';
       const out = document.createElement('button'); out.type = 'button'; out.textContent = '로그아웃';
       out.addEventListener('click', async () => { try { await fetch('/api/auth', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'logout' }) }); } catch (e) {} location.reload(); });

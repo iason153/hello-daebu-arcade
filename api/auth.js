@@ -19,7 +19,7 @@ import { kv } from '@vercel/kv';
 import { randomBytes } from 'crypto';
 import {
   SITE_ORIGIN, authReady, parseCookies, sessionKid, sessionUser, getUser, upsertUser,
-  makeSessionCookie, clearSessionCookie, getCards,
+  makeSessionCookie, clearSessionCookie, getCards, getNotes,
 } from './_session.js';
 
 const REDIRECT_URI = `${SITE_ORIGIN}/api/auth`;
@@ -46,6 +46,7 @@ export default async function handler(req, res) {
           await kv.del(`cards:${u.wid}`);
           await kv.del(`wid:${u.wid}`);
           await kv.del(`visits:${u.wid}`);
+          await kv.del(`notes:${u.wid}`);
           await kv.hdel('members', u.wid);
           await kv.del(`user:${kid}`);
         }
@@ -119,7 +120,10 @@ export default async function handler(req, res) {
     const u = await sessionUser(req);
     if (!u) return res.status(200).json({ loggedIn: false, ready: authReady() });
     const cards = await getCards(u.wid);
-    return res.status(200).json({ loggedIn: true, ready: true, wid: u.wid, nick: u.nick, cardCount: Object.keys(cards).length });
+    // 내 카드첩에 새로 달린 방명록 수(마지막으로 내 카드첩을 연 뒤에 남이 쓴 글)
+    let newNotes = 0;
+    try { const seen = Date.parse(u.notesSeenAt || u.createdAt) || 0; newNotes = (await getNotes(u.wid)).filter((n) => n.from !== u.wid && Date.parse(n.at) > seen).length; } catch (e) { /* 무시 */ }
+    return res.status(200).json({ loggedIn: true, ready: true, wid: u.wid, nick: u.nick, cardCount: Object.keys(cards).length, newNotes });
   } catch (e) {
     return res.status(500).json({ error: 'server error' });
   }

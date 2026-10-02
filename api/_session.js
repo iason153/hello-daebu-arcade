@@ -11,6 +11,7 @@
 //   cards:{카드첩주소}     → { zeus: { at, floor, serial }, ... }
 //   cardserial:{신}        → 숫자                    (그 카드의 전체 획득 번호 — "전체 7번째")
 //   visits:{카드첩주소}    → 숫자                    (구경 온 횟수)
+//   notes:{카드첩주소}     → [ { id, from, nick, text, at, reply, reports } … ]  (방명록, 최신순 50개까지)
 //   members (해시)         → 카드첩주소 → { nick, gods:[…], createdAt }   (수집가 광장 — 카드가 0장이어도 모든 회원)
 // 카카오 회원번호는 밖으로 절대 내보내지 않는다. 공개되는 건 무작위로 만든 카드첩 주소(wid)뿐.
 
@@ -26,6 +27,24 @@ export const CARD_NEED = {
 export const CARD_NAME = {
   hello: '헬로', starfish: '불가사리', crab: '꽃게', gull: '갈매기', jellyfish: '해파리',
   zeus: '제우스', athena: '아테나', hermes: '헤르메스', poseidon: '포세이돈', aphrodite: '아프로디테', apollo: '아폴론', hades: '하데스', artemis: '아르테미스', dionysus: '디오니소스', hera: '헤라',
+};
+// 자랑 글(링크 미리보기 설명)에 들어가는 한 줄
+export const CARD_BRAG = {
+  hello: "10층 쌓고 헬로를 데려왔어요. 시작이 반이라던데요?",
+  starfish: "30층 돌파! 갯벌의 별을 주웠습니다.",
+  crab: "50층 돌파! 집게 대장한테 인정받았어요.",
+  gull: "70층 돌파! 이제 갈매기랑 눈높이가 같아요.",
+  jellyfish: "100층 완주! 하늘나라 문지기가 문을 열어 줬어요.",
+  zeus: "번개 맞을 각오로 110층을 넘었습니다.",
+  athena: "120층 돌파! 지혜의 여신도 제 손놀림에 놀랐어요.",
+  hermes: "130층 돌파! 택배보다 빠르게 쌓았습니다.",
+  poseidon: "140층 돌파! 파도처럼 흔들려도 안 무너졌어요.",
+  aphrodite: "150층 돌파! 미끄러운 사랑도 버텨 냈습니다.",
+  apollo: "160층 돌파! 통통 튀는 태양신도 붙잡았어요.",
+  hades: "170층 돌파! 저승의 왕도 제 탑은 못 무너뜨렸어요.",
+  artemis: "180층 돌파! 달까지 얼마 안 남았어요.",
+  dionysus: "190층 돌파! 축제는 이제부터입니다.",
+  hera: "200층 정복! 신들의 여왕이 왕관을 씌워 줬어요.",
 };
 export const GODS = Object.keys(CARD_NEED); // (이름은 예전 그대로 두었지만 지금은 "모든 카드" 목록)
 export const SITE_ORIGIN = process.env.SITE_ORIGIN || 'https://daebugame.com';
@@ -111,6 +130,37 @@ export async function listMembers() {
   // 카드 많은 순, 같으면 먼저 가입한 순
   rows.sort((a, b) => b.count - a.count || String(a.createdAt).localeCompare(String(b.createdAt)));
   return rows;
+}
+
+// ---------- 방명록 ----------
+export const NOTE_MAX = 100;   // 글자 수
+const NOTE_KEEP = 50;          // 카드첩 하나에 보관하는 글 수
+export function cleanNote(s) {
+  return String(s || '').replace(/[\u0000-\u001f<>]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, NOTE_MAX);
+}
+export async function getNotes(wid) {
+  const n = await kv.get(`notes:${wid}`);
+  const arr = typeof n === 'string' ? JSON.parse(n) : n;
+  return Array.isArray(arr) ? arr : [];
+}
+export async function saveNotes(wid, notes) {
+  await kv.set(`notes:${wid}`, notes.slice(0, NOTE_KEEP));
+}
+// 밖으로 내보낼 모양 — 신고가 3번 이상 쌓인 글은 주인·관리자가 아니면 보이지 않는다. 신고한 사람 목록은 내보내지 않는다.
+export function publicNotes(notes, viewerWid, ownerWid, isAdmin) {
+  const out = [];
+  for (const n of notes) {
+    const hidden = (n.reports || []).length >= 3;
+    const canManage = isAdmin || viewerWid === ownerWid;
+    if (hidden && !canManage && viewerWid !== n.from) continue;
+    out.push({
+      id: n.id, from: n.from, nick: n.nick, text: n.text, at: n.at, reply: n.reply || null, hidden,
+      canDelete: !!viewerWid && (canManage || viewerWid === n.from),
+      canReply: !!viewerWid && viewerWid === ownerWid,
+      canReport: !!viewerWid && viewerWid !== n.from && viewerWid !== ownerWid && !(n.reports || []).includes(viewerWid), // 주인은 신고 대신 지우기
+    });
+  }
+  return out;
 }
 
 export function cleanNick(s) {

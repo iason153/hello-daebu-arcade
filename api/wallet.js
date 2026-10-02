@@ -7,6 +7,10 @@
 //                                                 이름과 카드 그림이 미리보기로 뜨고, 누르면 카드첩으로 이동한다.
 //   POST /api/wallet { action: 'claim', cards: [{ god, floor, at }] }  → 카드 등록(로그인 필요)
 //   POST /api/wallet { action: 'nick',  nick }                         → 카드첩 이름표(닉네임) 바꾸기
+//   POST /api/wallet { action: 'note', w, text }            → 그 카드첩에 방명록 남기기(회원만, 100자, 30초에 한 번)
+//   POST /api/wallet { action: 'note_reply', w, id, text }  → 카드첩 주인의 답글(글 하나에 하나)
+//   POST /api/wallet { action: 'note_delete', w, id }       → 글 지우기(쓴 사람·카드첩 주인·관리자)
+//   POST /api/wallet { action: 'note_report', w, id }       → 신고(3명이 신고하면 가려짐)
 //   POST /api/wallet { action: 'admin_check' }  (헤더 x-admin-secret)   → 관리자 비밀번호 확인(카드 발급 실제 테스트용)
 //   POST /api/wallet { action: 'admin_reset' }  (헤더 x-admin-secret)   → 로그인한 관리자 본인의 카드만 지움(다시 테스트하려고)
 //
@@ -14,7 +18,7 @@
 // 카카오 회원번호는 절대 내보내지 않는다.
 
 import { kv } from '@vercel/kv';
-import { GODS, CARD_NAME, SITE_ORIGIN, sessionUser, getUser, getCards, claimCards, cleanNick, isAdminRequest, saveMemberRow, listMembers } from './_session.js';
+import { GODS, CARD_NAME, CARD_BRAG, SITE_ORIGIN, sessionUser, getUser, getCards, claimCards, cleanNick, isAdminRequest, saveMemberRow, listMembers, getNotes, saveNotes, publicNotes, cleanNote } from './_session.js';
 
 const publicCards = (cards) => {
   const out = {};
@@ -43,6 +47,43 @@ export default async function handler(req, res) {
         await kv.set(`user:${me.kid}`, u);
         await saveMemberRow(u);
         return res.status(200).json({ ok: true, nick });
+      }
+      // ---------- 방명록 ----------
+      if (String(body.action || '').startsWith('note')) {
+        const w = String(body.w || '').toLowerCase();
+        if (!/^[a-z0-9]{4,16}$/.test(w) || !(await kv.get(`wid:${w}`))) return res.status(404).json({ error: 'not found' });
+        const admin = isAdminRequest(req);
+        const notes = await getNotes(w);
+        const done = async () => { await saveNotes(w, notes); return res.status(200).json({ ok: true, notes: publicNotes(notes, me.wid, w, admin) }); };
+        if (body.action === 'note') {
+          if (w === me.wid) return res.status(400).json({ error: 'own', message: '내 카드첩에는 답글로 이야기해 주세요.' });
+          const text = cleanNote(body.text);
+          if (!text) return res.status(400).json({ error: 'empty', message: '내용을 적어 주세요.' });
+          if (await kv.get(`noterate:${me.wid}`)) return res.status(429).json({ error: 'slow', message: '조금 뒤에 다시 남겨 주세요. (30초에 한 번)' });
+          await kv.set(`noterate:${me.wid}`, 1, { ex: 30 });
+          notes.unshift({ id: `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`, from: me.wid, nick: me.nick, text, at: new Date().toISOString(), reply: null, reports: [] });
+          return done();
+        }
+        const n = notes.find((x) => x.id === String(body.id || ''));
+        if (!n) return res.status(404).json({ error: 'no note' });
+        if (body.action === 'note_reply') {
+          if (w !== me.wid) return res.status(403).json({ error: 'owner only' });
+          const text = cleanNote(body.text);
+          n.reply = text ? { text, at: new Date().toISOString() } : null;
+          return done();
+        }
+        if (body.action === 'note_delete') {
+          if (!(admin || w === me.wid || n.from === me.wid)) return res.status(403).json({ error: 'forbidden' });
+          notes.splice(notes.indexOf(n), 1);
+          return done();
+        }
+        if (body.action === 'note_report') {
+          if (n.from === me.wid) return res.status(400).json({ error: 'own' });
+          n.reports = n.reports || [];
+          if (!n.reports.includes(me.wid)) n.reports.push(me.wid);
+          return done();
+        }
+        return res.status(400).json({ error: 'unknown action' });
       }
       if (body.action === 'admin_check') {
         return res.status(200).json({ ok: isAdminRequest(req), nick: me.nick, wid: me.wid });
@@ -82,12 +123,14 @@ export default async function handler(req, res) {
           dest = `${SITE_ORIGIN}/cardbook.html?w=${swid}`;
           if (q.g && pick === String(q.g)) {
             title = `${owner.nick}님이 '${CARD_NAME[pick]}' 카드를 얻었어요!`;
-            desc = `전체 ${cards[pick].serial}번째로 얻은 ${CARD_NAME[pick]} 카드 · 지금까지 ${owned.length}/${GODS.length}장 — 카드첩 구경하러 오세요.`;
+            desc = `${CARD_BRAG[pick]} (전체 ${cards[pick].serial}번째 ${CARD_NAME[pick]} · 지금까지 ${owned.length}/${GODS.length}장)`;
           } else {
             title = `${owner.nick}님의 올림포스 카드첩 (${owned.length}/${GODS.length}장)`;
-            desc = '헬로타워에서 모은 카드를 구경하러 오세요. 나도 카드첩을 만들 수 있어요!';
+            desc = owned.length >= GODS.length ? '15장을 전부 모은 올림포스의 주인! 구경하러 오세요.'
+              : pick ? `${CARD_BRAG[pick]} 남은 ${GODS.length - owned.length}장은 누가 먼저 모을까요?`
+              : '아직 빈 카드첩이에요. 헬로타워 10층만 쌓아도 첫 카드를 얻어요!';
           }
-          if (pick) img = `${SITE_ORIGIN}/assets/cards/og/${pick}.jpg`;
+          if (pick) img = `${SITE_ORIGIN}/assets/cards/og/${pick}.jpg?v=2`;
         }
       }
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
@@ -132,6 +175,12 @@ export default async function handler(req, res) {
     if (!owner) return res.status(404).json({ error: 'not found' });
 
     const cards = await getCards(wid);
+    const notes = await getNotes(wid);
+    if (isMine) {
+      // 내 카드첩을 열면 "새 방명록" 표시를 지운다
+      const u = await getUser(me.kid);
+      if (u) { u.notesSeenAt = new Date().toISOString(); await kv.set(`user:${me.kid}`, u); }
+    }
     if (isMine) await saveMemberRow(me, cards); // 예전에 가입한 회원도 카드첩을 열면 수집가 광장 명단에 올라감
     let visits = Number(await kv.get(`visits:${wid}`)) || 0;
     if (!isMine) visits = await kv.incr(`visits:${wid}`);
@@ -139,6 +188,7 @@ export default async function handler(req, res) {
       loggedIn: !!me, isMine, wid, nick: owner.nick, createdAt: owner.createdAt,
       cards: publicCards(cards), count: Object.keys(cards).length, total: GODS.length, visits,
       myWid: me ? me.wid : null,
+      notes: publicNotes(notes, me ? me.wid : null, wid, isAdminRequest(req)),
     });
   } catch (e) {
     return res.status(500).json({ error: 'server error' });

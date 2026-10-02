@@ -150,6 +150,36 @@ gtag("config", "G-5YPGVVP49T");
   .pz .nm { margin-top: 5px; font-size: 12px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .pz .ct { font-size: 11px; color: var(--gold); font-weight: 700; }
   .pz.me .nm::after { content: " (나)"; color: var(--sky); }
+  /* 카드 뒤집기 */
+  .flip { position: relative; width: 100%; aspect-ratio: 2 / 3; transform-style: preserve-3d; transition: transform 0.6s cubic-bezier(0.3, 0.9, 0.3, 1.1); cursor: pointer; }
+  .flip.turned { transform: rotateY(180deg); }
+  .flip .face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+  .flip .face.back { transform: rotateY(180deg); border-radius: 20px; overflow: hidden; padding: 9px; background: linear-gradient(135deg, var(--a, #f4f6fa), var(--b, #9aa6b8)); box-shadow: 0 0 26px color-mix(in srgb, var(--vc, #f2c14e) 70%, transparent), 0 12px 26px rgba(0, 0, 0, 0.55); }
+  .back-in { height: 100%; border-radius: 13px; padding: 16px 14px 12px; background: radial-gradient(ellipse 120% 60% at 50% 0%, rgba(242, 193, 78, 0.25), transparent 60%), linear-gradient(180deg, #1b2249, #0b0f24); display: flex; flex-direction: column; text-align: center; color: var(--cream); overflow: hidden; }
+  .back-in .em { font-family: 'Gowun Batang', serif; font-size: 11px; letter-spacing: 0.3em; color: var(--gold); }
+  .back-in .nm { font-family: 'Jua', sans-serif; font-size: 24px; margin-top: 2px; }
+  .back-in .quote { margin-top: 10px; font-family: 'Gowun Batang', serif; font-weight: 700; font-size: 16px; line-height: 1.4; color: #ffe9a8; }
+  .back-in .quote::before { content: "“"; } .back-in .quote::after { content: "”"; }
+  .back-in .stats { margin: 12px auto 0; display: grid; grid-template-columns: auto auto; gap: 4px 10px; font-size: 13px; text-align: left; }
+  .back-in .stats b { color: var(--dim); font-weight: 500; } .back-in .stats span { color: var(--gold); letter-spacing: 2px; }
+  .back-in .secret { margin-top: 12px; padding: 9px 10px; border-radius: 10px; background: rgba(255, 255, 255, 0.07); font-size: 12.5px; line-height: 1.5; color: #dfe4f7; text-align: left; }
+  .back-in .secret i { display: block; font-style: normal; font-size: 11px; color: var(--rose); font-weight: 700; margin-bottom: 2px; }
+  .back-in .rec { margin-top: auto; padding-top: 8px; font-size: 11.5px; color: var(--dim); border-top: 1px dashed var(--line); }
+  .flip-hint { margin-top: 10px; font-size: 12px; color: var(--dim); }
+  /* 방명록 */
+  .notes { display: grid; gap: 10px; margin-top: 4px; }
+  .note-item { padding: 11px 13px; border-radius: 14px; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--line); }
+  .note-item.hidden-note { opacity: 0.55; }
+  .note-item .who { display: flex; align-items: baseline; gap: 8px; font-size: 12px; color: var(--dim); }
+  .note-item .who a { color: var(--gold); font-weight: 700; font-size: 14px; text-decoration: none; }
+  .note-item .txt { margin-top: 3px; font-size: 15px; word-break: break-word; }
+  .note-item .reply { margin-top: 8px; padding: 8px 10px; border-left: 3px solid var(--gold); background: rgba(242, 193, 78, 0.09); border-radius: 0 10px 10px 0; font-size: 14px; }
+  .note-item .reply b { color: var(--gold); font-size: 12px; margin-right: 6px; }
+  .note-item .ops { margin-top: 6px; display: flex; gap: 12px; }
+  .note-item .ops button { background: none; border: 0; color: var(--dim); font-size: 12px; text-decoration: underline; padding: 6px 0; }
+  .note-form { display: flex; gap: 8px; margin: 4px 0 12px; }
+  .note-form input { flex: 1; min-width: 0; padding: 12px 14px; border-radius: 999px; border: 1.5px solid var(--line); background: rgba(255, 255, 255, 0.07); color: var(--cream); font: inherit; font-size: 15px; }
+  .note-form input::placeholder { color: #7f88ad; }
   .diag { margin-top: 22px; padding: 12px 14px; border-radius: 14px; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--line); font-size: 13px; color: #dfe4f7; }
   .diag summary { cursor: pointer; font-weight: 700; color: var(--cream); }
   .diag p { margin-top: 8px; }
@@ -182,9 +212,10 @@ gtag("config", "G-5YPGVVP49T");
 
   /* 크게 보기 */
   .viewer { position: fixed; inset: 0; z-index: 50; display: none; align-items: center; justify-content: center; flex-direction: column; padding: 18px; background: rgba(5, 7, 20, 0.9); overflow: hidden; }
+  .viewer { overflow-y: auto; justify-content: safe center; }
   .viewer.show { display: flex; animation: fade 0.25s ease both; }
   @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
-  .viewer .rays { position: absolute; left: 50%; top: 44%; width: 220vmax; height: 220vmax; margin: -110vmax 0 0 -110vmax; pointer-events: none;
+  .viewer .rays { position: fixed; left: 50%; top: 44%; width: 220vmax; height: 220vmax; margin: -110vmax 0 0 -110vmax; pointer-events: none;
     background: repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--vc, #f2c14e) 45%, transparent) 0deg 6deg, transparent 6deg 18deg);
     -webkit-mask-image: radial-gradient(circle, #000 0%, transparent 40%); mask-image: radial-gradient(circle, #000 0%, transparent 40%); animation: spin 18s linear infinite; opacity: 0.7; }
   @keyframes spin { to { transform: rotate(360deg); } }
@@ -254,6 +285,24 @@ const GODS = [
   { key: 'dionysus',  series: 'god', need: 190, name: '디오니소스', title: '포도와 축제의 신', grade: 'rare',   trait: '머리 위 포도가 무거워 잘 넘어가요.' },
   { key: 'hera',      series: 'god', need: 200, name: '헤라',       title: '신들의 여왕',      grade: 'legend', trait: '깃털처럼 천천히 떨어져 바람에 날려요.' },
 ];
+// 카드 뒷면 이야기 — 한마디, 비밀 이야기, 능력치(쌓기 난이도·귀여움·허세, 5점 만점)
+const FUN = {
+  hello: { quote: "삐약! 나만 믿고 쌓아!", secret: "사실 헬로는 높은 곳을 무서워해요. 그래서 눈을 꼭 감고 있답니다.", stats: [1, 5, 2] },
+  starfish: { quote: "나는 하늘의 별이 아니라 갯벌의 별이야.", secret: "물이 빠지면 갯벌에 누워 구름 모양 맞히기를 해요.", stats: [2, 4, 2] },
+  crab: { quote: "옆으로 걸어도 위로는 올라간다!", secret: "집게로 박수를 치면 누에섬 풍차가 한 바퀴 더 돈다는 소문이 있어요.", stats: [3, 4, 4] },
+  gull: { quote: "새우깡은 사랑입니다.", secret: "시화방조제를 하루에 세 번 왕복해요. 운동이 아니라 간식 때문에요.", stats: [4, 3, 5] },
+  jellyfish: { quote: "어서 와, 100층은 처음이지?", secret: "문지기지만 문을 잠근 적은 한 번도 없어요. 여기까지 올라온 것만으로 합격이니까요.", stats: [5, 5, 1] },
+  zeus: { quote: "내 번개는 와이파이보다 빠르다!", secret: "수염은 사실 구름이에요. 비 오는 날엔 조금 무거워진대요.", stats: [3, 3, 5] },
+  athena: { quote: "균형은 힘이 아니라 지혜로 잡는 거야.", secret: "어깨의 부엉이 이름은 '부엉부엉'. 직접 지었다고 자랑해요.", stats: [3, 5, 3] },
+  hermes: { quote: "늦었다고 생각할 때가 진짜 늦었다. 빨리 쌓아!", secret: "신발 날개는 충전식이에요. 그래서 가끔 걸어서 배달해요.", stats: [4, 4, 3] },
+  poseidon: { quote: "출렁이는 건 내 탓이 아니라 바다 탓이야.", secret: "대부도 갯벌에서 삼지창으로 바지락 캐는 걸 좋아해요.", stats: [4, 2, 4] },
+  aphrodite: { quote: "미끄러지는 것도 매력이야.", secret: "삐친 표정은 연기예요. 사실 블록 위에 올라가는 걸 제일 좋아해요.", stats: [5, 5, 5] },
+  apollo: { quote: "통통 튀는 게 내 리듬이야!", secret: "하프로 '대부도 아리랑'을 연습 중이에요. 아직 세 줄밖에 못 쳐요.", stats: [5, 4, 4] },
+  hades: { quote: "무너지면 내 집으로 오는 거다.", secret: "강아지 세 마리 이름은 케, 르, 베. 간식은 한 번에 세 개 줘야 해요.", stats: [5, 3, 5] },
+  artemis: { quote: "목표는 하나, 정중앙.", secret: "화살은 한 번도 빗나간 적 없지만, 블록 쌓기는 연습 중이래요.", stats: [5, 4, 2] },
+  dionysus: { quote: "넘어져도 축제는 계속된다!", secret: "잔에 든 건 포도 주스예요. 대부도 포도로 만들었대요.", stats: [5, 3, 4] },
+  hera: { quote: "여기까지 온 자, 고개를 들라.", secret: "공작새 깃털의 눈은 전부 200층까지 올라온 사람들을 지켜본 눈이래요.", stats: [5, 5, 5] },
+};
 const byKey = (k) => GODS.find((g) => g.key === k);
 const cardNo = (g) => { const same = GODS.filter((x) => x.series === g.series); return (g.series === 'friend' ? '친구 ' : 'No.') + String(same.indexOf(g) + 1).padStart(2, '0'); };
 const howToGet = (g) => (g.series === 'friend' ? `헬로타워에서 ${g.need}층을 쌓으면 얻어요.` : `${g.need - 9}층부터 나타나는 신이에요. ${g.need}층을 넘으면 카드를 얻어요.`);
@@ -329,15 +378,33 @@ function attachTilt(node, maxDeg) {
 function openViewer(god, info, w) {
   const holder = $('viewerCard');
   holder.textContent = '';
+  // 앞면(카드) + 뒷면(한마디·능력치·비밀 이야기). 카드를 누르면 뒤집힌다.
   const big = cardNode(god, true, { static: true });
   attachTilt(big, 16);
-  holder.appendChild(big);
+  const fun = FUN[god.key] || { quote: '', secret: '', stats: [3, 3, 3] };
+  const stars = (n) => '★'.repeat(n) + '☆'.repeat(5 - n);
+  const back = el('div', { class: 'face back ' + god.grade },
+    el('div', { class: 'back-in' },
+      el('div', { class: 'em', text: god.series === 'friend' ? 'DAEBUDO' : 'OLYMPUS' }),
+      el('div', { class: 'nm', text: god.name }),
+      el('div', { class: 'quote', text: fun.quote }),
+      el('div', { class: 'stats' }, el('b', { text: '쌓기 난이도' }), el('span', { text: stars(fun.stats[0]) }), el('b', { text: '귀여움' }), el('span', { text: stars(fun.stats[1]) }), el('b', { text: '허세' }), el('span', { text: stars(fun.stats[2]) })),
+      el('div', { class: 'secret' }, el('i', { text: '🤫 비밀 이야기' }), fun.secret),
+      el('div', { class: 'rec', text: (info && info.serial ? `전체 ${info.serial}번째 ${god.name}` : god.name) + (info && info.at ? ` · ${fmtDate(info.at)}` : '') })));
+  const GRAD = { normal: ['#f4f6fa', '#9aa6b8'], rare: ['#fff3b0', '#e0a010'], legend: ['#ff7ad9', '#8fd6ff'] }[god.grade];
+  back.style.setProperty('--a', GRAD[0]); back.style.setProperty('--b', GRAD[1]);
+  const flip = el('div', { class: 'flip', role: 'button', tabindex: '0', 'aria-label': '카드 뒤집기' }, el('div', { class: 'face front' }, big), back);
+  const turn = () => { const on = flip.classList.toggle('turned'); if (on) track('card_flip', { god: god.key }); };
+  flip.addEventListener('click', turn);
+  flip.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); turn(); } });
+  holder.appendChild(flip);
   $('viewer').style.setProperty('--vc', GRADE_COLOR[god.grade]);
   const box = $('viewerInfo');
   box.textContent = '';
   if (info && info.serial) box.appendChild(el('div', { class: 'serial', text: `전체 ${info.serial}번째로 얻은 ${god.name}` }));
   if (info && info.at) box.appendChild(el('div', { text: `${fmtDate(info.at)} 획득 · ${GRADE_LABEL[god.grade]} 카드` }));
   box.appendChild(el('div', { class: 'trait', text: god.trait }));
+  box.appendChild(el('div', { class: 'flip-hint', text: '🔄 카드를 누르면 뒤집혀요 — 뒷면에 비밀 이야기가 있어요' }));
   if (w && w.isMine) {
     box.appendChild(el('div', { class: 'actions', style: 'margin-top:12px' },
       el('button', { class: 'btn gold small', onclick: () => share(w, god) }, '📤 카톡'),
@@ -360,7 +427,7 @@ async function api(path, opts) {
   return { ok: r.ok, status: r.status, data: data || {} };
 }
 const post = (path, body) => api(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-const loginUrl = () => '/api/auth?action=login&next=' + encodeURIComponent('/cardbook.html');
+const loginUrl = (next) => '/api/auth?action=login&next=' + encodeURIComponent(next || '/cardbook.html');
 
 // 이 기기에 임시로 보관 중인 카드(헬로타워가 저장해 둔 것)
 function localCards() {
@@ -440,6 +507,7 @@ function renderBook(w) {
     app.appendChild(el('p', { class: 'note', style: 'text-align:center;margin-top:16px', text: '아직 카드가 없어요. 헬로타워에서 10층만 쌓아도 첫 카드(헬로)를 얻어요!' }));
   }
   requestAnimationFrame(() => { const f = $('fill'); if (f) f.style.width = (w.count / w.total * 100) + '%'; });
+  app.appendChild(notesSection(w));
   if (w.isMine) app.appendChild(diagNode(w));
   renderCollectors(w.wid);
   renderFoot(w);
@@ -533,6 +601,47 @@ async function copyBrag(w, g) {
   const text = `${shareTitle(w, g)}\n${g ? `전체 ${w.cards[g.key].serial}번째로 얻은 ${g.name} 카드예요.` : '헬로타워에서 모은 카드를 구경하러 오세요.'}\n${shareUrl(w, g)}`;
   try { await navigator.clipboard.writeText(text); toast('자랑 글을 복사했어요. 카페 글쓰기에 붙여 넣으세요!'); } catch (e) { prompt('아래 글을 복사하세요', text); }
   track('cardbook_share', { to: 'copy', card: g ? g.key : '' });
+}
+
+// ---------- 방명록 — 회원끼리 카드첩에 짧은 글을 남기고, 주인이 답글을 단다 ----------
+function notesSection(w) {
+  const wrap = el('section', { id: 'notes' });
+  const list = el('div', { class: 'notes' });
+  const adminHdr = () => { let pw = ''; try { pw = sessionStorage.getItem('ht_admin') || ''; } catch (e) {} return pw ? { 'x-admin-secret': pw } : {}; };
+  const call = async (body) => {
+    const r = await api('/api/wallet', { method: 'POST', headers: Object.assign({ 'Content-Type': 'application/json' }, adminHdr()), body: JSON.stringify(Object.assign({ w: w.wid }, body)) });
+    if (r.ok && r.data.notes) { w.notes = r.data.notes; draw(); } else toast(r.data.message || '처리하지 못했어요. 잠시 뒤 다시 시도해 주세요.');
+    return r.ok;
+  };
+  function draw() {
+    list.textContent = '';
+    title.textContent = `방명록 · ${w.notes.length}`;
+    if (!w.notes.length) { list.appendChild(el('p', { class: 'note', text: w.isMine ? '아직 방명록이 없어요. 카드첩을 자랑하면 친구들이 글을 남겨요.' : '첫 방명록을 남겨 보세요!' })); return; }
+    w.notes.forEach((n) => {
+      const ops = el('div', { class: 'ops' });
+      if (n.canReply) ops.appendChild(el('button', { onclick: () => { const t = prompt('답글 (100자까지, 비우면 답글을 지워요)', n.reply ? n.reply.text : ''); if (t != null) call({ action: 'note_reply', id: n.id, text: t }); } }, n.reply ? '답글 고치기' : '답글 달기'));
+      if (n.canDelete) ops.appendChild(el('button', { onclick: () => { if (confirm('이 글을 지울까요?')) call({ action: 'note_delete', id: n.id }); } }, '지우기'));
+      if (n.canReport) ops.appendChild(el('button', { onclick: () => { if (confirm('이 글을 신고할까요? 여러 명이 신고하면 글이 가려져요.')) call({ action: 'note_report', id: n.id }).then((ok) => { if (ok) toast('신고했어요.'); }); } }, '신고'));
+      list.appendChild(el('div', { class: 'note-item' + (n.hidden ? ' hidden-note' : '') },
+        el('div', { class: 'who' }, el('a', { href: '/cardbook.html?w=' + encodeURIComponent(n.from), title: '이 사람의 카드첩 구경하기' }, n.nick + ' 🎴'), el('span', { text: fmtDate(n.at) + (n.hidden ? ' · 신고로 가려진 글' : '') })),
+        el('div', { class: 'txt', text: n.text }),
+        n.reply ? el('div', { class: 'reply' }, el('b', { text: `↳ ${w.nick}` }), n.reply.text) : null,
+        ops.childNodes.length ? ops : null));
+    });
+  }
+  const title = el('h2', { class: 'section-title', text: '방명록' });
+  wrap.appendChild(title);
+  if (!w.loggedIn) {
+    wrap.appendChild(el('p', { class: 'note', style: 'margin:-4px 0 10px' }, '방명록은 오락실 회원만 남길 수 있어요. ', el('a', { href: loginUrl('/cardbook.html?w=' + w.wid), style: 'color:var(--gold);font-weight:700' }, '카카오 로그인')));
+  } else if (!w.isMine) {
+    const input = el('input', { type: 'text', maxlength: '100', placeholder: `${w.nick}님에게 한마디 (100자)`, 'aria-label': '방명록 내용' });
+    const send = async () => { const t = input.value.trim(); if (!t) return; if (await call({ action: 'note', text: t })) { input.value = ''; track('note_write', {}); } };
+    input.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.isComposing) send(); });
+    wrap.appendChild(el('div', { class: 'note-form' }, input, el('button', { class: 'btn gold', onclick: send }, '남기기')));
+  }
+  wrap.appendChild(list);
+  draw();
+  return wrap;
 }
 
 // "카드가 안 보여요" 확인 창 — 이 기기에 저장된 카드와 카드첩(서버)에 있는 카드를 나란히 보여준다
