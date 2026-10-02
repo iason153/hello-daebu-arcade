@@ -208,6 +208,22 @@
     .statue { animation: glint 6s ease-in-out infinite; }
     @keyframes glint { 0%, 100% { background-position: 0% 0%; } 50% { background-position: 100% 100%; } }
   }
+  .card-show { display: block; margin: 12px auto 6px; text-decoration: none; color: inherit; }
+  .cs-fan { display: flex; justify-content: center; padding: 6px 0 4px; }
+  .cs-card { position: relative; width: 78px; aspect-ratio: 2 / 3; border-radius: 9px; overflow: hidden; border: 3px solid #cfd6e2; margin: 0 -9px; box-shadow: 0 6px 14px rgba(43, 36, 51, 0.35); transition: transform .2s ease; background: #1a2148; }
+  .cs-card.rare { border-color: #f2b61e; box-shadow: 0 0 14px rgba(242, 182, 30, 0.65), 0 6px 14px rgba(43, 36, 51, 0.35); }
+  .cs-card.legend { border-color: #ff7ad9; box-shadow: 0 0 16px rgba(255, 122, 217, 0.75), 0 6px 14px rgba(43, 36, 51, 0.35); }
+  .cs-card img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .cs-card::after { content: ""; position: absolute; inset: 0; background: linear-gradient(115deg, transparent 35%, rgba(255, 255, 255, 0.75) 50%, transparent 65%); background-size: 280% 100%; animation: csSweep 3.6s ease-in-out infinite; mix-blend-mode: screen; }
+  @keyframes csSweep { 0%, 30% { background-position: 140% 0; } 80%, 100% { background-position: -140% 0; } }
+  .cs-fan .cs-card:nth-child(1):not(:only-child) { transform: rotate(-9deg) translateY(5px); }
+  .cs-fan .cs-card:nth-child(2):not(:last-child) { transform: translateY(-4px); z-index: 1; }
+  .cs-fan .cs-card:last-child:not(:only-child) { transform: rotate(9deg) translateY(5px); }
+  .card-show:hover .cs-card { transform: translateY(-6px); }
+  .cs-cap { display: block; margin-top: 8px; font-size: 13px; color: #7a5412; }
+  .cs-cap b { color: #a8650a; }
+  .cs-plain { display: inline-block; margin-top: 6px; font-size: 13px; color: #7a5412; font-weight: 700; }
+  @media (prefers-reduced-motion: reduce) { .cs-card::after { animation: none; } .cs-card { transition: none; } }
   .cb-link { color: inherit; text-decoration: underline; text-decoration-color: rgba(201, 146, 44, 0.6); text-underline-offset: 4px; }
 </style>
 </head>
@@ -307,6 +323,24 @@ function whoNode(e) {
   if (e && /^[a-z0-9]{4,16}$/.test(e.wid || '')) return el('a', { class: 'cb-link', href: '/cardbook.html?w=' + e.wid, title: '카드첩 구경하기' }, e.nickname + ' 🎴');
   return document.createTextNode(e.nickname);
 }
+// 왕좌의 주인이 올림포스 카드첩 회원이면, 가진 카드 중 가장 귀한 3장을 부채꼴로 보여 주고 카드첩으로 연결
+const GOD_RANK = ['zeus', 'athena', 'hermes', 'poseidon', 'aphrodite', 'apollo', 'hades', 'artemis', 'dionysus', 'hera'];
+function cardShow(e) {
+  if (!e || !/^[a-z0-9]{4,16}$/.test(e.wid || '')) return null;
+  const gods = GOD_RANK.filter((g) => (e.gods || []).includes(g));
+  const href = '/cardbook.html?w=' + e.wid;
+  if (!gods.length) return el('a', { class: 'cs-plain', href }, '🎴 카드첩 구경하기 →');
+  const a = el('a', { class: 'card-show', href, 'aria-label': `${e.nickname}님의 올림포스 카드첩 구경하기 — 신 카드 ${gods.length}장 보유` });
+  const fan = el('span', { class: 'cs-fan' });
+  gods.slice(-3).forEach((g) => {
+    const i = GOD_RANK.indexOf(g);
+    const c = el('span', { class: 'cs-card ' + (i === 9 ? 'legend' : i >= 5 ? 'rare' : 'normal') }, el('img', { src: `/assets/cards/${g}.webp`, alt: '', loading: 'lazy' }));
+    fan.appendChild(c);
+  });
+  a.append(fan, el('span', { class: 'cs-cap' }, el('b', { text: `신 카드 ${gods.length}장 보유` }), ' · 카드첩 구경하기 →'));
+  a.addEventListener('click', () => track('hall_cardbook_click', { cards: gods.length }));
+  return a;
+}
 function reignText(iso) {
   if (!iso) return '';
   const start = new Date(iso);
@@ -341,7 +375,8 @@ function renderShrine(cfg, data) {
   if (champ) {
     plaque.append(
       el('div', { class: 'title', text: champ.reign ? `제${champ.reign}대 왕좌의 주인` : '현재 왕좌의 주인' }),
-      el('div', { class: 'name' }, whoNode(champ)),
+      el('div', { class: 'name', text: champ.nickname }),
+      ...[cardShow(champ)].filter(Boolean),
       el('div', { class: 'record', text: `${champ.score}${cfg.unit}` }),
       el('div', { class: 'reign', text: reignText(champ.at) }),
     );

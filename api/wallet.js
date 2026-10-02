@@ -65,6 +65,14 @@ export default async function handler(req, res) {
     const q = req.query || {};
 
     if (q.list) {
+      // 수집가 광장이 생기기 전에 가입한 회원도 한 번에 명단에 올린다(처음 한 번만 실행)
+      if (!(await kv.get('members_backfilled'))) {
+        try {
+          const keys = await kv.keys('user:*');
+          for (const k of keys) { const u = await getUser(String(k).slice(5)); if (u && u.wid) await saveMemberRow(u); }
+          await kv.set('members_backfilled', new Date().toISOString());
+        } catch (e) { /* 실패하면 다음 조회 때 다시 시도 */ }
+      }
       const rows = await listMembers();
       return res.status(200).json({ total: rows.length, collectors: rows.slice(0, 100).map((r) => ({ wid: r.wid, nick: r.nick, count: r.count, gods: r.gods })) });
     }

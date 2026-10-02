@@ -133,6 +133,21 @@ gtag("config", "G-5YPGVVP49T");
   .card.locked .name { color: var(--dim); text-shadow: none; }
   .card.locked .title { color: #7f88ad; font-weight: 500; }
 
+  .plaza-top { margin-top: 22px; padding: 14px 0 12px 14px; border-radius: 18px; background: linear-gradient(160deg, rgba(242, 193, 78, 0.14), rgba(143, 214, 255, 0.07)); border: 1px solid var(--line); text-align: left; }
+  .plaza-top .hd { display: flex; align-items: baseline; justify-content: space-between; padding-right: 14px; }
+  .plaza-top .hd b { font-family: 'Gowun Batang', serif; font-size: 18px; color: var(--gold); }
+  .plaza-top .hd a { font-size: 12px; color: var(--dim); font-weight: 700; }
+  .plaza-top .sub { font-size: 12px; color: var(--dim); margin-top: 2px; padding-right: 14px; }
+  .plaza-row { display: flex; gap: 10px; overflow-x: auto; padding: 12px 14px 6px 0; scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch; }
+  .plaza-row::-webkit-scrollbar { height: 4px; } .plaza-row::-webkit-scrollbar-thumb { background: rgba(255, 233, 168, 0.3); border-radius: 4px; }
+  .pz { flex: none; width: 78px; text-decoration: none; text-align: center; scroll-snap-align: start; }
+  .pz .th { position: relative; width: 66px; height: 99px; margin: 0 auto; border-radius: 9px; overflow: hidden; border: 3px solid #cfd6e2; background: linear-gradient(160deg, #1a2148, #0d1128); box-shadow: 0 4px 10px rgba(0, 0, 0, 0.45); display: grid; place-items: center; color: rgba(255, 233, 168, 0.5); font-family: 'Gowun Batang', serif; font-weight: 700; font-size: 26px; }
+  .pz .th.rare { border-color: #ffc93c; box-shadow: 0 0 12px rgba(255, 201, 60, 0.55); } .pz .th.legend { border-color: #ff7ad9; box-shadow: 0 0 14px rgba(255, 122, 217, 0.7); }
+  .pz .th.none { border-style: dashed; border-color: rgba(255, 233, 168, 0.3); box-shadow: none; }
+  .pz .th img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .pz .nm { margin-top: 5px; font-size: 12px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pz .ct { font-size: 11px; color: var(--gold); font-weight: 700; }
+  .pz.me .nm::after { content: " (나)"; color: var(--sky); }
   .diag { margin-top: 22px; padding: 12px 14px; border-radius: 14px; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--line); font-size: 13px; color: #dfe4f7; }
   .diag summary { cursor: pointer; font-weight: 700; color: var(--cream); }
   .diag p { margin-top: 8px; }
@@ -352,6 +367,7 @@ function renderWelcome(ready) {
     el('div', { class: 'actions' }, ready === false
       ? el('span', { class: 'note', text: '로그인 기능을 준비 중이에요. 조금만 기다려 주세요!' })
       : el('a', { class: 'btn kakao', href: loginUrl(), onclick: () => track('login_click', { from: 'cardbook' }) }, '💬 카카오로 3초 만에 카드첩 만들기')),
+    el('section', { class: 'plaza-top', id: 'plazaTop', hidden: '' }),
     el('div', { class: 'howto' },
       el('div', {}, el('b', { text: '1' }), el('span', { text: '헬로타워에서 100층을 넘으면 2막 — 10층마다 신이 한 명씩 내려와요.' })),
       el('div', {}, el('b', { text: '2' }), el('span', { text: '그 신과 함께 10층을 더 쌓으면 카드를 얻어요.' })),
@@ -362,6 +378,7 @@ function renderWelcome(ready) {
 }
 
 function renderBook(w) {
+  window.__myWid = w.myWid || '';
   app.textContent = '';
   const master = w.count >= w.total;
   const head = el('header', { class: 'book' },
@@ -386,6 +403,7 @@ function renderBook(w) {
   }
   head.appendChild(actions);
   app.appendChild(head);
+  app.appendChild(el('section', { class: 'plaza-top', id: 'plazaTop', hidden: '' }));
 
   const grid = el('div', { class: 'grid' });
   GODS.forEach((g) => {
@@ -410,6 +428,22 @@ async function renderCollectors(currentWid) {
   const list = (r.data && r.data.collectors) || [];
   const total = (r.data && r.data.total) || list.length;
   if (!list.length) return;
+  // 맨 위 "수집가 광장" 띠 — 대표 카드 그림과 이름을 옆으로 넘겨 보며 바로 구경 갈 수 있게
+  const top = $('plazaTop');
+  if (top) {
+    const row = el('div', { class: 'plaza-row' });
+    list.slice(0, 40).forEach((c) => {
+      const best = GODS.slice().reverse().find((g) => c.gods.includes(g.key));
+      const th = el('div', { class: 'th ' + (best ? best.grade : 'none') }, best ? el('img', { src: ART(best.key), alt: '', loading: 'lazy' }) : '?');
+      row.appendChild(el('a', { class: 'pz' + (c.wid === (window.__myWid || '') ? ' me' : ''), href: '/cardbook.html?w=' + encodeURIComponent(c.wid), onclick: () => track('plaza_visit', {}) },
+        th, el('div', { class: 'nm', text: c.nick }), el('div', { class: 'ct', text: `${c.count}장` })));
+    });
+    top.textContent = '';
+    top.appendChild(el('div', { class: 'hd' }, el('b', { text: `🏛️ 수집가 광장 · ${total}명` }), el('a', { href: '#plaza', text: '전체 보기 ↓' })));
+    top.appendChild(el('div', { class: 'sub', text: '카드첩을 만든 회원들이에요. 눌러서 구경 가 보세요.' }));
+    top.appendChild(row);
+    top.removeAttribute('hidden');
+  }
   const ol = el('ol', { class: 'collectors' });
   list.forEach((c, i) => {
     const dots = el('span', { class: 'dots', 'aria-hidden': 'true' }, GODS.map((g) => el('i', { class: c.gods.includes(g.key) ? 'on' : '' })));
@@ -419,6 +453,7 @@ async function renderCollectors(currentWid) {
   app.appendChild(el('h2', { class: 'section-title', id: 'plaza', text: `수집가 광장 · ${total}명` }));
   app.appendChild(el('p', { class: 'note', style: 'margin:-4px 0 10px', text: '카드첩을 만든 모든 회원이에요. 이름을 누르면 그 사람의 카드첩을 구경할 수 있어요.' }));
   app.appendChild(ol);
+  if (location.hash === '#plaza') { const t = $('plaza'); if (t) t.scrollIntoView({ block: 'start' }); }
 }
 
 function renderFoot(w) {

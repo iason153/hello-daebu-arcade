@@ -167,12 +167,22 @@ img{ max-width:100%; display:block; }
 
 /* ---------- second game card (stacked below featured) ---------- */
 .game-featured + .game-featured{ margin-top:20px; }
-.member-chip{
-  display:inline-flex; align-items:center; gap:6px; margin-bottom:14px; padding:8px 14px; border-radius:999px;
-  background:#fff; border:2px solid #2b2433; color:#2b2433; font-weight:700; font-size:14px; text-decoration:none;
-  box-shadow:0 3px 0 #2b2433;
-}
-.member-chip.kakao{ background:#fee500; }
+/* ---------- 상단 바(메뉴 · 로그인) ---------- */
+.topbar{ position:sticky; top:0; z-index:30; background:rgba(15,26,48,0.94); backdrop-filter:blur(8px); border-bottom:1px solid var(--line); }
+.topbar-in{ max-width:640px; margin:0 auto; padding:10px 16px 0; display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.topbar .brand{ font-family:'Jua',sans-serif; font-size:18px; text-decoration:none; color:var(--cream); white-space:nowrap; }
+.topbar .brand b{ color:var(--coral); font-weight:400; }
+.topbar .member{ position:relative; min-height:34px; display:flex; align-items:center; }
+.topbar .login-btn{ background:#fee500; color:#191600; font-weight:700; font-size:13px; padding:7px 13px; border-radius:999px; text-decoration:none; white-space:nowrap; }
+.topbar .me-btn{ background:var(--navy-card); color:var(--cream); border:1.5px solid var(--gold); font:inherit; font-weight:700; font-size:13px; padding:6px 12px; border-radius:999px; cursor:pointer; max-width:190px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.topbar .me-menu{ position:absolute; right:0; top:40px; min-width:170px; background:var(--navy-card); border:1px solid var(--line); border-radius:14px; padding:6px; box-shadow:0 12px 30px rgba(0,0,0,.5); display:none; }
+.topbar .me-menu.open{ display:block; }
+.topbar .me-menu a, .topbar .me-menu button{ display:block; width:100%; text-align:left; padding:10px 12px; border-radius:10px; background:none; border:0; color:var(--cream); font:inherit; font-size:14px; text-decoration:none; cursor:pointer; }
+.topbar .me-menu a:hover, .topbar .me-menu button:hover{ background:rgba(255,255,255,.08); }
+.topbar .nav-links{ padding:8px 16px 10px; justify-content:flex-start; gap:8px; }
+.topbar .nav-links a{ flex:1; text-align:center; text-decoration:none; font-weight:700; font-size:13px; padding:8px 4px; border-radius:999px; background:rgba(255,255,255,.07); border:1px solid var(--line); }
+.topbar .nav-links a:hover{ background:rgba(255,255,255,.14); }
+.topbar :focus-visible{ outline:2px solid var(--gold); outline-offset:2px; }
 .temple-link{
   display:flex; align-items:center; gap:14px; margin-top:24px; padding:16px 18px;
   border-radius:16px; text-decoration:none; color:#2b2433;
@@ -253,9 +263,20 @@ footer{
 </head>
 <body>
 
+<nav class="topbar" aria-label="오락실 메뉴">
+  <div class="topbar-in">
+    <a class="brand" href="/">헬로 대부도 <b>오락실</b></a>
+    <div class="member" id="memberArea"></div>
+  </div>
+  <div class="topbar-in nav-links">
+    <a href="games/hello-tower/ranking.html">🏆 랭킹</a>
+    <a href="hall-of-fame.html">🏛️ 신전</a>
+    <a href="cardbook.html">🎴 카드첩</a>
+  </div>
+</nav>
+
 <section class="hero">
   <div class="wrap">
-    <a class="member-chip" id="memberChip" href="cardbook.html" hidden></a>
     <h1 class="eyebrow-free-title">헬로 대부도<br><span class="title-accent">오락실</span></h1>
     <p class="tagline">대부도 곳곳을 배경으로 한 아주 가벼운 미니게임들을 하나씩 만들고 있어요.</p>
     <div class="pwa-slot" data-pwa-install></div>
@@ -380,18 +401,35 @@ footer{
 </script>
 
 <script>
-// 로그인 상태 표시 — 로그인했으면 "🎴 닉네임님 카드첩", 아니면 "카카오 로그인" 버튼
+// 상단 바의 로그인 영역 — 로그인 전: "카카오 로그인" 버튼 / 로그인 후: "닉네임님" 버튼(내 카드첩·로그아웃 메뉴)
 (async function () {
-  const chip = document.getElementById('memberChip');
-  if (!chip) return;
+  const area = document.getElementById('memberArea');
+  if (!area) return;
   try {
     const r = await fetch('/api/auth', { credentials: 'same-origin', cache: 'no-store' });
     const d = await r.json();
-    if (d.loggedIn) { chip.textContent = `🎴 ${d.nick}님 · 카드 ${d.cardCount}장`; chip.href = 'cardbook.html'; chip.title = '내 올림포스 카드첩 열기'; }
-    else if (d.ready) { chip.textContent = '💬 카카오 로그인'; chip.classList.add('kakao'); chip.href = '/api/auth?action=login&next=' + encodeURIComponent('/'); }
-    else return;
-    chip.hidden = false;
-  } catch (e) { /* 로그인 기능이 꺼져 있으면 표시하지 않음 */ }
+    if (d.loggedIn) {
+      const btn = document.createElement('button');
+      btn.className = 'me-btn'; btn.type = 'button'; btn.setAttribute('aria-haspopup', 'true'); btn.setAttribute('aria-expanded', 'false');
+      btn.textContent = `🎴 ${d.nick}님 ▾`;
+      const menu = document.createElement('div'); menu.className = 'me-menu';
+      const book = document.createElement('a'); book.href = 'cardbook.html'; book.textContent = `내 카드첩 (카드 ${d.cardCount}장)`;
+      const plaza = document.createElement('a'); plaza.href = 'cardbook.html#plaza'; plaza.textContent = '수집가 광장';
+      const out = document.createElement('button'); out.type = 'button'; out.textContent = '로그아웃';
+      out.addEventListener('click', async () => { try { await fetch('/api/auth', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'logout' }) }); } catch (e) {} location.reload(); });
+      menu.append(book, plaza, out);
+      btn.addEventListener('click', (e) => { e.stopPropagation(); const open = menu.classList.toggle('open'); btn.setAttribute('aria-expanded', String(open)); });
+      document.addEventListener('click', () => { menu.classList.remove('open'); btn.setAttribute('aria-expanded', 'false'); });
+      area.append(btn, menu);
+    } else if (d.ready) {
+      const a = document.createElement('a');
+      a.className = 'login-btn'; a.textContent = '💬 카카오 로그인';
+      a.href = '/api/auth?action=login&next=' + encodeURIComponent('/');
+      area.appendChild(a);
+    }
+    // 로그인하고 돌아온 주소(?login=ok) 정리
+    try { const q = new URLSearchParams(location.search); if (q.has('login')) { q.delete('login'); history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q.toString() : '')); } } catch (e) {}
+  } catch (e) { /* 로그인 기능이 꺼져 있으면 메뉴만 보임 */ }
 })();
 </script>
 </body>

@@ -101,6 +101,15 @@ export default async function handler(req, res) {
       const raws = await kv.zrange(`score:${game}`, 0, -1);
       result[game] = summarize(parseEntries(raws), cfg);
     }
+    // [올림포스 카드첩] 왕좌·시상대에 오른 회원이 가진 신 카드 목록을 붙여 준다 — 신전에서 카드 그림을 보여 주려고
+    try {
+      const members = (await kv.hgetall('members')) || {};
+      const godsOf = (wid) => { try { const r = members[wid]; const o = typeof r === 'string' ? JSON.parse(r) : r; return o && Array.isArray(o.gods) ? o.gods : []; } catch (e) { return []; } };
+      for (const g of Object.values(result)) {
+        if (g.champion && g.champion.wid) g.champion = { ...g.champion, gods: godsOf(g.champion.wid) };
+        g.podium = g.podium.map((e) => (e.wid ? { ...e, gods: godsOf(e.wid) } : e));
+      }
+    } catch (e) { /* 카드 정보를 못 읽어도 신전은 그대로 */ }
     // 1분 캐시 — 신전은 실시간일 필요가 없고, 방문이 몰려도 DB 호출이 늘지 않게
     res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=600');
     return res.status(200).json({ games: result, generatedAt: new Date().toISOString() });

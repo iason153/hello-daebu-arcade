@@ -89,6 +89,23 @@ async function handleSubmit(req, res) {
     // 왕좌 판정(명예의 전당 /hall-of-fame.html 규칙과 동일): 지금 최고 기록 "이상"이면
     // 이 기록이 새 왕좌의 주인이 된다(같은 기록이면 나중에 오른 사람이 왕좌를 가져감).
     // 게임 화면이 이 값을 보고 "왕좌에 올랐어요! 왕좌 카드 받기" 안내를 띄운다.
+    // [도배 방지] 같은 사람이 이미 더 높은 기록을 올려 두었다면 새로 저장하지 않고 안내만 한다.
+    // "같은 사람" = 같은 카드첩(로그인 회원) 또는 닉네임과 연락처가 모두 같은 경우.
+    // (예전 기록은 지우지 않는다 — 신전의 왕좌 역사가 그 기록들로 계산되기 때문. 랭킹 화면에서만 최고 기록 하나로 보여 준다.)
+    try {
+      const all = await kv.zrange(`score:${game}`, 0, -1);
+      let best = -Infinity;
+      for (const raw of all) {
+        try {
+          const e = typeof raw === 'string' ? JSON.parse(raw) : raw;
+          if (!e) continue;
+          const same = (entry.wid && e.wid === entry.wid) || (e.nickname === nick && e.contact === cont);
+          if (same && Number(e.meters) > best) best = Number(e.meters);
+        } catch (err) { /* 손상된 기록은 건너뜀 */ }
+      }
+      if (score < best) return res.status(200).json({ ok: true, saved: false, lower: true, best, throne: false });
+    } catch (e) { /* 확인 실패해도 등록은 계속 */ }
+
     let throne = false;
     try {
       const top = await kv.zrange(`score:${game}`, 0, 0, { rev: true, withScores: true });
@@ -118,7 +135,10 @@ async function handleLeaderboard(req, res) {
 
     // 점수 높은 순 상위 N개 member를 가져온다. 각 member 자체가 그 기록의 전체 정보(JSON)라
     // 이후 별도로 다른 자료구조와 짜맞출 필요가 없다.
-    const topMembers = await kv.zrange(`score:${game}`, 0, limit - 1, { rev: true });
+    // 일반 조회는 "한 사람당 최고 기록 하나"만 보여 준다(도배 방지). 그래서 전체를 읽은 뒤 추린다.
+    // 관리자 조회는 삭제·확인을 위해 모든 기록을 그대로 보여 준다.
+    const topMembers = await kv.zrange(`score:${game}`, 0, isAdmin ? limit - 1 : -1, { rev: true });
+    const seen = new Set();
 
     const leaderboard = [];
     topMembers.forEach((raw) => {
@@ -129,6 +149,12 @@ async function handleLeaderboard(req, res) {
       try {
         const entry = typeof raw === 'string' ? JSON.parse(raw) : raw;
         if (entry && entry.nickname) {
+          if (!isAdmin) {
+            if (leaderboard.length >= limit) return;
+            const who = entry.wid ? 'w:' + entry.wid : 'n:' + entry.nickname; // 같은 회원 또는 같은 닉네임
+            if (seen.has(who)) return; // 높은 순으로 읽으므로 처음 만난 것이 그 사람의 최고 기록
+            seen.add(who);
+          }
           const row = { rank: leaderboard.length + 1, nickname: entry.nickname, meters: entry.meters };
           if (entry.wid) row.wid = entry.wid;
           if (isAdmin) {

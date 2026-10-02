@@ -706,7 +706,7 @@ document.getElementById('retryBtn').addEventListener('click', (e)=>{
       if(res.ok){
         msg.textContent = '등록 완료! 행운을 빌어요 🍀'; track('score_submit', { score: displayM });
         // 이번 기록으로 왕좌(1위)에 올랐으면 신전으로 안내 — 왕좌 카드를 카톡으로 자랑할 수 있게
-        try{ const data = await res.json(); if(data && data.throne){ msg.innerHTML = '👑 왕좌에 올랐어요! <a href="../../hall-of-fame.html?g=hello_run" style="color:#ffd166;font-weight:700;text-decoration:underline">헬로 신전에서 왕좌 카드 받기</a>'; track('throne_won', { score: displayM }); } }catch(e){}
+        try{ const data = await res.json(); if(data && data.lower){ msg.textContent = '이미 더 높은 기록(' + data.best + 'm)이 랭킹에 있어요. 최고 기록만 남겨요.'; } if(data && data.throne){ msg.innerHTML = '👑 왕좌에 올랐어요! <a href="../../hall-of-fame.html?g=hello_run" style="color:#ffd166;font-weight:700;text-decoration:underline">헬로 신전에서 왕좌 카드 받기</a>'; track('throne_won', { score: displayM }); } }catch(e){}
       }
       else{ msg.textContent = '등록에 실패했어요. 잠시 후 다시 시도해주세요.'; }
     }catch(e){
