@@ -4,5 +4,8 @@
       "path": "/api/cleanup-cards",
       "schedule": "0 18 * * *"
     }
+  ],
+  "rewrites": [
+    { "source": "/c/:wid", "destination": "/api/wallet?share=:wid" }
   ]
 }

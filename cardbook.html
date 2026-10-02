@@ -82,10 +82,12 @@ gtag("config", "G-5YPGVVP49T");
   .btn:hover { background: rgba(255, 255, 255, 0.12); }
   .btn.gold { background: linear-gradient(180deg, #ffd76a, #e6a92a); color: #3a2a10; border-color: #fff0b8; box-shadow: 0 4px 0 #a8741a; }
   .btn.kakao { background: #fee500; color: #191600; border-color: #fee500; font-size: 15px; padding: 13px 22px; box-shadow: 0 4px 0 #c9b400; }
+  .btn.naver { background: #03c75a; color: #fff; border-color: #03c75a; box-shadow: 0 4px 0 #028a3f; }
   .btn.small { font-size: 12px; padding: 6px 12px; }
 
   /* 카드 격자 */
-  .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-top: 26px; }
+  .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-top: 12px; }
+  .st-sub { font-family: 'Noto Sans KR', sans-serif; font-size: 12px; color: var(--dim); font-weight: 500; }
   @media (min-width: 520px) { .grid { grid-template-columns: repeat(3, 1fr); } }
 
   .card { position: relative; aspect-ratio: 2 / 3; border-radius: 16px; border: 0; padding: 0; background: #10152f; color: inherit; width: 100%;
@@ -233,23 +235,32 @@ gtag("config", "G-5YPGVVP49T");
 <script>
 try { if (window.Kakao && !window.Kakao.isInitialized()) window.Kakao.init('3994a3bda3b8146e709683fdb350c9cc'); } catch (e) {}
 
-// 신 10명 — 헬로타워 2막에서 101층부터 10층마다 한 명씩 등장, 그 구간(10층)을 넘기면 카드 획득
+// 카드 15장 — 1막 "대부도 친구들" 5장(정해진 층을 쌓으면 획득) + 2막 "올림포스의 신들" 10장(신과 함께 10층을 넘기면 획득)
+// need = 그 카드를 얻는 층. 뒤로 갈수록 귀한 카드.
 const GODS = [
-  { key: 'zeus',      name: '제우스',     title: '번개의 왕',        grade: 'normal', trait: '넓고 든든해요. 착지하면 번쩍!' },
-  { key: 'athena',    name: '아테나',     title: '지혜의 여신',      grade: 'normal', trait: '끈적해서 위에 놓인 블록이 잘 안 미끄러져요.' },
-  { key: 'hermes',    name: '헤르메스',   title: '날개 달린 전령',   grade: 'normal', trait: '매달려 있으면 시계추가 빨라져요.' },
-  { key: 'poseidon',  name: '포세이돈',   title: '바다의 왕',        grade: 'normal', trait: '착지하면 파도처럼 출렁출렁.' },
-  { key: 'aphrodite', name: '아프로디테', title: '사랑의 여신',      grade: 'normal', trait: '매끈매끈 미끄러워요.' },
-  { key: 'apollo',    name: '아폴론',     title: '태양과 음악의 신', grade: 'rare',   trait: '착지하면 통통 튀어요.' },
-  { key: 'hades',     name: '하데스',     title: '저승의 왕',        grade: 'rare',   trait: '무거워서 착지하면 탑이 쿵!' },
-  { key: 'artemis',   name: '아르테미스', title: '달과 사냥의 여신', grade: 'rare',   trait: '키가 커서 균형 잡기가 어려워요.' },
-  { key: 'dionysus',  name: '디오니소스', title: '포도와 축제의 신', grade: 'rare',   trait: '머리 위 포도가 무거워 잘 넘어가요.' },
-  { key: 'hera',      name: '헤라',       title: '신들의 여왕',      grade: 'legend', trait: '깃털처럼 천천히 떨어져 바람에 날려요.' },
+  { key: 'hello',     series: 'friend', need: 10,  name: '헬로',       title: '대부도의 마스코트',    grade: 'normal', trait: '오락실의 주인공. 어디든 든든하게 쌓여요.' },
+  { key: 'starfish',  series: 'friend', need: 30,  name: '불가사리',   title: '갯벌의 별',            grade: 'normal', trait: '넓적해서 다음 블록을 올리기 좋아요.' },
+  { key: 'crab',      series: 'friend', need: 50,  name: '꽃게',       title: '탄도항의 집게 대장',   grade: 'normal', trait: '50층, 여기서부터 탑 꼭대기가 살아 움직여요.' },
+  { key: 'gull',      series: 'friend', need: 70,  name: '갈매기',     title: '방조제의 하늘 길잡이', grade: 'normal', trait: '70층, 바람이 거세지는 높이까지 올라왔어요.' },
+  { key: 'jellyfish', series: 'friend', need: 100, name: '해파리',     title: '하늘나라의 문지기',    grade: 'rare',   trait: '100층, 1막을 완주하고 신들의 나라에 닿은 증표.' },
+  { key: 'zeus',      series: 'god', need: 110, name: '제우스',     title: '번개의 왕',        grade: 'normal', trait: '넓고 든든해요. 착지하면 번쩍!' },
+  { key: 'athena',    series: 'god', need: 120, name: '아테나',     title: '지혜의 여신',      grade: 'normal', trait: '끈적해서 위에 놓인 블록이 잘 안 미끄러져요.' },
+  { key: 'hermes',    series: 'god', need: 130, name: '헤르메스',   title: '날개 달린 전령',   grade: 'normal', trait: '매달려 있으면 시계추가 빨라져요.' },
+  { key: 'poseidon',  series: 'god', need: 140, name: '포세이돈',   title: '바다의 왕',        grade: 'normal', trait: '착지하면 파도처럼 출렁출렁.' },
+  { key: 'aphrodite', series: 'god', need: 150, name: '아프로디테', title: '사랑의 여신',      grade: 'normal', trait: '매끈매끈 미끄러워요.' },
+  { key: 'apollo',    series: 'god', need: 160, name: '아폴론',     title: '태양과 음악의 신', grade: 'rare',   trait: '착지하면 통통 튀어요.' },
+  { key: 'hades',     series: 'god', need: 170, name: '하데스',     title: '저승의 왕',        grade: 'rare',   trait: '무거워서 착지하면 탑이 쿵!' },
+  { key: 'artemis',   series: 'god', need: 180, name: '아르테미스', title: '달과 사냥의 여신', grade: 'rare',   trait: '키가 커서 균형 잡기가 어려워요.' },
+  { key: 'dionysus',  series: 'god', need: 190, name: '디오니소스', title: '포도와 축제의 신', grade: 'rare',   trait: '머리 위 포도가 무거워 잘 넘어가요.' },
+  { key: 'hera',      series: 'god', need: 200, name: '헤라',       title: '신들의 여왕',      grade: 'legend', trait: '깃털처럼 천천히 떨어져 바람에 날려요.' },
 ];
+const byKey = (k) => GODS.find((g) => g.key === k);
+const cardNo = (g) => { const same = GODS.filter((x) => x.series === g.series); return (g.series === 'friend' ? '친구 ' : 'No.') + String(same.indexOf(g) + 1).padStart(2, '0'); };
+const howToGet = (g) => (g.series === 'friend' ? `헬로타워에서 ${g.need}층을 쌓으면 얻어요.` : `${g.need - 9}층부터 나타나는 신이에요. ${g.need}층을 넘으면 카드를 얻어요.`);
 const GRADE_LABEL = { normal: '일반', rare: '희귀', legend: '전설' };
 const GRADE_COLOR = { normal: '#cfd6e2', rare: '#ffc93c', legend: '#ff7ad9' };
 const ART = (k) => `/assets/cards/${k}.webp`;                       // 카드 전용 그림(있으면)
-const BLOCK = (k) => `/games/hello-tower/assets/gods/${k}.webp`;     // 없으면 블록 그림으로 대신
+const BLOCK = (k) => (byKey(k) && byKey(k).series === 'friend' ? `/games/hello-tower/assets/blocks/${k}.png` : `/games/hello-tower/assets/gods/${k}.webp`); // 없으면 블록 그림으로 대신
 
 const $ = (id) => document.getElementById(id);
 const app = $('app');
@@ -274,7 +285,6 @@ const fmtDate = (iso) => { const d = new Date(iso); return isNaN(d) ? '' : `${d.
 
 // ---------- 카드 한 장 ----------
 function cardNode(god, owned, opts) {
-  const idx = GODS.indexOf(god);
   const img = el('img', { alt: '', loading: 'lazy', decoding: 'async' });
   if (owned) {
     img.src = ART(god.key);
@@ -284,16 +294,16 @@ function cardNode(god, owned, opts) {
   }
   const node = el((opts && opts.static) ? 'div' : 'button', {
     class: `card ${god.grade} ${owned ? 'owned' : 'locked'}`,
-    'aria-label': owned ? `${god.name} 카드 크게 보기` : `아직 얻지 못한 카드. ${101 + idx * 10}층부터 ${110 + idx * 10}층까지 넘으면 얻어요`,
+    'aria-label': owned ? `${god.name} 카드 크게 보기` : `아직 얻지 못한 카드. ${howToGet(god)}`,
   },
     el('div', { class: 'art' }, img),
     owned ? null : el('div', { class: 'q', text: '?' }),
     owned ? el('div', { class: 'holo' }) : null,
     owned ? el('div', { class: 'sweep' }) : null,
-    el('div', { class: 'top' }, el('span', { text: 'No.' + String(idx + 1).padStart(2, '0') }), owned ? el('span', { class: 'grade', text: GRADE_LABEL[god.grade] }) : null),
+    el('div', { class: 'top' }, el('span', { text: cardNo(god) }), owned ? el('span', { class: 'grade', text: GRADE_LABEL[god.grade] }) : null),
     el('div', { class: 'plate' },
       el('div', { class: 'name', text: owned ? god.name : '???' }),
-      el('div', { class: 'title', text: owned ? god.title : `${110 + idx * 10}층을 넘으면` })),
+      el('div', { class: 'title', text: owned ? god.title : (god.series === 'friend' ? `${god.need}층을 쌓으면` : `${god.need}층을 넘으면`) })),
     el('div', { class: 'frame' }),
   );
   if (owned) attachTilt(node, 9);
@@ -316,7 +326,7 @@ function attachTilt(node, maxDeg) {
 }
 
 // ---------- 크게 보기 ----------
-function openViewer(god, info) {
+function openViewer(god, info, w) {
   const holder = $('viewerCard');
   holder.textContent = '';
   const big = cardNode(god, true, { static: true });
@@ -328,6 +338,12 @@ function openViewer(god, info) {
   if (info && info.serial) box.appendChild(el('div', { class: 'serial', text: `전체 ${info.serial}번째로 얻은 ${god.name}` }));
   if (info && info.at) box.appendChild(el('div', { text: `${fmtDate(info.at)} 획득 · ${GRADE_LABEL[god.grade]} 카드` }));
   box.appendChild(el('div', { class: 'trait', text: god.trait }));
+  if (w && w.isMine) {
+    box.appendChild(el('div', { class: 'actions', style: 'margin-top:12px' },
+      el('button', { class: 'btn gold small', onclick: () => share(w, god) }, '📤 카톡'),
+      el('button', { class: 'btn naver small', onclick: () => shareNaver(w, god) }, 'N 카페'),
+      el('button', { class: 'btn small', onclick: () => copyBrag(w, god) }, '📋 글 복사')));
+  }
   $('viewer').classList.add('show');
   $('viewerClose').focus();
   track('card_view', { god: god.key });
@@ -359,18 +375,18 @@ function renderWelcome(ready) {
   app.appendChild(el('header', { class: 'book' },
     el('div', { class: 'laurel', text: 'OLYMPUS' }),
     el('h1', { text: '올림포스 카드첩' })));
-  const fan = el('div', { class: 'fan', 'aria-hidden': 'true' }, cardNode(GODS[9], true, { static: true }), cardNode(GODS[0], true, { static: true }), cardNode(GODS[5], true, { static: true }));
+  const fan = el('div', { class: 'fan', 'aria-hidden': 'true' }, cardNode(byKey('hera'), true, { static: true }), cardNode(byKey('zeus'), true, { static: true }), cardNode(byKey('hello'), true, { static: true }));
   app.appendChild(el('section', { class: 'welcome' },
     fan,
-    el('p', {}, '헬로타워에서 신들을 만나 얻은 카드를', el('br'), '영원히 보관하고 친구에게 자랑하는 나만의 카드첩.'),
+    el('p', {}, '헬로타워에서 얻은 대부도 친구들과 신들의 카드를', el('br'), '영원히 보관하고 친구에게 자랑하는 나만의 카드첩.'),
     n ? el('p', { style: 'color:#ffe9a8;font-weight:700', text: `이 기기에 카드 ${n}장이 기다리고 있어요. 로그인하면 카드첩으로 옮겨져요.` }) : null,
     el('div', { class: 'actions' }, ready === false
       ? el('span', { class: 'note', text: '로그인 기능을 준비 중이에요. 조금만 기다려 주세요!' })
       : el('a', { class: 'btn kakao', href: loginUrl(), onclick: () => track('login_click', { from: 'cardbook' }) }, '💬 카카오로 3초 만에 카드첩 만들기')),
     el('section', { class: 'plaza-top', id: 'plazaTop', hidden: '' }),
     el('div', { class: 'howto' },
-      el('div', {}, el('b', { text: '1' }), el('span', { text: '헬로타워에서 100층을 넘으면 2막 — 10층마다 신이 한 명씩 내려와요.' })),
-      el('div', {}, el('b', { text: '2' }), el('span', { text: '그 신과 함께 10층을 더 쌓으면 카드를 얻어요.' })),
+      el('div', {}, el('b', { text: '1' }), el('span', { text: '헬로타워에서 10층만 쌓아도 첫 카드! 10·30·50·70·100층에서 대부도 친구들 카드를 얻어요.' })),
+      el('div', {}, el('b', { text: '2' }), el('span', { text: '100층을 넘으면 2막 — 신들과 함께 10층을 쌓을 때마다 신 카드를 얻어요.' })),
       el('div', {}, el('b', { text: '3' }), el('span', { text: '카드첩이 있으면 기기를 바꿔도 사라지지 않고, 누구나 구경 올 수 있어요.' }))),
   ));
   renderCollectors();
@@ -393,7 +409,8 @@ function renderBook(w) {
   );
   const actions = el('div', { class: 'actions' });
   if (w.isMine) {
-    actions.appendChild(el('button', { class: 'btn gold', onclick: () => share(w) }, '📤 카드첩 자랑하기'));
+    actions.appendChild(el('button', { class: 'btn gold', onclick: () => share(w) }, '📤 카톡으로 자랑'));
+    actions.appendChild(el('button', { class: 'btn naver', onclick: () => shareNaver(w) }, 'N 카페에 자랑'));
     actions.appendChild(el('button', { class: 'btn', onclick: () => rename(w) }, '✏️ 이름 바꾸기'));
   } else {
     actions.appendChild(el('button', { class: 'btn', onclick: () => share(w) }, '📤 이 카드첩 공유'));
@@ -405,17 +422,22 @@ function renderBook(w) {
   app.appendChild(head);
   app.appendChild(el('section', { class: 'plaza-top', id: 'plazaTop', hidden: '' }));
 
-  const grid = el('div', { class: 'grid' });
-  GODS.forEach((g) => {
-    const info = w.cards[g.key];
-    const node = cardNode(g, !!info);
-    if (info) node.addEventListener('click', () => openViewer(g, info));
-    else node.addEventListener('click', () => toast(`${101 + GODS.indexOf(g) * 10}층부터 나타나는 신이에요. ${110 + GODS.indexOf(g) * 10}층을 넘으면 카드를 얻어요.`));
-    grid.appendChild(node);
+  [['friend', '대부도 친구들', '1막 · 1~100층'], ['god', '올림포스의 신들', '2막 · 101~200층']].forEach(([series, label, sub]) => {
+    const set = GODS.filter((g) => g.series === series);
+    const have = set.filter((g) => w.cards[g.key]).length;
+    app.appendChild(el('h2', { class: 'section-title' }, label, el('small', { class: 'st-sub', text: ` ${have}/${set.length} · ${sub}` })));
+    const grid = el('div', { class: 'grid' });
+    set.forEach((g) => {
+      const info = w.cards[g.key];
+      const node = cardNode(g, !!info);
+      if (info) node.addEventListener('click', () => openViewer(g, info, w));
+      else node.addEventListener('click', () => toast(howToGet(g)));
+      grid.appendChild(node);
+    });
+    app.appendChild(grid);
   });
-  app.appendChild(grid);
   if (w.isMine && w.count === 0) {
-    app.appendChild(el('p', { class: 'note', style: 'text-align:center;margin-top:16px', text: '아직 카드가 없어요. 헬로타워에서 110층을 넘으면 첫 카드(제우스)를 얻어요!' }));
+    app.appendChild(el('p', { class: 'note', style: 'text-align:center;margin-top:16px', text: '아직 카드가 없어요. 헬로타워에서 10층만 쌓아도 첫 카드(헬로)를 얻어요!' }));
   }
   requestAnimationFrame(() => { const f = $('fill'); if (f) f.style.width = (w.count / w.total * 100) + '%'; });
   if (w.isMine) app.appendChild(diagNode(w));
@@ -477,20 +499,22 @@ async function withdraw() {
   if (r.ok) { alert('탈퇴했어요. 그동안 고마웠어요.'); location.href = '/cardbook.html'; } else toast('탈퇴하지 못했어요. 다시 시도해 주세요.');
 }
 // 공유 이미지 — 가진 카드 중 가장 귀한 카드(번호가 가장 높은 카드) 그림. 카드가 없으면 카드첩 대표 이미지.
-function shareImage(w) {
-  const top = GODS.slice().reverse().find((g) => w.cards && w.cards[g.key]);
+function shareImage(w, g) {
+  const top = g || GODS.slice().reverse().find((x) => w.cards && w.cards[x.key]);
   if (top) return { imageUrl: `https://daebugame.com/assets/cards/${top.key}.webp`, imageWidth: 640, imageHeight: 960 };
   return { imageUrl: 'https://daebugame.com/assets/cards/share.jpg', imageWidth: 1200, imageHeight: 630 };
 }
-async function share(w) {
-  const url = `${location.origin}/cardbook.html?w=${encodeURIComponent(w.wid)}&utm_source=share&utm_medium=cardbook`;
-  const title = `${w.nick}님의 올림포스 카드첩 (${w.count}/${w.total}장)`;
-  track('cardbook_share', { count: w.count });
+// 자랑용 주소 — /c/카드첩주소 (붙여 넣으면 이름과 카드 그림이 미리보기로 뜸). g를 주면 그 카드 한 장을 자랑.
+const shareUrl = (w, g) => `${location.origin}/c/${encodeURIComponent(w.wid)}${g ? '?g=' + g.key : ''}`;
+const shareTitle = (w, g) => (g ? `${w.nick}님이 '${g.name}' 카드를 얻었어요!` : `${w.nick}님의 올림포스 카드첩 (${w.count}/${w.total}장)`);
+async function share(w, g) {
+  const url = shareUrl(w, g), title = shareTitle(w, g);
+  track('cardbook_share', { count: w.count, to: 'kakao', card: g ? g.key : '' });
   try {
     if (window.Kakao && window.Kakao.isInitialized()) {
       window.Kakao.Share.sendDefault({
         objectType: 'feed',
-        content: Object.assign({ title, description: '헬로타워에서 만난 신들의 카드를 구경하러 오세요!', link: { mobileWebUrl: url, webUrl: url } }, shareImage(w)),
+        content: Object.assign({ title, description: '헬로타워에서 모은 카드를 구경하러 오세요!', link: { mobileWebUrl: url, webUrl: url } }, shareImage(w, g)),
         buttons: [{ title: '카드첩 구경하기', link: { mobileWebUrl: url, webUrl: url } }],
       });
       return;
@@ -498,6 +522,17 @@ async function share(w) {
   } catch (e) {}
   try { if (navigator.share) { await navigator.share({ title, url }); return; } } catch (e) { return; }
   try { await navigator.clipboard.writeText(url); toast('카드첩 주소를 복사했어요!'); } catch (e) { prompt('아래 주소를 복사하세요', url); }
+}
+// 네이버 카페(또는 블로그)에 자랑 — 네이버 공유 창이 열리고, 거기서 카페와 게시판을 고르면 글에 링크와 카드 그림이 들어간다
+function shareNaver(w, g) {
+  track('cardbook_share', { count: w.count, to: 'naver', card: g ? g.key : '' });
+  window.open('https://share.naver.com/web/shareView?url=' + encodeURIComponent(shareUrl(w, g)) + '&title=' + encodeURIComponent(shareTitle(w, g)), '_blank', 'noopener');
+}
+// 카페 글에 그대로 붙여 넣을 문장 복사
+async function copyBrag(w, g) {
+  const text = `${shareTitle(w, g)}\n${g ? `전체 ${w.cards[g.key].serial}번째로 얻은 ${g.name} 카드예요.` : '헬로타워에서 모은 카드를 구경하러 오세요.'}\n${shareUrl(w, g)}`;
+  try { await navigator.clipboard.writeText(text); toast('자랑 글을 복사했어요. 카페 글쓰기에 붙여 넣으세요!'); } catch (e) { prompt('아래 글을 복사하세요', text); }
+  track('cardbook_share', { to: 'copy', card: g ? g.key : '' });
 }
 
 // "카드가 안 보여요" 확인 창 — 이 기기에 저장된 카드와 카드첩(서버)에 있는 카드를 나란히 보여준다
@@ -510,7 +545,7 @@ function diagNode(w) {
     el('p', {}, '카드첩에 보관된 카드: ', el('b', { text: names((g) => w.cards[g.key]) })),
     el('p', { class: 'note', text: '카드는 게임을 한 그 기기·그 브라우저에 먼저 저장돼요. 카페 앱 안에서 게임을 했다면 카드첩도 같은 앱 안에서 열어 로그인해야 옮겨져요. 테스트 모드(?test=1)에서 얻은 카드는 저장되지 않아요.' }),
     el('button', { class: 'btn small', onclick: async () => {
-      const claims = GODS.filter((g) => local[g.key] && !w.cards[g.key]).map((g) => ({ god: g.key, floor: 110 + GODS.indexOf(g) * 10, at: local[g.key].at }));
+      const claims = GODS.filter((g) => local[g.key] && !w.cards[g.key]).map((g) => ({ god: g.key, floor: g.need, at: local[g.key].at }));
       if (!claims.length) { toast('옮길 카드가 없어요. 이 기기에는 새 카드가 없어요.'); return; }
       const c = await post('/api/wallet', { action: 'claim', cards: claims });
       if (c.ok && c.data.added && c.data.added.length) { toast(`카드 ${c.data.added.length}장을 옮겼어요!`); load(); } else toast('옮기지 못했어요. 잠시 뒤 다시 시도해 주세요.');
@@ -540,7 +575,7 @@ async function load() {
   // 내 카드첩이면, 이 기기에 임시 보관 중이던 카드를 카드첩으로 옮김
   if (r.data.isMine) {
     const local = localCards();
-    const claims = GODS.filter((g) => local[g.key] && !r.data.cards[g.key]).map((g) => ({ god: g.key, floor: 110 + GODS.indexOf(g) * 10, at: local[g.key].at }));
+    const claims = GODS.filter((g) => local[g.key] && !r.data.cards[g.key]).map((g) => ({ god: g.key, floor: g.need, at: local[g.key].at }));
     if (claims.length) {
       const c = await post('/api/wallet', { action: 'claim', cards: claims });
       if (c.ok && c.data.added && c.data.added.length) {

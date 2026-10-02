@@ -529,6 +529,20 @@ const PIECES = {
 // verts/drawW/drawH 단위는 게임 유닛, 원점은 그림 왼쪽 위.
 // =========================================================================
 const GOD_ORDER = ['zeus','athena','hermes','poseidon','aphrodite','apollo','hades','artemis','dionysus','hera'];
+// [1막 카드] 대부도 친구들 — 1막의 정해진 층을 쌓으면 얻는 카드(블록으로 이미 나오는 캐릭터들).
+const FRIEND_ORDER = ['hello', 'starfish', 'crab', 'gull', 'jellyfish'];
+const FRIEND_INFO = {
+  hello:     { name: '헬로',     title: '대부도의 마스코트',   grade: 'normal', floor: 10 },
+  starfish:  { name: '불가사리', title: '갯벌의 별',           grade: 'normal', floor: 30 },
+  crab:      { name: '꽃게',     title: '탄도항의 집게 대장',  grade: 'normal', floor: 50 },
+  gull:      { name: '갈매기',   title: '방조제의 하늘 길잡이', grade: 'normal', floor: 70 },
+  jellyfish: { name: '해파리',   title: '하늘나라의 문지기',   grade: 'rare',   floor: 100 },
+};
+const FRIEND_AT = { 10: 'hello', 30: 'starfish', 50: 'crab', 70: 'gull' }; // 100층(해파리)은 2막 인트로 직전에 따로 처리
+const CARD_ORDER = FRIEND_ORDER.concat(GOD_ORDER); // 모든 카드(뒤로 갈수록 귀함)
+const cardNeed = (k) => (FRIEND_INFO[k] ? FRIEND_INFO[k].floor : 110 + GOD_ORDER.indexOf(k) * 10);
+const cardInfo = (k) => FRIEND_INFO[k] || GOD_INFO[k];
+const cardNo = (k) => (FRIEND_INFO[k] ? '친구 ' + String(FRIEND_ORDER.indexOf(k) + 1).padStart(2, '0') : 'No.' + String(GOD_ORDER.indexOf(k) + 1).padStart(2, '0'));
 const GOD_INFO = {
   zeus:      { name: '제우스',     title: '번개의 왕',       trait: '넓고 든든해요 · 착지하면 번쩍!',          grade: 'normal' },
   athena:    { name: '아테나',     title: '지혜의 여신',     trait: '끈적해요 · 위에 놓인 블록이 잘 안 미끄러져요', grade: 'normal' },
@@ -2016,7 +2030,7 @@ function finalizeSettle(body) {
     refreezeTower(true); // 퍼펙트 — 꼭대기까지 전부 굳혀서 안정
     freezeBody(body);
     const nf = floorCount + 1; // 이번에 올라갈 층 — 카드 획득/2막 전환 층이면 그 연출이 우선(문구 겹침 방지)
-    if (!(nf >= HEAVEN_FLOOR && nf % 10 === 0)) showPerfect(perfectCombo);
+    if (!((nf >= HEAVEN_FLOOR && nf % 10 === 0) || FRIEND_AT[nf])) showPerfect(perfectCombo);
     track('perfect', { score: floorCount + 1, combo: perfectCombo });
   } else {
     perfectCombo = 0;
@@ -2049,10 +2063,20 @@ function finalizeSettle(body) {
     return;
   }
   if (floorCount === HEAVEN_FLOOR) {
-    startAct2Intro(); // 100층 — 신들의 환영 후 2막으로 계속
+    // 100층 — 1막 완주 카드(해파리)를 먼저 받고, 신들의 환영 후 2막으로 계속
+    if (awardGodCard('jellyfish')) showCardReveal('jellyfish', startAct2Intro);
+    else startAct2Intro();
     return;
   }
-  if (floorCount > HEAVEN_FLOOR && floorCount % 10 === 0) {
+  if (FRIEND_AT[floorCount]) {
+    // [1막 카드] 10·30·50·70층 — 대부도 친구 카드
+    if (awardGodCard(FRIEND_AT[floorCount])) {
+      if (checkGameOver()) { endGame(); return; }
+      showCardReveal(FRIEND_AT[floorCount], advanceTurn);
+      return;
+    }
+    showMilestone(floorCount);
+  } else if (floorCount > HEAVEN_FLOOR && floorCount % 10 === 0) {
     const cardKey = GOD_ORDER[(floorCount - HEAVEN_FLOOR) / 10 - 1]; // 110층=제우스 카드 …
     if (awardGodCard(cardKey)) {
       // 처음 얻는 카드 — 화려한 획득 연출을 보여준 뒤에 다음 조각으로
@@ -2135,7 +2159,7 @@ function claimCardsToServer(claims) {
     })
     .catch(() => say('❌ 서버에 연결하지 못했어요'));
 }
-function localCardCount() { const c = loadCards(); return GOD_ORDER.filter((k) => c[k]).length; }
+function localCardCount() { const c = loadCards(); return CARD_ORDER.filter((k) => c[k]).length; }
 // 게임오버 화면의 회원 안내 — 로그인했으면 이름을, 아니면 카카오 로그인 버튼을 보여준다
 function renderMemberBox() {
   const box = document.getElementById('memberBox');
@@ -2155,11 +2179,11 @@ function renderMemberBox() {
     // 얻은 카드 그림을 보여 주며 "보관하세요"
     const row = document.createElement('div'); row.className = 'mbCards';
     const owned = loadCards();
-    GOD_ORDER.filter((k) => owned[k]).slice(-5).forEach((k) => { const im = new Image(); im.alt = ''; im.src = '/assets/cards/' + k + '.webp'; im.onerror = () => { im.onerror = null; im.src = PIECES[k].file; }; row.appendChild(im); });
+    CARD_ORDER.filter((k) => owned[k]).slice(-5).forEach((k) => { const im = new Image(); im.alt = ''; im.src = '/assets/cards/' + k + '.webp'; im.onerror = () => { im.onerror = null; im.src = PIECES[k].file; }; row.appendChild(im); });
     box.appendChild(row);
   }
   const t = document.createElement('div');
-  t.textContent = n ? `신 카드 ${n}장을 얻었어요! 아직 이 기기에만 있어요. 로그인하면 카드첩에 영원히 보관되고 랭킹에 🎴가 붙어요.` : '오락실 회원 혜택: 랭킹 이름 옆 🎴 표시 · 닉네임 자동 입력 · 올림포스 카드첩';
+  t.textContent = n ? `카드 ${n}장을 얻었어요! 아직 이 기기에만 있어요. 로그인하면 카드첩에 영원히 보관되고 랭킹에 🎴가 붙어요.` : '오락실 회원 혜택: 랭킹 이름 옆 🎴 표시 · 닉네임 자동 입력 · 올림포스 카드첩';
   const b = document.createElement('button');
   b.textContent = n ? '💬 카카오 로그인하고 카드 보관하기' : '💬 카카오 로그인하고 등록하기';
   b.addEventListener('click', (e) => {
@@ -2209,9 +2233,9 @@ async function syncMember() {
     const cards = loadCards();
     let changed = false;
     const claims = [];
-    GOD_ORDER.forEach((k, i) => {
-      if (w.cards[k] && !cards[k]) { cards[k] = { at: w.cards[k].at, floor: 110 + i * 10, count: 1 }; changed = true; }
-      else if (cards[k] && !w.cards[k]) claims.push({ god: k, floor: 110 + i * 10, at: cards[k].at });
+    CARD_ORDER.forEach((k) => {
+      if (w.cards[k] && !cards[k]) { cards[k] = { at: w.cards[k].at, floor: cardNeed(k), count: 1 }; changed = true; }
+      else if (cards[k] && !w.cards[k]) claims.push({ god: k, floor: cardNeed(k), at: cards[k].at });
     });
     if (changed) { try { localStorage.setItem('ht_cards', JSON.stringify(cards)); } catch (e) { /* 무시 */ } }
     claimCardsToServer(claims);
@@ -2242,7 +2266,7 @@ function awardGodCard(key) {
     if (isNew) cards[key] = { at: new Date().toISOString(), floor: floorCount };
     cards[key].count = (cards[key].count || 0) + 1;
     try { localStorage.setItem('ht_cards', JSON.stringify(cards)); } catch (e) { /* 무시 */ }
-    if (isNew) claimCardsToServer([{ god: key, floor: 110 + GOD_ORDER.indexOf(key) * 10, at: cards[key].at }]);
+    if (isNew) claimCardsToServer([{ god: key, floor: cardNeed(key), at: cards[key].at }]);
   }
   track('card_get', { god: key, score: floorCount, first: isNew });
   return isNew || NO_SAVE();
@@ -2252,7 +2276,7 @@ function awardGodCard(key) {
 // 연출 동안 게임은 잠깐 멈춤(state 'card_reveal'). 1초 뒤부터 화면을 누르면 닫히고, 5초 뒤 자동으로 닫힘.
 let cardRevealDone = null, cardRevealTimer = null, cardRevealOpenAt = 0;
 function showCardReveal(key, onDone) {
-  const info = GOD_INFO[key];
+  const info = cardInfo(key);
   state = 'card_reveal';
   stopPendulumSound();
   const el = document.getElementById('cardReveal');
@@ -2276,7 +2300,8 @@ function showCardReveal(key, onDone) {
   }
   el.querySelector('.crName').textContent = info.name;
   el.querySelector('.crTitle').textContent = info.title;
-  el.querySelector('.crNo').textContent = 'No.' + String(GOD_ORDER.indexOf(key) + 1).padStart(2, '0');
+  el.querySelector('.crNo').textContent = cardNo(key);
+  el.querySelector('.crHead').textContent = FRIEND_INFO[key] ? '친구 카드 획득!' : '신 카드 획득!';
   el.querySelector('.crGrade').textContent = { normal: '일반', rare: '희귀', legend: '전설' }[info.grade];
   void el.offsetWidth;
   el.classList.add('show');
@@ -2295,22 +2320,56 @@ function closeCardReveal() {
 }
 document.getElementById('cardReveal').addEventListener('pointerdown', (e) => { e.stopPropagation(); closeCardReveal(); });
 function playCardFanfare(grade) {
+  // 카드 획득 팡파르 — 여러 소리를 겹쳐 화려하게:
+  //  ① 빨려 올라가는 바람 소리 → ② 쿵! 하는 타격 → ③ 금관악기 같은 화음 → ④ 위로 달려 올라가는 반짝이는 음 → ⑤ 흩날리는 별가루
+  // 등급이 높을수록 음이 더 많고 화음이 한 번 더 바뀐다.
   if (!SOUND_ENABLED) return;
   try {
     if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    const now = audioCtx.currentTime;
-    const notes = grade === 'legend' ? [523, 659, 784, 1047, 1319, 1568] : grade === 'rare' ? [523, 659, 784, 1047, 1319] : [523, 659, 784, 1047];
-    notes.forEach((f, k) => {
-      const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
-      osc.type = 'triangle';
-      const t = now + 0.25 + k * 0.09;
-      osc.frequency.setValueAtTime(f, t);
-      gain.gain.setValueAtTime(0.0001, t);
-      gain.gain.exponentialRampToValueAtTime(0.16, t + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.001, t + (k === notes.length - 1 ? 0.9 : 0.3));
-      osc.connect(gain); gain.connect(audioCtx.destination);
-      osc.start(t); osc.stop(t + 1);
-    });
+    const ac = audioCtx, t0 = ac.currentTime + 0.02;
+    const level = grade === 'legend' ? 2 : grade === 'rare' ? 1 : 0;
+    // 여러 소리가 겹쳐도 찢어지지 않게 한데 모아 눌러 줌
+    const comp = ac.createDynamicsCompressor();
+    const master = ac.createGain(); master.gain.value = 0.85;
+    master.connect(comp); comp.connect(ac.destination);
+    const tone = (type, f, t, dur, vol, f2) => {
+      const o = ac.createOscillator(), g = ac.createGain();
+      o.type = type; o.frequency.setValueAtTime(f, t);
+      if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + dur);
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(vol, t + 0.015);
+      g.gain.exponentialRampToValueAtTime(0.0008, t + dur);
+      o.connect(g); g.connect(master); o.start(t); o.stop(t + dur + 0.05);
+    };
+    const noise = (t, dur, vol, fFrom, fTo, q) => {
+      const len = Math.floor(ac.sampleRate * dur), buf = ac.createBuffer(1, len, ac.sampleRate), d = buf.getChannelData(0);
+      for (let k = 0; k < len; k++) d[k] = Math.random() * 2 - 1;
+      const src = ac.createBufferSource(); src.buffer = buf;
+      const f = ac.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = q || 1.2;
+      f.frequency.setValueAtTime(fFrom, t); f.frequency.exponentialRampToValueAtTime(fTo, t + dur);
+      const g = ac.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + dur * 0.8); g.gain.exponentialRampToValueAtTime(0.0008, t + dur);
+      src.connect(f); f.connect(g); g.connect(master); src.start(t); src.stop(t + dur + 0.02);
+    };
+    const hit = t0 + 0.28; // 카드가 뒤집혀 나타나는 순간
+    // ① 바람(상승)
+    noise(t0, 0.3, 0.5, 300, 5200, 1.0);
+    tone('sine', 180, t0, 0.28, 0.12, 900);
+    // ② 타격
+    tone('sine', 150, hit, 0.5, 0.9, 38);
+    noise(hit, 0.18, 0.45, 2400, 500, 0.7);
+    // ③ 화음(금관 느낌 — 톱니파를 살짝 어긋나게 겹침)
+    const chord = (t, freqs, dur, vol) => freqs.forEach((f) => { tone('sawtooth', f, t, dur, vol); tone('sawtooth', f * 1.006, t, dur, vol * 0.7); tone('triangle', f * 2, t, dur * 0.8, vol * 0.5); });
+    const C = [261.6, 329.6, 392.0, 523.3], F = [349.2, 440.0, 523.3, 698.5], G = [392.0, 493.9, 587.3, 784.0], C2 = [523.3, 659.3, 784.0, 1046.5];
+    if (level === 0) { chord(hit, C, 1.1, 0.075); }
+    else if (level === 1) { chord(hit, C, 0.45, 0.075); chord(hit + 0.42, G, 0.4, 0.07); chord(hit + 0.8, C2, 1.3, 0.08); }
+    else { chord(hit, C, 0.4, 0.075); chord(hit + 0.36, F, 0.36, 0.07); chord(hit + 0.7, G, 0.4, 0.075); chord(hit + 1.08, C2, 1.8, 0.09); tone('sine', 65.4, hit + 1.08, 1.6, 0.5); }
+    // ④ 달려 올라가는 음
+    const run = [523.3, 659.3, 784.0, 1046.5, 1318.5, 1568.0, 2093.0, 2637.0].slice(0, 5 + level * 1.5 | 0);
+    const runAt = hit + (level === 0 ? 0.1 : level === 1 ? 0.85 : 1.12);
+    run.forEach((f, k) => { const t = runAt + k * 0.065; tone('triangle', f, t, k === run.length - 1 ? 1.1 : 0.28, 0.2); tone('sine', f * 2, t, 0.2, 0.06); });
+    // ⑤ 별가루
+    const sparkN = 10 + level * 8, sparkAt = runAt + run.length * 0.065;
+    for (let k = 0; k < sparkN; k++) tone('sine', 2200 + Math.random() * 3800, sparkAt + Math.random() * (0.9 + level * 0.5), 0.14, 0.05 + Math.random() * 0.04);
   } catch (e) { /* 무시 */ }
 }
 
@@ -3254,7 +3313,7 @@ if (TEST_MODE) {
   const wrap = document.getElementById('testFloorBtns');
   const opts = [[1, '1층 (처음부터)'], [96, '96층 (2막 직전)']]
     .concat(GOD_ORDER.map((k, i) => [HEAVEN_FLOOR + 1 + i * 10, `${HEAVEN_FLOOR + 1 + i * 10}층 ${GOD_INFO[k].name}`]))
-    .concat([[110, '110층 (한 층 쌓으면 제우스 카드)'], [130, '130층 (한 층 쌓으면 헤르메스 카드)'], [198, '198층 (최종 직전)']]);
+    .concat([[10, '10층 (한 층 쌓으면 헬로 카드)'], [100, '100층 (한 층 쌓으면 해파리 카드)'], [110, '110층 (한 층 쌓으면 제우스 카드)'], [130, '130층 (한 층 쌓으면 헤르메스 카드)'], [198, '198층 (최종 직전)']]);
   opts.forEach(([n, label]) => {
     const b = document.createElement('button');
     b.textContent = label;
@@ -3278,7 +3337,7 @@ if (TEST_MODE) {
       try { sessionStorage.setItem('ht_admin', pw); } catch (e) { /* 무시 */ }
       await syncMember();
       adminMsg.style.color = '#1a7a3a';
-      adminMsg.textContent = `✅ 실제 발급 켜짐 — ${d.nick}님 카드첩\n지금 이 기기 카드 ${localCardCount()}장. '110층' 버튼으로 시작해 한 층만 쌓으면 제우스 카드가 발급돼요.`;
+      adminMsg.textContent = `✅ 실제 발급 켜짐 — ${d.nick}님 카드첩\n지금 이 기기 카드 ${localCardCount()}장. '10층'·'110층' 버튼으로 시작해 한 층만 쌓으면 카드가 발급돼요.`;
       document.getElementById('testResetBtn').style.display = 'inline-block';
       document.querySelector('#testPanel .note').textContent = '랭킹 등록·통계는 꺼져 있고, 카드만 실제로 발급돼요(관리자 테스트).';
     } catch (e) { adminMsg.textContent = '❌ 서버에 연결하지 못했어요.'; }

@@ -326,20 +326,20 @@ function whoNode(e) {
   return document.createTextNode(e.nickname);
 }
 // 왕좌의 주인이 올림포스 카드첩 회원이면, 가진 카드 중 가장 귀한 3장을 부채꼴로 보여 주고 카드첩으로 연결
-const GOD_RANK = ['zeus', 'athena', 'hermes', 'poseidon', 'aphrodite', 'apollo', 'hades', 'artemis', 'dionysus', 'hera'];
+const GOD_RANK = ['hello', 'starfish', 'crab', 'gull', 'jellyfish', 'zeus', 'athena', 'hermes', 'poseidon', 'aphrodite', 'apollo', 'hades', 'artemis', 'dionysus', 'hera'];
+const CARD_GRADE = { jellyfish: 'rare', apollo: 'rare', hades: 'rare', artemis: 'rare', dionysus: 'rare', hera: 'legend' };
 function cardShow(e) {
   if (!e || !/^[a-z0-9]{4,16}$/.test(e.wid || '')) return null;
   const gods = GOD_RANK.filter((g) => (e.gods || []).includes(g));
   const href = '/cardbook.html?w=' + e.wid;
   if (!gods.length) return el('a', { class: 'cs-plain', href }, '🎴 카드첩 구경하기 →');
-  const a = el('a', { class: 'card-show', href, 'aria-label': `${e.nickname}님의 올림포스 카드첩 구경하기 — 신 카드 ${gods.length}장 보유` });
+  const a = el('a', { class: 'card-show', href, 'aria-label': `${e.nickname}님의 올림포스 카드첩 구경하기 — 카드 ${gods.length}장 보유` });
   const fan = el('span', { class: 'cs-fan' });
   gods.slice(-3).forEach((g) => {
-    const i = GOD_RANK.indexOf(g);
-    const c = el('span', { class: 'cs-card ' + (i === 9 ? 'legend' : i >= 5 ? 'rare' : 'normal') }, el('img', { src: `/assets/cards/${g}.webp`, alt: '', loading: 'lazy' }));
+    const c = el('span', { class: 'cs-card ' + (CARD_GRADE[g] || 'normal') }, el('img', { src: `/assets/cards/${g}.webp`, alt: '', loading: 'lazy' }));
     fan.appendChild(c);
   });
-  a.append(fan, el('span', { class: 'cs-cap' }, el('b', { text: `신 카드 ${gods.length}장 보유` }), ' · 카드첩 구경하기 →'));
+  a.append(fan, el('span', { class: 'cs-cap' }, el('b', { text: `카드 ${gods.length}장 보유` }), ' · 카드첩 구경하기 →'));
   a.addEventListener('click', () => track('hall_cardbook_click', { cards: gods.length }));
   return a;
 }

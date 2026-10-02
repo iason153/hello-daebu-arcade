@@ -17,7 +17,17 @@
 import { kv } from '@vercel/kv';
 import { createHmac, timingSafeEqual, randomBytes } from 'crypto';
 
-export const GODS = ['zeus', 'athena', 'hermes', 'poseidon', 'aphrodite', 'apollo', 'hades', 'artemis', 'dionysus', 'hera'];
+// 카드 목록과 "그 카드를 얻을 수 있는 최소 층". 1막 = 대부도 친구들 5장, 2막 = 올림포스 신 10장.
+// 뒤로 갈수록 귀한 카드(순서가 곧 귀한 정도 — 대표 카드 고를 때 맨 뒤 것을 씀).
+export const CARD_NEED = {
+  hello: 10, starfish: 30, crab: 50, gull: 70, jellyfish: 100,
+  zeus: 110, athena: 120, hermes: 130, poseidon: 140, aphrodite: 150, apollo: 160, hades: 170, artemis: 180, dionysus: 190, hera: 200,
+};
+export const CARD_NAME = {
+  hello: '헬로', starfish: '불가사리', crab: '꽃게', gull: '갈매기', jellyfish: '해파리',
+  zeus: '제우스', athena: '아테나', hermes: '헤르메스', poseidon: '포세이돈', aphrodite: '아프로디테', apollo: '아폴론', hades: '하데스', artemis: '아르테미스', dionysus: '디오니소스', hera: '헤라',
+};
+export const GODS = Object.keys(CARD_NEED); // (이름은 예전 그대로 두었지만 지금은 "모든 카드" 목록)
 export const SITE_ORIGIN = process.env.SITE_ORIGIN || 'https://daebugame.com';
 const COOKIE = 'hs';
 const MAX_AGE = 60 * 60 * 24 * 180; // 180일
@@ -134,7 +144,7 @@ export async function getCards(wid) {
 }
 
 // 카드 획득 등록. 이미 가진 카드는 건드리지 않는다(처음 얻은 기록을 지킴).
-// 층수는 그 카드를 얻을 수 있는 최소 층(제우스 110, 아테나 120 …) 이상이어야 받아준다.
+// 층수는 그 카드를 얻을 수 있는 최소 층(헬로 10 … 제우스 110, 아테나 120 …) 이상이어야 받아준다.
 export async function claimCards(wid, claims) {
   const cards = await getCards(wid);
   const added = [];
@@ -142,7 +152,7 @@ export async function claimCards(wid, claims) {
     const god = String((c || {}).god || '');
     const idx = GODS.indexOf(god);
     if (idx < 0 || cards[god]) continue;
-    const need = 110 + idx * 10;
+    const need = CARD_NEED[god];
     const floor = Math.floor(Number(c.floor));
     if (!Number.isFinite(floor) || floor < need || floor > 200) continue;
     const t = Date.parse(c.at);
