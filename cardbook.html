@@ -17,7 +17,9 @@ gtag("config", "G-5YPGVVP49T");
 <meta name="description" content="헬로타워 2막에서 신들을 만나 모은 카드를 보관하고 자랑하는 곳, 올림포스 카드첩.">
 <meta property="og:title" content="올림포스 카드첩">
 <meta property="og:description" content="헬로타워에서 만난 올림포스 신들의 카드를 모아 보세요.">
-<meta property="og:image" content="https://daebugame.com/games/hello-tower/assets/thumb-hellotower.jpg">
+<meta property="og:image" content="https://daebugame.com/assets/cards/share.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Jua&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -433,6 +435,12 @@ async function withdraw() {
   const r = await post('/api/auth', { action: 'withdraw' });
   if (r.ok) { alert('탈퇴했어요. 그동안 고마웠어요.'); location.href = '/cardbook.html'; } else toast('탈퇴하지 못했어요. 다시 시도해 주세요.');
 }
+// 공유 이미지 — 가진 카드 중 가장 귀한 카드(번호가 가장 높은 카드) 그림. 카드가 없으면 카드첩 대표 이미지.
+function shareImage(w) {
+  const top = GODS.slice().reverse().find((g) => w.cards && w.cards[g.key]);
+  if (top) return { imageUrl: `https://daebugame.com/assets/cards/${top.key}.webp`, imageWidth: 640, imageHeight: 960 };
+  return { imageUrl: 'https://daebugame.com/assets/cards/share.jpg', imageWidth: 1200, imageHeight: 630 };
+}
 async function share(w) {
   const url = `${location.origin}/cardbook.html?w=${encodeURIComponent(w.wid)}&utm_source=share&utm_medium=cardbook`;
   const title = `${w.nick}님의 올림포스 카드첩 (${w.count}/${w.total}장)`;
@@ -441,7 +449,7 @@ async function share(w) {
     if (window.Kakao && window.Kakao.isInitialized()) {
       window.Kakao.Share.sendDefault({
         objectType: 'feed',
-        content: { title, description: '헬로타워에서 만난 신들의 카드를 구경하러 오세요!', imageUrl: 'https://daebugame.com/games/hello-tower/assets/thumb-hellotower.jpg', link: { mobileWebUrl: url, webUrl: url } },
+        content: Object.assign({ title, description: '헬로타워에서 만난 신들의 카드를 구경하러 오세요!', link: { mobileWebUrl: url, webUrl: url } }, shareImage(w)),
         buttons: [{ title: '카드첩 구경하기', link: { mobileWebUrl: url, webUrl: url } }],
       });
       return;
