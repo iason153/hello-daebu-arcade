@@ -31,7 +31,9 @@ function parseEntries(raws) {
     try {
       const e = typeof raw === 'string' ? JSON.parse(raw) : raw;
       if (e && e.nickname && Number.isFinite(Number(e.meters))) {
-        out.push({ nickname: String(e.nickname), score: Number(e.meters), at: e.submittedAt || null });
+        const row = { nickname: String(e.nickname), score: Number(e.meters), at: e.submittedAt || null };
+        if (e.wid) row.wid = String(e.wid); // 올림포스 카드첩 주소(로그인하고 등록한 기록만)
+        out.push(row);
       }
     } catch (err) { /* 낡은 기록은 건너뜀 */ }
   }

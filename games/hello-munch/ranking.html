@@ -64,6 +64,7 @@
   .btn.ghost{background:rgba(255,255,255,0.08); color:#fff; border:1px solid rgba(255,255,255,0.18);}
 
   footer{text-align:center; margin-top:30px; font-size:12px; color:rgba(255,255,255,0.35);}
+.cb-link{color:inherit;text-decoration:underline;text-decoration-color:rgba(201,146,44,.6);text-underline-offset:3px;}
 </style>
 </head>
 <body>
@@ -126,7 +127,7 @@ function renderList(entries){
     const nick = (e.nickname||'').toString().slice(0,12);
     const unit = (currentGame==='hello_tower') ? '층' : (currentGame==='hello_bird') ? '점' : 'm';
     const meters = (e.meters!=null) ? e.meters+unit : '-';
-    return '<div class="row'+topClass+'"><div class="rank">'+rankLabel+'</div><div class="nick">'+escapeHtml(nick)+'</div><div class="meters">'+meters+'</div></div>';
+    return '<div class="row'+topClass+'"><div class="rank">'+rankLabel+'</div><div class="nick">'+(/^[a-z0-9]{4,16}$/.test(e.wid||'') ? '<a class="cb-link" href="/cardbook.html?w='+e.wid+'" title="카드첩 구경하기">'+escapeHtml(nick)+' <span aria-hidden="true">🎴</span></a>' : escapeHtml(nick))+'</div><div class="meters">'+meters+'</div></div>';
   }).join('');
 }
 function escapeHtml(s){

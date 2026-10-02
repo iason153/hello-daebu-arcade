@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5YPGVVP49T"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag("js", new Date());
+gtag("config", "G-5YPGVVP49T");
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#0b0f24">
+<link rel="icon" type="image/png" sizes="64x64" href="/icons/favicon-64.png">
+<title>올림포스 카드첩 · 헬로 대부도 오락실</title>
+<meta name="description" content="헬로타워 2막에서 신들을 만나 모은 카드를 보관하고 자랑하는 곳, 올림포스 카드첩.">
+<meta property="og:title" content="올림포스 카드첩">
+<meta property="og:description" content="헬로타워에서 만난 올림포스 신들의 카드를 모아 보세요.">
+<meta property="og:image" content="https://daebugame.com/games/hello-tower/assets/thumb-hellotower.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Jua&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --night: #0b0f24; --night-2: #141a3a; --panel: #1b2249; --line: rgba(255, 233, 168, 0.16);
+    --gold: #f2c14e; --gold-deep: #c9922c; --cream: #fff6d5; --dim: #9aa3c7; --rose: #ff7ad9; --sky: #8fd6ff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-text-size-adjust: 100%; background: #0b0f24; }
+  body {
+    min-height: 100vh; color: var(--cream); font-family: 'Noto Sans KR', sans-serif; line-height: 1.55;
+    background:
+      radial-gradient(ellipse 120% 46% at 50% -6%, rgba(242, 193, 78, 0.28), transparent 62%),
+      radial-gradient(ellipse 80% 40% at 100% 30%, rgba(143, 214, 255, 0.10), transparent 60%),
+      radial-gradient(ellipse 80% 40% at 0% 60%, rgba(255, 122, 217, 0.09), transparent 60%),
+      linear-gradient(180deg, var(--night-2), var(--night) 46%);
+    background-attachment: fixed; overflow-x: hidden;
+  }
+  /* 밤하늘 별 */
+  body::before {
+    content: ""; position: fixed; inset: 0; pointer-events: none; opacity: 0.55;
+    background-image:
+      radial-gradient(1.4px 1.4px at 12% 18%, #fff, transparent 60%), radial-gradient(1.2px 1.2px at 78% 9%, #fff, transparent 60%),
+      radial-gradient(1.6px 1.6px at 43% 31%, #ffe9a8, transparent 60%), radial-gradient(1.1px 1.1px at 91% 44%, #fff, transparent 60%),
+      radial-gradient(1.3px 1.3px at 22% 62%, #fff, transparent 60%), radial-gradient(1.5px 1.5px at 64% 73%, #cfe6ff, transparent 60%),
+      radial-gradient(1.1px 1.1px at 8% 88%, #fff, transparent 60%), radial-gradient(1.4px 1.4px at 85% 90%, #ffe9a8, transparent 60%);
+    animation: twinkle 5s ease-in-out infinite alternate;
+  }
+  @keyframes twinkle { from { opacity: 0.35; } to { opacity: 0.7; } }
+  a { color: inherit; }
+  button { font: inherit; cursor: pointer; }
+  :focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
+  .wrap { position: relative; max-width: 560px; margin: 0 auto; padding: 0 16px 72px; }
+
+  .topbar { display: flex; justify-content: space-between; align-items: center; padding: 14px 2px 0; font-size: 13px; }
+  .topbar a { text-decoration: none; color: var(--dim); font-weight: 700; padding: 6px 2px; }
+  .topbar a:hover { color: var(--cream); }
+
+  header.book { text-align: center; padding: 18px 0 8px; }
+  .laurel { font-size: 13px; letter-spacing: 0.34em; color: var(--gold); font-weight: 700; }
+  h1 { font-family: 'Gowun Batang', serif; font-weight: 700; font-size: clamp(30px, 9vw, 40px); line-height: 1.15; margin-top: 4px;
+    background: linear-gradient(180deg, #fff6d5 10%, #f2c14e 60%, #c9922c); -webkit-background-clip: text; background-clip: text; color: transparent;
+    filter: drop-shadow(0 2px 10px rgba(242, 193, 78, 0.35)); }
+  .owner { margin-top: 10px; font-family: 'Jua', sans-serif; font-size: 21px; word-break: break-all; }
+  .owner small { font-family: 'Noto Sans KR', sans-serif; font-size: 13px; color: var(--dim); font-weight: 500; }
+  .meta { margin-top: 4px; font-size: 12px; color: var(--dim); }
+  .meta b { color: var(--cream); font-weight: 700; }
+
+  .progress { margin: 16px auto 0; max-width: 340px; }
+  .progress .bar { height: 12px; border-radius: 999px; background: rgba(255, 255, 255, 0.09); border: 1px solid var(--line); overflow: hidden; }
+  .progress .fill { height: 100%; width: 0; border-radius: 999px; background: linear-gradient(90deg, #c9922c, #f2c14e, #fff6d5); box-shadow: 0 0 12px rgba(242, 193, 78, 0.7); transition: width 0.9s cubic-bezier(0.2, 0.8, 0.2, 1); }
+  .progress .num { margin-top: 6px; font-family: 'Jua', sans-serif; font-size: 16px; }
+  .progress .num b { font-size: 24px; color: var(--gold); }
+  .badge-master { display: inline-block; margin-top: 8px; padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 900; color: #3a2a10;
+    background: linear-gradient(90deg, #ff7ad9, #ffd76a, #8fd6ff, #b8ff9a); }
+
+  .actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 16px; }
+  .btn { border: 1.5px solid var(--line); background: rgba(255, 255, 255, 0.06); color: var(--cream); padding: 10px 16px; border-radius: 999px; font-weight: 700; font-size: 14px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+  .btn:hover { background: rgba(255, 255, 255, 0.12); }
+  .btn.gold { background: linear-gradient(180deg, #ffd76a, #e6a92a); color: #3a2a10; border-color: #fff0b8; box-shadow: 0 4px 0 #a8741a; }
+  .btn.kakao { background: #fee500; color: #191600; border-color: #fee500; font-size: 15px; padding: 13px 22px; box-shadow: 0 4px 0 #c9b400; }
+  .btn.small { font-size: 12px; padding: 6px 12px; }
+
+  /* 카드 격자 */
+  .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-top: 26px; }
+  @media (min-width: 520px) { .grid { grid-template-columns: repeat(3, 1fr); } }
+
+  .card { position: relative; aspect-ratio: 2 / 3; border-radius: 16px; border: 0; padding: 0; background: #10152f; color: inherit; width: 100%;
+    transform-style: preserve-3d; transform: perspective(700px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+    transition: transform 0.25s ease; --c: #cfd6e2; --a: #f4f6fa; --b: #9aa6b8; --mx: 50%; --my: 50%;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.12), 0 10px 24px rgba(0, 0, 0, 0.5); overflow: hidden; display: block; text-align: left; }
+  .card.rare { --c: #ffc93c; --a: #fff3b0; --b: #e0a010; }
+  .card.legend { --c: #ff7ad9; --a: #ff7ad9; --b: #8fd6ff; }
+  .card.owned { box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.4), 0 0 22px color-mix(in srgb, var(--c) 70%, transparent), 0 12px 26px rgba(0, 0, 0, 0.55); animation: bob 5s ease-in-out infinite; }
+  .card.owned:nth-child(2n) { animation-delay: -2.3s; }
+  .card.owned:nth-child(3n) { animation-delay: -1.1s; }
+  @keyframes bob { 0%, 100% { translate: 0 0; } 50% { translate: 0 -4px; } }
+  .card .art { position: absolute; inset: 0; background: radial-gradient(circle at 50% 38%, #fff 0%, color-mix(in srgb, var(--c) 40%, #fff) 45%, color-mix(in srgb, var(--c) 65%, #6b5a2a) 100%); }
+  .card .art img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .card .art img.block { object-fit: contain; inset: 14% 8% 30% 8%; width: 84%; height: 56%; filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.35)); }
+  .card .frame { position: absolute; inset: 0; border-radius: 16px; border: 6px solid transparent; pointer-events: none;
+    background: linear-gradient(135deg, var(--a), var(--b), var(--a), var(--b)) border-box;
+    -webkit-mask: linear-gradient(#000 0 0) padding-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; }
+  .card.legend .frame { background: linear-gradient(135deg, #ff7ad9, #ffd76a, #8fd6ff, #b8ff9a, #ff7ad9) border-box; background-size: 300% 300%; animation: rainbow 6s linear infinite; }
+  @keyframes rainbow { to { background-position: 300% 300%; } }
+  .card .top { position: absolute; left: 11px; right: 11px; top: 10px; display: flex; justify-content: space-between; align-items: center; font-size: 11px; font-weight: 900; color: #fff; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.75); }
+  .card .grade { background: var(--c); padding: 2px 8px; border-radius: 999px; text-shadow: 0 1px 1px rgba(0, 0, 0, 0.35); }
+  .card .plate { position: absolute; left: 6px; right: 6px; bottom: 6px; padding: 26px 8px 9px; text-align: center; border-radius: 0 0 10px 10px;
+    background: linear-gradient(to top, rgba(16, 12, 36, 0.94) 48%, rgba(16, 12, 36, 0)); }
+  .card .name { font-family: 'Jua', sans-serif; font-size: clamp(18px, 5.4vw, 23px); color: var(--cream); text-shadow: 0 0 10px var(--c), 0 2px 3px #000; line-height: 1.1; }
+  .card .title { font-size: 11px; color: #ffe9a8; font-weight: 700; }
+  /* 홀로그램 반짝임 — 손가락·마우스 위치를 따라 움직임 */
+  .card .holo { position: absolute; inset: 0; pointer-events: none; mix-blend-mode: color-dodge; opacity: 0.55;
+    background:
+      radial-gradient(circle at var(--mx) var(--my), rgba(255, 255, 255, 0.85), transparent 38%),
+      linear-gradient(115deg, transparent 20%, rgba(255, 160, 230, 0.55) 38%, rgba(140, 220, 255, 0.55) 50%, rgba(184, 255, 154, 0.5) 62%, transparent 80%);
+    background-size: 100% 100%, 240% 240%; background-position: 0 0, var(--mx) var(--my); }
+  .card .sweep { position: absolute; inset: 0; pointer-events: none; mix-blend-mode: screen;
+    background: linear-gradient(115deg, transparent 34%, rgba(255, 255, 255, 0.7) 48%, transparent 62%); background-size: 280% 100%; animation: sweep 4.2s ease-in-out infinite; }
+  .card:nth-child(2n) .sweep { animation-delay: -1.6s; }
+  .card:nth-child(3n) .sweep { animation-delay: -2.9s; }
+  @keyframes sweep { 0%, 35% { background-position: 140% 0; } 80%, 100% { background-position: -140% 0; } }
+
+  /* 아직 못 얻은 카드 */
+  .card.locked { background: linear-gradient(160deg, #1a2148, #0d1128); border: 1.5px dashed rgba(255, 233, 168, 0.28); box-shadow: none; }
+  .card.locked .art { background: none; }
+  .card.locked .art img { object-fit: contain; inset: 16% 10% 34% 10%; width: 80%; height: 50%; filter: brightness(0) drop-shadow(0 0 10px rgba(143, 214, 255, 0.35)); opacity: 0.55; }
+  .card.locked .q { position: absolute; inset: 0 0 34% 0; display: flex; align-items: center; justify-content: center; font-family: 'Gowun Batang', serif; font-weight: 700; font-size: 44px; color: rgba(255, 233, 168, 0.5); }
+  .card.locked .plate { background: none; }
+  .card.locked .name { color: var(--dim); text-shadow: none; }
+  .card.locked .title { color: #7f88ad; font-weight: 500; }
+
+  .section-title { margin: 34px 0 10px; font-family: 'Gowun Batang', serif; font-weight: 700; font-size: 20px; color: var(--gold); display: flex; align-items: center; gap: 10px; }
+  .section-title::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, var(--line), transparent); }
+  .note { font-size: 13px; color: var(--dim); }
+
+  .collectors { list-style: none; display: grid; gap: 8px; }
+  .collectors a { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 14px; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--line); text-decoration: none; }
+  .collectors a:hover { background: rgba(255, 255, 255, 0.1); }
+  .collectors .rk { font-family: 'Gowun Batang', serif; font-weight: 700; color: var(--gold); width: 26px; text-align: center; }
+  .collectors .nm { flex: 1; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .collectors .dots { display: flex; gap: 3px; }
+  .collectors .dots i { width: 9px; height: 9px; border-radius: 50%; background: rgba(255, 255, 255, 0.14); }
+  .collectors .dots i.on { background: var(--gold); box-shadow: 0 0 6px rgba(242, 193, 78, 0.8); }
+  .collectors .ct { font-family: 'Jua', sans-serif; color: var(--cream); min-width: 38px; text-align: right; }
+
+  /* 처음 온 사람 안내 */
+  .welcome { text-align: center; padding: 20px 6px 4px; }
+  .welcome p { margin-top: 10px; color: #cfd5ee; font-size: 15px; }
+  .welcome .fan { position: relative; height: 250px; margin: 22px auto 14px; width: 260px; }
+  .welcome .fan .card { position: absolute; width: 124px; left: 68px; top: 6px; animation: none; }
+  .welcome .fan .card:nth-child(1) { transform: rotate(-16deg) translate(-70px, 14px); }
+  .welcome .fan .card:nth-child(2) { transform: rotate(0deg) translate(0, -4px); z-index: 2; }
+  .welcome .fan .card:nth-child(3) { transform: rotate(16deg) translate(70px, 14px); }
+  .howto { text-align: left; margin: 22px auto 0; max-width: 380px; display: grid; gap: 8px; }
+  .howto div { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; color: #dfe4f7; }
+  .howto b { flex: none; width: 24px; height: 24px; border-radius: 50%; background: var(--gold); color: #3a2a10; display: grid; place-items: center; font-size: 13px; }
+
+  /* 크게 보기 */
+  .viewer { position: fixed; inset: 0; z-index: 50; display: none; align-items: center; justify-content: center; flex-direction: column; padding: 18px; background: rgba(5, 7, 20, 0.9); overflow: hidden; }
+  .viewer.show { display: flex; animation: fade 0.25s ease both; }
+  @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+  .viewer .rays { position: absolute; left: 50%; top: 44%; width: 220vmax; height: 220vmax; margin: -110vmax 0 0 -110vmax; pointer-events: none;
+    background: repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--vc, #f2c14e) 45%, transparent) 0deg 6deg, transparent 6deg 18deg);
+    -webkit-mask-image: radial-gradient(circle, #000 0%, transparent 40%); mask-image: radial-gradient(circle, #000 0%, transparent 40%); animation: spin 18s linear infinite; opacity: 0.7; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .viewer .big { position: relative; width: min(300px, 72vw); touch-action: none; }
+  .viewer .big .card { animation: none; transition: transform 0.08s linear; }
+  .viewer .big .card .name { font-size: 30px; }
+  .viewer .big .card .title { font-size: 14px; }
+  .viewer .big .card .top { font-size: 14px; left: 16px; right: 16px; top: 15px; }
+  .viewer .big .card .frame { border-width: 9px; border-radius: 20px; }
+  .viewer .big .card { border-radius: 20px; }
+  .viewer .info { position: relative; margin-top: 18px; text-align: center; font-size: 14px; color: #dfe4f7; max-width: 320px; }
+  .viewer .info .serial { font-family: 'Gowun Batang', serif; font-weight: 700; color: var(--gold); font-size: 17px; }
+  .viewer .info .trait { margin-top: 6px; color: var(--dim); font-size: 13px; }
+  .viewer .close { position: relative; margin-top: 16px; }
+
+  .toast { position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%) translateY(20px); opacity: 0; pointer-events: none; z-index: 60;
+    background: rgba(20, 24, 54, 0.96); border: 1px solid var(--gold); color: var(--cream); padding: 11px 18px; border-radius: 999px; font-size: 14px; font-weight: 700; transition: all 0.3s ease; max-width: 88vw; text-align: center; }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  footer { margin-top: 40px; text-align: center; font-size: 12px; color: #7f88ad; }
+  footer a, footer button { color: #9aa3c7; background: none; border: 0; text-decoration: underline; font-size: 12px; padding: 4px 6px; }
+  .skeleton { text-align: center; padding: 70px 0; color: var(--dim); }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav class="topbar">
+    <a href="/">← 오락실</a>
+    <a href="/games/hello-tower/">헬로타워 하러 가기 →</a>
+  </nav>
+  <main id="app"><div class="skeleton">카드첩을 펼치는 중…</div></main>
+  <footer id="foot"></footer>
+</div>
+
+<div class="viewer" id="viewer" role="dialog" aria-modal="true" aria-label="카드 크게 보기">
+  <div class="rays"></div>
+  <div class="big" id="viewerCard"></div>
+  <div class="info" id="viewerInfo"></div>
+  <button class="btn close" id="viewerClose">닫기</button>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script src="https://t1.kakaocdn.net/kakao_js_sdk/2.8.1/kakao.min.js" crossorigin="anonymous"></script>
+<script>
+try { if (window.Kakao && !window.Kakao.isInitialized()) window.Kakao.init('3994a3bda3b8146e709683fdb350c9cc'); } catch (e) {}
+
+// 신 10명 — 헬로타워 2막에서 101층부터 10층마다 한 명씩 등장, 그 구간(10층)을 넘기면 카드 획득
+const GODS = [
+  { key: 'zeus',      name: '제우스',     title: '번개의 왕',        grade: 'normal', trait: '넓고 든든해요. 착지하면 번쩍!' },
+  { key: 'athena',    name: '아테나',     title: '지혜의 여신',      grade: 'normal', trait: '끈적해서 위에 놓인 블록이 잘 안 미끄러져요.' },
+  { key: 'hermes',    name: '헤르메스',   title: '날개 달린 전령',   grade: 'normal', trait: '매달려 있으면 시계추가 빨라져요.' },
+  { key: 'poseidon',  name: '포세이돈',   title: '바다의 왕',        grade: 'normal', trait: '착지하면 파도처럼 출렁출렁.' },
+  { key: 'aphrodite', name: '아프로디테', title: '사랑의 여신',      grade: 'normal', trait: '매끈매끈 미끄러워요.' },
+  { key: 'apollo',    name: '아폴론',     title: '태양과 음악의 신', grade: 'rare',   trait: '착지하면 통통 튀어요.' },
+  { key: 'hades',     name: '하데스',     title: '저승의 왕',        grade: 'rare',   trait: '무거워서 착지하면 탑이 쿵!' },
+  { key: 'artemis',   name: '아르테미스', title: '달과 사냥의 여신', grade: 'rare',   trait: '키가 커서 균형 잡기가 어려워요.' },
+  { key: 'dionysus',  name: '디오니소스', title: '포도와 축제의 신', grade: 'rare',   trait: '머리 위 포도가 무거워 잘 넘어가요.' },
+  { key: 'hera',      name: '헤라',       title: '신들의 여왕',      grade: 'legend', trait: '깃털처럼 천천히 떨어져 바람에 날려요.' },
+];
+const GRADE_LABEL = { normal: '일반', rare: '희귀', legend: '전설' };
+const GRADE_COLOR = { normal: '#cfd6e2', rare: '#ffc93c', legend: '#ff7ad9' };
+const ART = (k) => `/assets/cards/${k}.webp`;                       // 카드 전용 그림(있으면)
+const BLOCK = (k) => `/games/hello-tower/assets/gods/${k}.webp`;     // 없으면 블록 그림으로 대신
+
+const $ = (id) => document.getElementById(id);
+const app = $('app');
+function el(tag, attrs, ...kids) {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (k === 'text') n.textContent = v;
+    else if (k === 'class') n.className = v;
+    else if (k.startsWith('on')) n.addEventListener(k.slice(2), v);
+    else n.setAttribute(k, v);
+  }
+  kids.flat().forEach((c) => { if (c != null) n.appendChild(typeof c === 'string' ? document.createTextNode(c) : c); });
+  return n;
+}
+let toastTimer = null;
+function toast(msg) {
+  const t = $('toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+}
+function track(name, params) { try { if (typeof gtag === 'function') gtag('event', name, params || {}); } catch (e) {} }
+const fmtDate = (iso) => { const d = new Date(iso); return isNaN(d) ? '' : `${d.getFullYear()}.${d.getMonth() + 1}.${d.getDate()}`; };
+
+// ---------- 카드 한 장 ----------
+function cardNode(god, owned, opts) {
+  const idx = GODS.indexOf(god);
+  const img = el('img', { alt: '', loading: 'lazy', decoding: 'async' });
+  if (owned) {
+    img.src = ART(god.key);
+    img.addEventListener('error', () => { if (!img.classList.contains('block')) { img.classList.add('block'); img.src = BLOCK(god.key); } }, { once: false });
+  } else {
+    img.src = BLOCK(god.key);
+  }
+  const node = el((opts && opts.static) ? 'div' : 'button', {
+    class: `card ${god.grade} ${owned ? 'owned' : 'locked'}`,
+    'aria-label': owned ? `${god.name} 카드 크게 보기` : `아직 얻지 못한 카드. ${101 + idx * 10}층부터 ${110 + idx * 10}층까지 넘으면 얻어요`,
+  },
+    el('div', { class: 'art' }, img),
+    owned ? null : el('div', { class: 'q', text: '?' }),
+    owned ? el('div', { class: 'holo' }) : null,
+    owned ? el('div', { class: 'sweep' }) : null,
+    el('div', { class: 'top' }, el('span', { text: 'No.' + String(idx + 1).padStart(2, '0') }), owned ? el('span', { class: 'grade', text: GRADE_LABEL[god.grade] }) : null),
+    el('div', { class: 'plate' },
+      el('div', { class: 'name', text: owned ? god.name : '???' }),
+      el('div', { class: 'title', text: owned ? god.title : `${110 + idx * 10}층을 넘으면` })),
+    el('div', { class: 'frame' }),
+  );
+  if (owned) attachTilt(node, 9);
+  return node;
+}
+// 손가락·마우스를 따라 카드가 기울고 반짝임이 움직임
+function attachTilt(node, maxDeg) {
+  const move = (e) => {
+    const r = node.getBoundingClientRect();
+    const x = Math.min(Math.max((e.clientX - r.left) / r.width, 0), 1), y = Math.min(Math.max((e.clientY - r.top) / r.height, 0), 1);
+    node.style.setProperty('--ry', ((x - 0.5) * 2 * maxDeg).toFixed(1) + 'deg');
+    node.style.setProperty('--rx', ((0.5 - y) * 2 * maxDeg).toFixed(1) + 'deg');
+    node.style.setProperty('--mx', (x * 100).toFixed(0) + '%');
+    node.style.setProperty('--my', (y * 100).toFixed(0) + '%');
+  };
+  const reset = () => { node.style.setProperty('--rx', '0deg'); node.style.setProperty('--ry', '0deg'); node.style.setProperty('--mx', '50%'); node.style.setProperty('--my', '50%'); };
+  node.addEventListener('pointermove', move);
+  node.addEventListener('pointerleave', reset);
+  node.addEventListener('pointerup', reset);
+}
+
+// ---------- 크게 보기 ----------
+function openViewer(god, info) {
+  const holder = $('viewerCard');
+  holder.textContent = '';
+  const big = cardNode(god, true, { static: true });
+  attachTilt(big, 16);
+  holder.appendChild(big);
+  $('viewer').style.setProperty('--vc', GRADE_COLOR[god.grade]);
+  const box = $('viewerInfo');
+  box.textContent = '';
+  if (info && info.serial) box.appendChild(el('div', { class: 'serial', text: `전체 ${info.serial}번째로 얻은 ${god.name}` }));
+  if (info && info.at) box.appendChild(el('div', { text: `${fmtDate(info.at)} 획득 · ${GRADE_LABEL[god.grade]} 카드` }));
+  box.appendChild(el('div', { class: 'trait', text: god.trait }));
+  $('viewer').classList.add('show');
+  $('viewerClose').focus();
+  track('card_view', { god: god.key });
+}
+function closeViewer() { $('viewer').classList.remove('show'); }
+$('viewerClose').addEventListener('click', closeViewer);
+$('viewer').addEventListener('click', (e) => { if (e.target === $('viewer')) closeViewer(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeViewer(); });
+
+// ---------- 서버 ----------
+async function api(path, opts) {
+  const r = await fetch(path, Object.assign({ credentials: 'same-origin' }, opts || {}));
+  let data = null; try { data = await r.json(); } catch (e) {}
+  return { ok: r.ok, status: r.status, data: data || {} };
+}
+const post = (path, body) => api(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+const loginUrl = () => '/api/auth?action=login&next=' + encodeURIComponent('/cardbook.html');
+
+// 이 기기에 임시로 보관 중인 카드(헬로타워가 저장해 둔 것)
+function localCards() {
+  try { const c = JSON.parse(localStorage.getItem('ht_cards') || '{}'); return (c && typeof c === 'object') ? c : {}; } catch (e) { return {}; }
+}
+
+// ---------- 화면 ----------
+function renderWelcome(ready) {
+  const local = localCards();
+  const n = GODS.filter((g) => local[g.key]).length;
+  app.textContent = '';
+  app.appendChild(el('header', { class: 'book' },
+    el('div', { class: 'laurel', text: 'OLYMPUS' }),
+    el('h1', { text: '올림포스 카드첩' })));
+  const fan = el('div', { class: 'fan', 'aria-hidden': 'true' }, cardNode(GODS[9], true, { static: true }), cardNode(GODS[0], true, { static: true }), cardNode(GODS[5], true, { static: true }));
+  app.appendChild(el('section', { class: 'welcome' },
+    fan,
+    el('p', {}, '헬로타워에서 신들을 만나 얻은 카드를', el('br'), '영원히 보관하고 친구에게 자랑하는 나만의 카드첩.'),
+    n ? el('p', { style: 'color:#ffe9a8;font-weight:700', text: `이 기기에 카드 ${n}장이 기다리고 있어요. 로그인하면 카드첩으로 옮겨져요.` }) : null,
+    el('div', { class: 'actions' }, ready === false
+      ? el('span', { class: 'note', text: '로그인 기능을 준비 중이에요. 조금만 기다려 주세요!' })
+      : el('a', { class: 'btn kakao', href: loginUrl(), onclick: () => track('login_click', { from: 'cardbook' }) }, '💬 카카오로 3초 만에 카드첩 만들기')),
+    el('div', { class: 'howto' },
+      el('div', {}, el('b', { text: '1' }), el('span', { text: '헬로타워에서 100층을 넘으면 2막 — 10층마다 신이 한 명씩 내려와요.' })),
+      el('div', {}, el('b', { text: '2' }), el('span', { text: '그 신과 함께 10층을 더 쌓으면 카드를 얻어요.' })),
+      el('div', {}, el('b', { text: '3' }), el('span', { text: '카드첩이 있으면 기기를 바꿔도 사라지지 않고, 누구나 구경 올 수 있어요.' }))),
+  ));
+  renderCollectors();
+  renderFoot(null);
+}
+
+function renderBook(w) {
+  app.textContent = '';
+  const master = w.count >= w.total;
+  const head = el('header', { class: 'book' },
+    el('div', { class: 'laurel', text: 'OLYMPUS' }),
+    el('h1', { text: '올림포스 카드첩' }),
+    el('div', { class: 'owner' }, w.nick, el('small', { text: ' 님의 카드첩' })),
+    el('div', { class: 'meta' }, '구경 온 사람 ', el('b', { text: String(w.visits || 0) }), '명 · ', fmtDate(w.createdAt), ' 개설'),
+    el('div', { class: 'progress' },
+      el('div', { class: 'bar' }, el('div', { class: 'fill', id: 'fill' })),
+      el('div', { class: 'num' }, el('b', { text: String(w.count) }), ` / ${w.total} 장`),
+      master ? el('div', { class: 'badge-master', text: '🏛️ 올림포스의 주인' }) : null),
+  );
+  const actions = el('div', { class: 'actions' });
+  if (w.isMine) {
+    actions.appendChild(el('button', { class: 'btn gold', onclick: () => share(w) }, '📤 카드첩 자랑하기'));
+    actions.appendChild(el('button', { class: 'btn', onclick: () => rename(w) }, '✏️ 이름 바꾸기'));
+  } else {
+    actions.appendChild(el('button', { class: 'btn', onclick: () => share(w) }, '📤 이 카드첩 공유'));
+    actions.appendChild(w.myWid
+      ? el('a', { class: 'btn gold', href: '/cardbook.html' }, '🎴 내 카드첩 가기')
+      : el('a', { class: 'btn kakao', href: loginUrl() }, '💬 나도 카드첩 만들기'));
+  }
+  head.appendChild(actions);
+  app.appendChild(head);
+
+  const grid = el('div', { class: 'grid' });
+  GODS.forEach((g) => {
+    const info = w.cards[g.key];
+    const node = cardNode(g, !!info);
+    if (info) node.addEventListener('click', () => openViewer(g, info));
+    else node.addEventListener('click', () => toast(`${101 + GODS.indexOf(g) * 10}층부터 나타나는 신이에요. ${110 + GODS.indexOf(g) * 10}층을 넘으면 카드를 얻어요.`));
+    grid.appendChild(node);
+  });
+  app.appendChild(grid);
+  if (w.isMine && w.count === 0) {
+    app.appendChild(el('p', { class: 'note', style: 'text-align:center;margin-top:16px', text: '아직 카드가 없어요. 헬로타워에서 110층을 넘으면 첫 카드(제우스)를 얻어요!' }));
+  }
+  requestAnimationFrame(() => { const f = $('fill'); if (f) f.style.width = (w.count / w.total * 100) + '%'; });
+  renderCollectors(w.wid);
+  renderFoot(w);
+}
+
+async function renderCollectors(currentWid) {
+  const r = await api('/api/wallet?list=1');
+  const list = (r.data && r.data.collectors) || [];
+  if (!list.length) return;
+  const ol = el('ol', { class: 'collectors' });
+  list.forEach((c, i) => {
+    const dots = el('span', { class: 'dots', 'aria-hidden': 'true' }, GODS.map((g) => el('i', { class: c.gods.includes(g.key) ? 'on' : '' })));
+    ol.appendChild(el('li', {}, el('a', { href: '/cardbook.html?w=' + encodeURIComponent(c.wid), 'aria-current': c.wid === currentWid ? 'page' : null },
+      el('span', { class: 'rk', text: String(i + 1) }), el('span', { class: 'nm', text: c.nick }), dots, el('span', { class: 'ct', text: `${c.count}장` }))));
+  });
+  app.appendChild(el('h2', { class: 'section-title', text: '수집가들의 카드첩' }));
+  app.appendChild(el('p', { class: 'note', style: 'margin:-4px 0 10px', text: '이름을 누르면 그 사람의 카드첩을 구경할 수 있어요.' }));
+  app.appendChild(ol);
+}
+
+function renderFoot(w) {
+  const f = $('foot'); f.textContent = '';
+  f.appendChild(el('a', { href: '/privacy.html' }, '개인정보 처리방침'));
+  if (w && w.isMine) {
+    f.appendChild(el('button', { onclick: async () => { await post('/api/auth', { action: 'logout' }); location.href = '/cardbook.html'; } }, '로그아웃'));
+    f.appendChild(el('button', { onclick: withdraw }, '탈퇴하기'));
+  }
+}
+
+async function rename(w) {
+  const nick = prompt('카드첩에 표시할 이름(12자까지)', w.nick);
+  if (nick == null) return;
+  const r = await post('/api/wallet', { action: 'nick', nick });
+  if (r.ok) { toast('이름을 바꿨어요.'); load(); } else toast('이름을 바꾸지 못했어요. 다시 시도해 주세요.');
+}
+async function withdraw() {
+  if (!confirm('정말 탈퇴할까요? 카드첩과 모은 카드가 모두 지워지고 되돌릴 수 없어요.')) return;
+  const r = await post('/api/auth', { action: 'withdraw' });
+  if (r.ok) { alert('탈퇴했어요. 그동안 고마웠어요.'); location.href = '/cardbook.html'; } else toast('탈퇴하지 못했어요. 다시 시도해 주세요.');
+}
+async function share(w) {
+  const url = `${location.origin}/cardbook.html?w=${encodeURIComponent(w.wid)}&utm_source=share&utm_medium=cardbook`;
+  const title = `${w.nick}님의 올림포스 카드첩 (${w.count}/${w.total}장)`;
+  track('cardbook_share', { count: w.count });
+  try {
+    if (window.Kakao && window.Kakao.isInitialized()) {
+      window.Kakao.Share.sendDefault({
+        objectType: 'feed',
+        content: { title, description: '헬로타워에서 만난 신들의 카드를 구경하러 오세요!', imageUrl: 'https://daebugame.com/games/hello-tower/assets/thumb-hellotower.jpg', link: { mobileWebUrl: url, webUrl: url } },
+        buttons: [{ title: '카드첩 구경하기', link: { mobileWebUrl: url, webUrl: url } }],
+      });
+      return;
+    }
+  } catch (e) {}
+  try { if (navigator.share) { await navigator.share({ title, url }); return; } } catch (e) { return; }
+  try { await navigator.clipboard.writeText(url); toast('카드첩 주소를 복사했어요!'); } catch (e) { prompt('아래 주소를 복사하세요', url); }
+}
+
+// ---------- 시작 ----------
+async function load() {
+  const params = new URLSearchParams(location.search);
+  const login = params.get('login');
+  const w = (params.get('w') || '').toLowerCase();
+  if (login) {
+    params.delete('login');
+    history.replaceState(null, '', location.pathname + (params.toString() ? '?' + params.toString() : ''));
+    if (login === 'cancel') toast('로그인을 취소했어요.');
+    else if (login !== 'ok') toast('로그인하지 못했어요. 잠시 뒤 다시 시도해 주세요.');
+  }
+  let r = await api('/api/wallet' + (w ? '?w=' + encodeURIComponent(w) : ''));
+  if (r.status === 404) { app.textContent = ''; app.appendChild(el('div', { class: 'skeleton' }, '이 카드첩을 찾을 수 없어요.', el('br'), el('a', { href: '/cardbook.html', class: 'btn', style: 'margin-top:14px' }, '카드첩 첫 화면으로'))); return; }
+  if (!r.ok) { app.textContent = ''; app.appendChild(el('div', { class: 'skeleton', text: '카드첩을 불러오지 못했어요. 잠시 뒤 다시 열어 주세요.' })); return; }
+  if (!w && r.data.loggedIn === false) {
+    const me = await api('/api/auth');
+    renderWelcome(me.data.ready);
+    return;
+  }
+  // 내 카드첩이면, 이 기기에 임시 보관 중이던 카드를 카드첩으로 옮김
+  if (r.data.isMine) {
+    const local = localCards();
+    const claims = GODS.filter((g) => local[g.key] && !r.data.cards[g.key]).map((g) => ({ god: g.key, floor: 110 + GODS.indexOf(g) * 10, at: local[g.key].at }));
+    if (claims.length) {
+      const c = await post('/api/wallet', { action: 'claim', cards: claims });
+      if (c.ok && c.data.added && c.data.added.length) {
+        toast(`이 기기에 있던 카드 ${c.data.added.length}장을 카드첩에 옮겼어요!`);
+        track('cards_migrated', { count: c.data.added.length });
+        r = await api('/api/wallet');
+      }
+    }
+    if (login === 'ok') track('login_ok', {});
+  }
+  renderBook(r.data);
+}
+load();
+</script>
+</body>
+</html>

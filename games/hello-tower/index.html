@@ -105,6 +105,16 @@
     box-shadow: 0 4px 0 #14172488; margin-top: 4px;
   }
   #overlay #shareBtn:active { box-shadow: 0 2px 0 #14172488; }
+  #overlay #cardbookLink { display: inline-block; margin-top: 10px; color: #ffe9a8; font-size: 14px; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; padding: 6px 10px; }
+  /* 카드 전용 그림이 있을 때 — 그림이 카드 전체를 채우고 이름은 아래에 겹쳐 표시 */
+  #cardReveal .crCard.hasArt { height: 348px; padding: 0; }
+  #cardReveal .crCard.hasArt .crArt { position: absolute; inset: 0; height: auto; border-radius: 0; background: none; }
+  #cardReveal .crCard.hasArt .crImg { max-width: none; max-height: none; width: 100%; height: 100%; object-fit: cover; filter: none; }
+  #cardReveal .crCard.hasArt .crTop { position: absolute; left: 12px; right: 12px; top: 10px; z-index: 1; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
+  #cardReveal .crCard.hasArt .crPlate { position: absolute; left: 0; right: 0; bottom: 0; z-index: 1; padding: 34px 8px 14px; background: linear-gradient(to top, rgba(16,12,36,0.94) 50%, rgba(16,12,36,0)); }
+  #cardReveal .crCard.hasArt .crName { color: #fff6d5; text-shadow: 0 0 10px var(--cr), 0 2px 3px #000; margin-top: 0; }
+  #cardReveal .crCard.hasArt .crTitle { color: #ffe9a8; }
+  #cardReveal .crBook { position: relative; margin-top: 10px; color: #ffe9a8; font-size: 13px; font-weight: 700; text-align: center; min-height: 18px; }
   #overlay.ending {
     background: radial-gradient(circle, rgba(255,236,168,0.5), rgba(120,70,20,0.75));
   }
@@ -253,10 +263,11 @@
   <div class="crCard">
     <div class="crTop"><span class="crNo"></span><span class="crGrade"></span></div>
     <div class="crArt"><img class="crImg" alt=""></div>
-    <div class="crName"></div><div class="crTitle"></div>
+    <div class="crPlate"><div class="crName"></div><div class="crTitle"></div></div>
     <div class="crShine"></div>
   </div>
   <div class="crHint">화면을 누르면 계속</div>
+  <div class="crBook"></div>
 </div>
 <a id="testBadge" href="?test=1">🧪 테스트 메뉴로</a>
 <div id="testPanel"><div class="box">
@@ -272,6 +283,7 @@
   <div class="finalFloor" id="finalFloorNum">0층</div>
   <button id="retryBtn">다시 하기</button>
   <button id="shareBtn">📤 친구에게 자랑하기!</button>
+  <a id="cardbookLink" href="/cardbook.html">🎴 올림포스 카드첩</a>
   <div id="rankPanel">
     <div class="rankPanelLabel">🏆 이벤트 랭킹 등록</div>
     <input id="rankNickname" placeholder="닉네임" maxlength="12">
@@ -2063,7 +2075,37 @@ function showGodUnlock(key) {
 }
 
 // ---------- [2막] 도감 카드 — 그 구간(10층)을 다 쌓으면 획득 ----------
-// 지금은 기기에만 저장(localStorage 'ht_cards'). 로그인/보관함은 다음 단계.
+// 기기(localStorage 'ht_cards')에 먼저 저장하고, 로그인한 회원이면 올림포스 카드첩(서버)에도 등록한다.
+// 로그인하지 않은 사람의 카드는 기기에만 남아 있다가, 나중에 카드첩을 만들면 그때 옮겨진다.
+let member = null; // 로그인한 회원이면 { wid, nick }
+function claimCardsToServer(claims) {
+  if (!member || TEST_MODE || !claims.length) return;
+  fetch('/api/wallet', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'claim', cards: claims }) }).catch(() => {});
+}
+// 게임을 열 때 한 번: 로그인 상태를 확인하고, 카드첩과 이 기기의 카드를 서로 맞춘다.
+// (다른 기기에서 얻은 카드는 이 기기에도 표시해 획득 연출이 다시 뜨지 않게 하고, 이 기기에만 있던 카드는 카드첩에 등록)
+async function syncMember() {
+  if (TEST_MODE) return;
+  try {
+    const r = await fetch('/api/wallet', { credentials: 'same-origin', cache: 'no-store' });
+    if (!r.ok) return;
+    const w = await r.json();
+    if (!w || !w.isMine) return;
+    member = { wid: w.wid, nick: w.nick };
+    const cards = loadCards();
+    let changed = false;
+    const claims = [];
+    GOD_ORDER.forEach((k, i) => {
+      if (w.cards[k] && !cards[k]) { cards[k] = { at: w.cards[k].at, floor: 110 + i * 10, count: 1 }; changed = true; }
+      else if (cards[k] && !w.cards[k]) claims.push({ god: k, floor: 110 + i * 10, at: cards[k].at });
+    });
+    if (changed) { try { localStorage.setItem('ht_cards', JSON.stringify(cards)); } catch (e) { /* 무시 */ } }
+    claimCardsToServer(claims);
+    const link = document.getElementById('cardbookLink');
+    if (link) link.textContent = '🎴 내 올림포스 카드첩';
+  } catch (e) { /* 로그인 기능이 없거나 꺼져 있어도 게임은 그대로 진행 */ }
+}
+syncMember();
 function loadCards() {
   try { return JSON.parse(localStorage.getItem('ht_cards') || '{}'); } catch (e) { return {}; }
 }
@@ -2076,6 +2118,7 @@ function awardGodCard(key) {
     if (isNew) cards[key] = { at: new Date().toISOString(), floor: floorCount };
     cards[key].count = (cards[key].count || 0) + 1;
     try { localStorage.setItem('ht_cards', JSON.stringify(cards)); } catch (e) { /* 무시 */ }
+    if (isNew) claimCardsToServer([{ god: key, floor: 110 + GOD_ORDER.indexOf(key) * 10, at: cards[key].at }]);
   }
   track('card_get', { god: key, score: floorCount, first: isNew });
   return isNew || TEST_MODE;
@@ -2090,7 +2133,14 @@ function showCardReveal(key, onDone) {
   stopPendulumSound();
   const el = document.getElementById('cardReveal');
   el.className = 'grade-' + info.grade;
-  el.querySelector('.crImg').src = PIECES[key].file;
+  // 카드 전용 그림(/assets/cards/신.webp)이 있으면 그걸로, 아직 없으면 블록 그림으로
+  const crImg = el.querySelector('.crImg'), crCard = el.querySelector('.crCard');
+  crCard.classList.remove('hasArt');
+  crImg.src = PIECES[key].file;
+  const art = new Image();
+  art.onload = () => { if (cardRevealDone) { crImg.src = art.src; crCard.classList.add('hasArt'); } };
+  art.src = '/assets/cards/' + key + '.webp';
+  el.querySelector('.crBook').textContent = TEST_MODE ? '' : (member ? '🎴 내 올림포스 카드첩에 보관했어요' : '🎴 카드첩을 만들면 영원히 보관돼요 (게임이 끝난 뒤 안내)');
   el.querySelector('.crName').textContent = info.name;
   el.querySelector('.crTitle').textContent = info.title;
   el.querySelector('.crNo').textContent = 'No.' + String(GOD_ORDER.indexOf(key) + 1).padStart(2, '0');

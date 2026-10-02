@@ -26,6 +26,7 @@
 
 import { kv } from '@vercel/kv';
 import { timingSafeEqual } from 'crypto';
+import { sessionUser } from './_session.js';
 
 const MAX_METERS = 5000; // 터무니없는 점수 최소 검증용 상한선(헬로런 기준, 필요시 게임별로 분리 가능)
 const ALLOWED_GAMES = ['hello_run', 'hello_bird', 'hello_tower', 'hello_munch'];
@@ -79,6 +80,12 @@ async function handleSubmit(req, res) {
       meters: score,
       submittedAt: new Date().toISOString(),
     };
+    // [올림포스 카드첩] 로그인한 회원이 등록한 기록이면 카드첩 주소를 함께 저장 —
+    // 랭킹·신전에서 그 이름을 누르면 카드첩을 구경 갈 수 있게 한다(로그인 안 했으면 예전과 동일).
+    try {
+      const me = await sessionUser(req);
+      if (me) entry.wid = me.wid;
+    } catch (e) { /* 로그인 확인 실패해도 등록은 계속 */ }
     // 왕좌 판정(명예의 전당 /hall-of-fame.html 규칙과 동일): 지금 최고 기록 "이상"이면
     // 이 기록이 새 왕좌의 주인이 된다(같은 기록이면 나중에 오른 사람이 왕좌를 가져감).
     // 게임 화면이 이 값을 보고 "왕좌에 올랐어요! 왕좌 카드 받기" 안내를 띄운다.
@@ -123,6 +130,7 @@ async function handleLeaderboard(req, res) {
         const entry = typeof raw === 'string' ? JSON.parse(raw) : raw;
         if (entry && entry.nickname) {
           const row = { rank: leaderboard.length + 1, nickname: entry.nickname, meters: entry.meters };
+          if (entry.wid) row.wid = entry.wid;
           if (isAdmin) {
             row.id = entry.id;
             row.contact = entry.contact;

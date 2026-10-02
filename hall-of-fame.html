@@ -208,6 +208,7 @@
     .statue { animation: glint 6s ease-in-out infinite; }
     @keyframes glint { 0%, 100% { background-position: 0% 0%; } 50% { background-position: 100% 100%; } }
   }
+  .cb-link { color: inherit; text-decoration: underline; text-decoration-color: rgba(201, 146, 44, 0.6); text-underline-offset: 4px; }
 </style>
 </head>
 <body>
@@ -301,6 +302,11 @@ function fmtDate(iso) {
   if (isNaN(d)) return '';
   return `${d.getMonth() + 1}월 ${d.getDate()}일`;
 }
+// 카드첩이 있는 사람(로그인하고 기록을 올린 사람)은 이름을 누르면 올림포스 카드첩으로 이동
+function whoNode(e) {
+  if (e && /^[a-z0-9]{4,16}$/.test(e.wid || '')) return el('a', { class: 'cb-link', href: '/cardbook.html?w=' + e.wid, title: '카드첩 구경하기' }, e.nickname + ' 🎴');
+  return document.createTextNode(e.nickname);
+}
 function reignText(iso) {
   if (!iso) return '';
   const start = new Date(iso);
@@ -335,7 +341,7 @@ function renderShrine(cfg, data) {
   if (champ) {
     plaque.append(
       el('div', { class: 'title', text: champ.reign ? `제${champ.reign}대 왕좌의 주인` : '현재 왕좌의 주인' }),
-      el('div', { class: 'name', text: champ.nickname }),
+      el('div', { class: 'name' }, whoNode(champ)),
       el('div', { class: 'record', text: `${champ.score}${cfg.unit}` }),
       el('div', { class: 'reign', text: reignText(champ.at) }),
     );
@@ -379,7 +385,7 @@ function renderShrine(cfg, data) {
     const list = el('ol', { class: 'podium' });
     data.podium.filter((e) => !champ || e.nickname !== champ.nickname).slice(0, 2).forEach((e, i) => {
       list.appendChild(el('li', {},
-        el('span', { class: 'who' }, el('span', { class: 'rank-mark', text: `${i + 2}위` }), e.nickname),
+        el('span', { class: 'who' }, el('span', { class: 'rank-mark', text: `${i + 2}위` }), whoNode(e)),
         el('span', { class: 'pts', text: `${e.score}${cfg.unit}` })));
     });
     records.appendChild(el('section', {}, el('h3', { text: '왕좌 곁을 지키는 이들' }), list));
