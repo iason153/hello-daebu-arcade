@@ -168,18 +168,25 @@ gtag("config", "G-5YPGVVP49T");
   .flip-hint { margin-top: 10px; font-size: 12px; color: var(--dim); }
   /* 방명록 */
   .notes { display: grid; gap: 10px; margin-top: 4px; }
-  .note-item { padding: 11px 13px; border-radius: 14px; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--line); }
+  .note-item { padding: 12px 13px; border-radius: 14px; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--line); }
   .note-item.hidden-note { opacity: 0.55; }
-  .note-item .who { display: flex; align-items: baseline; gap: 8px; font-size: 12px; color: var(--dim); }
-  .note-item .who a { color: var(--gold); font-weight: 700; font-size: 14px; text-decoration: none; }
-  .note-item .txt { margin-top: 3px; font-size: 15px; word-break: break-word; }
-  .note-item .reply { margin-top: 8px; padding: 8px 10px; border-left: 3px solid var(--gold); background: rgba(242, 193, 78, 0.09); border-radius: 0 10px 10px 0; font-size: 14px; }
-  .note-item .reply b { color: var(--gold); font-size: 12px; margin-right: 6px; }
-  .note-item .ops { margin-top: 6px; display: flex; gap: 12px; }
+  .who { display: flex; align-items: baseline; gap: 8px; font-size: 12px; color: var(--dim); }
+  .who a { color: var(--gold); font-weight: 700; font-size: 14px; text-decoration: none; }
+  .who .x { margin-left: auto; background: none; border: 0; color: var(--dim); font-size: 13px; padding: 4px 6px; }
+  .note-item .txt { margin-top: 3px; font-size: 15px; word-break: break-word; white-space: pre-wrap; }
+  .replies { margin-top: 10px; display: grid; gap: 6px; }
+  .reply { padding: 8px 10px; border-left: 3px solid rgba(255, 233, 168, 0.35); background: rgba(255, 255, 255, 0.04); border-radius: 0 10px 10px 0; }
+  .reply.owner { border-left-color: var(--gold); background: rgba(242, 193, 78, 0.09); }
+  .reply .txt { font-size: 14px; }
+  .note-item .ops { margin-top: 6px; display: flex; gap: 14px; }
   .note-item .ops button { background: none; border: 0; color: var(--dim); font-size: 12px; text-decoration: underline; padding: 6px 0; }
-  .note-form { display: flex; gap: 8px; margin: 4px 0 12px; }
-  .note-form input { flex: 1; min-width: 0; padding: 12px 14px; border-radius: 999px; border: 1.5px solid var(--line); background: rgba(255, 255, 255, 0.07); color: var(--cream); font: inherit; font-size: 15px; }
-  .note-form input::placeholder { color: #7f88ad; }
+  .composer { margin: 4px 0 12px; }
+  .note-item .composer { margin: 8px 0 0; }
+  .composer textarea { width: 100%; min-height: 56px; resize: none; padding: 12px 14px; border-radius: 14px; border: 1.5px solid var(--line); background: rgba(255, 255, 255, 0.07); color: var(--cream); font: inherit; font-size: 15px; line-height: 1.5; }
+  .composer textarea::placeholder { color: #7f88ad; }
+  .composer .row { display: flex; align-items: center; justify-content: space-between; margin-top: 6px; }
+  .composer .cnt { font-size: 12px; color: var(--dim); }
+  .composer .btn:disabled { opacity: 0.5; }
   .diag { margin-top: 22px; padding: 12px 14px; border-radius: 14px; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--line); font-size: 13px; color: #dfe4f7; }
   .diag summary { cursor: pointer; font-weight: 700; color: var(--cream); }
   .diag p { margin-top: 8px; }
@@ -603,7 +610,7 @@ async function copyBrag(w, g) {
   track('cardbook_share', { to: 'copy', card: g ? g.key : '' });
 }
 
-// ---------- 방명록 — 회원끼리 카드첩에 짧은 글을 남기고, 주인이 답글을 단다 ----------
+// ---------- 방명록 — 회원끼리 카드첩에 글을 남기고(여러 줄), 누구나 답글을 이어 단다 ----------
 function notesSection(w) {
   const wrap = el('section', { id: 'notes' });
   const list = el('div', { class: 'notes' });
@@ -613,31 +620,44 @@ function notesSection(w) {
     if (r.ok && r.data.notes) { w.notes = r.data.notes; draw(); } else toast(r.data.message || '처리하지 못했어요. 잠시 뒤 다시 시도해 주세요.');
     return r.ok;
   };
+  const who = (x) => el('a', { href: '/cardbook.html?w=' + encodeURIComponent(x.from), title: '이 사람의 카드첩 구경하기' }, (x.nick || w.nick) + (x.isOwner ? ' 👑' : ' 🎴'));
+  // 글자 수를 세어 주는 입력 칸(여러 줄). Enter는 줄바꿈, 버튼으로 보냄.
+  function composer(placeholder, max, label, onSend) {
+    const ta = el('textarea', { rows: '2', maxlength: String(max), placeholder, 'aria-label': placeholder });
+    const cnt = el('span', { class: 'cnt', text: `0/${max}` });
+    const btn = el('button', { class: 'btn gold small' }, label);
+    ta.addEventListener('input', () => { cnt.textContent = `${ta.value.length}/${max}`; ta.style.height = 'auto'; ta.style.height = Math.min(ta.scrollHeight, 180) + 'px'; });
+    btn.addEventListener('click', async () => { const t = ta.value.trim(); if (!t) { ta.focus(); return; } btn.disabled = true; const ok = await onSend(t); btn.disabled = false; if (ok) { ta.value = ''; cnt.textContent = `0/${max}`; ta.style.height = 'auto'; } });
+    return el('div', { class: 'composer' }, ta, el('div', { class: 'row' }, cnt, btn));
+  }
+  const openReply = new Set(); // 답글 입력 칸을 열어 둔 글
   function draw() {
     list.textContent = '';
-    title.textContent = `방명록 · ${w.notes.length}`;
-    if (!w.notes.length) { list.appendChild(el('p', { class: 'note', text: w.isMine ? '아직 방명록이 없어요. 카드첩을 자랑하면 친구들이 글을 남겨요.' : '첫 방명록을 남겨 보세요!' })); return; }
+    const total = w.notes.reduce((a, n) => a + 1 + n.replies.length, 0);
+    title.textContent = `방명록 · ${total}`;
+    if (!w.notes.length) { list.appendChild(el('p', { class: 'note', text: w.isMine ? '아직 방명록이 없어요. 인사말을 먼저 남기거나, 카드첩을 자랑해 친구들을 불러 보세요.' : '첫 방명록을 남겨 보세요!' })); return; }
     w.notes.forEach((n) => {
       const ops = el('div', { class: 'ops' });
-      if (n.canReply) ops.appendChild(el('button', { onclick: () => { const t = prompt('답글 (100자까지, 비우면 답글을 지워요)', n.reply ? n.reply.text : ''); if (t != null) call({ action: 'note_reply', id: n.id, text: t }); } }, n.reply ? '답글 고치기' : '답글 달기'));
-      if (n.canDelete) ops.appendChild(el('button', { onclick: () => { if (confirm('이 글을 지울까요?')) call({ action: 'note_delete', id: n.id }); } }, '지우기'));
+      if (n.canReply) ops.appendChild(el('button', { onclick: () => { if (openReply.has(n.id)) openReply.delete(n.id); else openReply.add(n.id); draw(); } }, openReply.has(n.id) ? '답글 닫기' : `답글 달기${n.replies.length ? ' (' + n.replies.length + ')' : ''}`));
+      if (n.canDelete) ops.appendChild(el('button', { onclick: () => { if (confirm('이 글을 지울까요? 달린 답글도 함께 지워져요.')) call({ action: 'note_delete', id: n.id }); } }, '지우기'));
       if (n.canReport) ops.appendChild(el('button', { onclick: () => { if (confirm('이 글을 신고할까요? 여러 명이 신고하면 글이 가려져요.')) call({ action: 'note_report', id: n.id }).then((ok) => { if (ok) toast('신고했어요.'); }); } }, '신고'));
+      const replies = n.replies.length ? el('div', { class: 'replies' }, n.replies.map((r) => el('div', { class: 'reply' + (r.isOwner ? ' owner' : '') },
+        el('div', { class: 'who' }, who(r), el('span', { text: fmtDate(r.at) }), r.canDelete ? el('button', { class: 'x', title: '답글 지우기', 'aria-label': '답글 지우기', onclick: () => { if (confirm('이 답글을 지울까요?')) call({ action: 'note_reply_delete', id: n.id, rid: r.id }); } }, '✕') : null),
+        el('div', { class: 'txt', text: r.text })))) : null;
       list.appendChild(el('div', { class: 'note-item' + (n.hidden ? ' hidden-note' : '') },
-        el('div', { class: 'who' }, el('a', { href: '/cardbook.html?w=' + encodeURIComponent(n.from), title: '이 사람의 카드첩 구경하기' }, n.nick + ' 🎴'), el('span', { text: fmtDate(n.at) + (n.hidden ? ' · 신고로 가려진 글' : '') })),
+        el('div', { class: 'who' }, who(n), el('span', { text: fmtDate(n.at) + (n.hidden ? ' · 신고로 가려진 글' : '') })),
         el('div', { class: 'txt', text: n.text }),
-        n.reply ? el('div', { class: 'reply' }, el('b', { text: `↳ ${w.nick}` }), n.reply.text) : null,
-        ops.childNodes.length ? ops : null));
+        replies,
+        ops.childNodes.length ? ops : null,
+        openReply.has(n.id) ? composer('답글 (200자)', 200, '답글', (t) => call({ action: 'note_reply', id: n.id, text: t }).then((ok) => { if (ok) track('note_reply', {}); return ok; })) : null));
     });
   }
   const title = el('h2', { class: 'section-title', text: '방명록' });
   wrap.appendChild(title);
   if (!w.loggedIn) {
     wrap.appendChild(el('p', { class: 'note', style: 'margin:-4px 0 10px' }, '방명록은 오락실 회원만 남길 수 있어요. ', el('a', { href: loginUrl('/cardbook.html?w=' + w.wid), style: 'color:var(--gold);font-weight:700' }, '카카오 로그인')));
-  } else if (!w.isMine) {
-    const input = el('input', { type: 'text', maxlength: '100', placeholder: `${w.nick}님에게 한마디 (100자)`, 'aria-label': '방명록 내용' });
-    const send = async () => { const t = input.value.trim(); if (!t) return; if (await call({ action: 'note', text: t })) { input.value = ''; track('note_write', {}); } };
-    input.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.isComposing) send(); });
-    wrap.appendChild(el('div', { class: 'note-form' }, input, el('button', { class: 'btn gold', onclick: send }, '남기기')));
+  } else {
+    wrap.appendChild(composer(w.isMine ? '내 카드첩에 인사말 남기기 (300자, 여러 줄 가능)' : `${w.nick}님에게 한마디 (300자, 여러 줄 가능)`, 300, '남기기', (t) => call({ action: 'note', text: t }).then((ok) => { if (ok) track('note_write', {}); return ok; })));
   }
   wrap.appendChild(list);
   draw();

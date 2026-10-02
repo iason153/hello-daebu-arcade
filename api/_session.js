@@ -133,34 +133,56 @@ export async function listMembers() {
 }
 
 // ---------- 방명록 ----------
-export const NOTE_MAX = 100;   // 글자 수
-const NOTE_KEEP = 50;          // 카드첩 하나에 보관하는 글 수
-export function cleanNote(s) {
-  return String(s || '').replace(/[\u0000-\u001f<>]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, NOTE_MAX);
+// 글 하나 = { id, from, nick, text, at, replies: [ { id, from, nick, text, at } … ], reports: [카드첩주소 …] }
+export const NOTE_MAX = 300;   // 글 글자 수(여러 줄 가능)
+export const REPLY_MAX = 200;  // 답글 글자 수
+const NOTE_KEEP = 100;         // 카드첩 하나에 보관하는 글 수(넘으면 오래된 것부터 사라짐)
+export const REPLY_KEEP = 30;  // 글 하나에 달 수 있는 답글 수
+export function cleanNote(s, max) {
+  return String(s || '').replace(/\r/g, '').replace(/[\u0000-\u0009\u000b-\u001f<>]/g, ' ').replace(/[ \t]+/g, ' ')
+    .replace(/ ?\n ?/g, '\n').replace(/\n{3,}/g, '\n\n').trim().slice(0, max || NOTE_MAX);
 }
+export const newId = () => `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
 export async function getNotes(wid) {
   const n = await kv.get(`notes:${wid}`);
   const arr = typeof n === 'string' ? JSON.parse(n) : n;
-  return Array.isArray(arr) ? arr : [];
+  if (!Array.isArray(arr)) return [];
+  // 처음 버전(주인 답글 하나만 있던 때)의 글을 지금 모양으로 맞춤
+  for (const x of arr) {
+    if (!Array.isArray(x.replies)) x.replies = x.reply && x.reply.text ? [{ id: 'r0', from: wid, nick: '', text: x.reply.text, at: x.reply.at }] : [];
+    delete x.reply;
+  }
+  return arr;
 }
 export async function saveNotes(wid, notes) {
   await kv.set(`notes:${wid}`, notes.slice(0, NOTE_KEEP));
 }
-// 밖으로 내보낼 모양 — 신고가 3번 이상 쌓인 글은 주인·관리자가 아니면 보이지 않는다. 신고한 사람 목록은 내보내지 않는다.
-export function publicNotes(notes, viewerWid, ownerWid, isAdmin) {
+// 밖으로 내보낼 모양 — 신고가 3번 이상 쌓인 글은 주인·관리자·쓴 사람이 아니면 보이지 않는다. 신고한 사람 목록은 내보내지 않는다.
+export function publicNotes(notes, viewerWid, ownerWid, isAdmin, ownerNick) {
   const out = [];
+  const canManage = isAdmin || (!!viewerWid && viewerWid === ownerWid);
   for (const n of notes) {
     const hidden = (n.reports || []).length >= 3;
-    const canManage = isAdmin || viewerWid === ownerWid;
     if (hidden && !canManage && viewerWid !== n.from) continue;
     out.push({
-      id: n.id, from: n.from, nick: n.nick, text: n.text, at: n.at, reply: n.reply || null, hidden,
-      canDelete: !!viewerWid && (canManage || viewerWid === n.from),
-      canReply: !!viewerWid && viewerWid === ownerWid,
+      id: n.id, from: n.from, nick: n.nick, text: n.text, at: n.at, hidden, isOwner: n.from === ownerWid,
+      replies: (n.replies || []).map((r) => ({ id: r.id, from: r.from, nick: r.nick || ownerNick || '', text: r.text, at: r.at, isOwner: r.from === ownerWid, canDelete: canManage || (!!viewerWid && viewerWid === r.from) })),
+      canDelete: canManage || (!!viewerWid && viewerWid === n.from),
+      canReply: !!viewerWid && (n.replies || []).length < REPLY_KEEP,
       canReport: !!viewerWid && viewerWid !== n.from && viewerWid !== ownerWid && !(n.reports || []).includes(viewerWid), // 주인은 신고 대신 지우기
     });
   }
   return out;
+}
+// 내 카드첩에 "마지막으로 본 뒤" 남이 남긴 글·답글 수
+export function countNewNotes(notes, myWid, seenAt) {
+  const seen = Date.parse(seenAt) || 0;
+  let c = 0;
+  for (const n of notes) {
+    if (n.from !== myWid && Date.parse(n.at) > seen) c++;
+    for (const r of n.replies || []) if (r.from !== myWid && Date.parse(r.at) > seen) c++;
+  }
+  return c;
 }
 
 export function cleanNick(s) {

@@ -182,6 +182,18 @@ img{ max-width:100%; display:block; }
 .topbar .nav-links{ padding:8px 16px 10px; justify-content:flex-start; gap:8px; }
 .topbar .nav-links a{ flex:1; text-align:center; text-decoration:none; font-weight:700; font-size:13px; padding:8px 4px; border-radius:999px; background:rgba(255,255,255,.07); border:1px solid var(--line); }
 .topbar .nav-links a:hover{ background:rgba(255,255,255,.14); }
+.topbar .nav-links button{ flex:1; position:relative; font:inherit; color:inherit; cursor:pointer; text-align:center; font-weight:700; font-size:13px; padding:8px 4px; border-radius:999px; background:rgba(255,255,255,.07); border:1px solid var(--line); }
+.topbar .n{ position:absolute; top:-5px; right:-2px; min-width:18px; height:18px; padding:0 4px; border-radius:999px; background:#ff3b30; color:#fff; font-size:11px; line-height:18px; font-weight:900; }
+.news-panel{ position:fixed; inset:0; z-index:60; background:rgba(8,12,26,.8); display:flex; align-items:flex-start; justify-content:center; padding:70px 16px 16px; overflow-y:auto; }
+.news-panel[hidden]{ display:none; }
+.news-box{ width:100%; max-width:520px; background:var(--navy-card); border:1px solid var(--line); border-radius:18px; padding:18px; }
+.news-box h2{ font-family:'Jua',sans-serif; font-size:22px; font-weight:400; }
+.news-box ul{ list-style:none; margin-top:10px; display:grid; gap:10px; }
+.news-box li{ padding:10px 12px; border-radius:12px; background:rgba(255,255,255,.05); font-size:14px; }
+.news-box li.new{ border:1px solid var(--gold); }
+.news-box time{ display:block; font-size:12px; color:var(--dim); }
+.news-box li b{ color:var(--gold); }
+.news-box button{ margin-top:14px; width:100%; padding:11px; border-radius:999px; border:0; background:var(--gold); color:#2a1c00; font:inherit; font-weight:700; cursor:pointer; }
 .topbar :focus-visible{ outline:2px solid var(--gold); outline-offset:2px; }
 .temple-link{
   display:flex; align-items:center; gap:14px; margin-top:24px; padding:16px 18px;
@@ -272,8 +284,16 @@ footer{
     <a href="games/hello-tower/ranking.html">🏆 랭킹</a>
     <a href="hall-of-fame.html">🏛️ 신전</a>
     <a href="cardbook.html">🎴 카드첩</a>
+    <button type="button" id="newsBtn" aria-haspopup="dialog">📢 소식<span class="n" id="newsN" hidden>N</span></button>
   </div>
 </nav>
+<div class="news-panel" id="newsPanel" role="dialog" aria-label="오락실 소식" hidden>
+  <div class="news-box">
+    <h2>📢 오락실 소식</h2>
+    <ul id="newsList"></ul>
+    <button type="button" id="newsClose">닫기</button>
+  </div>
+</div>
 
 <section class="hero">
   <div class="wrap">
@@ -401,6 +421,53 @@ footer{
 </script>
 
 <script>
+// ===== 오락실 소식 — 여기만 대표님이 직접 고치면 돼요 =====
+// 새 소식은 맨 위에 한 줄 추가하세요. date(날짜)가 바뀌면 방문자 화면의 "📢 소식" 버튼에 빨간 N이 붙어요.
+const NEWS = [
+  { date: '2026-10-02', title: '카드첩에 방명록과 카드 뒤집기', text: '다른 사람 카드첩에 글과 답글을 남길 수 있어요. 카드를 누르면 뒤집혀서 비밀 이야기가 나와요.' },
+  { date: '2026-10-02', title: '대부도 친구들 카드 5장', text: '헬로타워 10층만 쌓아도 첫 카드! 10·30·50·70·100층에서 얻어요.' },
+  { date: '2026-10-02', title: '헬로타워 2막 · 올림포스 카드첩', text: '101~200층에 신 10명이 나타나요. 카카오 로그인으로 카드를 보관하고 자랑하세요.' },
+];
+// ============================================================
+(function () {
+  const btn = document.getElementById('newsBtn'), panel = document.getElementById('newsPanel'), n = document.getElementById('newsN');
+  if (!btn) return;
+  const key = (x) => x.date + '|' + x.title;
+  let seen = []; try { seen = JSON.parse(localStorage.getItem('arcade_news_seen') || '[]'); } catch (e) {}
+  const fresh = NEWS.filter((x) => !seen.includes(key(x)));
+  window.__newsCount = fresh.length;
+  if (fresh.length) { n.textContent = fresh.length > 9 ? '9+' : String(fresh.length); n.hidden = false; }
+  const list = document.getElementById('newsList');
+  NEWS.forEach((x) => {
+    const li = document.createElement('li'); if (fresh.includes(x)) li.className = 'new';
+    const t = document.createElement('time'); t.textContent = x.date.replace(/-/g, '.') + (fresh.includes(x) ? ' · 새 소식' : '');
+    const b = document.createElement('b'); b.textContent = x.title;
+    const p = document.createElement('div'); p.textContent = x.text;
+    li.append(t, b, p); list.appendChild(li);
+  });
+  const close = () => { panel.hidden = true; btn.focus(); };
+  btn.addEventListener('click', () => {
+    panel.hidden = false; document.getElementById('newsClose').focus();
+    try { localStorage.setItem('arcade_news_seen', JSON.stringify(NEWS.map(key))); } catch (e) {}
+    n.hidden = true; window.__newsCount = 0; if (window.__updateAppBadge) window.__updateAppBadge();
+  });
+  document.getElementById('newsClose').addEventListener('click', close);
+  panel.addEventListener('click', (e) => { if (e.target === panel) close(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !panel.hidden) close(); });
+})();
+// 홈 화면에 설치한 오락실 아이콘에 숫자(또는 점) 표시 — 새 소식 수 + 내 카드첩의 새 방명록 수.
+// (지원하는 기기에서만 동작하고, 오락실을 열었을 때 갱신돼요. 닫혀 있을 때 갱신하려면 푸시 알림이 필요해요.)
+window.__newNotes = 0;
+window.__updateAppBadge = function () {
+  try {
+    const c = (window.__newsCount || 0) + (window.__newNotes || 0);
+    if (!('setAppBadge' in navigator)) return;
+    if (c > 0) navigator.setAppBadge(c).catch(() => {}); else navigator.clearAppBadge().catch(() => {});
+  } catch (e) { /* 지원하지 않는 기기 */ }
+};
+window.__updateAppBadge();
+</script>
+<script>
 // 상단 바의 로그인 영역 — 로그인 전: "카카오 로그인" 버튼 / 로그인 후: "닉네임님" 버튼(내 카드첩·로그아웃 메뉴)
 (async function () {
   const area = document.getElementById('memberArea');
@@ -409,6 +476,7 @@ footer{
     const r = await fetch('/api/auth', { credentials: 'same-origin', cache: 'no-store' });
     const d = await r.json();
     if (d.loggedIn) {
+      window.__newNotes = d.newNotes || 0; if (window.__updateAppBadge) window.__updateAppBadge();
       const btn = document.createElement('button');
       btn.className = 'me-btn'; btn.type = 'button'; btn.setAttribute('aria-haspopup', 'true'); btn.setAttribute('aria-expanded', 'false');
       btn.textContent = `🎴 ${d.nick}님${d.newNotes ? ' 🔴' : ''} ▾`;

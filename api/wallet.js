@@ -7,8 +7,9 @@
 //                                                 이름과 카드 그림이 미리보기로 뜨고, 누르면 카드첩으로 이동한다.
 //   POST /api/wallet { action: 'claim', cards: [{ god, floor, at }] }  → 카드 등록(로그인 필요)
 //   POST /api/wallet { action: 'nick',  nick }                         → 카드첩 이름표(닉네임) 바꾸기
-//   POST /api/wallet { action: 'note', w, text }            → 그 카드첩에 방명록 남기기(회원만, 100자, 30초에 한 번)
-//   POST /api/wallet { action: 'note_reply', w, id, text }  → 카드첩 주인의 답글(글 하나에 하나)
+//   POST /api/wallet { action: 'note', w, text }            → 그 카드첩에 방명록 남기기(회원만, 300자·여러 줄, 10초에 한 번)
+//   POST /api/wallet { action: 'note_reply', w, id, text }  → 답글(회원 누구나, 200자, 글 하나에 30개까지)
+//   POST /api/wallet { action: 'note_reply_delete', w, id, rid } → 답글 지우기(쓴 사람·카드첩 주인·관리자)
 //   POST /api/wallet { action: 'note_delete', w, id }       → 글 지우기(쓴 사람·카드첩 주인·관리자)
 //   POST /api/wallet { action: 'note_report', w, id }       → 신고(3명이 신고하면 가려짐)
 //   POST /api/wallet { action: 'admin_check' }  (헤더 x-admin-secret)   → 관리자 비밀번호 확인(카드 발급 실제 테스트용)
@@ -18,7 +19,7 @@
 // 카카오 회원번호는 절대 내보내지 않는다.
 
 import { kv } from '@vercel/kv';
-import { GODS, CARD_NAME, CARD_BRAG, SITE_ORIGIN, sessionUser, getUser, getCards, claimCards, cleanNick, isAdminRequest, saveMemberRow, listMembers, getNotes, saveNotes, publicNotes, cleanNote } from './_session.js';
+import { GODS, CARD_NAME, CARD_BRAG, SITE_ORIGIN, sessionUser, getUser, getCards, claimCards, cleanNick, isAdminRequest, saveMemberRow, listMembers, getNotes, saveNotes, publicNotes, cleanNote, newId, REPLY_MAX, REPLY_KEEP } from './_session.js';
 
 const publicCards = (cards) => {
   const out = {};
@@ -51,25 +52,36 @@ export default async function handler(req, res) {
       // ---------- 방명록 ----------
       if (String(body.action || '').startsWith('note')) {
         const w = String(body.w || '').toLowerCase();
-        if (!/^[a-z0-9]{4,16}$/.test(w) || !(await kv.get(`wid:${w}`))) return res.status(404).json({ error: 'not found' });
+        const ownerKid = /^[a-z0-9]{4,16}$/.test(w) ? await kv.get(`wid:${w}`) : null;
+        const owner = ownerKid ? await getUser(String(ownerKid)) : null;
+        if (!owner) return res.status(404).json({ error: 'not found' });
         const admin = isAdminRequest(req);
         const notes = await getNotes(w);
-        const done = async () => { await saveNotes(w, notes); return res.status(200).json({ ok: true, notes: publicNotes(notes, me.wid, w, admin) }); };
+        const done = async () => { await saveNotes(w, notes); return res.status(200).json({ ok: true, notes: publicNotes(notes, me.wid, w, admin, owner.nick) }); };
+        // 도배 방지: 글·답글을 합쳐 10초에 한 번
+        const slow = async () => { if (await kv.get(`noterate:${me.wid}`)) return true; await kv.set(`noterate:${me.wid}`, 1, { ex: 10 }); return false; };
         if (body.action === 'note') {
-          if (w === me.wid) return res.status(400).json({ error: 'own', message: '내 카드첩에는 답글로 이야기해 주세요.' });
           const text = cleanNote(body.text);
           if (!text) return res.status(400).json({ error: 'empty', message: '내용을 적어 주세요.' });
-          if (await kv.get(`noterate:${me.wid}`)) return res.status(429).json({ error: 'slow', message: '조금 뒤에 다시 남겨 주세요. (30초에 한 번)' });
-          await kv.set(`noterate:${me.wid}`, 1, { ex: 30 });
-          notes.unshift({ id: `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`, from: me.wid, nick: me.nick, text, at: new Date().toISOString(), reply: null, reports: [] });
+          if (await slow()) return res.status(429).json({ error: 'slow', message: '조금 뒤에 다시 남겨 주세요. (10초에 한 번)' });
+          notes.unshift({ id: newId(), from: me.wid, nick: me.nick, text, at: new Date().toISOString(), replies: [], reports: [] });
           return done();
         }
         const n = notes.find((x) => x.id === String(body.id || ''));
-        if (!n) return res.status(404).json({ error: 'no note' });
+        if (!n) return res.status(404).json({ error: 'no note', message: '지워진 글이에요.' });
         if (body.action === 'note_reply') {
-          if (w !== me.wid) return res.status(403).json({ error: 'owner only' });
-          const text = cleanNote(body.text);
-          n.reply = text ? { text, at: new Date().toISOString() } : null;
+          const text = cleanNote(body.text, REPLY_MAX);
+          if (!text) return res.status(400).json({ error: 'empty', message: '내용을 적어 주세요.' });
+          if (n.replies.length >= REPLY_KEEP) return res.status(400).json({ error: 'full', message: '이 글에는 답글을 더 달 수 없어요.' });
+          if (await slow()) return res.status(429).json({ error: 'slow', message: '조금 뒤에 다시 남겨 주세요. (10초에 한 번)' });
+          n.replies.push({ id: newId(), from: me.wid, nick: me.nick, text, at: new Date().toISOString() });
+          return done();
+        }
+        if (body.action === 'note_reply_delete') {
+          const r = n.replies.find((x) => x.id === String(body.rid || ''));
+          if (!r) return res.status(404).json({ error: 'no reply' });
+          if (!(admin || w === me.wid || r.from === me.wid)) return res.status(403).json({ error: 'forbidden' });
+          n.replies.splice(n.replies.indexOf(r), 1);
           return done();
         }
         if (body.action === 'note_delete') {
@@ -188,7 +200,7 @@ export default async function handler(req, res) {
       loggedIn: !!me, isMine, wid, nick: owner.nick, createdAt: owner.createdAt,
       cards: publicCards(cards), count: Object.keys(cards).length, total: GODS.length, visits,
       myWid: me ? me.wid : null,
-      notes: publicNotes(notes, me ? me.wid : null, wid, isAdminRequest(req)),
+      notes: publicNotes(notes, me ? me.wid : null, wid, isAdminRequest(req), owner.nick),
     });
   } catch (e) {
     return res.status(500).json({ error: 'server error' });
