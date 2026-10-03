@@ -563,7 +563,8 @@ function sharkTop() { return shark.base + shark.lunge; }
 function earnCard(key) {
   try {
     if (!window.HelloCards || !HelloCards.earn(key, score)) return;
-    if (key !== 'm_chomp' && state === 'play') popups.push({ text: key === 'm_gull' ? '🎴 비밀 카드 발견!' : '🎴 카드 획득!', x: W / 2, y: 262, t0: now, gold: true, long: true });
+    // 게임은 멈추지 않고, 카드 그림이 화면 위에서 툭 내려왔다 올라감(먹힐 때 받는 '덥석!'은 곧바로 큰 연출이 나오므로 생략)
+    if (key !== 'm_chomp' && state === 'play') { HelloCards.setSound(() => !muted); HelloCards.toast(key); flash = Math.max(flash, .5); }
   } catch (e) { /* 카드가 실패해도 게임은 그대로 */ }
 }
 let overAt = 0;

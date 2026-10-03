@@ -168,6 +168,44 @@
       for (var k = 0; k < n; k++) tone('sine', 2200 + Math.random() * 3800, at + Math.random() * (0.9 + level * 0.5), 0.14, 0.05 + Math.random() * 0.04);
     } catch (e) { /* 소리가 안 나도 게임은 그대로 */ }
   }
+  // 게임 도중 알림 — 화면을 멈추지 않고, 카드 그림이 위에서 툭 내려왔다가 2초 뒤 올라간다(누르는 건 그대로 게임으로 전달)
+  function chime(grade) {
+    try {
+      if (!soundOn()) return;
+      if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
+      if (actx.state === 'suspended') actx.resume();
+      var t0 = actx.currentTime + 0.01, notes = grade === 'legend' ? [784, 1047, 1319, 1568, 2093] : grade === 'rare' ? [784, 1047, 1319, 1568] : [784, 1047, 1319];
+      notes.forEach(function (f, k) {
+        var o = actx.createOscillator(), g = actx.createGain(), t = t0 + k * 0.07;
+        o.type = 'triangle'; o.frequency.setValueAtTime(f, t);
+        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.22, t + 0.015); g.gain.exponentialRampToValueAtTime(0.001, t + (k === notes.length - 1 ? 0.7 : 0.22));
+        o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t + 0.8);
+      });
+    } catch (e) {}
+  }
+  var toastEl = null, toastTimer = null;
+  function toast(key) {
+    var c = CARDS[key]; if (!c) return;
+    style();
+    var g = GRADE[c.grade];
+    if (toastEl) toastEl.remove();
+    clearTimeout(toastTimer);
+    var el = h('div'); el.id = 'hcToast';
+    el.style.setProperty('--c', g[1]); el.style.setProperty('--a', g[2]); el.style.setProperty('--b', g[3]);
+    var th = h('div'); th.className = 'th';
+    var img = new Image(); img.alt = '';
+    img.onerror = function () { if (!img.className) { img.className = 'fb'; img.src = '/games/hello-munch/assets/' + c.fb + '.webp'; } };
+    img.src = '/assets/cards/' + key + '.webp';
+    th.appendChild(img); var sh = h('i'); th.appendChild(sh);
+    var tx = h('div'); tx.className = 'tx';
+    var l1 = h('b', '', key === 'm_gull' ? '🎴 비밀 카드 발견!' : '🎴 카드 획득!'); var l2 = h('span', '', c.name); var l3 = h('em', '', g[0] + ' · 끝나고 크게 볼 수 있어요');
+    tx.appendChild(l1); tx.appendChild(l2); tx.appendChild(l3);
+    el.appendChild(th); el.appendChild(tx);
+    document.body.appendChild(el);
+    toastEl = el;
+    chime(c.grade);
+    toastTimer = setTimeout(function () { if (toastEl === el) { el.classList.add('out'); setTimeout(function () { el.remove(); if (toastEl === el) toastEl = null; }, 400); } }, 2400);
+  }
   var styled = false;
   function style() {
     if (styled) return; styled = true;
@@ -185,7 +223,12 @@
       '#hcReveal .hint{position:relative;margin-top:18px;color:rgba(255,255,255,.75);font-size:13px;font-weight:700}' +
       '#hcReveal .book{position:relative;margin-top:10px;max-width:300px;text-align:center;color:#ffe9a8;font-size:13px;font-weight:700;line-height:1.45}#hcReveal .book.warn{background:rgba(20,16,40,.86);border:2px solid #fee500;border-radius:14px;padding:10px 14px;color:#fff;animation:hcWarn 1.2s ease-in-out infinite alternate}#hcReveal .book b{color:#fee500}' +
       '#hcReveal .book button{display:block;margin:8px auto 0;padding:9px 16px;border:0;border-radius:999px;background:#fee500;color:#191600;font-weight:800;font-size:13px;cursor:pointer}' +
-      '@media (prefers-reduced-motion:reduce){#hcReveal,#hcReveal *{animation:none!important}}';
+      '#hcToast{position:fixed;left:50%;top:max(84px,calc(env(safe-area-inset-top) + 76px));z-index:9997;transform:translateX(-50%);display:flex;align-items:center;gap:10px;padding:8px 14px 8px 8px;border-radius:16px;background:rgba(16,12,36,.92);border:2px solid var(--c);box-shadow:0 0 22px var(--c),0 8px 20px rgba(0,0,0,.5);pointer-events:none;font-family:sans-serif;animation:hcDrop .45s cubic-bezier(.2,1.4,.4,1) both;max-width:92vw}' +
+      '#hcToast.out{animation:hcUp .4s ease both}@keyframes hcDrop{from{transform:translate(-50%,-140px) rotate(-6deg);opacity:0}to{transform:translate(-50%,0);opacity:1}}@keyframes hcUp{to{transform:translate(-50%,-140px);opacity:0}}' +
+      '#hcToast .th{position:relative;flex:none;width:52px;height:78px;border-radius:7px;overflow:hidden;padding:3px;background:linear-gradient(135deg,var(--a),var(--b));transform:rotate(-5deg)}#hcToast .th img{width:100%;height:100%;object-fit:cover;border-radius:4px;display:block;background:#fff}#hcToast .th img.fb{object-fit:contain}' +
+      '#hcToast .th i{position:absolute;inset:0;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.85) 50%,transparent 70%);background-size:280% 100%;animation:hcSweep 1.2s ease-in-out infinite;mix-blend-mode:screen}' +
+      '#hcToast .tx{display:flex;flex-direction:column;line-height:1.25;min-width:0}#hcToast b{color:#ffe9a8;font-size:13px}#hcToast span{color:#fff;font-size:19px;font-weight:900;text-shadow:0 0 10px var(--c);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#hcToast em{font-style:normal;color:#9aa3c7;font-size:11px}' +
+      '@media (prefers-reduced-motion:reduce){#hcReveal,#hcReveal *,#hcToast,#hcToast *{animation:none!important}}';
     document.head.appendChild(st);
   }
   // opts: { path, game, getScore, soundOn, onDone }
@@ -246,5 +289,5 @@
     show();
   }
   if (/\/hello-munch\//.test(location.pathname)) sync(); // 카드가 있는 게임에서만 카드첩과 맞춤(불필요한 서버 호출 줄이기)
-  window.HelloCards = { earn: earn, flush: flush, pending: function () { return queue.length; }, list: CARDS };
+  window.HelloCards = { earn: earn, flush: flush, toast: toast, setSound: function (fn) { soundOn = fn; }, pending: function () { return queue.length; }, list: CARDS };
 })();
