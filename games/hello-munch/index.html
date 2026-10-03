@@ -310,6 +310,7 @@ function moveExtent(l) { return .5 + .5 * Math.sin(now / 520 + l.phase); }
 // ---------------------------------------------------------------- 상태
 let crumbleAcc = 0;
 let rocket = null, shellsTotal = 0, rays = 0;
+let gullHits = 0; // [카드] 이번 판에 갈매기에게 맞은 횟수
 let state, hero, shark, cam, score, nearMiss, particles, popups, shake, startedAt, endingShown, best, queued, lastNearAt, shells, flash;
 let now = performance.now();
 try { best = Number(localStorage.getItem('hm_best') || 0); } catch (e) { best = 0; }
@@ -319,6 +320,7 @@ function reset() {
   ensureFloors(30);
   hero = { zone: '앞바다', floor: 0, side: 'L', anim: null, pos: 0, face: 'calm', standSince: now, js: 0, jv: 0, hs: 0, hv: 0, lastX: 0, skew: 0, splat: 0 };
   shark = { base: -2.6, lunge: 0, lungeT: -1, nextLunge: 2600, open: .6, chompAt: 0, paused: 0, roarUntil: 0, roarCool: 0 };
+  gullHits = 0;
   cam = 0; score = 0; nearMiss = 0; particles = []; popups = []; shake = 0; flash = 0;
   endingShown = false; queued = null; lastNearAt = 0; shells = 0; shellsTotal = 0; rocket = null; rays = 0;
   state = 'ready';
@@ -471,6 +473,7 @@ function checkNearMiss() {
   if (hero.danger && d > 2 && now - lastNearAt > 1200 && state === 'play') {
     hero.danger = false; jelly(.35, 6);   // 아슬아슬하게 빠져나가며 쭈욱
     nearMiss++; lastNearAt = now; sfx.near();
+    if (nearMiss >= 5) earnCard('m_near'); // [카드] 한 판에 아슬아슬 5번
     popups.push({ text: '아슬아슬!', x: W / 2, y: HERO_Y - 70, t0: now, big: true });
   }
 }
@@ -496,6 +499,8 @@ function landOn(floor, side) {
   hero.floor = floor; hero.side = side; hero.standSince = now; hero.anim = null;
   const l = floors[floor][side];
   if (floor > score) score = floor;
+  // [카드] 높이 도달 카드 — 로켓으로 구간을 건너뛰어도 받도록 "그 높이 이상이면"으로 확인
+  if (floor >= 60) earnCard('m_sky'); if (floor >= 150) earnCard('m_cloud'); if (floor >= 270) earnCard('m_space'); if (floor >= 500) earnCard('m_gods');
   if (l.item) { if (l.item === 'shell') { shells++; shellsTotal++; sfx.shell(); popups.push({ text: shells >= 10 ? '황금조개 10개!' : `+1 황금조개 ${shells}/10`, x: ledgeX(side), y: screenY(floor) - 46, t0: now, gold: true }); } l.item = null; }
   sfx.land(); spawnPuff(ledgeX(side), screenY(floor)); jelly(-.4, -2);   // 철퍼덕 찌부 → 탱글탱글 흔들림
   if (l.type === 'crack') l.breakAt = now + 600;
@@ -529,6 +534,7 @@ function landOn(floor, side) {
 const ROCKET_UP = 30, ROCKET_CHARGE = 1000, ROCKET_MS = 2400;
 function startRocket() {
   shells = 0; queued = null; track('rocket', { score: hero.floor });
+  earnCard('m_rocket'); // [카드] 헬로 로켓 발동
   const from = hero.floor, to = from + ROCKET_UP;
   ensureFloors(to + 25);
   // 도착 층은 양쪽 모두 튼튼한 바위(착지 보장)
@@ -552,13 +558,22 @@ function fallFrom(floor, side) {
 }
 function sharkTop() { return shark.base + shark.lunge; }
 
+// ---------------------------------------------------------------- 카드(우주괴물 도감)
+// 게임 도중에는 멈추지 않고 "카드 획득!" 글자만 띄우고, 화려한 획득 연출은 게임이 끝난 뒤 한 장씩 보여 준다(member.js의 HelloCards).
+function earnCard(key) {
+  try {
+    if (!window.HelloCards || !HelloCards.earn(key, score)) return;
+    if (key !== 'm_chomp' && state === 'play') popups.push({ text: key === 'm_gull' ? '🎴 비밀 카드 발견!' : '🎴 카드 획득!', x: W / 2, y: 262, t0: now, gold: true, long: true });
+  } catch (e) { /* 카드가 실패해도 게임은 그대로 */ }
+}
 let overAt = 0;
 function gameOver() {
+  earnCard('m_chomp'); // [카드] 처음 잡아먹히면 받는 카드
   helloIdle(false); rocketLoop(false);
   state = 'over'; overAt = now; shake = 22; sfx.chomp(); setTimeout(() => sfx.roar(), 350); shark.chompAt = now;
   spawnDebris(W / 2, HERO_Y, 26);
   track('game_over', { score, shells: shellsTotal });
-  setTimeout(showOverlay, 1300);
+  setTimeout(() => { showOverlay(); try { if (window.HelloCards) HelloCards.flush({ game: 'hello_munch', path: '/games/hello-munch/', getScore: () => score, soundOn: () => !muted }); } catch (e) {} }, 1300);
   if (score > best) { best = score; try { localStorage.setItem('hm_best', String(best)); } catch (e) {} }
 }
 
@@ -636,6 +651,7 @@ function update(dt) {
     } else if (l.slipAt && now >= l.slipAt) {
       l.slipAt = 0; popups.push({ text: '미끄덩!', x: ledgeX(hero.side), y: screenY(hero.floor) - 40, t0: now }); fallFrom(hero.floor, hero.side);
     } else if (l.gullKick && now >= l.gullKick) {
+      gullHits++; if (gullHits >= 2) earnCard('m_gull'); // [비밀 카드] 한 판에 갈매기에게 2번 맞기
       l.gullKick = 0; l.gullFly = now; l.type = 'rock'; popups.push({ text: '끼악!', x: ledgeX(hero.side), y: screenY(hero.floor) - 50, t0: now }); fallFrom(hero.floor, hero.side);
     } else if (l.type === 'move' && moveExtent(l) < .35) {
       popups.push({ text: '으악!', x: ledgeX(hero.side), y: screenY(hero.floor) - 40, t0: now }); fallFrom(hero.floor, hero.side);

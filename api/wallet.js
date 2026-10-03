@@ -19,7 +19,7 @@
 // 카카오 회원번호는 절대 내보내지 않는다.
 
 import { kv } from '@vercel/kv';
-import { GODS, CARD_NAME, CARD_BRAG, SITE_ORIGIN, sessionUser, getUser, getCards, claimCards, cleanNick, isAdminRequest, saveMemberRow, listMembers, getNotes, saveNotes, publicNotes, cleanNote, newId, REPLY_MAX, REPLY_KEEP } from './_session.js';
+import { GODS, CARD_NAME, CARD_BRAG, NO_OG, bestCard, SITE_ORIGIN, sessionUser, getUser, getCards, claimCards, cleanNick, isAdminRequest, saveMemberRow, listMembers, getNotes, saveNotes, publicNotes, cleanNote, newId, REPLY_MAX, REPLY_KEEP } from './_session.js';
 
 const publicCards = (cards) => {
   const out = {};
@@ -131,18 +131,18 @@ export default async function handler(req, res) {
         if (owner) {
           const cards = await getCards(swid);
           const owned = GODS.filter((g) => cards[g]);
-          const pick = GODS.includes(String(q.g)) && cards[String(q.g)] ? String(q.g) : owned[owned.length - 1];
+          const pick = GODS.includes(String(q.g)) && cards[String(q.g)] ? String(q.g) : bestCard(owned);
           dest = `${SITE_ORIGIN}/cardbook.html?w=${swid}`;
           if (q.g && pick === String(q.g)) {
             title = `${owner.nick}님이 '${CARD_NAME[pick]}' 카드를 얻었어요!`;
             desc = `${CARD_BRAG[pick]} (전체 ${cards[pick].serial}번째 ${CARD_NAME[pick]} · 지금까지 ${owned.length}/${GODS.length}장)`;
           } else {
             title = `${owner.nick}님의 올림포스 카드첩 (${owned.length}/${GODS.length}장)`;
-            desc = owned.length >= GODS.length ? '15장을 전부 모은 올림포스의 주인! 구경하러 오세요.'
+            desc = owned.length >= GODS.length ? `${GODS.length}장을 전부 모았어요! 구경하러 오세요.`
               : pick ? `${CARD_BRAG[pick]} 남은 ${GODS.length - owned.length}장은 누가 먼저 모을까요?`
               : '아직 빈 카드첩이에요. 헬로타워 10층만 쌓아도 첫 카드를 얻어요!';
           }
-          if (pick) img = `${SITE_ORIGIN}/assets/cards/og/${pick}.jpg?v=2`;
+          if (pick && !NO_OG.has(pick)) img = `${SITE_ORIGIN}/assets/cards/og/${pick}.jpg?v=2`;
         }
       }
       res.setHeader('Content-Type', 'text/html; charset=utf-8');

@@ -326,8 +326,9 @@ function whoNode(e) {
   return document.createTextNode(e.nickname);
 }
 // 왕좌의 주인이 올림포스 카드첩 회원이면, 가진 카드 중 가장 귀한 3장을 부채꼴로 보여 주고 카드첩으로 연결
-const GOD_RANK = ['hello', 'starfish', 'crab', 'gull', 'jellyfish', 'zeus', 'athena', 'hermes', 'poseidon', 'aphrodite', 'apollo', 'hades', 'artemis', 'dionysus', 'hera'];
-const CARD_GRADE = { jellyfish: 'rare', apollo: 'rare', hades: 'rare', artemis: 'rare', dionysus: 'rare', hera: 'legend' };
+const GOD_RANK = ['hello', 'starfish', 'crab', 'gull', 'zeus', 'athena', 'hermes', 'poseidon', 'aphrodite', 'm_chomp', 'm_sky', 'm_cloud', 'm_rocket', 'jellyfish', 'apollo', 'hades', 'artemis', 'dionysus', 'm_space', 'm_near', 'm_gull', 'm_gods', 'hera']; // 귀한 순서(뒤로 갈수록 귀함)
+const CARD_GRADE = { jellyfish: 'rare', apollo: 'rare', hades: 'rare', artemis: 'rare', dionysus: 'rare', hera: 'legend', m_space: 'rare', m_near: 'rare', m_gull: 'rare', m_gods: 'legend' };
+const CARD_FALLBACK = { m_chomp: 'm0_wide', m_sky: 'hello_tall', m_cloud: 'ledge_ice', m_rocket: 'shell_gold', m_space: 'hello_round', m_near: 'm3_closing', m_gull: 'gull_flap', m_gods: 'god_zeus' }; // 카드 그림이 아직 없을 때 쓰는 게임 그림
 function cardShow(e) {
   if (!e || !/^[a-z0-9]{4,16}$/.test(e.wid || '')) return null;
   const gods = GOD_RANK.filter((g) => (e.gods || []).includes(g));
@@ -337,6 +338,7 @@ function cardShow(e) {
   const fan = el('span', { class: 'cs-fan' });
   gods.slice(-3).forEach((g) => {
     const c = el('span', { class: 'cs-card ' + (CARD_GRADE[g] || 'normal') }, el('img', { src: `/assets/cards/${g}.webp`, alt: '', loading: 'lazy' }));
+    if (CARD_FALLBACK[g]) c.querySelector('img').addEventListener('error', (ev) => { const im = ev.target; if (!im.dataset.fb) { im.dataset.fb = '1'; im.style.objectFit = 'contain'; im.src = `/games/hello-munch/assets/${CARD_FALLBACK[g]}.webp`; } });
     fan.appendChild(c);
   });
   a.append(fan, el('span', { class: 'cs-cap' }, el('b', { text: `카드 ${gods.length}장 보유` }), ' · 카드첩 구경하기 →'));

@@ -23,10 +23,26 @@ import { createHmac, timingSafeEqual, randomBytes } from 'crypto';
 export const CARD_NEED = {
   hello: 10, starfish: 30, crab: 50, gull: 70, jellyfish: 100,
   zeus: 110, athena: 120, hermes: 130, poseidon: 140, aphrodite: 150, apollo: 160, hades: 170, artemis: 180, dionysus: 190, hera: 200,
+  // 헬로먼치 "우주괴물 도감" — 도달 카드는 높이(m), 묘기·비밀 카드는 0(게임 화면이 알려 주는 대로 믿음)
+  m_chomp: 0, m_sky: 60, m_cloud: 150, m_rocket: 0, m_space: 270, m_near: 0, m_gull: 0, m_gods: 500,
 };
+// 카드가 속한 게임(없으면 헬로타워)과 그 게임에서 나올 수 있는 최고 기록 — 터무니없는 값 걸러내기용
+export const CARD_GAME = { m_chomp: 'munch', m_sky: 'munch', m_cloud: 'munch', m_rocket: 'munch', m_space: 'munch', m_near: 'munch', m_gull: 'munch', m_gods: 'munch' };
+const GAME_MAX = { tower: 200, munch: 100000 };
+// 등급(귀한 정도) — 대표 카드를 고를 때 씀. 적혀 있지 않으면 일반.
+export const CARD_GRADE = { jellyfish: 1, apollo: 1, hades: 1, artemis: 1, dionysus: 1, hera: 2, m_space: 1, m_near: 1, m_gull: 1, m_gods: 2 };
+// 가진 카드 중 가장 귀한 것(등급이 같으면 목록에서 뒤에 있는 것)
+export function bestCard(owned) {
+  let best = null, score = -1;
+  owned.forEach((k) => { const s = (CARD_GRADE[k] || 0) * 1000 + GODS.indexOf(k); if (s > score) { score = s; best = k; } });
+  return best;
+}
+// 아직 자랑용 가로 그림(og)이 준비되지 않은 카드 — 그림이 오면 여기서 빼면 됨
+export const NO_OG = new Set([]);
 export const CARD_NAME = {
   hello: '헬로', starfish: '불가사리', crab: '꽃게', gull: '갈매기', jellyfish: '해파리',
   zeus: '제우스', athena: '아테나', hermes: '헤르메스', poseidon: '포세이돈', aphrodite: '아프로디테', apollo: '아폴론', hades: '하데스', artemis: '아르테미스', dionysus: '디오니소스', hera: '헤라',
+  m_chomp: '덥석!', m_sky: '하늘', m_cloud: '구름 위', m_rocket: '헬로 로켓', m_space: '우주', m_near: '아슬아슬의 달인', m_gull: '갈매기의 복수', m_gods: '신들의 나라',
 };
 // 자랑 글(링크 미리보기 설명)에 들어가는 한 줄
 export const CARD_BRAG = {
@@ -46,6 +62,16 @@ export const CARD_BRAG = {
   dionysus: "190층 돌파! 축제는 이제부터입니다.",
   hera: "200층 정복! 신들의 여왕이 왕관을 씌워 줬어요.",
 };
+Object.assign(CARD_BRAG, {
+  m_chomp: '우주괴물한테 덥석 먹혔습니다. 뱃속은 생각보다 따뜻해요.',
+  m_sky: '괴물을 따돌리고 60m 하늘까지 올라왔어요.',
+  m_cloud: '150m 구름 위! 비행기 옆자리에 앉았습니다.',
+  m_rocket: '황금조개 10개 모아서 헬로 로켓 발사!',
+  m_space: '270m, 괴물을 달고 우주까지 왔습니다.',
+  m_near: '괴물 이빨 사이를 다섯 번이나 빠져나왔어요.',
+  m_gull: '비밀 카드를 찾았어요. 얻는 방법은 비밀!',
+  m_gods: '500m 신들의 나라 도착! 괴물도 여기까진 못 와요.',
+});
 export const GODS = Object.keys(CARD_NEED); // (이름은 예전 그대로 두었지만 지금은 "모든 카드" 목록)
 export const SITE_ORIGIN = process.env.SITE_ORIGIN || 'https://daebugame.com';
 const COOKIE = 'hs';
@@ -226,7 +252,7 @@ export async function claimCards(wid, claims) {
     if (idx < 0 || cards[god]) continue;
     const need = CARD_NEED[god];
     const floor = Math.floor(Number(c.floor));
-    if (!Number.isFinite(floor) || floor < need || floor > 200) continue;
+    if (!Number.isFinite(floor) || floor < need || floor > GAME_MAX[CARD_GAME[god] || 'tower']) continue;
     const t = Date.parse(c.at);
     const at = Number.isFinite(t) && t <= Date.now() + 60000 && t > Date.parse('2026-10-01') ? new Date(t).toISOString() : new Date().toISOString();
     const serial = await kv.incr(`cardserial:${god}`);
