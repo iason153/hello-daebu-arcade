@@ -80,6 +80,19 @@ function isAdminRequest(req) {
   return a.length === b.length && timingSafeEqual(a, b);
 }
 
+// 회원 닉네임 → 카드첩 주소. 같은 닉네임 회원이 둘 이상이면 누구 것인지 알 수 없으므로 합치지 않는다.
+async function memberNickMap() {
+  const map = new Map(), dup = new Set();
+  try {
+    const members = (await kv.hgetall('members')) || {};
+    for (const [wid, r] of Object.entries(members)) {
+      try { const o = typeof r === 'string' ? JSON.parse(r) : r; const n = o && o.nick; if (!n) continue; if (map.has(n)) dup.add(n); else map.set(n, wid); } catch (e) {}
+    }
+  } catch (e) {}
+  for (const n of dup) map.delete(n);
+  return map;
+}
+
 export default async function handler(req, res) {
   if (req.method === 'POST') {
     const action = (req.body || {}).action;
@@ -158,7 +171,7 @@ async function handleSubmit(req, res) {
         try {
           const e = typeof raw === 'string' ? JSON.parse(raw) : raw;
           if (!e) continue;
-          const same = (entry.wid && e.wid === entry.wid) || (e.nickname === nick && e.contact === cont);
+          const same = (entry.wid && e.wid === entry.wid) || (e.nickname === nick && e.contact === cont) || (entry.wid && !e.wid && e.nickname === nick);
           if (same && Number(e.meters) > best) best = Number(e.meters);
         } catch (err) { /* 손상된 기록은 건너뜀 */ }
       }
@@ -199,6 +212,11 @@ async function handleLeaderboard(req, res) {
     const wantPending = isAdmin && req.query.pending === '1';
     const topMembers = await kv.zrange(`${wantPending ? 'pending' : 'score'}:${game}`, 0, isAdmin ? limit - 1 : -1, { rev: true });
     const seen = new Set();
+    // 로그인 전에 같은 닉네임으로 올린 기록은 그 회원의 기록으로 합친다(한 사람이 두 줄로 나오지 않게).
+    const widOf = isAdmin ? new Map() : await memberNickMap();
+    if (!isAdmin) topMembers.forEach((raw) => {
+      try { const e = typeof raw === 'string' ? JSON.parse(raw) : raw; if (e && e.wid && e.nickname && !widOf.has(e.nickname)) widOf.set(e.nickname, e.wid); } catch (err) {}
+    });
 
     const leaderboard = [];
     topMembers.forEach((raw) => {
@@ -211,6 +229,7 @@ async function handleLeaderboard(req, res) {
         if (entry && entry.nickname) {
           if (!isAdmin) {
             if (leaderboard.length >= limit) return;
+            if (!entry.wid && widOf.has(entry.nickname)) entry.wid = widOf.get(entry.nickname);
             const who = entry.wid ? 'w:' + entry.wid : 'n:' + entry.nickname; // 같은 회원 또는 같은 닉네임
             if (seen.has(who)) return; // 높은 순으로 읽으므로 처음 만난 것이 그 사람의 최고 기록
             seen.add(who);

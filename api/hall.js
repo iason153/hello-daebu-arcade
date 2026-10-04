@@ -25,7 +25,20 @@ const GAMES = {
   hello_munch: { maxScore: 500 }, // 500m = 신들의 나라 도착
 };
 
-function parseEntries(raws) {
+// 회원 닉네임 → 카드첩 주소. 같은 닉네임 회원이 둘 이상이면 누구 것인지 알 수 없으므로 합치지 않는다.
+async function memberNickMap() {
+  const map = new Map(), dup = new Set();
+  try {
+    const members = (await kv.hgetall('members')) || {};
+    for (const [wid, r] of Object.entries(members)) {
+      try { const o = typeof r === 'string' ? JSON.parse(r) : r; const n = o && o.nick; if (!n) continue; if (map.has(n)) dup.add(n); else map.set(n, wid); } catch (e) {}
+    }
+  } catch (e) {}
+  for (const n of dup) map.delete(n);
+  return map;
+}
+
+function parseEntries(raws, nickMap) {
   const out = [];
   for (const raw of raws) {
     try {
@@ -37,6 +50,10 @@ function parseEntries(raws) {
       }
     } catch (err) { /* 낡은 기록은 건너뜀 */ }
   }
+  // 로그인 전에 같은 닉네임으로 올린 기록도 그 회원의 기록으로 본다(카드첩 표시가 함께 붙도록)
+  const widOf = new Map(nickMap || []);
+  for (const r of out) if (r.wid && !widOf.has(r.nickname)) widOf.set(r.nickname, r.wid);
+  for (const r of out) if (!r.wid && widOf.has(r.nickname)) r.wid = widOf.get(r.nickname);
   return out;
 }
 
@@ -106,9 +123,10 @@ export default async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'method not allowed' });
   try {
     const result = {};
+    const nickMap = await memberNickMap();
     for (const [game, cfg] of Object.entries(GAMES)) {
       const raws = await kv.zrange(`score:${game}`, 0, -1);
-      result[game] = summarize(parseEntries(raws), cfg);
+      result[game] = summarize(parseEntries(raws, nickMap), cfg);
     }
     // [올림포스 카드첩] 왕좌·시상대에 오른 회원이 가진 신 카드 목록을 붙여 준다 — 신전에서 카드 그림을 보여 주려고
     try {
