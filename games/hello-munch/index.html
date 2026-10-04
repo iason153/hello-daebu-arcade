@@ -101,6 +101,7 @@
 </div>
 
 <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.8.1/kakao.min.js" crossorigin="anonymous"></script>
+<script src="/fair.js" data-game="hello_munch"></script>
 <script src="/member.js"></script>
 <script>
 try { if (window.Kakao && !window.Kakao.isInitialized()) window.Kakao.init('3994a3bda3b8146e709683fdb350c9cc'); } catch (e) {}
@@ -1375,7 +1376,7 @@ function frame(t) {
 
 // ---------------------------------------------------------------- 정식 버전: 로딩·GA4·결과·랭킹·공유
 const GA_GAME = 'hello_munch';
-function track(name, params) { try { if (typeof gtag === 'function') gtag('event', name, Object.assign({ game: GA_GAME }, params || {})); } catch (e) {} }
+function track(name, params) { if (name === 'game_start' && window.HelloFair) HelloFair.start(GA_GAME); try { if (typeof gtag === 'function') gtag('event', name, Object.assign({ game: GA_GAME }, params || {})); } catch (e) {} }
 const CRITICAL = ['m1_open', 'hello_round', 'bg_start', 'ledge_grass', 'ledge_rock'];
 function assetsLoaded() { return CRITICAL.every(k => ready(IMG[k])); }
 document.addEventListener('visibilitychange', () => { if (!ac) return; if (document.hidden) ac.suspend(); else ac.resume(); });

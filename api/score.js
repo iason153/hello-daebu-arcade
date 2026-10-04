@@ -25,11 +25,52 @@
 // 관리자 화면: /admin.html
 
 import { kv } from '@vercel/kv';
-import { timingSafeEqual } from 'crypto';
+import { timingSafeEqual, createHmac } from 'crypto';
 import { sessionUser } from './_session.js';
 
 const MAX_METERS = 5000; // 터무니없는 점수 최소 검증용 상한선(헬로런 기준, 필요시 게임별로 분리 가능)
 const ALLOWED_GAMES = ['hello_run', 'hello_bird', 'hello_tower', 'hello_munch'];
+
+// [기록 확인표 — 2026-10 조작 방지]
+// 게임을 시작할 때 서버가 "확인표"를 내준다(게임 이름 + 시작 시각 + 서명). 기록을 등록할 때 이 표를 함께 보내면
+// 서버는 ① 표가 진짜인지 ② 시작한 뒤 흐른 시간에 비해 기록이 가능한 값인지 를 본다.
+// 통과하지 못한 기록은 버리지 않고 "확인 대기"(pending:{game})에 따로 모아 두며, 랭킹·왕좌·신전에는 나오지 않는다.
+// 관리실에서 확인 후 올려 주거나 지울 수 있다. (정상 이용자가 통신 문제로 표를 못 받은 경우를 살리기 위함)
+const TICKET_TTL = 6 * 3600 * 1000;
+// 게임별 "1초에 올릴 수 있는 최대 기록"과 여유분 — 사람이 낼 수 있는 속도보다 넉넉하게 잡았다.
+const PACE = {
+  hello_munch: { perSec: 8, base: 30 },
+  hello_tower: { perSec: 1.5, base: 5 },
+  hello_run: { perSec: 15, base: 30 },
+  hello_bird: { perSec: 3, base: 5 },
+};
+function ticketSig(game, t) {
+  const secret = process.env.SESSION_SECRET || '';
+  if (!secret) return '';
+  return createHmac('sha256', secret).update(`ticket|${game}|${t}`).digest('hex').slice(0, 32);
+}
+function makeTicket(game) {
+  const t = Date.now();
+  const sig = ticketSig(game, t);
+  return sig ? `${game}.${t}.${sig}` : '';
+}
+// → { ok, why, dur(초) }
+function checkTicket(ticket, game, score) {
+  const parts = String(ticket || '').split('.');
+  if (parts.length !== 3) return { ok: false, why: '확인표 없음' };
+  const [g, ts, sig] = parts;
+  const t = Number(ts);
+  const want = ticketSig(g, t);
+  if (!want || g !== game || !Number.isFinite(t)) return { ok: false, why: '확인표 오류' };
+  const a = Buffer.from(want), b = Buffer.from(String(sig));
+  if (a.length !== b.length || !timingSafeEqual(a, b)) return { ok: false, why: '확인표 오류' };
+  const ms = Date.now() - t;
+  const dur = Math.max(0, Math.round(ms / 1000));
+  if (ms < 0 || ms > TICKET_TTL) return { ok: false, why: '확인표 만료', dur };
+  const pace = PACE[game];
+  if (score > pace.base + pace.perSec * (ms / 1000)) return { ok: false, why: `너무 빠름(${dur}초)`, dur };
+  return { ok: true, dur };
+}
 
 function isAdminRequest(req) {
   const expected = process.env.ADMIN_SECRET || '';
@@ -41,8 +82,18 @@ function isAdminRequest(req) {
 
 export default async function handler(req, res) {
   if (req.method === 'POST') {
-    if ((req.body || {}).action === 'delete') {
+    const action = (req.body || {}).action;
+    if (action === 'start') {
+      const game = (req.body || {}).game;
+      if (!ALLOWED_GAMES.includes(game)) return res.status(400).json({ error: 'invalid game' });
+      res.setHeader('Cache-Control', 'no-store');
+      return res.status(200).json({ ok: true, ticket: makeTicket(game) });
+    }
+    if (action === 'delete') {
       return handleDelete(req, res);
+    }
+    if (action === 'approve') {
+      return handleApprove(req, res);
     }
     return handleSubmit(req, res);
   }
@@ -54,7 +105,7 @@ export default async function handler(req, res) {
 
 async function handleSubmit(req, res) {
   try {
-    const { game, nickname, contact, meters } = req.body || {};
+    const { game, nickname, contact, meters, ticket } = req.body || {};
 
     if (!ALLOWED_GAMES.includes(game)) {
       return res.status(400).json({ error: 'invalid game' });
@@ -86,6 +137,14 @@ async function handleSubmit(req, res) {
       const me = await sessionUser(req);
       if (me) entry.wid = me.wid;
     } catch (e) { /* 로그인 확인 실패해도 등록은 계속 */ }
+    // [조작 방지] 확인표 검사 — 통과 못 하면 "확인 대기"로 따로 보관(랭킹·왕좌에 반영 안 됨)
+    const chk = checkTicket(ticket, game, score);
+    if (chk.dur != null) entry.dur = chk.dur;
+    if (!chk.ok) {
+      entry.why = chk.why;
+      await kv.zadd(`pending:${game}`, { score, member: JSON.stringify(entry) });
+      return res.status(200).json({ ok: true, saved: false, pending: true, throne: false });
+    }
     // 왕좌 판정(명예의 전당 /hall-of-fame.html 규칙과 동일): 지금 최고 기록 "이상"이면
     // 이 기록이 새 왕좌의 주인이 된다(같은 기록이면 나중에 오른 사람이 왕좌를 가져감).
     // 게임 화면이 이 값을 보고 "왕좌에 올랐어요! 왕좌 카드 받기" 안내를 띄운다.
@@ -137,7 +196,8 @@ async function handleLeaderboard(req, res) {
     // 이후 별도로 다른 자료구조와 짜맞출 필요가 없다.
     // 일반 조회는 "한 사람당 최고 기록 하나"만 보여 준다(도배 방지). 그래서 전체를 읽은 뒤 추린다.
     // 관리자 조회는 삭제·확인을 위해 모든 기록을 그대로 보여 준다.
-    const topMembers = await kv.zrange(`score:${game}`, 0, isAdmin ? limit - 1 : -1, { rev: true });
+    const wantPending = isAdmin && req.query.pending === '1';
+    const topMembers = await kv.zrange(`${wantPending ? 'pending' : 'score'}:${game}`, 0, isAdmin ? limit - 1 : -1, { rev: true });
     const seen = new Set();
 
     const leaderboard = [];
@@ -161,6 +221,8 @@ async function handleLeaderboard(req, res) {
             row.id = entry.id;
             row.contact = entry.contact;
             row.submittedAt = entry.submittedAt;
+            if (entry.dur != null) row.dur = entry.dur;
+            if (entry.why) row.why = entry.why;
           }
           leaderboard.push(row);
         }
@@ -169,7 +231,9 @@ async function handleLeaderboard(req, res) {
       }
     });
 
-    return res.status(200).json({ game, leaderboard, isAdmin });
+    const out = { game, leaderboard, isAdmin };
+    if (isAdmin) { try { out.pendingCount = await kv.zcard(`pending:${game}`); } catch (e) { out.pendingCount = 0; } }
+    return res.status(200).json(out);
   } catch (e) {
     return res.status(500).json({ error: 'server error' });
   }
@@ -177,7 +241,8 @@ async function handleLeaderboard(req, res) {
 
 async function handleDelete(req, res) {
   try {
-    const { game, id } = req.body || {};
+    const { game, id, pending } = req.body || {};
+    const key = `${pending ? 'pending' : 'score'}:${game}`;
     if (!isAdminRequest(req)) {
       return res.status(403).json({ error: 'forbidden' });
     }
@@ -190,13 +255,13 @@ async function handleDelete(req, res) {
 
     // sorted set은 member 문자열 전체로 지워야 해서, 전체를 훑어 id가 일치하는
     // member(원본 문자열 그대로)를 찾은 다음 그 문자열로 zrem 한다.
-    const all = await kv.zrange(`score:${game}`, 0, -1);
+    const all = await kv.zrange(key, 0, -1);
     let removed = 0;
     for (const raw of all) {
       try {
         const entry = typeof raw === 'string' ? JSON.parse(raw) : raw;
         if (entry && entry.id === id) {
-          await kv.zrem(`score:${game}`, raw);
+          await kv.zrem(key, raw);
           removed++;
         }
       } catch (e) {
@@ -204,6 +269,33 @@ async function handleDelete(req, res) {
       }
     }
     return res.status(200).json({ ok: true, removed });
+  } catch (e) {
+    return res.status(500).json({ error: 'server error' });
+  }
+}
+
+// 확인 대기 기록을 관리자가 확인하고 랭킹에 올린다.
+async function handleApprove(req, res) {
+  try {
+    const { game, id } = req.body || {};
+    if (!isAdminRequest(req)) return res.status(403).json({ error: 'forbidden' });
+    if (!ALLOWED_GAMES.includes(game)) return res.status(400).json({ error: 'invalid game' });
+    if (!id) return res.status(400).json({ error: 'id required' });
+    const all = await kv.zrange(`pending:${game}`, 0, -1);
+    let moved = 0;
+    for (const raw of all) {
+      try {
+        const entry = typeof raw === 'string' ? JSON.parse(raw) : raw;
+        if (entry && entry.id === id) {
+          const kept = { ...entry, approved: true };
+          delete kept.why;
+          await kv.zadd(`score:${game}`, { score: Number(entry.meters), member: JSON.stringify(kept) });
+          await kv.zrem(`pending:${game}`, raw);
+          moved++;
+        }
+      } catch (e) { /* 손상된 기록은 건너뜀 */ }
+    }
+    return res.status(200).json({ ok: true, moved });
   } catch (e) {
     return res.status(500).json({ error: 'server error' });
   }

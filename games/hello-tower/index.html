@@ -334,6 +334,7 @@
   <a class="overlayLink" href="../../index.html">🏠 오락실로 돌아가기</a>
 </div>
 
+<script src="/fair.js" data-game="hello_tower"></script>
 <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.8.1/kakao.min.js" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
 <script>
@@ -1258,6 +1259,7 @@ const GA_GAME = 'hello_tower';
 // 세 게임 공통 이벤트 이름: game_start / game_over / score_submit / share_click
 // (game 파라미터로 게임 구분, score = 헬로런 m · 헬로버드 점수 · 헬로타워 층수)
 function track(name, params){
+  if (name === 'game_start' && window.HelloFair) HelloFair.start(GA_GAME);
   if (TEST_MODE) return; // 테스트 기록이 실제 통계에 섞이지 않게
   try{ if(typeof gtag === 'function') gtag('event', name, Object.assign({ game: GA_GAME }, params || {})); }catch(e){}
 }

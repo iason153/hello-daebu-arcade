@@ -71,6 +71,7 @@
 </div>
 
 <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.8.1/kakao.min.js" crossorigin="anonymous"></script>
+<script src="/fair.js" data-game="hello_bird"></script>
 <script src="/member.js"></script>
 <script>
 // 카카오톡 공유용 초기화. 헬로런과 같은 카카오 앱(JavaScript 키) 재사용 — 이미
@@ -355,6 +356,7 @@ const GA_GAME = 'hello_bird';
 // 세 게임 공통 이벤트 이름: game_start / game_over / score_submit / share_click
 // (game 파라미터로 게임 구분, score = 헬로런 m · 헬로버드 점수 · 헬로타워 층수)
 function track(name, params){
+  if (name === 'game_start' && window.HelloFair) HelloFair.start(GA_GAME);
   try{ if(typeof gtag === 'function') gtag('event', name, Object.assign({ game: GA_GAME }, params || {})); }catch(e){}
 }
 

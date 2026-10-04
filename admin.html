@@ -142,8 +142,9 @@
         </div>
         <p class="hint" id="rankHint">상위 200건까지 보여요. 삭제한 기록은 되돌릴 수 없어요.</p>
         <div class="table-scroll">
+          <div style="margin:0 0 10px"><button type="button" id="pendToggle" style="padding:8px 12px;border-radius:10px;border:1px solid #c9d2e0;background:#fff;font-weight:700;cursor:pointer">확인 대기 기록 보기</button></div>
           <table>
-            <thead><tr><th>순위</th><th>닉네임</th><th>기록</th><th></th><th>연락처</th><th>등록</th></tr></thead>
+            <thead><tr><th>순위</th><th>닉네임</th><th>기록</th><th></th><th>연락처</th><th>등록</th><th>걸린 시간</th></tr></thead>
             <tbody id="rankBody"></tbody>
           </table>
         </div>
@@ -272,6 +273,7 @@ document.querySelectorAll('#gamePicker button').forEach((btn) => {
   });
 });
 
+document.addEventListener('DOMContentLoaded', () => { const b = document.getElementById('pendToggle'); if (b) b.addEventListener('click', () => { showPending = !showPending; loadRanking(); }); });
 function formatWhen(iso) {
   if (!iso) return '';
   const d = new Date(iso);
@@ -279,14 +281,31 @@ function formatWhen(iso) {
   return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 }
 
+let showPending = false;
+function fmtDur(e) {
+  if (e.dur == null) return e.why || '';
+  const m = Math.floor(e.dur / 60), s = e.dur % 60;
+  return (m ? m + '분 ' : '') + s + '초' + (e.why ? ' · ' + e.why : '');
+}
+async function approveEntry(entry) {
+  if (!confirm(`"${entry.nickname}" (${entry.meters}) 기록을 랭킹에 올릴까요?`)) return;
+  try {
+    await api('/api/score', { method: 'POST', body: JSON.stringify({ action: 'approve', game: currentGame, id: entry.id }) });
+    toast('랭킹에 올렸어요.');
+    loadRanking();
+  } catch (err) { toast('실패: ' + err.message, true); }
+}
 async function loadRanking() {
   const body = $('rankBody');
   body.innerHTML = '<tr><td colspan="6" class="empty">불러오는 중…</td></tr>';
   try {
-    const data = await api(`/api/score?game=${currentGame}&limit=200`);
+    const data = await api(`/api/score?game=${currentGame}&limit=200${showPending ? '&pending=1' : ''}`);
+    const pt = $('pendToggle');
+    pt.textContent = showPending ? '← 랭킹으로 돌아가기' : `확인 대기 기록 보기 (${data.pendingCount || 0})`;
+    pt.style.background = !showPending && data.pendingCount ? '#fff3b0' : '#fff';
     body.innerHTML = '';
     if (!data.leaderboard.length) {
-      body.innerHTML = '<tr><td colspan="6" class="empty">아직 등록된 기록이 없어요.</td></tr>';
+      body.innerHTML = `<tr><td colspan="7" class="empty">${showPending ? '확인 대기 중인 기록이 없어요.' : '아직 등록된 기록이 없어요.'}</td></tr>`;
       return;
     }
     const unit = currentGame === 'hello_tower' ? '층' : (currentGame === 'hello_run' || currentGame === 'hello_munch') ? 'm' : '점';
@@ -299,7 +318,8 @@ async function loadRanking() {
         tr.appendChild(td);
       };
       addCell('rank', e.rank);
-      addCell('', e.nickname);
+      addCell('', e.nickname + (showPending ? '\n(' + fmtDur(e) + ')' : ''));
+      if (showPending) tr.children[1].style.whiteSpace = 'pre-line';
       addCell('score', e.meters + unit);
       // 삭제 버튼은 휴대폰에서 스크롤 없이 보이도록 기록 바로 옆에
       const td = document.createElement('td');
@@ -307,10 +327,19 @@ async function loadRanking() {
       del.className = 'del';
       del.textContent = '삭제';
       del.addEventListener('click', () => deleteEntry(e, tr));
+      if (showPending) {
+        const ap = document.createElement('button');
+        ap.className = 'del';
+        ap.style.cssText = 'background:#1f8f4e;margin-right:6px';
+        ap.textContent = '올리기';
+        ap.addEventListener('click', () => approveEntry(e));
+        td.appendChild(ap);
+      }
       td.appendChild(del);
       tr.appendChild(td);
       addCell('meta', e.contact || '');
       addCell('meta', formatWhen(e.submittedAt));
+      addCell('meta', fmtDur(e));
       body.appendChild(tr);
     });
   } catch (err) {
@@ -327,7 +356,7 @@ async function deleteEntry(entry, rowEl) {
   try {
     const data = await api('/api/score', {
       method: 'POST',
-      body: JSON.stringify({ action: 'delete', game: currentGame, id: entry.id }),
+      body: JSON.stringify({ action: 'delete', game: currentGame, id: entry.id, pending: showPending }),
     });
     if (data.removed) {
       toast('삭제했어요.');
