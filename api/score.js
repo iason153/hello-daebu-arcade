@@ -43,7 +43,7 @@ const PACE = {
   hello_tower: { perSec: 1.5, base: 5 },
   hello_run: { perSec: 15, base: 30 },
   hello_bird: { perSec: 3, base: 5 },
-  hello_swing: { perSec: 45, base: 80 }, // 대포 중 초속 25m 안팎 + 패스 보너스
+  hello_swing: { perSec: 30, base: 60 }, // 평소 초속 10~20m, 대포 중 25m 안팎(기록은 날아간 거리만)
 };
 function ticketSig(game, t) {
   const secret = process.env.SESSION_SECRET || '';

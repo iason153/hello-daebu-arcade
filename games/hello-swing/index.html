@@ -85,15 +85,15 @@ try { if (window.Kakao && !window.Kakao.isInitialized()) window.Kakao.init('3994
 
 const ZM=0.88,VW=380/ZM;const cv=document.getElementById('c'),g=cv.getContext('2d'),W=380,H=820,SEA=H-90,M=40; // 40px = 1m
 const ZONES=[{at:0,name:'시화방조제',sky:['#6ec3f4','#d8f1ff'],gap:[285,70],wind:0},
- {at:200,name:'방아머리',sky:['#5aa9e6','#ffe9c7'],gap:[200,90],wind:.07},
- {at:500,name:'탄도항',sky:['#f7a56b','#ffe3b3'],gap:[215,110],wind:.10},
- {at:900,name:'먼 바다',sky:['#3b6fb5','#a8d0f0'],gap:[235,135],wind:.13},
- {at:1500,name:'구름 위',sky:['#27306b','#8a7fd1'],gap:[250,160],wind:.16}];
+ {at:250,name:'방아머리',sky:['#5aa9e6','#ffe9c7'],gap:[200,90],wind:.07},
+ {at:600,name:'탄도항',sky:['#f7a56b','#ffe3b3'],gap:[215,110],wind:.10},
+ {at:1050,name:'먼 바다',sky:['#3b6fb5','#a8d0f0'],gap:[235,135],wind:.13},
+ {at:1700,name:'구름 위',sky:['#27306b','#8a7fd1'],gap:[250,160],wind:.16}];
 const IMG={};const SRC={"far4": "assets/far4.webp", "far5": "assets/far5.webp", "mid5": "assets/mid5.webp", "hook": "assets/hook.webp", "far1": "assets/far1.webp", "far2": "assets/far2.webp", "far3": "assets/far3.webp", "mid1": "assets/mid1.webp", "mid2": "assets/mid2.webp", "mid3": "assets/mid3.webp", "shell": "assets/shell.webp", "wide1": "assets/wide1.webp", "open1": "assets/open1.webp", "open2": "assets/open2.webp", "open3": "assets/open3.webp", "half1": "assets/half1.webp", "half2": "assets/half2.webp", "half3": "assets/half3.webp", "teeth1": "assets/teeth1.webp", "teeth2": "assets/teeth2.webp", "teeth3": "assets/teeth3.webp", "shut1": "assets/shut1.webp", "shut2": "assets/shut2.webp", "shut3": "assets/shut3.webp", "heroR": "assets/heroR.webp", "heroH": "assets/heroH.webp", "seaF": "assets/seaF.webp", "seaB": "assets/seaB.webp"};for(const k in SRC){IMG[k]=new Image();IMG[k].src=SRC[k];}
 let p,anchors,rope,camX,state,best=(()=>{try{return +localStorage.getItem('hsw_best')||0}catch(e){return 0}})(),holding=false;
 let skipAt=0,lead=0,hs=0,fs=0,pulse=0,hr=-0.4,dfx=0,dfy=0,dvx=0,dvy=0,vo=0,roarCd=0,jel={s:0,v:0},jrot={s:0,v:0},pvx=0,pvy=0,mouthO=0,lunge=0,lungeCd=200,spray=[],monFront=0,swallowed=false,gulp=0;
 let wave,shake,trail,drops,t,why,roar,zone,rest,banner,bonus,passN,lastPassX,pops,skips,wind,windNext,windWarn,shells,shellN,cannon;
-const dist=()=>Math.max(0,Math.floor(p.x/M)),score=()=>dist()+bonus;
+const dist=()=>Math.max(0,Math.floor(p.x/M)),score=()=>dist();
 const zoneOf=(m)=>{let z=0;ZONES.forEach((Z,i)=>{if(m>=Z.at)z=i;});return z;};
 function addAnchor(){const prev=anchors[anchors.length-1],z=ZONES[zoneOf(prev.hx/M)],easy=ZONES.some(Z=>prev.hx/M>=Z.at&&prev.hx/M<Z.at+18);
   const a={hx:prev.hx+(easy?285:z.gap[0]+Math.random()*z.gap[1]),hy:150+Math.random()*(easy?90:z===ZONES[0]?120:190),r:0,w:0,ph:Math.random()*7};
@@ -107,7 +107,7 @@ function reset(){t=0;anchors=[{hx:120,hy:200,x:120,y:200,r:0,w:0,ph:0}];shells=[
   skipAt=0;lead=0;hs=fs=pulse=0;hr=-0.4;dfx=dfy=dvx=dvy=0;curMx=-1e9;vo=0;roarCd=0;jel={s:0,v:0};jrot={s:0,v:0};pvx=0;pvy=0;mouthO=0;lunge=0;lungeCd=200;spray=[];swallowed=false;gulp=0;zone=0;rest=0;banner=0;bonus=0;passN=0;lastPassX=-1;skips=2;wind=0;windNext={at:1e9,v:0};windWarn=0;shellN=0;cannon=0;attach(anchors[0]);}
 function kick(v){pulse=v;}
 function attach(a){if(state==='play'){helloN++;sfx('shoot');if(helloN%6===1)sfx('hello',2);}rope={a,len:Math.max(60,Math.hypot(p.x-a.x,p.y-a.y))};shake=5;kick(-0.1);
-  if(passN>0){const add=passN*(passN+1)/2;bonus+=add;pop('패스 ×'+passN+'  +'+add+'m','#ffd23c');}passN=0;}
+  if(passN>0){pop(passN>=5?'패스 ×'+passN+'!! 대단해!':passN>=3?'패스 ×'+passN+'! 멋져!':'패스 ×'+passN+'!','#ffd23c');shake=Math.max(shake,3+passN);}passN=0;}
 function pop(text,col){pops.push({text,col,l:70});}
 function pick(){let bestA=null,bd=1e9;for(const a of anchors){const dx=a.x-p.x,dy=a.y-p.y,d=Math.hypot(dx,dy);
   if(dx>-30&&dy<-20&&d<410&&d<bd){bd=d;bestA=a;}}return bestA;}
@@ -179,7 +179,7 @@ function step(){
     const base=t<240?2:4.2+Math.min(2.6,dist()*0.004);
     // 헬로 먼치의 괴물과 같은 방식: 제 속도로 들쑥날쑥 쫓아오고, 멀어지면 멀어진 만큼 빨라지며(완만한 고무줄), 많이 뒤처지면 포효하며 몰아친다
     wave.v=base*(1+0.3*Math.sin(t/102)+0.15*Math.sin(t/38+1));
-    { const dd=dist(); wave.v*= dd<150?0.55:dd<210?0.55+0.45*(dd-150)/60:1; } // 초반 봐주기
+    { const dd=dist(); wave.v*= dd<190?0.55:dd<260?0.55+0.45*(dd-190)/70:1; } // 초반 봐주기
     if(rest>0)wave.v*=0.35; if(wind<0)wave.v*=0.85;
     if(roarCd>0)roarCd--;
     if(roar>0){roar--;wave.v*=2.1;} else if(gap>400&&t>300&&rest<=0&&!cannon&&roarCd<=0){roar=84;roarCd=360;shake=6;}
@@ -311,7 +311,7 @@ function draw(){
   g.restore();
   const gap=p.x-wave.x;
   if(state==='play'&&gap<260){g.fillStyle='rgba(255,60,60,'+(0.35*(1-gap/260)*(0.6+0.4*Math.sin(t*0.4)))+')';g.fillRect(0,0,26,H);}
-  txt(dist()+'m',18,58,'900 44px system-ui');if(bonus>0){g.font='900 44px system-ui';const bw=g.measureText(dist()+'m').width;txt('+'+bonus,26+bw,58,'800 20px system-ui','#ffd23c');}
+  txt(dist()+'m',18,58,'900 44px system-ui');
   txt('최고 '+best+'m · 괴물 '+Math.max(0,Math.floor((gap-100)/M))+'m 뒤',20,84,'700 15px system-ui');
   for(let i=0;i<10;i++){g.fillStyle=i<shellN?'#ffc93c':'rgba(255,255,255,.35)';g.fillRect(20+i*13,96,10,10);}
   txt('물수제비 '+(skips>1?'●●':skips?'●':'○'),W-18,40,'700 15px system-ui','#8fe3ff','right');
@@ -325,7 +325,7 @@ function draw(){
     g.font='900 23px system-ui';g.fillText(state==='over'?why:'헬로 스윙',W/2,320);
     if(state==='over'){g.font='900 30px system-ui';g.fillStyle='#ffd23c';g.fillText(score()+'m',W/2,358);g.fillStyle='#fff';g.font='600 14px system-ui';g.fillText('거리 '+dist()+'m + 패스 보너스 '+bonus+'m',W/2,382);}
     g.font='600 15px system-ui';
-    ['꾹 누르면 줄을 쏘고 감는다 · 떼면 날아간다','걸이를 지나쳐 날면 패스 보너스','바다에 닿아도 한 번은 물수제비로 튕긴다','황금조개 10개 = 헬로 대포','200m부터 순풍·역풍이 분다'].forEach((s,i)=>g.fillText(s,W/2,(state==='over'?408:354)+i*23));
+    ['꾹 누르면 줄을 쏘고 감는다 · 떼면 날아간다','고리를 지나쳐 날면 패스!','바다에 닿아도 한 번은 물수제비로 튕긴다','황금조개 10개 = 헬로 대포','250m부터 순풍·역풍이 분다'].forEach((s,i)=>g.fillText(s,W/2,(state==='over'?408:354)+i*23));
     g.fillStyle='#ffd23c';g.font='700 16px system-ui';g.fillText(state==='over'?'탭해서 다시':'탭해서 시작',W/2,532);}
 }
 function loop(){step();audioTick();draw();requestAnimationFrame(loop);}
@@ -342,7 +342,7 @@ function showOverlay() {
   if (state !== 'over') return;
   $id('ovTitle').textContent = why || '풍덩!';
   $id('ovScore').textContent = finalScore + 'm';
-  $id('ovSub').textContent = ZONES[zoneOf(dist())].name + '까지 날아갔어요\n거리 ' + dist() + 'm + 패스 보너스 ' + bonus + ' = 기록 ' + finalScore + 'm\n최고 기록 ' + best + 'm';
+  $id('ovSub').textContent = ZONES[zoneOf(dist())].name + '까지 날아갔어요\n최고 기록 ' + best + 'm';
   $id('rankMsg').textContent = '';
   $id('overlay').hidden = false;
   $id('retryBtn').focus({ preventScroll: true });
@@ -401,6 +401,9 @@ function buildShareCard() {
   c.strokeText('파도 괴물에게서 도망쳤어요!', 272, 286); c.fillText('파도 괴물에게서 도망쳤어요!', 272, 286);
   c.font = '700 18px sans-serif'; c.lineWidth = 5;
   c.strokeText('헬로 스윙 · 대부도 오락실', 272, 316); c.fillText('헬로 스윙 · 대부도 오락실', 272, 316);
+  if (ok(IMG.heroR)) { c.save(); c.translate(326, 478); c.rotate(-0.1); c.scale(4.4, 4.4); c.drawImage(IMG.heroR, -27.7, -26.8, 56, 47.25);
+    for (const [ex, ey, k] of [[3.4, -7, 1], [11.6, -7.2, 0.88]]) { c.fillStyle = '#fff'; c.strokeStyle = '#3a2a1a'; c.lineWidth = 1; c.beginPath(); c.arc(ex, ey, 4.6 * k, 0, 7); c.fill(); c.stroke(); c.fillStyle = '#22180e'; c.beginPath(); c.arc(ex + 1.1, ey + 0.2, 2.5 * k, 0, 7); c.fill(); }
+    c.restore(); }
   const cta = '👉  daebugame.com 놀러가기'; c.font = '800 26px sans-serif';
   const w = Math.min(cw - 48, c.measureText(cta).width + 60), y = 720, h = 56;
   rr(c, cw / 2 - w / 2, y, w, h, h / 2); c.fillStyle = '#ffc857'; c.fill();
