@@ -1,6 +1,6 @@
 // /api/score.js
 // 헬로 대부도 오락실의 랭킹 이벤트 시스템 — 헬로런/헬로버드/헬로타워 공용.
-// 요청 body/query의 "game" 값으로 어느 게임의 점수인지 구분한다 (예: "hello_run" | "hello_bird" | "hello_tower" | "hello_munch").
+// 요청 body/query의 "game" 값으로 어느 게임의 점수인지 구분한다 (예: "hello_run" | "hello_bird" | "hello_tower" | "hello_munch" | "hello_swing").
 //
 // 소규모 커피쿠폰 이벤트 기준이라 부정행위 방지는 최소한만 한다:
 //   - meters(또는 게임별 점수)가 상식적인 범위를 벗어나면 거부
@@ -29,7 +29,7 @@ import { timingSafeEqual, createHmac } from 'crypto';
 import { sessionUser } from './_session.js';
 
 const MAX_METERS = 5000; // 터무니없는 점수 최소 검증용 상한선(헬로런 기준, 필요시 게임별로 분리 가능)
-const ALLOWED_GAMES = ['hello_run', 'hello_bird', 'hello_tower', 'hello_munch'];
+const ALLOWED_GAMES = ['hello_run', 'hello_bird', 'hello_tower', 'hello_munch', 'hello_swing'];
 
 // [기록 확인표 — 2026-10 조작 방지]
 // 게임을 시작할 때 서버가 "확인표"를 내준다(게임 이름 + 시작 시각 + 서명). 기록을 등록할 때 이 표를 함께 보내면
@@ -43,6 +43,7 @@ const PACE = {
   hello_tower: { perSec: 1.5, base: 5 },
   hello_run: { perSec: 15, base: 30 },
   hello_bird: { perSec: 3, base: 5 },
+  hello_swing: { perSec: 45, base: 80 }, // 대포 중 초속 25m 안팎 + 패스 보너스
 };
 function ticketSig(game, t) {
   const secret = process.env.SESSION_SECRET || '';

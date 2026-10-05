@@ -28,8 +28,8 @@
   header h1{font-size:22px; margin:0 0 4px; color:#ffe9b8; letter-spacing:-0.3px;}
   header p{font-size:13px; margin:0; color:rgba(255,255,255,0.55);}
 
-  .tabs{display:flex; gap:4px; margin-bottom:18px; background:rgba(255,255,255,0.06); padding:4px; border-radius:14px;}
-  .tab{flex:1; text-align:center; padding:10px 0; border-radius:11px; font-size:13px; white-space:nowrap; font-weight:700; color:rgba(255,255,255,0.55); cursor:pointer; transition:background .15s,color .15s;}
+  .tabs{display:flex; flex-wrap:wrap; gap:4px; margin-bottom:18px; background:rgba(255,255,255,0.06); padding:4px; border-radius:14px;}
+  .tab{flex:1 1 30%; text-align:center; padding:10px 0; border-radius:11px; font-size:13px; white-space:nowrap; font-weight:700; color:rgba(255,255,255,0.55); cursor:pointer; transition:background .15s,color .15s;}
   .tab.active{background:#ffc857; color:#2a1c00;}
 
   .list{display:flex; flex-direction:column; gap:10px; min-height:160px;}
@@ -76,6 +76,7 @@
   </header>
 
   <div class="tabs">
+    <div class="tab" data-game="hello_swing">🕸️ 헬로스윙</div>
     <div class="tab" data-game="hello_munch">👾 헬로먼치</div>
     <div class="tab active" data-game="hello_tower">🗼 헬로타워</div>
     <div class="tab" data-game="hello_run">🏃 헬로런</div>
@@ -159,7 +160,7 @@ document.querySelectorAll('.tab').forEach(tab=>{
   });
 });
 // 게임하러 가기 버튼 — 지금 보고 있는 탭의 게임으로 연결
-const PLAY = { hello_munch: ['👾 헬로먼치', '/games/hello-munch/'], hello_tower: ['🗼 헬로타워', '/games/hello-tower/'], hello_run: ['🏃 헬로런', '/games/hello-run/'], hello_bird: ['🐦 헬로버드', '/games/hello-bird/'] };
+const PLAY = { hello_swing: ['🕸️ 헬로스윙', '/games/hello-swing/'], hello_munch: ['👾 헬로먼치', '/games/hello-munch/'], hello_tower: ['🗼 헬로타워', '/games/hello-tower/'], hello_run: ['🏃 헬로런', '/games/hello-run/'], hello_bird: ['🐦 헬로버드', '/games/hello-bird/'] };
 function updatePlayBtn(){ const p = PLAY[currentGame]; const b = document.getElementById('playBtn'); if (p && b) { b.textContent = p[0] + ' 하러 가기'; b.href = p[1]; } }
 // 주소에 ?g=hello_run 처럼 붙어 오면 그 탭부터 보여줌
 try { const q = new URLSearchParams(location.search).get('g'); const tab = q && document.querySelector('.tab[data-game="' + q + '"]'); if (tab) { document.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); tab.classList.add('active'); currentGame = q; } } catch (e) {}
