@@ -107,7 +107,7 @@ function reset(){t=0;anchors=[{hx:120,hy:200,x:120,y:200,r:0,w:0,ph:0}];shells=[
   skipAt=0;lead=0;hs=fs=pulse=0;hr=-0.4;dfx=dfy=dvx=dvy=0;curMx=-1e9;vo=0;roarCd=0;jel={s:0,v:0};jrot={s:0,v:0};pvx=0;pvy=0;mouthO=0;lunge=0;lungeCd=200;spray=[];swallowed=false;gulp=0;zone=0;rest=0;banner=0;bonus=0;passN=0;lastPassX=-1;skips=2;wind=0;windNext={at:1e9,v:0};windWarn=0;shellN=0;cannon=0;attach(anchors[0]);}
 function kick(v){pulse=v;}
 function attach(a){if(state==='play'){helloN++;sfx('shoot');if(helloN%6===1)sfx('hello',2);}rope={a,len:Math.max(60,Math.hypot(p.x-a.x,p.y-a.y))};shake=5;kick(-0.1);
-  if(passN>0){const add=passN*(passN+1)/2*3;bonus+=add;pop('패스 ×'+passN+'  +'+add+'m','#ffd23c');}passN=0;}
+  if(passN>0){const add=passN*(passN+1)/2;bonus+=add;pop('패스 ×'+passN+'  +'+add+'m','#ffd23c');}passN=0;}
 function pop(text,col){pops.push({text,col,l:70});}
 function pick(){let bestA=null,bd=1e9;for(const a of anchors){const dx=a.x-p.x,dy=a.y-p.y,d=Math.hypot(dx,dy);
   if(dx>-30&&dy<-20&&d<410&&d<bd){bd=d;bestA=a;}}return bestA;}
@@ -311,7 +311,7 @@ function draw(){
   g.restore();
   const gap=p.x-wave.x;
   if(state==='play'&&gap<260){g.fillStyle='rgba(255,60,60,'+(0.35*(1-gap/260)*(0.6+0.4*Math.sin(t*0.4)))+')';g.fillRect(0,0,26,H);}
-  txt(score()+'m',18,58,'900 44px system-ui');
+  txt(dist()+'m',18,58,'900 44px system-ui');if(bonus>0){g.font='900 44px system-ui';const bw=g.measureText(dist()+'m').width;txt('+'+bonus,26+bw,58,'800 20px system-ui','#ffd23c');}
   txt('최고 '+best+'m · 괴물 '+Math.max(0,Math.floor((gap-100)/M))+'m 뒤',20,84,'700 15px system-ui');
   for(let i=0;i<10;i++){g.fillStyle=i<shellN?'#ffc93c':'rgba(255,255,255,.35)';g.fillRect(20+i*13,96,10,10);}
   txt('물수제비 '+(skips>1?'●●':skips?'●':'○'),W-18,40,'700 15px system-ui','#8fe3ff','right');
@@ -342,7 +342,7 @@ function showOverlay() {
   if (state !== 'over') return;
   $id('ovTitle').textContent = why || '풍덩!';
   $id('ovScore').textContent = finalScore + 'm';
-  $id('ovSub').textContent = ZONES[zoneOf(dist())].name + '까지 날아갔어요\n거리 ' + dist() + 'm + 패스 보너스 ' + bonus + 'm · 최고 기록 ' + best + 'm';
+  $id('ovSub').textContent = ZONES[zoneOf(dist())].name + '까지 날아갔어요\n거리 ' + dist() + 'm + 패스 보너스 ' + bonus + ' = 기록 ' + finalScore + 'm\n최고 기록 ' + best + 'm';
   $id('rankMsg').textContent = '';
   $id('overlay').hidden = false;
   $id('retryBtn').focus({ preventScroll: true });
@@ -387,27 +387,20 @@ $id('snd').addEventListener('click', () => { sndOn = !sndOn; audioInit(); if (ma
 // 카카오톡 공유 — 결과 카드(640×800)를 게임 그림으로 그려서 올림
 function rr(c, x, y, w, h, r) { c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); }
 const ok = (im) => im && im.complete && im.naturalWidth > 0;
+const shareBg = new Image(); shareBg.src = 'assets/share-card-bg.jpg';
 function buildShareCard() {
   const cw = 640, ch = 800, sc = document.createElement('canvas'); sc.width = cw; sc.height = ch;
   const c = sc.getContext('2d');
   rr(c, 0, 0, cw, ch, 28); c.save(); c.clip();
-  const sk = c.createLinearGradient(0, 0, 0, ch); sk.addColorStop(0, '#6ec3f4'); sk.addColorStop(1, '#d8f1ff'); c.fillStyle = sk; c.fillRect(0, 0, cw, ch);
-  if (ok(IMG.far1)) { c.globalAlpha = 0.9; c.drawImage(IMG.far1, -1180, 330, 1800, 375); c.globalAlpha = 1; }
-  if (ok(IMG.mid1)) { const h = 150, w = IMG.mid1.naturalWidth * h / 384; for (let x = -60; x < cw; x += w) c.drawImage(IMG.mid1, x, 585, w, h); }
-  if (ok(IMG.open1)) c.drawImage(IMG.open1, -90, 250, 300, 600);
-  if (ok(IMG.seaF)) { const w = IMG.seaF.naturalWidth * 0.6, h = IMG.seaF.naturalHeight * 0.6; for (let x = -40; x < cw; x += w) c.drawImage(IMG.seaF, x, 655, w, h); }
-  c.strokeStyle = '#fff'; c.lineWidth = 5; c.lineCap = 'round'; c.beginPath(); c.moveTo(520, 330); c.lineTo(448, 432); c.stroke();
-  if (ok(IMG.hook)) c.drawImage(IMG.hook, 485, 295, 70, 70);
-  if (ok(IMG.heroH)) { c.save(); c.translate(390, 480); c.rotate(-0.62); c.scale(2.6, 2.6); c.drawImage(IMG.heroH, -28.1, -33.4, 64.25, 58.75);
-    for (const [ex, ey, k] of [[8.6, -6.6, 1], [16.6, -6.9, 0.88]]) { c.fillStyle = '#fff'; c.strokeStyle = '#3a2a1a'; c.lineWidth = 1; c.beginPath(); c.arc(ex, ey, 5.4 * k, 0, 7); c.fill(); c.stroke(); c.fillStyle = '#22180e'; c.beginPath(); c.arc(ex - 1.8, ey + 0.6, 1.7 * k, 0, 7); c.fill(); }
-    c.restore(); }
+  if (ok(shareBg)) c.drawImage(shareBg, 0, 0, cw, ch);
+  else { const sk = c.createLinearGradient(0, 0, 0, ch); sk.addColorStop(0, '#3f8fe8'); sk.addColorStop(1, '#ffd9a0'); c.fillStyle = sk; c.fillRect(0, 0, cw, ch); }
   c.textAlign = 'center';
-  c.save(); c.shadowColor = 'rgba(255,190,60,.9)'; c.shadowBlur = 30; c.font = '900 92px sans-serif'; c.lineWidth = 8; c.strokeStyle = '#fff';
-  c.strokeText(finalScore + 'm', cw / 2, 150); c.fillStyle = '#ff9d1f'; c.fillText(finalScore + 'm', cw / 2, 150); c.restore();
-  c.font = '800 24px sans-serif'; c.lineWidth = 6; c.strokeStyle = 'rgba(20,40,80,.85)'; c.fillStyle = '#fff';
-  c.strokeText('파도 괴물에게서 도망쳤어요!', cw / 2, 212); c.fillText('파도 괴물에게서 도망쳤어요!', cw / 2, 212);
+  c.save(); c.shadowColor = 'rgba(255,190,60,.9)'; c.shadowBlur = 30; c.font = '900 96px sans-serif'; c.lineWidth = 9; c.strokeStyle = '#fff';
+  c.strokeText(finalScore + 'm', 280, 235); c.fillStyle = '#ff8a1f'; c.fillText(finalScore + 'm', 280, 235); c.restore();
+  c.font = '800 22px sans-serif'; c.lineWidth = 6; c.strokeStyle = 'rgba(20,40,90,.9)'; c.fillStyle = '#fff';
+  c.strokeText('파도 괴물에게서 도망쳤어요!', 272, 286); c.fillText('파도 괴물에게서 도망쳤어요!', 272, 286);
   c.font = '700 18px sans-serif'; c.lineWidth = 5;
-  c.strokeText('헬로 스윙 · 대부도 오락실', cw / 2, 244); c.fillText('헬로 스윙 · 대부도 오락실', cw / 2, 244);
+  c.strokeText('헬로 스윙 · 대부도 오락실', 272, 316); c.fillText('헬로 스윙 · 대부도 오락실', 272, 316);
   const cta = '👉  daebugame.com 놀러가기'; c.font = '800 26px sans-serif';
   const w = Math.min(cw - 48, c.measureText(cta).width + 60), y = 720, h = 56;
   rr(c, cw / 2 - w / 2, y, w, h, h / 2); c.fillStyle = '#ffc857'; c.fill();
