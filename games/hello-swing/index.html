@@ -91,7 +91,7 @@ const ZONES=[{at:0,name:'시화방조제',sky:['#6ec3f4','#d8f1ff'],gap:[285,70]
  {at:1700,name:'구름 위',sky:['#27306b','#8a7fd1'],gap:[250,160],wind:.16}];
 const IMG={};const SRC={"far4": "assets/far4.webp", "far5": "assets/far5.webp", "mid5": "assets/mid5.webp", "hook": "assets/hook.webp", "far1": "assets/far1.webp", "far2": "assets/far2.webp", "far3": "assets/far3.webp", "mid1": "assets/mid1.webp", "mid2": "assets/mid2.webp", "mid3": "assets/mid3.webp", "shell": "assets/shell.webp", "wide1": "assets/wide1.webp", "open1": "assets/open1.webp", "open2": "assets/open2.webp", "open3": "assets/open3.webp", "half1": "assets/half1.webp", "half2": "assets/half2.webp", "half3": "assets/half3.webp", "teeth1": "assets/teeth1.webp", "teeth2": "assets/teeth2.webp", "teeth3": "assets/teeth3.webp", "shut1": "assets/shut1.webp", "shut2": "assets/shut2.webp", "shut3": "assets/shut3.webp", "heroR": "assets/heroR.webp", "heroH": "assets/heroH.webp", "seaF": "assets/seaF.webp", "seaB": "assets/seaB.webp"};for(const k in SRC){IMG[k]=new Image();IMG[k].src=SRC[k];}
 let p,anchors,rope,camX,state,best=(()=>{try{return +localStorage.getItem('hsw_best')||0}catch(e){return 0}})(),holding=false;
-let skipAt=0,lead=0,hs=0,fs=0,pulse=0,hr=-0.4,dfx=0,dfy=0,dvx=0,dvy=0,vo=0,roarCd=0,jel={s:0,v:0},jrot={s:0,v:0},pvx=0,pvy=0,mouthO=0,lunge=0,lungeCd=200,spray=[],monFront=0,swallowed=false,gulp=0;
+let skipAt=0,lead=0,hs=0,fs=0,pulse=0,hr=-0.4,dfx=0,dfy=0,dvx=0,dvy=0,vo=0,roarCd=0,jel={s:0,v:0},jrot={s:0,v:0},pvx=0,pvy=0,mouthO=0,lunge=0,lungeWarn=0,tutN=0,skipFlash=0,lungeCd=200,spray=[],monFront=0,swallowed=false,gulp=0;
 let wave,shake,trail,drops,t,why,roar,zone,rest,banner,bonus,passN,lastPassX,pops,skips,wind,windNext,windWarn,shells,shellN,cannon;
 const dist=()=>Math.max(0,Math.floor(p.x/M)),score=()=>dist();
 const zoneOf=(m)=>{let z=0;ZONES.forEach((Z,i)=>{if(m>=Z.at)z=i;});return z;};
@@ -104,16 +104,16 @@ function addAnchor(){const prev=anchors[anchors.length-1],z=ZONES[zoneOf(prev.hx
     else if(r<.85)shells.push({x:a.hx+(Math.random()-.5)*50,y:a.hy+110+Math.random()*190,got:false});}}
 function reset(){t=0;anchors=[{hx:120,hy:200,x:120,y:200,r:0,w:0,ph:0}];shells=[];for(let i=0;i<12;i++)addAnchor();
   p={x:40,y:330,vx:3.6,vy:0};rope=null;camX=0;state='ready';wave={x:-420,v:2};trail=[];drops=[];pops=[];shake=0;roar=0;why='';
-  skipAt=0;lead=0;hs=fs=pulse=0;hr=-0.4;dfx=dfy=dvx=dvy=0;curMx=-1e9;vo=0;roarCd=0;jel={s:0,v:0};jrot={s:0,v:0};pvx=0;pvy=0;mouthO=0;lunge=0;lungeCd=200;spray=[];swallowed=false;gulp=0;zone=0;rest=0;banner=0;bonus=0;passN=0;lastPassX=-1;skips=2;wind=0;windNext={at:1e9,v:0};windWarn=0;shellN=0;cannon=0;attach(anchors[0]);}
+  skipAt=0;lead=0;hs=fs=pulse=0;hr=-0.4;dfx=dfy=dvx=dvy=0;curMx=-1e9;vo=0;roarCd=0;jel={s:0,v:0};jrot={s:0,v:0};pvx=0;pvy=0;mouthO=0;lunge=0;lungeWarn=0;skipFlash=0;lungeCd=200;spray=[];swallowed=false;gulp=0;zone=0;rest=0;banner=0;bonus=0;passN=0;lastPassX=-1;skips=2;wind=0;windNext={at:1e9,v:0};windWarn=0;shellN=0;cannon=0;attach(anchors[0]);}
 function kick(v){pulse=v;}
 function attach(a){if(state==='play'){helloN++;sfx('shoot');if(helloN%6===1)sfx('hello',2);}rope={a,len:Math.max(60,Math.hypot(p.x-a.x,p.y-a.y))};shake=5;kick(-0.1);
   if(passN>0){pop(passN>=5?'패스 ×'+passN+'!! 대단해!':passN>=3?'패스 ×'+passN+'! 멋져!':'패스 ×'+passN+'!','#ffd23c');shake=Math.max(shake,3+passN);}passN=0;}
 function pop(text,col){pops.push({text,col,l:70});}
-function pick(){let bestA=null,bd=1e9;for(const a of anchors){const dx=a.x-p.x,dy=a.y-p.y,d=Math.hypot(dx,dy);
-  if(dx>-30&&dy<-20&&d<410&&d<bd){bd=d;bestA=a;}}return bestA;}
+function pick(){const fast=p.vx>6.5&&p.vy<5&&p.y<470,minDx=fast?75:-30;let bestA=null,bd=1e9;for(const a of anchors){const dx=a.x-p.x,dy=a.y-p.y,d=Math.hypot(dx,dy);
+  if(dx>minDx&&dy<-20&&d<(fast?440:410)&&d<bd){bd=d;bestA=a;}}return bestA;}
 function down(){audioInit();holding=true;if(state==='over')return;if(state==='ready'){state='play';track('game_start');return;}
   if(!rope&&!cannon){const a=pick();if(a)attach(a);}}
-function up(){holding=false;if(state==='play'&&rope){lastPassX=rope.a.hx;rope=null;p.vx*=1.08;p.vy*=1.08;kick(0.14);}}
+function up(){holding=false;if(state==='play'&&rope){if(tutOn&&++tutN>=5)tutDone();lastPassX=rope.a.hx;rope=null;p.vx*=1.08;p.vy*=1.08;kick(0.14);}}
 const SND={"bgm": "assets/snd/bgm.mp3", "sea": "assets/snd/sea.mp3", "mon": "assets/snd/mon.mp3", "hello": "assets/snd/hello.mp3", "rk1": "assets/snd/rk1.mp3", "rk2": "assets/snd/rk2.mp3"};
 const AC=window.AudioContext||window.webkitAudioContext;let ac=null,BUF={},master=null,seaG=null,monG=null,monSrc=null,lastHello=-99,helloN=0,sndOn=(()=>{try{return localStorage.getItem('swing-mute')!=='1'}catch(e){return true}})();
 function b64buf(d){const b=atob(d.split(',')[1]),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u.buffer;}
@@ -122,7 +122,9 @@ function audioInit(){ // 첫 터치 때 시작(브라우저 규칙)
   if(ac){if(ac.state==='suspended')ac.resume();return;} if(!AC)return; try{ac=new AC();}catch(e){ac=null;return;}
   master=ac.createGain();master.gain.value=sndOn?1:0;master.connect(ac.destination);monG=ac.createGain();monG.gain.value=0;monG.connect(master);
   for(const k in SND){fetch(SND[k]).then(r=>r.arrayBuffer()).then(buf=>ac.decodeAudioData(buf,b=>{BUF[k]=b;if(k==='bgm')loopStart('bgm',0.3);if(k==='sea')seaG=loopStart('sea',0.12);},()=>{})).catch(()=>{});} }
-function sfx(k,vol){if(!ac)return;if(k==='shoot'){const n=ac.currentTime,o=ac.createOscillator(),gn=ac.createGain();o.type='triangle';o.frequency.setValueAtTime(1500,n);o.frequency.exponentialRampToValueAtTime(420,n+0.1);gn.gain.setValueAtTime(0.0001,n);gn.gain.exponentialRampToValueAtTime(0.16,n+0.012);gn.gain.exponentialRampToValueAtTime(0.001,n+0.13);o.connect(gn);gn.connect(master);o.start(n);o.stop(n+0.14);
+function sfx(k,vol){if(!ac)return;if(k==='beep'||k==='beep2'||k==='skip'){const n=ac.currentTime,o=ac.createOscillator(),gn=ac.createGain();
+    if(k==='skip'){o.type='sine';o.frequency.setValueAtTime(420,n);o.frequency.exponentialRampToValueAtTime(1100,n+0.16);gn.gain.setValueAtTime(0.22,n);gn.gain.exponentialRampToValueAtTime(0.001,n+0.3);o.connect(gn);gn.connect(master);o.start(n);o.stop(n+0.31);return;}
+    o.type='square';o.frequency.setValueAtTime(k==='beep'?980:1320,n);gn.gain.setValueAtTime(0.0001,n);gn.gain.exponentialRampToValueAtTime(0.11,n+0.01);gn.gain.setValueAtTime(0.11,n+(k==='beep'?0.14:0.2));gn.gain.exponentialRampToValueAtTime(0.001,n+(k==='beep'?0.18:0.26));o.connect(gn);gn.connect(master);o.start(n);o.stop(n+0.28);return;}if(k==='shoot'){const n=ac.currentTime,o=ac.createOscillator(),gn=ac.createGain();o.type='triangle';o.frequency.setValueAtTime(1500,n);o.frequency.exponentialRampToValueAtTime(420,n+0.1);gn.gain.setValueAtTime(0.0001,n);gn.gain.exponentialRampToValueAtTime(0.16,n+0.012);gn.gain.exponentialRampToValueAtTime(0.001,n+0.13);o.connect(gn);gn.connect(master);o.start(n);o.stop(n+0.14);
     const o2=ac.createOscillator(),g2=ac.createGain();o2.type='square';o2.frequency.setValueAtTime(2600,n);o2.frequency.exponentialRampToValueAtTime(1300,n+0.04);g2.gain.setValueAtTime(0.035,n);g2.gain.exponentialRampToValueAtTime(0.001,n+0.05);o2.connect(g2);g2.connect(master);o2.start(n);o2.stop(n+0.06);return;}if(k==='shell'){const o=ac.createOscillator(),gn=ac.createGain();o.type='triangle';o.frequency.setValueAtTime(1320,ac.currentTime);o.frequency.setValueAtTime(1760,ac.currentTime+0.07);gn.gain.setValueAtTime(0.14,ac.currentTime);gn.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+0.22);o.connect(gn);gn.connect(master);o.start();o.stop(ac.currentTime+0.23);return;}
   if(!BUF[k])return;const src=ac.createBufferSource(),gn=ac.createGain();src.buffer=BUF[k];gn.gain.value=vol||1;src.connect(gn);gn.connect(master);src.start();}
 function audioTick(){ if(!ac||!master)return; // 괴물이 화면에 보이는 동안 괴물 소리, 가까울수록 파도 소리가 커진다
@@ -179,7 +181,7 @@ function step(){
     const base=t<240?2:4.2+Math.min(2.6,dist()*0.004);
     // 헬로 먼치의 괴물과 같은 방식: 제 속도로 들쑥날쑥 쫓아오고, 멀어지면 멀어진 만큼 빨라지며(완만한 고무줄), 많이 뒤처지면 포효하며 몰아친다
     wave.v=base*(1+0.3*Math.sin(t/102)+0.15*Math.sin(t/38+1));
-    { const dd=dist(); wave.v*= dd<190?0.55:dd<260?0.55+0.45*(dd-190)/70:1; } // 초반 봐주기
+    { const dd=dist(); wave.v*= dd<190?0.55:dd<600?0.55+0.45*(dd-190)/410:1; } // 초반 봐주기
     if(rest>0)wave.v*=0.35; if(wind<0)wave.v*=0.85;
     if(roarCd>0)roarCd--;
     if(roar>0){roar--;wave.v*=2.1;} else if(gap>400&&t>300&&rest<=0&&!cannon&&roarCd<=0){roar=84;roarCd=360;shake=6;}
@@ -190,13 +192,14 @@ function step(){
     camX+=((p.x-200-Math.max(0,Math.min(60,p.vx*4)))-camX)*0.12;
     if(p.x-camX>300)camX=p.x-300; // 헬로가 화면 오른쪽 밖으로 나가지 않게
     while(anchors[anchors.length-1].hx<camX+VW+500)addAnchor();
-    if(p.y>seaY(p.x)){ if(skips>0&&!cannon){skips--;p.y=seaY(p.x)-2;p.vy=-Math.abs(p.vy)*0.5-7;kick(-0.1);p.vx=Math.max(p.vx,5)*1.05;splash(14);shake=6;pop('물수제비!','#8fe3ff');}
+    if(p.y>seaY(p.x)){ if(skips>0&&!cannon){skips--;p.y=seaY(p.x)-2;p.vy=-Math.abs(p.vy)*0.5-7;kick(-0.1);p.vx=Math.max(p.vx,5)*1.05;splash(20);shake=9;skipFlash=75;sfx('skip');}
       else over('풍덩!'); }
     else if(p.x<monEdge(p.y)-12&&!cannon){over('파도 괴물에게 삼켜졌어요!');gulp=26;}
     // 덥석 돌진(먼치 괴물처럼): 가까우면 자주, 멀면 드물게
     const gp=p.x-wave.x;
     if(lunge>0){lunge--;if(lunge===18){shake=7;for(let i=0;i<22;i++)spray.push({x:wave.x+70+Math.random()*30,y:380+Math.random()*320,vx:3+Math.random()*7,vy:-2-Math.random()*7,r:3+Math.random()*4,l:34,c:Math.random()<.6?'#fff':'#9fdcff'});}}
-    else if(--lungeCd<=0&&gp<430&&rest<=0&&!cannon){lunge=54;lungeCd=gp<220?70+Math.random()*60:150+Math.random()*120;}
+    else if(lungeWarn>0){lungeWarn--;if(lungeWarn===47||lungeWarn===27)sfx('beep');if(lungeWarn===0){lunge=54;sfx('beep2');}}
+    else if(--lungeCd<=0&&gp<430&&rest<=0&&!cannon){lungeWarn=48;lungeCd=(gp<220?70+Math.random()*60:150+Math.random()*120)*(zone<=1?2:1);}
     if(p.y<-200)p.vy+=0.6;
   }
   // 괴물 앞머리의 물보라(코드): 입 앞과 물벽 가장자리에서 계속 튄다
@@ -284,10 +287,10 @@ function draw(){
   drawSea(0);
   { const gapW=p.x-wave.x;
     // 입 벌림 정도(0~1)를 부드럽게 따라가며 인접한 두 장을 겹쳐 넘긴다 → 뚝뚝 끊기지 않음
-    let target=gapW<120?1:gapW<240?0.66:gapW<400?0.33:0; if(roar>0)target=1; if(lunge>0)target=lunge>18?1:0;
+    let target=gapW<120?1:gapW<240?0.66:gapW<400?0.33:0; if(roar>0)target=1; if(lungeWarn>0)target=1; if(lunge>0)target=lunge>18?1:0;
     if(state==='play'&&gapW<520)target=Math.max(target,0.18+0.18*Math.sin(t*0.13)); // 숨 쉬듯 우물거림
     mouthO+=(target-mouthO)*(lunge>0&&lunge<=18?0.5:0.16);
-    const lung=lunge>0?Math.sin(Math.PI*(1-lunge/54))*46:0;
+    const lung=lunge>0?Math.sin(Math.PI*(1-lunge/54))*24:lungeWarn>0?-Math.sin(Math.PI*(1-lungeWarn/48))*22:0;
     // 실제 거리 그대로: 헬로가 빠르면 화면 밖으로 사라지고, 느려지면 입 벌리고 불쑥 나타난다
     const mx=wave.x+120-410+vo+Math.sin(t*0.09)*6+(roar>0?18:0)+lung,my=Math.sin(t*0.06)*8;
     { const off=camX-(wave.x+120+vo); // 화면 왼쪽 밖으로 벗어난 거리 → 가까이 오는 기척(어둑한 그림자)
@@ -310,11 +313,16 @@ function draw(){
   for(const d of drops){g.fillStyle='#e8f6ff';g.beginPath();g.arc(d.x,d.y,4,0,7);g.fill();}
   g.restore();
   const gap=p.x-wave.x;
+  if(state==='play'&&lungeWarn>0){const al=0.55*Math.abs(Math.sin(lungeWarn*0.2));for(const [x0,x1] of [[0,95],[W,W-95]]){const rg=g.createLinearGradient(x0,0,x1,0);rg.addColorStop(0,'rgba(255,30,30,'+al+')');rg.addColorStop(1,'rgba(255,30,30,0)');g.fillStyle=rg;g.fillRect(Math.min(x0,x1),0,95,H);}
+    if(lungeWarn%16<10)txt('⚠ 덮친다!',W/2,215,'900 26px system-ui','#ff4a4a','center');}
+  if(state==='play'&&skips<=0&&!cannon){g.fillStyle='rgba(255,50,50,'+(0.16+0.12*Math.sin(t*0.18))+')';g.fillRect(0,742,W,H-742);}
+  if(skipFlash>0){skipFlash--;g.globalAlpha=Math.min(1,skipFlash/20);txt('물수제비!',W/2,430,'900 40px system-ui','#8fe3ff','center');txt(skips>0?'한 번 더 튕길 수 있어요':'이제 빠지면 끝!',W/2,462,'800 17px system-ui',skips>0?'#fff':'#ff8a8a','center');g.globalAlpha=1;}
+  drawTut();
   if(state==='play'&&gap<260){g.fillStyle='rgba(255,60,60,'+(0.35*(1-gap/260)*(0.6+0.4*Math.sin(t*0.4)))+')';g.fillRect(0,0,26,H);}
   txt(dist()+'m',18,58,'900 44px system-ui');
   txt('최고 '+best+'m · 괴물 '+Math.max(0,Math.floor((gap-100)/M))+'m 뒤',20,84,'700 15px system-ui');
   for(let i=0;i<10;i++){g.fillStyle=i<shellN?'#ffc93c':'rgba(255,255,255,.35)';g.fillRect(20+i*13,96,10,10);}
-  txt('물수제비 '+(skips>1?'●●':skips?'●':'○'),W-18,40,'700 15px system-ui','#8fe3ff','right');
+  txt('물수제비 '+(skips>1?'●●':skips?'●':'없음!'),W-18,40,'700 15px system-ui',skips?'#8fe3ff':'#ff8a8a','right');
   if(windWarn)txt(windWarn===9?'곧 바람이 멎는다':windWarn>0?'곧 순풍 →→':'←← 곧 역풍',W-18,66,'800 16px system-ui','#fff','right');
   else if(wind)txt(wind>0?'순풍 →→':'←← 역풍',W-18,66,'800 16px system-ui',wind>0?'#9dffb0':'#ff9d9d','right');
   if(banner>0)txt(ZONES[zone].name+(rest>0?' · 쉼터':''),W/2,170,'900 26px system-ui','#fff','center');
@@ -325,9 +333,17 @@ function draw(){
     g.font='900 23px system-ui';g.fillText(state==='over'?why:'헬로 스윙',W/2,320);
     if(state==='over'){g.font='900 30px system-ui';g.fillStyle='#ffd23c';g.fillText(score()+'m',W/2,358);g.fillStyle='#fff';g.font='600 14px system-ui';g.fillText('거리 '+dist()+'m + 패스 보너스 '+bonus+'m',W/2,382);}
     g.font='600 15px system-ui';
-    ['꾹 누르면 줄을 쏘고 감는다 · 떼면 날아간다','고리를 지나쳐 날면 패스!','바다에 닿아도 한 번은 물수제비로 튕긴다','황금조개 10개 = 헬로 대포','250m부터 순풍·역풍이 분다'].forEach((s,i)=>g.fillText(s,W/2,(state==='over'?408:354)+i*23));
+    ['꾹 누르면 줄을 쏘고 감는다 · 떼면 날아간다','바다에 빠져도 물수제비(●)가 있으면 튕겨요','⚠ 삐삐 경보가 울리면 괴물이 덮쳐요','고리를 지나쳐 날면 패스!','황금조개 10개 = 헬로 대포'].forEach((s,i)=>g.fillText(s,W/2,(state==='over'?408:354)+i*23));
     g.fillStyle='#ffd23c';g.font='700 16px system-ui';g.fillText(state==='over'?'탭해서 다시':'탭해서 시작',W/2,532);}
 }
+let tutOn=(()=>{try{return localStorage.getItem('hsw_tut')!=='1'}catch(e){return false}})();
+function tutDone(){if(!tutOn)return;tutOn=false;try{localStorage.setItem('hsw_tut','1')}catch(e){}}
+function drawTut(){ if(!tutOn||state!=='play'||cannon)return;
+  let msg,sub,col='#fff';
+  if(rope){ if(p.x>rope.a.x-15&&p.vx>1){msg='지금 떼기!';sub='손을 떼면 휙 날아가요';col='#ffd23c';} else {msg='꾹 누르고 있기';sub='줄을 감으며 앞으로 흔들려요';} }
+  else {msg='꾹 누르기!';sub='빛나는 고리에 줄이 걸려요';col='#8fe3ff';}
+  const by=Math.sin(t*0.25)*5;g.fillStyle='rgba(14,26,43,.72)';g.beginPath();g.rect(60,596,W-120,84);g.fill();
+  txt('👆',96,652+by,'34px system-ui','#fff','center');txt(msg,W/2+22,636,'900 26px system-ui',col,'center');txt(sub,W/2+22,662,'700 14px system-ui','#fff','center'); }
 function loop(){step();audioTick();draw();requestAnimationFrame(loop);}
 
 
@@ -337,7 +353,7 @@ function track(name, params) { if (name === 'game_start' && window.HelloFair) He
 let finalScore = 0, overAt = 0;
 const $id = (id) => document.getElementById(id);
 function toast(msg) { const el = $id('toast'); el.textContent = msg; el.style.opacity = '1'; clearTimeout(el._h); el._h = setTimeout(() => { el.style.opacity = '0'; }, 2500); }
-function onGameOver() { finalScore = score(); overAt = Date.now(); track('game_over', { score: finalScore, dist: dist(), zone: zone + 1 }); setTimeout(showOverlay, 1300); }
+function onGameOver() { if (dist() >= 60) tutDone(); finalScore = score(); overAt = Date.now(); track('game_over', { score: finalScore, dist: dist(), zone: zone + 1 }); setTimeout(showOverlay, 1300); }
 function showOverlay() {
   if (state !== 'over') return;
   $id('ovTitle').textContent = why || '풍덩!';
