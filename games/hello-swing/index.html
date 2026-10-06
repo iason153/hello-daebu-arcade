@@ -109,7 +109,8 @@ function kick(v){pulse=v;}
 function attach(a){if(state==='play'){helloN++;sfx('shoot');if(helloN%6===1)sfx('hello',2);}rope={a,len:Math.max(60,Math.hypot(p.x-a.x,p.y-a.y))};shake=5;kick(-0.1);
   if(passN>0){pop(passN>=5?'패스 ×'+passN+'!! 대단해!':passN>=3?'패스 ×'+passN+'! 멋져!':'패스 ×'+passN+'!','#ffd23c');shake=Math.max(shake,3+passN);}passN=0;}
 function pop(text,col){pops.push({text,col,l:70});}
-function pick(){const fast=p.vx>6.5&&p.vy<5&&p.y<470,minDx=fast?75:-30;let bestA=null,bd=1e9;for(const a of anchors){const dx=a.x-p.x,dy=a.y-p.y,d=Math.hypot(dx,dy);
+// 고리 잡기 규칙(구간별): 1·2구간은 앞쪽 고리만(바다 가까이 떨어질 때만 머리 위도 허용) → 3구간은 빠르게 날 때만 머리 위를 건너뜀 → 4구간부터는 머리 위도 늘 걸림
+function pick(){const zi=zoneOf(p.x/M),low=p.y>540&&p.vy>0,fast=zi<=1?!low:zi===2?(p.vx>6.5&&p.vy<5&&p.y<470):false,minDx=fast?75:-30;let bestA=null,bd=1e9;for(const a of anchors){const dx=a.x-p.x,dy=a.y-p.y,d=Math.hypot(dx,dy);
   if(dx>minDx&&dy<-20&&d<(fast?440:410)&&d<bd){bd=d;bestA=a;}}return bestA;}
 function down(){audioInit();holding=true;if(state==='over')return;if(state==='ready'){state='play';track('game_start');return;}
   if(!rope&&!cannon){const a=pick();if(a)attach(a);}}
