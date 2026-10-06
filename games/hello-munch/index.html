@@ -136,13 +136,13 @@ const zoneAt = (f) => { let z = ZONES[0]; for (const q of ZONES) if (f >= q.from
 
 // 상어 기본 속도(층/초) — 문서의 구간 표
 function sharkBase(f) {
-  const pts = [[0, .8], [60, 1.3], [150, 1.9], [270, 2.6], [400, 3.1], [500, 3.4]];
-  if (f >= 500) return 3.4 + Math.min(.8, (f - 500) * .004);   // 신들의 나라 이후엔 아주 천천히 계속 빨라짐
+  const pts = [[0, .8], [60, 1.3], [150, 1.9], [270, 2.35], [400, 2.8], [500, 3.15]];
+  if (f >= 500) return 3.15 + Math.min(.8, (f - 500) * .004);   // 신들의 나라 이후엔 아주 천천히 계속 빨라짐
   for (let i = 0; i < pts.length - 1; i++) {
     const [a, va] = pts[i], [b, vb] = pts[i + 1];
     if (f < b) return va + (vb - va) * ((f - a) / (b - a));
   }
-  return 3.4;
+  return 3.15;
 }
 // 구간이 바뀌는 곳마다 쉼터(넓은 양쪽 발판 4칸, 괴물이 숨을 고름)
 const REST_LEN = 4;
@@ -156,7 +156,7 @@ function makeLedge(f, allowHazard) {
   let type = 'rock';
   // 새 요소 등장: 60m 금 간 통나무 · 90m 미끄러운 슬라임(150m부터 얼음) · 210m 갈매기 · 270m 움직이는 발판 · 400m부터 비율 상승
   const hard = f >= 400 ? 1.25 : 1;
-  if (f >= 270 && r < .16 * hard) type = 'move';
+  if (f >= 270 && r < (f < 330 ? .07 : f < 400 ? .12 : .16) * hard) type = 'move';   // 움직이는 발판은 270m에 조금씩 나오기 시작해 400m에 원래 비율
   else if (f >= 210 && allowHazard && r < .28 * hard) type = 'gull';
   else if (f >= 90 && r < (f < 150 ? .30 : .40) * hard) type = 'weed';
   else if (f >= 60 && r < .58 * hard) type = 'crack';
