@@ -113,6 +113,23 @@ img{ max-width:100%; display:block; }
 
 /* ---------- section headings ---------- */
 .section{ padding:8px 24px 48px; }
+.story-sec{ padding-bottom:20px; }
+.story{ background:var(--navy-card); border:1px solid var(--line); border-radius:18px; overflow:hidden; }
+.story summary{ list-style:none; cursor:pointer; padding:18px 20px; display:grid; gap:4px; }
+.story summary::-webkit-details-marker{ display:none; }
+.story summary:focus-visible{ outline:2px solid var(--gold); outline-offset:-2px; }
+.story-k{ font-size:12px; font-weight:700; letter-spacing:.08em; color:var(--gold); }
+.story-t{ font-family:'Jua',sans-serif; font-size:21px; line-height:1.3; }
+.story-s{ font-size:14px; color:var(--dim); }
+.story-more{ margin-top:8px; justify-self:start; font-size:13px; font-weight:700; color:#2a1c00; background:var(--gold); padding:6px 14px; border-radius:999px; }
+.story[open] .story-more{ display:none; }
+.story-body{ padding:0 20px 20px; display:grid; gap:12px; font-size:15px; line-height:1.75; }
+.story-body p{ margin:0; }
+.story-q{ color:var(--gold); font-weight:700; }
+.story-n{ font-size:13px; color:var(--dim); }
+.story, .story *{ word-break:keep-all; }
+@media (max-width:520px){ .story-body br{ display:none; } }
+
 .section h2{
   font-family:'Jua', sans-serif;
   font-size:22px;
@@ -311,6 +328,27 @@ footer{
         </div>
       </div>
     </div>
+  </div>
+</section>
+
+<section class="section story-sec">
+  <div class="wrap">
+    <details class="story" id="helloStory">
+      <summary>
+        <span class="story-k">헬로의 이야기</span>
+        <span class="story-t">엄마를 찾아, 하늘 위 올림포스로</span>
+        <span class="story-s">새끼 갈매기 헬로가 괴물들을 따돌리며 신들의 나라로 떠나요.</span>
+        <span class="story-more" aria-hidden="true">이야기 읽기</span>
+      </summary>
+      <div class="story-body">
+        <p>대부도 바닷가에서 태어난 새끼 갈매기 헬로. <br>"헬로~!" 하고 먼저 인사하는 게 하루 일과였어요.</p>
+        <p>그런데 어느 날부터 바다가 사나워졌습니다. <br>괴물들이 나타나 대부도를 괴롭히기 시작했고, <br>마을은 조용해지고, 헬로의 엄마도 돌아오지 않았어요.</p>
+        <p>어른 갈매기들은 말했습니다. <br>"하늘 저 위, 신들의 나라 올림포스에 가면 뭐든 알 수 있단다."</p>
+        <p>겁도 났지만 궁금한 게 더 많았던 헬로는 길을 떠납니다. <br>탑을 쌓아 오르고, 절벽을 뛰어오르고, 바다 위를 날아서. <br>가는 길마다 "헬로~!" 인사하며 친구를 만들고, <br>신들의 짓궂은 시험을 지나고, 괴물들을 따돌리면서요.</p>
+        <p class="story-q">헬로는 엄마를 만날 수 있을까요? <br>그리고 대부도는 다시 시끌벅적해질 수 있을까요?</p>
+        <p class="story-n">게임 하나하나가 올림포스로 가는 서로 다른 길이에요.</p>
+      </div>
+    </details>
   </div>
 </section>
 
