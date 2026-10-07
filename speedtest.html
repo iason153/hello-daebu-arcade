@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>화면 속도 확인 | 헬로 대부도 오락실</title>
+<style>
+:root{--bg:#0e1a2b;--fg:#eef3ff;--dim:#8fa0c4;--gold:#ffc857;--card:#1a2947}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;padding:24px 20px;line-height:1.6}
+h1{font-size:22px;margin:0 0 6px}p{margin:8px 0;color:var(--dim);font-size:14px}
+.big{font-size:64px;font-weight:900;color:var(--gold);font-variant-numeric:tabular-nums;margin:18px 0 0}
+.box{background:var(--card);border-radius:16px;padding:18px;margin-top:16px}
+dl{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0;font-size:15px}dt{color:var(--dim)}dd{margin:0;font-variant-numeric:tabular-nums}
+#verdict{font-size:16px;font-weight:700;color:var(--fg)}
+</style></head><body>
+<h1>화면 속도 확인</h1>
+<p>이 폰의 브라우저가 화면을 1초에 몇 번 그리는지 잽니다. 5초쯤 기다렸다가 숫자를 알려 주세요.</p>
+<div class="big"><span id="hz">–</span><span style="font-size:22px"> 번/초</span></div>
+<div class="box"><p id="verdict">재는 중…</p>
+<dl><dt>가장 느렸던 화면 간격</dt><dd id="worst">–</dd><dt>화면 크기</dt><dd id="scr">–</dd><dt>브라우저</dt><dd id="ua" style="font-size:12px;word-break:break-all">–</dd></dl></div>
+<script>
+let n=0,t0=0,worst=0,last=0;const $=id=>document.getElementById(id);
+$('scr').textContent=screen.width+' × '+screen.height+' (배율 '+(window.devicePixelRatio||1)+')';$('ua').textContent=navigator.userAgent;
+function f(ts){if(!t0){t0=ts;last=ts;}const d=ts-last;last=ts;if(n>10&&d>worst)worst=d;n++;
+  if(ts-t0>=1000){const hz=Math.round(n*1000/(ts-t0));$('hz').textContent=hz;$('worst').textContent=worst.toFixed(1)+'ms';
+    $('verdict').textContent=hz>=100?'빠른 화면(120번대)입니다. 수정 전 헬로 스윙은 이 폰에서 약 2배 빨랐습니다.':hz>=80?'조금 빠른 화면(90번대)입니다. 수정 전 헬로 스윙은 이 폰에서 약 1.5배 빨랐습니다.':hz>=55?'보통 화면(60번대)입니다. 헬로 스윙이 설계한 속도로 돌던 폰입니다.':'화면이 느리게 그려집니다. 수정 전 헬로 스윙은 이 폰에서 설계보다 느렸습니다.';
+    n=0;t0=ts;}
+  requestAnimationFrame(f);}
+requestAnimationFrame(f);
+</script></body></html>
