@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5YPGVVP49T"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag("js", new Date());
+  gtag("config", "G-5YPGVVP49T");
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#0d0b1a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="대부도 오락실">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="64x64" href="/icons/favicon-64.png">
+<script src="/pwa.js" defer></script>
+<title>올림포스 결투장 | 헬로 대부도 오락실</title>
+<meta name="description" content="도전장으로 겨룬 결과가 모이는 곳. 명성 점수와 칭호, 서열, 상대 전적을 확인하세요.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="올림포스 결투장 — 헬로 대부도 오락실">
+<meta property="og:description" content="도전장으로 겨루고 명성을 쌓아 올림포스의 반신이 되어 보세요.">
+<meta property="og:image" content="https://daebugame.com/assets/duel/duel-bg-swing.webp">
+<meta property="og:url" content="https://daebugame.com/arena.html">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Jua&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  /* 밤의 원형 경기장: 짙은 남보라 하늘, 대리석 빛 글자, 청동·진홍·금. 한 화면 한 줄(최대 560px) */
+  :root {
+    --night: #0d0b1a; --night-2: #17142b; --card: #1d1934; --line: #3a3358;
+    --marble: #f3ecdf; --marble-dim: #b9b0c9; --gold: #f2c14e; --bronze: #c98a4b; --crimson: #d6453d; --win: #4fd18b; --loss: #8a86a3;
+    --carved: 'Gowun Batang', 'Apple SD Gothic Neo', serif; --game: 'Jua', 'Apple SD Gothic Neo', sans-serif; --body: 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  [hidden] { display: none !important; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { font-family: var(--body); color: var(--marble); line-height: 1.6; min-height: 100vh; overflow-x: hidden;
+    background: radial-gradient(120% 60% at 50% 0%, #2a2150 0%, var(--night) 60%) var(--night); }
+  a { color: inherit; }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  :focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+  .wrap { max-width: 560px; margin: 0 auto; padding: max(14px, env(safe-area-inset-top)) 16px 48px; }
+  .back { font-size: 13px; color: var(--marble-dim); text-decoration: none; }
+  .back:hover { color: var(--marble); text-decoration: underline; }
+
+  /* 정문 */
+  .gate { text-align: center; padding: 22px 0 6px; }
+  .gate .arch { width: 120px; height: 60px; margin: 0 auto 6px; border: 3px solid var(--bronze); border-bottom: 0; border-radius: 60px 60px 0 0; position: relative; }
+  .gate .arch::before, .gate .arch::after { content: ""; position: absolute; bottom: -10px; width: 12px; height: 14px; background: var(--bronze); border-radius: 2px; }
+  .gate .arch::before { left: -7px; } .gate .arch::after { right: -7px; }
+  .gate .swords { position: absolute; left: 50%; top: 14px; transform: translateX(-50%); font-family: var(--game); font-size: 26px; color: var(--gold); letter-spacing: -6px; }
+  h1 { font-family: var(--carved); font-weight: 700; font-size: 34px; letter-spacing: 2px; text-wrap: balance; }
+  .lede { color: var(--marble-dim); font-size: 14px; margin-top: 4px; }
+
+  section { margin-top: 22px; }
+  h2 { font-family: var(--carved); font-size: 19px; letter-spacing: 1px; margin-bottom: 10px; display: flex; align-items: baseline; gap: 8px; }
+  h2 small { font-family: var(--body); font-size: 12px; color: var(--marble-dim); font-weight: 400; letter-spacing: 0; }
+
+  /* 로그인 안내 */
+  .login { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 20px 18px; text-align: center; }
+  .login p { color: var(--marble-dim); font-size: 14px; margin: 6px 0 14px; }
+  .kakao { display: inline-block; background: #fee500; color: #191600; font-weight: 700; padding: 12px 22px; border-radius: 999px; text-decoration: none; }
+
+  /* 내 결투 카드 */
+  .me { position: relative; background: linear-gradient(160deg, #2a2348 0%, var(--card) 55%); border: 1.5px solid var(--bronze); border-radius: 22px; padding: 18px 16px 16px; overflow: hidden; }
+  .me-top { display: grid; grid-template-columns: 92px 1fr; gap: 14px; align-items: center; }
+  .medal { width: 92px; height: 92px; border-radius: 50%; display: grid; place-items: center; text-align: center; position: relative;
+    background: radial-gradient(circle at 50% 35%, #2e2752, #15122a 70%); }
+  .medal::before { content: ""; position: absolute; inset: 0; border-radius: 50%; padding: 5px; background: conic-gradient(var(--t1), var(--t2), var(--t1), var(--t2), var(--t1));
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; }
+  .medal span { font-family: var(--carved); font-weight: 700; font-size: 11px; color: var(--marble-dim); line-height: 1.2; }
+  .medal b { display: block; font-family: var(--carved); font-size: 20px; color: var(--t1); }
+  .t-견습생 { --t1: #a8a3b8; --t2: #6c6780; } .t-전사 { --t1: #d9965a; --t2: #8a5426; } .t-용사 { --t1: #dfe6f2; --t2: #8e9ab0; }
+  .t-영웅 { --t1: #f2c14e; --t2: #a3741a; } .t-반신 { --t1: #ffe08a; --t2: #b58cff; }
+  .me-name { font-family: var(--game); font-size: 26px; line-height: 1.2; overflow-wrap: anywhere; }
+  .me-title { font-family: var(--carved); font-weight: 700; color: var(--t1); font-size: 15px; }
+  .fame { display: flex; align-items: baseline; gap: 6px; margin-top: 2px; }
+  .fame b { font-family: var(--game); font-size: 34px; color: var(--gold); font-variant-numeric: tabular-nums; line-height: 1.1; }
+  .fame small { font-size: 12px; color: var(--marble-dim); }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 14px; }
+  .stat { background: rgba(0,0,0,.22); border-radius: 12px; padding: 8px 6px; text-align: center; }
+  .stat b { display: block; font-family: var(--game); font-size: 22px; font-variant-numeric: tabular-nums; }
+  .stat span { font-size: 11px; color: var(--marble-dim); }
+  .stat.w b { color: var(--win); } .stat.l b { color: var(--loss); }
+  .next { margin-top: 12px; font-size: 12.5px; color: var(--marble-dim); }
+  .bar { height: 8px; border-radius: 999px; background: rgba(255,255,255,.1); overflow: hidden; margin-top: 6px; }
+  .bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--bronze), var(--gold)); border-radius: 999px; }
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+  .tag { font-size: 12px; background: rgba(255,255,255,.07); border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; }
+  .tag b { color: var(--gold); font-weight: 700; }
+  .tag button { background: none; border: 0; padding: 0; color: var(--marble); font-weight: 700; text-decoration: underline; text-underline-offset: 2px; }
+  .go { display: block; margin-top: 14px; text-align: center; background: var(--crimson); color: #fff; font-weight: 700; padding: 12px; border-radius: 999px; text-decoration: none; box-shadow: 0 4px 0 #8e2620; }
+  .go:active { transform: translateY(2px); box-shadow: 0 2px 0 #8e2620; }
+
+  /* 서열 */
+  .ladder { background: var(--card); border: 1px solid var(--line); border-radius: 18px; overflow: hidden; }
+  .row { display: grid; grid-template-columns: 34px 1fr auto 56px; gap: 10px; align-items: center; width: 100%; text-align: left; background: none; border: 0; border-top: 1px solid var(--line); padding: 11px 14px; }
+  .row:first-child { border-top: 0; }
+  .row:hover { background: rgba(255,255,255,.04); }
+  .row.mine { background: rgba(242,193,78,.08); }
+  .rk { font-family: var(--game); font-size: 18px; text-align: center; color: var(--marble-dim); font-variant-numeric: tabular-nums; }
+  .rk.top { color: var(--gold); }
+  .who { min-width: 0; }
+  .who b { display: block; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .chip { display: inline-block; font-family: var(--carved); font-weight: 700; font-size: 11px; color: var(--t1); border: 1px solid var(--t2); border-radius: 999px; padding: 0 7px; }
+  .wl { font-size: 12px; color: var(--marble-dim); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .pts { font-family: var(--game); font-size: 18px; color: var(--gold); text-align: right; font-variant-numeric: tabular-nums; }
+  .empty { padding: 18px 16px; color: var(--marble-dim); font-size: 14px; text-align: center; }
+
+  /* 결투 기록 */
+  .log { display: grid; gap: 8px; }
+  .bout { display: grid; grid-template-columns: 34px 1fr auto; gap: 10px; align-items: center; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 10px 12px; }
+  .res { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-family: var(--game); font-size: 15px; }
+  .res.w { background: var(--win); color: #062114; } .res.l { background: #3b3657; color: var(--marble-dim); }
+  .bout .mid { min-width: 0; font-size: 13px; }
+  .bout .mid b { font-weight: 700; }
+  .bout .mid button { background: none; border: 0; padding: 0; font-weight: 700; text-decoration: underline; text-underline-offset: 2px; }
+  .bout .mid small { display: block; color: var(--marble-dim); font-size: 11.5px; }
+  .bout .dm { text-align: right; font-family: var(--game); font-size: 14px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .bout .dm small { display: block; font-family: var(--body); font-size: 11px; }
+  .up { color: var(--win); } .down { color: #ff8f86; } .flat { color: var(--marble-dim); }
+
+  /* 규칙 */
+  details.rules { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 12px 14px; }
+  details.rules summary { cursor: pointer; font-weight: 700; }
+  .rules ol { padding-left: 18px; margin-top: 10px; font-size: 13.5px; color: var(--marble-dim); display: grid; gap: 4px; }
+  .tiers { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-top: 12px; }
+  .tiers div { text-align: center; background: rgba(0,0,0,.2); border-radius: 10px; padding: 8px 2px; font-size: 11px; color: var(--marble-dim); }
+  .tiers b { display: block; font-family: var(--carved); font-size: 14px; color: var(--t1); }
+
+  /* 다른 회원 화면(아래에서 올라오는 판) */
+  .sheet { position: fixed; inset: 0; z-index: 50; background: rgba(5,4,12,.72); display: flex; align-items: flex-end; justify-content: center; }
+  .sheet-in { width: min(560px, 100%); max-height: 88vh; overflow-y: auto; background: var(--night-2); border: 1px solid var(--line); border-bottom: 0; border-radius: 22px 22px 0 0; padding: 16px 16px max(20px, env(safe-area-inset-bottom)); }
+  .sheet-x { float: right; background: rgba(255,255,255,.08); border: 0; border-radius: 999px; width: 34px; height: 34px; font-size: 18px; }
+  .vs { margin-top: 12px; background: rgba(214,69,61,.12); border: 1px solid rgba(214,69,61,.45); border-radius: 14px; padding: 10px 12px; font-size: 14px; text-align: center; }
+  .vs b { font-family: var(--game); font-size: 22px; margin: 0 6px; font-variant-numeric: tabular-nums; }
+  .games { display: grid; gap: 6px; margin-top: 12px; }
+  .game { display: flex; justify-content: space-between; background: rgba(0,0,0,.22); border-radius: 10px; padding: 8px 12px; font-size: 13.5px; }
+  .game b { font-variant-numeric: tabular-nums; }
+  .loading { color: var(--marble-dim); text-align: center; padding: 30px 0; font-size: 14px; }
+  @media (prefers-reduced-motion: no-preference) { .me, .ladder { animation: rise .5s ease-out both; } .ladder { animation-delay: .08s; } @keyframes rise { from { transform: translateY(8px); opacity: .4; } to { transform: none; opacity: 1; } } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="/">← 오락실로</a>
+  <header class="gate">
+    <div class="arch" aria-hidden="true"><span class="swords">⚔</span></div>
+    <h1>올림포스 결투장</h1>
+    <p class="lede">신들이 지켜보는 헬로들의 결투. 도전장으로 이기면 명성이 오르고, 명성이 칭호가 됩니다.</p>
+  </header>
+
+  <div id="loading" class="loading">결투장 문을 여는 중…</div>
+
+  <section id="loginBox" hidden>
+    <div class="login">
+      <h2 style="justify-content:center">회원만 들어올 수 있어요</h2>
+      <p>결투 기록은 로그인한 회원끼리 겨룬 도전장만 남아요.<br>로그인하고 친구에게 도전장을 보내 보세요.</p>
+      <a class="kakao" href="/api/auth?action=login&amp;next=/arena.html">카카오로 로그인</a>
+    </div>
+  </section>
+
+  <div id="main" hidden>
+    <section aria-labelledby="meH">
+      <h2 id="meH">나의 결투</h2>
+      <div class="me" id="meCard"></div>
+    </section>
+    <section aria-labelledby="ladH">
+      <h2 id="ladH">서열 <small id="ladN"></small></h2>
+      <div class="ladder" id="ladder"></div>
+    </section>
+    <section aria-labelledby="logH">
+      <h2 id="logH">나의 최근 결투</h2>
+      <div class="log" id="myLog"></div>
+    </section>
+  </div>
+
+  <section>
+    <details class="rules" id="rules">
+      <summary>결투장 규칙과 칭호</summary>
+      <ol>
+        <li>게임이 끝나면 [📨 친구에게 도전장 보내기]로 내 기록을 걸고 도전장을 보내요.</li>
+        <li>받은 사람은 같은 맵에서 내 유령과 겨뤄요. 기회는 3번, 기한은 3일이에요.</li>
+        <li>보낸 사람과 받은 사람이 둘 다 로그인했을 때만 결투장에 기록돼요.</li>
+        <li>강한 상대를 이기면 명성이 많이 오르고, 지면 내려가요. 칭호도 함께 오르내려요.</li>
+        <li>같은 두 사람의 결투는 하루 한 번만 명성에 들어가요. 승패 기록은 모두 남아요.</li>
+        <li>모든 게임의 결투가 명성 하나로 합쳐져요. 게임별 성적은 각자의 화면에서 볼 수 있어요.</li>
+      </ol>
+      <div class="tiers" id="tierList"></div>
+    </details>
+  </section>
+</div>
+
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="pName" hidden>
+  <div class="sheet-in" id="sheetIn"></div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  var GAME = { hello_swing: { name: '헬로 스윙', unit: 'm', url: '/games/hello-swing/' } };
+  var TIERS = [{ name: '견습생', min: 0, games: 0 }, { name: '전사', min: 980, games: 3 }, { name: '용사', min: 1080, games: 3 }, { name: '영웅', min: 1180, games: 10 }, { name: '반신', min: 1300, games: 20 }];
+  var ME = null;
+  var $ = function (id) { return document.getElementById(id); };
+  function el(tag, cls, text) { var n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; }
+  function track(n, p) { try { if (typeof gtag === 'function') gtag('event', n, p || {}); } catch (e) {} }
+  function get(u) { return fetch(u, { credentials: 'same-origin', cache: 'no-store' }).then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { d.__s = r.status; return d; }); }); }
+  function day(ms) { var d = new Date(ms); return (d.getMonth() + 1) + '/' + d.getDate(); }
+  function gname(k) { return (GAME[k] && GAME[k].name) || k; }
+  function unit(k) { return (GAME[k] && GAME[k].unit) || ''; }
+  function rate(w, l) { return w + l ? Math.round(w * 100 / (w + l)) + '%' : '-'; }
+  function medal(tier, small) {
+    var m = el('div', 'medal t-' + tier); if (small) m.style.cssText = 'width:64px;height:64px';
+    var s = el('span'); s.appendChild(document.createTextNode('올림포스')); s.appendChild(el('b', '', tier)); m.appendChild(s); return m;
+  }
+  // 최근 결투에서 라이벌(가장 많이 겨룬 상대)과 천적(나를 가장 많이 이긴 상대, 2번 이상)을 찾는다
+  function foes(recent) {
+    var cnt = {}, beat = {}, nick = {};
+    recent.forEach(function (x) { cnt[x.o] = (cnt[x.o] || 0) + 1; nick[x.o] = x.on; if (x.r === 'l') beat[x.o] = (beat[x.o] || 0) + 1; });
+    var top = function (o, min) { var b = null, n = min - 1; Object.keys(o).forEach(function (k) { if (o[k] > n) { n = o[k]; b = k; } }); return b ? { wid: b, nick: nick[b], n: n } : null; };
+    return { rival: top(cnt, 2), nemesis: top(beat, 2) };
+  }
+  function mainGame(games) { var b = null, n = 0; Object.keys(games || {}).forEach(function (k) { var g = games[k]; if (g.w + g.l > n) { n = g.w + g.l; b = k; } }); return b; }
+  function nextTier(r, n, tier) {
+    var i = TIERS.findIndex(function (t) { return t.name === tier; }); var T = TIERS[i + 1]; if (!T) return null;
+    return { name: T.name, pts: Math.max(0, T.min - r), games: Math.max(0, T.games - n), pct: Math.max(4, Math.min(100, Math.round((r - TIERS[i].min) * 100 / Math.max(1, T.min - TIERS[i].min)))) };
+  }
+  function personBtn(wid, nick) { var b = el('button', '', nick || '(이름 없음)'); b.type = 'button'; b.addEventListener('click', function () { openProfile(wid); }); return b; }
+
+  function renderMe(m, nick, recent) {
+    var c = $('meCard'); c.textContent = ''; c.className = 'me t-' + m.tier;
+    var top = el('div', 'me-top'); top.appendChild(medal(m.tier));
+    var info = el('div'); info.appendChild(el('div', 'me-name', nick));
+    info.appendChild(el('div', 'me-title', '올림포스 ' + m.tier));
+    var f = el('div', 'fame'); f.appendChild(el('b', '', String(m.r))); f.appendChild(el('small', '', '명성' + (m.rank ? ' · 서열 ' + m.rank + '위' : ''))); info.appendChild(f);
+    top.appendChild(info); c.appendChild(top);
+    var st = el('div', 'stats'), add = function (cls, v, t) { var s = el('div', 'stat ' + cls); s.appendChild(el('b', '', v)); s.appendChild(el('span', '', t)); st.appendChild(s); };
+    add('w', String(m.w), '승'); add('l', String(m.l), '패'); add('', rate(m.w, m.l), '승률'); c.appendChild(st);
+    var nx = nextTier(m.r, m.w + m.l, m.tier);
+    if (nx) {
+      var need = []; if (nx.pts) need.push('명성 ' + nx.pts + '점'); if (nx.games) need.push(nx.games + '판');
+      var t = el('div', 'next', need.length ? '다음 칭호 「' + nx.name + '」까지 ' + need.join(' · ') : '다음 칭호 「' + nx.name + '」 바로 앞!');
+      var bar = el('div', 'bar'); var i = el('i'); i.style.width = nx.pct + '%'; bar.appendChild(i); t.appendChild(bar); c.appendChild(t);
+    } else c.appendChild(el('div', 'next', '가장 높은 칭호에 올랐어요. 신들도 당신을 알아봐요.'));
+    var tags = el('div', 'tags'), mg = mainGame(m.games), fo = foes(recent || []);
+    var tag = function (label, node) { var s = el('span', 'tag'); s.appendChild(el('b', '', label + ' ')); s.appendChild(typeof node === 'string' ? document.createTextNode(node) : node); tags.appendChild(s); };
+    if (mg) tag('주 종목', gname(mg));
+    if (fo.rival) tag('라이벌', personBtn(fo.rival.wid, fo.rival.nick));
+    if (fo.nemesis) tag('천적', personBtn(fo.nemesis.wid, fo.nemesis.nick));
+    if (tags.children.length) c.appendChild(tags);
+    var go = el('a', 'go', m.w + m.l ? '📨 새 도전장 보내러 가기' : '📨 첫 도전장 보내러 가기'); go.href = '/games/hello-swing/'; c.appendChild(go);
+  }
+  function renderLadder(list, me) {
+    var L = $('ladder'); L.textContent = ''; $('ladN').textContent = list.length ? list.length + '명' : '';
+    if (!list.length) { L.appendChild(el('div', 'empty', '아직 결투 기록이 없어요. 로그인한 친구에게 도전장을 보내면 첫 기록이 생겨요.')); return; }
+    list.forEach(function (x) {
+      var b = el('button', 'row' + (x.wid === me ? ' mine' : '')); b.type = 'button';
+      b.setAttribute('aria-label', x.rank + '위 ' + x.nick + ' 올림포스 ' + x.tier + ' 명성 ' + x.r);
+      b.appendChild(el('span', 'rk' + (x.rank <= 3 ? ' top' : ''), String(x.rank)));
+      var w = el('span', 'who t-' + x.tier); w.appendChild(el('b', '', x.nick || '(이름 없음)')); w.appendChild(el('span', 'chip', x.tier)); b.appendChild(w);
+      b.appendChild(el('span', 'wl', x.w + '승 ' + x.l + '패'));
+      b.appendChild(el('span', 'pts', String(x.r)));
+      b.addEventListener('click', function () { openProfile(x.wid); });
+      L.appendChild(b);
+    });
+  }
+  function boutEl(x) {
+    var b = el('div', 'bout');
+    b.appendChild(el('span', 'res ' + x.r, x.r === 'w' ? '승' : '패'));
+    var m = el('div', 'mid'); m.appendChild(personBtn(x.o, x.on)); m.appendChild(document.createTextNode(x.role === 's' ? '님이 내 도전장을 받음' : '님의 도전장에 응전'));
+    m.appendChild(el('small', '', day(x.at) + ' · ' + gname(x.g) + ' · 나 ' + x.me + unit(x.g) + ' / 상대 ' + x.op + unit(x.g))); b.appendChild(m);
+    var d = el('div', 'dm'); d.appendChild(el('span', x.dr > 0 ? 'up' : x.dr < 0 ? 'down' : 'flat', x.dr > 0 ? '+' + x.dr : x.dr < 0 ? String(x.dr) : '±0'));
+    d.appendChild(el('small', 'flat', x.dr ? '명성' : '하루 1번만 반영')); b.appendChild(d);
+    return b;
+  }
+  function renderLog(box, recent, emptyText) {
+    box.textContent = '';
+    if (!recent.length) { box.appendChild(el('div', 'empty', emptyText)); return; }
+    recent.slice(0, 20).forEach(function (x) { box.appendChild(boutEl(x)); });
+  }
+  function renderTiers() {
+    var T = $('tierList'); T.textContent = '';
+    TIERS.forEach(function (t) { var d = el('div', 't-' + t.name); d.appendChild(el('b', '', t.name)); d.appendChild(document.createTextNode(t.min ? '명성 ' + t.min : '처음')); if (t.games) { d.appendChild(el('br')); d.appendChild(document.createTextNode(t.games + '판 이상')); } T.appendChild(d); });
+  }
+
+  // 다른 회원(또는 나)의 결투 기록
+  var sheet = $('sheet'), sheetIn = $('sheetIn');
+  function closeSheet() { sheet.hidden = true; if (/^#p-/.test(location.hash)) history.replaceState(null, '', location.pathname); }
+  function openProfile(wid) { if (location.hash !== '#p-' + wid) history.pushState(null, '', '#p-' + wid); showProfile(wid); }
+  function showProfile(wid) {
+    sheet.hidden = false; sheetIn.textContent = ''; sheetIn.appendChild(el('div', 'loading', '기록을 불러오는 중…'));
+    track('arena_profile_open', { self: wid === ME });
+    get('/api/duel?arena=' + encodeURIComponent(wid)).then(function (p) {
+      sheetIn.textContent = '';
+      var x = el('button', 'sheet-x', '✕'); x.type = 'button'; x.setAttribute('aria-label', '닫기'); x.addEventListener('click', closeSheet); sheetIn.appendChild(x);
+      if (!p || p.__s !== 200) { sheetIn.appendChild(el('div', 'loading', '기록을 불러오지 못했어요.')); return; }
+      var top = el('div', 'me-top t-' + p.tier); top.appendChild(medal(p.tier));
+      var info = el('div'); var nm = el('div', 'me-name', p.nick || '(이름 없음)'); nm.id = 'pName'; info.appendChild(nm);
+      info.appendChild(el('div', 'me-title', '올림포스 ' + p.tier));
+      var f = el('div', 'fame'); f.appendChild(el('b', '', String(p.r))); f.appendChild(el('small', '', '명성 · ' + p.w + '승 ' + p.l + '패 · 승률 ' + rate(p.w, p.l))); info.appendChild(f);
+      top.appendChild(info); sheetIn.appendChild(top);
+      if (p.vsMe) {
+        var v = el('div', 'vs'); v.appendChild(document.createTextNode('나와의 전적 ')); v.appendChild(el('b', 'up', String(p.vsMe.myWins))); v.appendChild(document.createTextNode(':'));
+        v.appendChild(el('b', 'down', String(p.vsMe.theirWins))); v.appendChild(el('div', 'flat', p.vsMe.myWins + p.vsMe.theirWins ? (p.vsMe.myWins > p.vsMe.theirWins ? '내가 앞서고 있어요' : p.vsMe.myWins < p.vsMe.theirWins ? '복수할 차례예요' : '팽팽해요') : '아직 겨룬 적이 없어요'));
+        sheetIn.appendChild(v);
+      }
+      var gs = el('div', 'games'), keys = Object.keys(p.games || {});
+      keys.forEach(function (k) { var g = p.games[k], r = el('div', 'game'); r.appendChild(el('span', '', gname(k))); r.appendChild(el('b', '', g.w + '승 ' + g.l + '패 · ' + rate(g.w, g.l))); gs.appendChild(r); });
+      if (keys.length) { sheetIn.appendChild(el('h2', '', '게임별 전적')); sheetIn.lastChild.style.marginTop = '16px'; sheetIn.appendChild(gs); }
+      var fo = foes(p.recent || []);
+      if (fo.rival || fo.nemesis) { var tg = el('div', 'tags'); if (fo.rival) { var a = el('span', 'tag'); a.appendChild(el('b', '', '라이벌 ')); a.appendChild(personBtn(fo.rival.wid, fo.rival.nick)); tg.appendChild(a); }
+        if (fo.nemesis) { var b2 = el('span', 'tag'); b2.appendChild(el('b', '', '천적 ')); b2.appendChild(personBtn(fo.nemesis.wid, fo.nemesis.nick)); tg.appendChild(b2); } sheetIn.appendChild(tg); }
+      var h = el('h2', '', '최근 결투'); h.style.marginTop = '16px'; sheetIn.appendChild(h);
+      var log = el('div', 'log'); renderLog(log, p.recent || [], '아직 결투 기록이 없어요.'); sheetIn.appendChild(log);
+    });
+  }
+  sheet.addEventListener('click', function (e) { if (e.target === sheet) closeSheet(); });
+  addEventListener('keydown', function (e) { if (e.key === 'Escape' && !sheet.hidden) closeSheet(); });
+  addEventListener('popstate', function () { var m = /^#p-([a-z0-9]{4,16})$/.exec(location.hash); if (m) showProfile(m[1]); else sheet.hidden = true; });
+
+  renderTiers();
+  get('/api/auth').then(function (a) {
+    if (!a || !a.loggedIn) { $('loading').hidden = true; $('loginBox').hidden = false; $('rules').open = true; return; }
+    return get('/api/duel?arena=1').then(function (L) {
+      if (!L || L.__s !== 200) throw new Error('arena');
+      if (L.tiers) TIERS = L.tiers;
+      ME = L.me; renderTiers();
+      return get('/api/duel?arena=' + L.me).then(function (P) {
+        $('loading').hidden = true; $('main').hidden = false;
+        renderMe(L.mine, L.myNick || a.nick, (P && P.recent) || []);
+        renderLadder(L.ladder || [], L.me);
+        renderLog($('myLog'), (P && P.recent) || [], '아직 결투가 없어요. 게임을 한 판 하고 로그인한 친구에게 도전장을 보내 보세요!');
+        var m = /^#p-([a-z0-9]{4,16})$/.exec(location.hash); if (m) showProfile(m[1]);
+      });
+    });
+  }).catch(function () { $('loading').textContent = '결투장을 불러오지 못했어요. 잠시 뒤 다시 열어 주세요.'; });
+})();
+</script>
+</body>
+</html>

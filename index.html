@@ -212,6 +212,9 @@ img{ max-width:100%; display:block; }
 .news-box li b{ color:var(--gold); }
 .news-box button{ margin-top:14px; width:100%; padding:11px; border-radius:999px; border:0; background:var(--gold); color:#2a1c00; font:inherit; font-weight:700; cursor:pointer; }
 .topbar :focus-visible{ outline:2px solid var(--gold); outline-offset:2px; }
+/* 10/8 결투장 칸 추가로 메뉴가 5칸 — 좁은 폰에서 글자가 두 줄로 꺾이지 않게 */
+.topbar .nav-links{ gap:6px; }
+.topbar .nav-links a, .topbar .nav-links button{ white-space:nowrap; font-size:12.5px; padding:8px 2px; }
 .temple-link{
   display:flex; align-items:center; gap:14px; margin-top:24px; padding:16px 18px;
   border-radius:16px; text-decoration:none; color:#2b2433;
@@ -300,6 +303,7 @@ footer{
   <div class="topbar-in nav-links">
     <a href="games/hello-tower/ranking.html">🏆 랭킹</a>
     <a href="hall-of-fame.html">🏛️ 신전</a>
+    <a href="arena.html">⚔️ 결투장</a>
     <a href="cardbook.html">🎴 카드첩</a>
     <button type="button" id="newsBtn" aria-haspopup="dialog">📢 소식<span class="n" id="newsN" hidden>N</span></button>
   </div>

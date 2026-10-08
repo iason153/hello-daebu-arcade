@@ -111,9 +111,17 @@ function linkFor(d) {
 }
 
 // ---- 올림포스 결투장: 양쪽 다 로그인한 대결이 확정되면 기록한다
-// 칭호: 올림포스 견습생 → 전사 → 용사 → 영웅 → 반신. 점수가 내려가면 칭호도 내려간다(강등 있음, 대표 결정 10/8).
+// 칭호: 올림포스 견습생 → 전사 → 용사 → 영웅 → 반신. 모든 게임의 대결이 명성 하나로 합쳐진다(대표 결정 10/8).
+// 점수가 내려가면 칭호도 내려간다(강등 있음, 대표 결정 10/8). 처음 3판까지는 견습생.
 // 영웅·반신은 판 수도 채워야 한다(몇 판 운 좋게 이긴 사람이 바로 꼭대기에 서지 않게).
-const tierOf = (r, n) => (r >= 1300 && n >= 20 ? '반신' : r >= 1180 && n >= 10 ? '영웅' : r >= 1080 ? '용사' : r >= 980 ? '전사' : '견습생');
+export const TIERS = [
+  { name: '견습생', min: 0, games: 0 },
+  { name: '전사', min: 980, games: 3 },
+  { name: '용사', min: 1080, games: 3 },
+  { name: '영웅', min: 1180, games: 10 },
+  { name: '반신', min: 1300, games: 20 },
+];
+const tierOf = (r, n) => { let t = TIERS[0].name; for (const T of TIERS) if (r >= T.min && n >= T.games) t = T.name; return t; };
 async function arenaGet(wid) { return parse(await kv.get(`arena:${wid}`)) || { r: START, w: 0, l: 0, g: {} }; }
 async function arenaRecord(d, p) {
   const s = d.wid, c = p.wid;
@@ -264,13 +272,16 @@ async function arena(req, res, who) {
     const out = [];
     for (let i = 0; i < rows.length; i += 2) out.push({ wid: rows[i], r: Number(rows[i + 1]) });
     const stats = await Promise.all(out.map((o) => arenaGet(o.wid)));
-    return res.status(200).json({ me: me.wid, ladder: out.map((o, i) => ({ rank: i + 1, wid: o.wid, nick: stats[i].nick || '', r: o.r, tier: tierOf(o.r, stats[i].w + stats[i].l), w: stats[i].w, l: stats[i].l })) });
+    const mine = await arenaGet(me.wid);
+    return res.status(200).json({ me: me.wid, myNick: me.nick, tiers: TIERS, START,
+      mine: { r: mine.r, w: mine.w, l: mine.l, games: mine.g || {}, tier: tierOf(mine.r, mine.w + mine.l), rank: out.findIndex((o) => o.wid === me.wid) + 1 },
+      ladder: out.map((o, i) => ({ rank: i + 1, wid: o.wid, nick: stats[i].nick || '', r: o.r, tier: tierOf(o.r, stats[i].w + stats[i].l), w: stats[i].w, l: stats[i].l })) });
   }
   if (!WID_RE.test(who)) return res.status(400).json({ error: 'bad wid' });
   const [st, list] = await Promise.all([arenaGet(who), kv.lrange(`arenam:${who}`, 0, 49)]);
   const pair = [me.wid, who].sort();
   const h2h = who === me.wid ? null : ((await kv.hgetall(`arenah:${pair[0]}:${pair[1]}`)) || {});
-  return res.status(200).json({ wid: who, nick: st.nick || '', r: st.r, tier: tierOf(st.r, st.w + st.l), w: st.w, l: st.l, games: st.g || {},
+  return res.status(200).json({ wid: who, isMe: who === me.wid, nick: st.nick || (who === me.wid ? me.nick : ''), tiers: TIERS, r: st.r, tier: tierOf(st.r, st.w + st.l), w: st.w, l: st.l, games: st.g || {},
     recent: (list || []).map(parse).filter(Boolean),
     vsMe: h2h ? { myWins: Number(h2h[me.wid] || 0), theirWins: Number(h2h[who] || 0) } : null });
 }

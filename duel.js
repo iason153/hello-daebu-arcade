@@ -190,12 +190,13 @@
     } else if (r.win) {
       title = '도전 성공! 🏆';
       add('big', '🏆 ' + d.nick + '님(' + d.dist + U + ')을 ' + diff + U + ' 앞질렀어요!');
-      if (r.arena && r.arena.rated) add('', '⚔️ 올림포스 결투장 명성 ' + (r.arena.delta >= 0 ? '+' : '') + r.arena.delta);
+      if (r.arena && r.arena.rated) { var al = el('a', '', '⚔️ 올림포스 결투장 명성 ' + (r.arena.delta >= 0 ? '+' : '') + r.arena.delta + ' →'); al.href = '/arena.html'; al.style.cssText = 'color:#ffc857;font-weight:700'; st.appendChild(el('div')).appendChild(al); }
       if (CFG.sendBtn) CFG.sendBtn.textContent = '📨 반격 도전장 보내기';
     } else if (me.result === 'lose') {
       title = '도전 실패…';
       add('big', '기회 3번을 다 썼어요 (최고 ' + me.best + U + ')');
       add('dim', '연습은 계속할 수 있어요. 내 기록으로 도전장을 보내 복수해 보세요!');
+      if (r.arena && r.arena.rated) { var al2 = el('a', '', '⚔️ 올림포스 결투장 명성 ' + r.arena.delta + ' →'); al2.href = '/arena.html'; al2.style.cssText = 'color:#9fb0d8;font-weight:700'; st.appendChild(el('div')).appendChild(al2); }
     } else {
       title = '아깝다!';
       var line = add('big', diff + U + ' 모자라요 · 남은 기회 '); line.appendChild(el('b', '', dots(left)));
@@ -218,24 +219,24 @@
   function buildCard(o) {
     var W = 1200, H = 600, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
     var c = cv.getContext('2d'), bg = img('bg', CFG.bgSrc), hero = img('hero', CFG.heroSrc), seal = img('seal', '/assets/duel/duel-seal.png');
-    var CX = 820, INK = '#3b2412';
+    var CX = 772, INK = '#3b2412', PAPER = '#f7ebcd';
     if (ok(bg)) c.drawImage(bg, 0, 0, W, H);
     else { // 그림을 못 불러왔을 때의 임시 배경(같은 배치)
       var g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#2c6fd6'); g.addColorStop(1, '#0a1530'); c.fillStyle = g; c.fillRect(0, 0, W, H);
       c.fillStyle = '#f1dfb8'; rr(c, 470, 20, 700, 380, 18); c.fill();
       if (ok(hero)) { c.save(); c.translate(220, 430); c.rotate(-0.12); c.scale(5, 5); c.drawImage(hero, -27.7, -26.8, 56, 47.25); c.restore(); }
     }
+    // 낙관(10/8 대표: 더 크게) — 글자보다 먼저 찍어서 기록 숫자가 가려지지 않게
+    if (ok(seal)) { c.save(); c.translate(1066, 300); c.rotate(0.2); c.globalAlpha = 0.9; c.drawImage(seal, -122, -122, 244, 244); c.restore(); } // 낙관(10/8 대표: 더 크게)
     c.textBaseline = 'alphabetic'; c.textAlign = 'center'; c.lineJoin = 'round';
     // 보낸 사람
-    var nm = o.nick + '님의 도전장'; fit(c, nm, '900 $px ' + FONT, 58, 560); c.fillStyle = INK; c.fillText(nm, CX, 100);
+    var nm = o.nick + '님의 도전장'; fit(c, nm, '900 $px ' + FONT, 58, 500); outline(c, nm, CX, 100, INK, PAPER, 7);
     // 한마디
-    var ph = '"' + o.phrase + '"'; fit(c, ph, '800 $px ' + FONT, 36, 540); c.fillStyle = '#7a3b16'; c.fillText(ph, CX, 152);
+    var ph = '"' + o.phrase + '"'; fit(c, ph, '800 $px ' + FONT, 36, 500); outline(c, ph, CX, 152, '#7a3b16', PAPER, 6);
     // 넘어야 할 기록
-    var sc = o.dist + o.unit; fit(c, sc, '900 $px ' + FONT, 150, 500);
+    var sc = o.dist + o.unit; fit(c, sc, '900 $px ' + FONT, 150, 330);
     c.save(); c.shadowColor = 'rgba(80,20,0,.35)'; c.shadowBlur = 10; outline(c, sc, CX, 292, '#c62a1c', '#fff3d6', 10); c.restore();
-    c.font = '800 46px ' + FONT; c.fillStyle = INK; c.fillText('넘을 수 있어?', CX, 352);
-    // 도장
-    if (ok(seal)) { c.save(); c.translate(1078, 300); c.rotate(0.22); c.globalAlpha = 0.92; c.drawImage(seal, -84, -84, 168, 168); c.restore(); }
+    c.font = '800 46px ' + FONT; outline(c, '넘을 수 있어?', CX, 352, INK, PAPER, 7);
     // 아래 안내(파도 위 띠)
     var ft = '로그인 없이 바로 · ' + when(o.exp) + '까지 · ' + o.name; c.font = '700 26px ' + FONT;
     var fw = Math.min(560, c.measureText(ft).width + 48); fit(c, ft, '700 $px ' + FONT, 26, fw - 40);
