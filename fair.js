@@ -49,7 +49,8 @@
     return rawFetch(input, init);
   };
 
-  window.HelloFair = { start: start };
+  // ticket(게임키): 도전장(/api/duel)이 이번 판의 확인표를 함께 보낼 때 쓴다
+  window.HelloFair = { start: start, ticket: function (game) { return get(game || pageGame); } };
   // 페이지를 열 때도 한 장 받아 둔다(게임 시작 신호를 놓쳐도 확인표가 비지 않게). 이미 있으면 그대로 둔다 —
   // 로그인하고 돌아와 이어서 등록하는 기록은 그 판의 확인표를 써야 하기 때문.
   if (pageGame && !get(pageGame)) start(pageGame);

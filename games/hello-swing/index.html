@@ -39,6 +39,8 @@
   #overlay button { font-family: var(--body); cursor: pointer; }
   #retryBtn { width: 100%; background: var(--gold); border: none; border-radius: 999px; padding: 13px 0; font-size: 18px; font-weight: 700; color: #2a1c00; box-shadow: 0 4px 0 #b8862b; }
   #retryBtn:active { transform: translateY(2px); box-shadow: 0 2px 0 #b8862b; }
+  #duelBtn { width: 100%; margin-top: 10px; background: #7fd3ff; border: none; border-radius: 999px; padding: 12px 0; font-size: 16px; font-weight: 700; color: #06243d; box-shadow: 0 4px 0 #3c8fbf; }
+  #duelBtn:active { transform: translateY(2px); box-shadow: 0 2px 0 #3c8fbf; }
   #shareBtn { width: 100%; margin-top: 10px; background: #2a2f45; color: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 11px 0; font-size: 14px; font-weight: 700; }
   #rankPanel { margin-top: 14px; background: rgba(10,14,24,.92); border-radius: 12px; padding: 12px; text-align: left; }
   #rankPanel .lbl { font-size: 12px; margin-bottom: 6px; color: var(--gold); font-weight: 700; }
@@ -61,7 +63,9 @@
       <h1 id="ovTitle">풍덩!</h1>
       <div class="final" id="ovScore">0m</div>
       <div class="sub" id="ovSub"></div>
+      <div id="duelStat" class="hd-stat" role="status" hidden></div>
       <button id="retryBtn" type="button">다시 하기</button>
+      <button id="duelBtn" type="button">📨 친구에게 도전장 보내기</button>
       <button id="shareBtn" type="button">📤 친구에게 자랑하기!</button>
       <div id="rankPanel">
         <div class="lbl">🏆 랭킹에 기록 남기기</div>
@@ -80,10 +84,11 @@
 <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.8.1/kakao.min.js" crossorigin="anonymous"></script>
 <script src="/fair.js" data-game="hello_swing"></script>
 <script src="/member.js"></script>
+<script src="/duel.js"></script>
 <script>
 try { if (window.Kakao && !window.Kakao.isInitialized()) window.Kakao.init('3994a3bda3b8146e709683fdb350c9cc'); } catch (e) {}
 
-const ZM=0.88,VW=380/ZM;const cv=document.getElementById('c'),g=cv.getContext('2d'),W=380,H=820,SEA=H-90,M=40; // 40px = 1m
+let ZM=0.88,VW=380/ZM;const cv=document.getElementById('c'),g=cv.getContext('2d'),W=380,H=820,SEA=H-90,M=40; // 40px = 1m
 const ZONES=[{at:0,name:'시화방조제',sky:['#6ec3f4','#d8f1ff'],gap:[285,70],wind:0},
  {at:250,name:'방아머리',sky:['#5aa9e6','#ffe9c7'],gap:[200,90],wind:.07},
  {at:600,name:'탄도항',sky:['#f7a56b','#ffe3b3'],gap:[215,110],wind:.10},
@@ -95,14 +100,19 @@ let nearT=0,skipAt=0,lead=0,hs=0,fs=0,pulse=0,hr=-0.4,dfx=0,dfy=0,dvx=0,dvy=0,vo
 let wave,shake,trail,drops,t,why,roar,zone,rest,banner,bonus,passN,lastPassX,pops,skips,wind,windNext,windWarn,shells,shellN,cannon;
 const dist=()=>Math.max(0,Math.floor(p.x/M)),score=()=>dist();
 const zoneOf=(m)=>{let z=0;ZONES.forEach((Z,i)=>{if(m>=Z.at)z=i;});return z;};
+// [2026-10-08 도전장] 고리·조개 배치는 "맵 번호"에서만 나온다(같은 번호 = 같은 맵). 평소에는 판마다 새 번호.
+// pt = 게임을 시작한 뒤 흐른 칸 수(돌아가는 고리 위치의 기준), rx·ry·ra = 지나간 길(3칸마다 한 점: 위치와 잡고 있던 고리 번호)
+function mulberry(a){return function(){a|=0;a=a+0x6D2B79F5|0;let x=Math.imul(a^a>>>15,1|a);x=x+Math.imul(x^x>>>7,61|x)^x;return((x^x>>>14)>>>0)/4294967296;}}
+const newSeed=()=>((Math.random()*2147483646)|0)+1;
+let mapSeed=newSeed(),mr=mulberry(mapSeed),pt=0,rx=[],ry=[],ra=[],ghost=null,lastRun=null;
 function addAnchor(){const prev=anchors[anchors.length-1],z=ZONES[zoneOf(prev.hx/M)],easy=ZONES.some(Z=>prev.hx/M>=Z.at&&prev.hx/M<Z.at+18);
-  const a={hx:prev.hx+(easy?285:z.gap[0]+Math.random()*z.gap[1]),hy:150+Math.random()*(easy?90:z===ZONES[0]?120:190),r:0,w:0,ph:Math.random()*7};
-  const zi=zoneOf(a.hx/M);if(!easy&&zi>=1&&Math.random()<.3){a.r=34+zi*4;a.w=.03+Math.random()*.02;} // 돌아가는 걸이(풍력발전기 날개)
+  const a={hx:prev.hx+(easy?285:z.gap[0]+mr()*z.gap[1]),hy:150+mr()*(easy?90:z===ZONES[0]?120:190),r:0,w:0,ph:mr()*7};
+  const zi=zoneOf(a.hx/M);if(!easy&&zi>=1&&mr()<.3){a.r=34+zi*4;a.w=.03+mr()*.02;} // 돌아가는 걸이(풍력발전기 날개)
   a.x=a.hx;a.y=a.hy;anchors.push(a);
-  {const r=Math.random(); // 황금조개: 걸쇠 사이 날아가는 길목(절반) 또는 걸쇠 바로 아래 스윙 길목(3분의 1)
-    if(r<.5)shells.push({x:(prev.hx+a.hx)/2+(Math.random()-.5)*70,y:(prev.hy+a.hy)/2+Math.random()*230,got:false});
-    else if(r<.85)shells.push({x:a.hx+(Math.random()-.5)*50,y:a.hy+110+Math.random()*190,got:false});}}
-function reset(){t=0;anchors=[{hx:120,hy:200,x:120,y:200,r:0,w:0,ph:0}];shells=[];for(let i=0;i<12;i++)addAnchor();
+  {const r=mr(); // 황금조개: 걸쇠 사이 날아가는 길목(절반) 또는 걸쇠 바로 아래 스윙 길목(3분의 1)
+    if(r<.5)shells.push({x:(prev.hx+a.hx)/2+(mr()-.5)*70,y:(prev.hy+a.hy)/2+mr()*230,got:false});
+    else if(r<.85)shells.push({x:a.hx+(mr()-.5)*50,y:a.hy+110+mr()*190,got:false});}}
+function reset(){if(!ghost)mapSeed=newSeed();t=0;pt=0;rx=[];ry=[];ra=[];mr=mulberry(mapSeed);zk=1;zs=0;anchors=[{hx:120,hy:200,x:120,y:200,r:0,w:0,ph:0}];shells=[];for(let i=0;i<12;i++)addAnchor();
   p={x:40,y:330,vx:3.6,vy:0};rope=null;camX=0;state='ready';wave={x:-420,v:2};trail=[];drops=[];pops=[];shake=0;roar=0;why='';
   nearT=0;skipAt=0;lead=0;hs=fs=pulse=0;hr=-0.4;dfx=dfy=dvx=dvy=0;curMx=-1e9;vo=0;roarCd=0;jel={s:0,v:0};jrot={s:0,v:0};pvx=0;pvy=0;mouthO=0;lunge=0;lungeWarn=0;skipFlash=0;lungeCd=200;spray=[];swallowed=false;gulp=0;zone=0;rest=0;banner=0;bonus=0;passN=0;lastPassX=-1;skips=2;wind=0;windNext={at:1e9,v:0};windWarn=0;shellN=0;cannon=0;attach(anchors[0]);}
 function kick(v){pulse=v;}
@@ -142,10 +152,11 @@ cv.addEventListener('pointerdown',e=>{e.preventDefault();down();});addEventListe
 addEventListener('keydown',e=>{if(e.code==='Space'&&!e.repeat&&document.getElementById('overlay').hidden)down();});addEventListener('keyup',e=>{if(e.code==='Space')up();});
 const seaY=(x)=>SEA+Math.sin(x*0.012+t*0.05)*10+Math.sin(x*0.031-t*0.08)*5;
 function splash(n){for(let i=0;i<n;i++)drops.push({x:p.x,y:Math.min(p.y,SEA),vx:(Math.random()-.5)*9,vy:-Math.random()*11-3,l:50});}
-function over(msg){pulse=-0.15;state='over';why=msg;shake=14;best=Math.max(best,score());try{localStorage.setItem('hsw_best',best)}catch(e){}splash(26);onGameOver();}
+function recPush(){rx.push(Math.round(p.x));ry.push(Math.round(p.y));ra.push(rope?anchors.indexOf(rope.a):-1);}
+function over(msg){recPush();pulse=-0.15;state='over';why=msg;shake=14;best=Math.max(best,score());try{localStorage.setItem('hsw_best',best)}catch(e){}splash(26);onGameOver();}
 function step(){
-  t++;
-  for(const a of anchors){if(a.r){a.x=a.hx+Math.cos(t*a.w+a.ph)*a.r;a.y=a.hy+Math.sin(t*a.w+a.ph)*a.r;}}
+  t++;ghostTick();
+  for(const a of anchors){if(a.r){a.x=a.hx+Math.cos(pt*a.w+a.ph)*a.r;a.y=a.hy+Math.sin(pt*a.w+a.ph)*a.r;}}
   if(state==='play'){
     const z=zoneOf(dist());if(z!==zone){zone=z;rest=420;banner=150;skips=1;wind=0;windNext={at:t+500,v:0};pop('물수제비 충전!','#8fe3ff');}
     if(rest>0)rest--;
@@ -177,6 +188,7 @@ function step(){
     if(!rope)for(const a of anchors){if(a.hx>px0&&a.hx<=p.x&&a.hx>lastPassX){passN++;pop('패스'+(passN>1?' ×'+passN:'')+'!','#fff');}}
     for(const s of shells){if(s.got)continue;const sd=Math.hypot(s.x-p.x,s.y-p.y);
       if(sd<50){s.got=true;shellN++;sfx('shell');if(shellN>=10){shellN=0;cannon=110;rope=null;shake=12;pop('헬로 대포 발사!!','#ffd23c');sfx('rk1',0.8);setTimeout(()=>sfx('rk2',2),1350);}}}
+    pt++;if(pt%3===0)recPush();
     trail.push({x:p.x,y:p.y});if(trail.length>14)trail.shift();
     const gap=p.x-wave.x;
     const base=t<240?2:4.2+Math.min(2.4,dist()*0.0013);
@@ -249,7 +261,8 @@ function drawBG(){
     if(zi!==3&&mi&&mi.complete&&mi.naturalWidth){const B=BGP[zi],dh=B.mh,dw=MIDW[zi]*dh/384;let x=-(((camX*B.mp)%dw)+dw)%dw;g.globalAlpha=al*B.ma;for(;x<W;x+=dw)g.drawImage(mi,x,B.my,dw+0.5,dh);}
     g.globalAlpha=1;}
 }
-function draw(){
+function draw(){const z0=ZM,v0=VW,c0=camX;ZM=0.88*zk;VW=380/ZM;camX=c0-zs*(VW-v0);try{drawCore();}finally{ZM=z0;VW=v0;camX=c0;}} // 유령이 가까우면 화면을 넓혀 둘을 함께 보여 준다
+function drawCore(){
   const sk=g.createLinearGradient(0,0,0,H),SK=skyAt(p.x/M);sk.addColorStop(0,SK[0]);sk.addColorStop(1,SK[1]);g.fillStyle=sk;g.fillRect(0,0,W,H);
   g.fillStyle='rgba(255,255,255,.5)';for(let i=0;i<5;i++){const x=((i*190-camX*0.08)%(W+200)+W+200)%(W+200)-100;g.beginPath();g.ellipse(x,120+(i%3)*70,60,18,0,0,7);g.fill();}
   drawBG();
@@ -268,6 +281,7 @@ function draw(){
   for(const s of shells){if(s.got||s.x<camX-30||s.x>camX+VW+30)continue;if(IMG.shell.complete)g.drawImage(IMG.shell,s.x-13,s.y-12.5+Math.sin(t*0.1+s.x)*4,26,25);}
   if(rope){const mx=(rope.a.x+p.x)/2,my=(rope.a.y+p.y)/2,d=Math.hypot(p.x-rope.a.x,p.y-rope.a.y),sag=Math.max(0,rope.len-d)*0.5;
     g.strokeStyle='#fff';g.lineWidth=2.5;g.setLineDash([]);g.beginPath();g.moveTo(rope.a.x,rope.a.y);const hx=p.x+Math.cos(hr)*26.4+Math.sin(hr)*9,hy=p.y+Math.sin(hr)*26.4-Math.cos(hr)*9;g.quadraticCurveTo((rope.a.x+hx)/2,(rope.a.y+hy)/2+sag,hx,hy);g.stroke();}
+  drawGhost();
   trail.forEach((q,i)=>{g.fillStyle=(cannon?'rgba(255,150,40,':'rgba(255,225,77,')+(i/trail.length*0.4)+')';g.beginPath();g.arc(q.x,q.y,6+i*0.6,0,7);g.fill();});
   const ang=Math.max(-.7,Math.min(.7,Math.atan2(p.vy,Math.abs(p.vx)+4))),st=Math.max(-0.45,Math.min(0.7,jel.s)),HS=0.2;
   const gapH=p.x-wave.x,scared=gapH<240&&state==='play';
@@ -298,7 +312,7 @@ function draw(){
     const mx=wave.x+120-410+vo+Math.sin(t*0.09)*6+(roar>0?18:0)+lung,my=Math.sin(t*0.06)*8;
     { const off=camX-(wave.x+120+vo); // 화면 왼쪽 밖으로 벗어난 거리 → 가까이 오는 기척(어둑한 그림자)
       if(state==='play'&&off>-30&&off<260){const al=Math.min(0.5,(1-Math.max(0,off)/260)*0.5)*(0.75+0.25*Math.sin(t*0.3));
-        const sg=g.createLinearGradient(camX,0,camX+90,0);sg.addColorStop(0,'rgba(10,50,100,'+al+')');sg.addColorStop(1,'rgba(10,50,100,0)');g.fillStyle=sg;g.fillRect(camX,-140,90,H+280);
+        const sg=g.createLinearGradient(camX,0,camX+90,0);sg.addColorStop(0,'rgba(10,50,100,'+al+')');sg.addColorStop(1,'rgba(10,50,100,0)');g.fillStyle=sg;g.fillRect(camX,-760,90,H+900);
         if(off>0&&t%3===0)spray.push({x:camX+4+Math.random()*10,y:420+Math.random()*280,vx:2+Math.random()*3,vy:-1-Math.random()*4,r:2+Math.random()*3,l:22,c:'#fff'});} }
     monFront=mx+410;curMx=mx;curMy=my;
     if(mx+410>camX-10){
@@ -323,6 +337,7 @@ function draw(){
   drawTut();
   if(state==='play'&&gap<260){g.fillStyle='rgba(255,60,60,'+(0.35*(1-gap/260)*(0.6+0.4*Math.sin(t*0.4)))+')';g.fillRect(0,0,26,H);}
   txt(dist()+'m',18,58,'900 44px system-ui');
+  drawGhostHud();
   txt('최고 '+best+'m · 괴물 '+Math.max(0,Math.floor((gap-100)/M))+'m 뒤',20,84,'700 15px system-ui');
   for(let i=0;i<10;i++){g.fillStyle=i<shellN?'#ffc93c':'rgba(255,255,255,.35)';g.fillRect(20+i*13,96,10,10);}
   txt('물수제비 '+(skips>1?'●●':skips?'●':'없음!'),W-18,40,'700 15px system-ui',skips?'#8fe3ff':'#ff8a8a','right');
@@ -363,19 +378,99 @@ function loop(ts){
   requestAnimationFrame(loop);}
 
 
+// ---------------------------------------------------------------- 도전장 유령(2026-10-08)
+// 유령 = 도전장을 보낸 사람이 지나간 길. 같은 맵 번호(mapSeed)로 같은 고리·조개가 나오고, 저장된 길(3칸마다 한 점)을 그대로 따라간다.
+// 유령은 헬로 그림 그대로 반투명하게(10/8 대표: 단색은 헬로로 안 보임). 줄은 점선, 이름표가 붙는다. 괴물·바람은 판마다 다르다.
+const GC='#8fe3ff';
+const GA=0.45; // 유령 투명도
+const gName=()=>ghost&&ghost.name?ghost.name:'유령';
+function ghostAt(k){if(!ghost)return null;const n=ghost.x.length,f=k/3-1,i=Math.floor(f);if(i>=n-1)return null;
+  if(i<0)return {x:ghost.x[0],y:ghost.y[0],a:ghost.a[0],vx:3.6,vy:0};
+  const u=f-i;return {x:ghost.x[i]+(ghost.x[i+1]-ghost.x[i])*u,y:ghost.y[i]+(ghost.y[i+1]-ghost.y[i])*u,a:ghost.a[i],vx:(ghost.x[i+1]-ghost.x[i])/3,vy:(ghost.y[i+1]-ghost.y[i])/3};}
+const flagX=()=>ghost.x[ghost.x.length-1];
+// 화면 넓히기: 유령이 18m 안이면 서서히 넓어지고 12m 안이면 가장 넓게. 1초 60칸(step) 기준으로만 변한다
+let zk=1,zs=0;
+function ghostTick(){let tk=1,ts=zs<0.5?0:1;
+  if(ghost&&state==='play'){const G=ghostAt(pt),gx=G?G.x:flagX(),d=gx-p.x,ad=Math.abs(d);
+    if(ad<720)tk=ad<480?0.72:0.72+0.28*(ad-480)/240; ts=d<0?1:0;}
+  zk+=(tk-zk)*0.04; zs+=(ts-zs)*0.05; }
+function bubble(s,x,y){g.font='800 14px system-ui';const w=g.measureText(s).width+20,h=28;
+  g.fillStyle='#fff';g.strokeStyle='#22364d';g.lineWidth=2.5;g.beginPath();
+  if(g.roundRect)g.roundRect(x-w/2,y-h,w,h,12);else g.rect(x-w/2,y-h,w,h);g.fill();g.stroke();
+  g.beginPath();g.moveTo(x-7,y-1);g.lineTo(x,y+9);g.lineTo(x+7,y-1);g.closePath();g.fill();g.stroke();g.fillRect(x-6,y-4,12,4);
+  g.fillStyle='#22364d';g.textAlign='center';g.fillText(s,x,y-9);}
+function ghostEyes(E){for(const [ex,ey,k] of E){const R=4.3*k;g.fillStyle='#fff';g.strokeStyle='#3a2a1a';g.lineWidth=1;g.beginPath();g.ellipse(ex,ey,R,R,0,0,7);g.fill();g.stroke();
+  g.fillStyle='#22180e';g.beginPath();g.arc(ex+1.1,ey+0.2,2.4*k,0,7);g.fill();}}
+function drawGhostBody(x,y,A,vx,vy,wave){
+  g.save();
+  if(A){let th=Math.atan2(A.y-y,A.x-x);if(th>Math.PI/2)th-=2*Math.PI;th=Math.max(-2.7,Math.min(-0.45,th));const r=(th+Math.PI/2)*0.7-0.84;
+    const hx=x+Math.cos(r)*26.4+Math.sin(r)*9,hy=y+Math.sin(r)*26.4-Math.cos(r)*9;
+    g.globalAlpha=0.7;g.strokeStyle='#fff';g.lineWidth=2;g.setLineDash([7,6]);g.beginPath();g.moveTo(A.x,A.y);g.lineTo(hx,hy);g.stroke();g.setLineDash([]);
+    g.globalAlpha=GA;g.translate(x,y);g.rotate(r);if(IMG.heroH.complete)g.drawImage(IMG.heroH,-28.1,-33.4,64.25,58.75);ghostEyes([[8.6,-6.6,1],[16.6,-6.9,0.88]]);}
+  else{g.globalAlpha=GA;g.translate(x,y);g.rotate(wave?Math.sin(t*0.15)*0.35:Math.max(-.7,Math.min(.7,Math.atan2(vy,Math.abs(vx)+4)))*0.8);if(IMG.heroR.complete)g.drawImage(IMG.heroR,-27.7,-26.8,56,47.25);ghostEyes([[3.4,-7,1],[11.6,-7.2,0.88]]);}
+  g.restore();}
+function drawGhost(){ if(!ghost)return;
+  const fx=flagX();
+  if(fx>camX-80&&fx<camX+VW+80){ // 유령이 끝난 자리의 깃발 = 넘어야 할 기록
+    g.strokeStyle='#22364d';g.lineWidth=5;g.beginPath();g.moveTo(fx,SEA+20);g.lineTo(fx,SEA-190);g.stroke();
+    g.strokeStyle='#fff';g.lineWidth=2.5;g.beginPath();g.moveTo(fx,SEA+20);g.lineTo(fx,SEA-190);g.stroke();
+    g.fillStyle='#ff5a5a';g.strokeStyle='#22364d';g.lineWidth=2.5;g.beginPath();g.moveTo(fx,SEA-190);g.lineTo(fx+46,SEA-172);g.lineTo(fx,SEA-154);g.closePath();g.fill();g.stroke();
+    txt(gName()+' '+ghost.dist+'m',fx,SEA-202,'800 15px system-ui','#fff','center'); }
+  if(state==='ready')return;
+  const G=ghostAt(pt);
+  if(!G){ // 다 간 유령은 깃발 위에 떠서 손을 흔들며 기다린다
+    if(fx>camX-60&&fx<camX+VW+60){const gy=SEA-262+Math.sin(t*0.06)*8;drawGhostBody(fx,gy,null,0,0,true);
+      if(state==='play'&&p.x>fx-640&&p.x<fx)bubble('헬로~!',fx,gy-38);}
+    return; }
+  if(G.x<camX-60||G.x>camX+VW+60)return;
+  drawGhostBody(G.x,G.y,G.a>=0?anchors[G.a]:null,G.vx,G.vy,false);
+  txt(gName(),G.x,G.y-44,'800 13px system-ui','#e6f6ff','center');
+  if(ghost.msg&&pt<210)bubble(ghost.msg,G.x,G.y-60); }
+function drawGhostHud(){ if(!ghost||state==='ready')return;
+  const G=ghostAt(pt),me=p.x/M;
+  if(G){const d=Math.round((G.x-p.x)/M);
+    txt(d>0?'유령이 '+d+'m 앞 ▶':d<0?'◀ 유령이 '+(-d)+'m 뒤':'유령과 나란히!',W/2,132,'800 16px system-ui',d>0?'#ffb3b3':d<0?'#9dffb0':'#fff','center');}
+  else{const d=ghost.dist-dist();txt(d>0?'🚩 깃발까지 '+d+'m':'🚩 깃발을 넘었다! +'+(-d)+'m',W/2,132,'800 16px system-ui',d>0?'#ffe08a':'#9dffb0','center');}
+  // 경주 진행바: 0m부터 깃발까지, 나(노랑)와 유령(하늘색)
+  const x0=26,x1=W-26,y=150,tot=Math.max(ghost.dist,dist())*1.06+3,X=m=>x0+(x1-x0)*Math.max(0,Math.min(1,m/tot));
+  g.fillStyle='rgba(14,26,43,.6)';g.beginPath();if(g.roundRect)g.roundRect(x0-6,y-7,x1-x0+12,14,7);else g.rect(x0-6,y-7,x1-x0+12,14);g.fill();
+  g.fillStyle='rgba(255,255,255,.28)';g.fillRect(x0,y-2,x1-x0,4);
+  g.fillStyle='#ffd23c';g.fillRect(x0,y-2,X(me)-x0,4);
+  const fxp=X(ghost.dist);g.strokeStyle='#fff';g.lineWidth=2;g.beginPath();g.moveTo(fxp,y+7);g.lineTo(fxp,y-15);g.stroke();
+  g.fillStyle='#ff5a5a';g.beginPath();g.moveTo(fxp,y-15);g.lineTo(fxp+11,y-11);g.lineTo(fxp,y-7);g.closePath();g.fill();
+  const gm=G?G.x/M:ghost.dist;
+  g.fillStyle=GC;g.strokeStyle='#22364d';g.lineWidth=2;g.beginPath();g.arc(X(gm),y,8,0,7);g.fill();g.stroke();
+  g.fillStyle='#ffd23c';g.beginPath();g.arc(X(me),y,9,0,7);g.fill();g.stroke();
+  if(IMG.heroR.complete)g.drawImage(IMG.heroR,X(me)-8,y-7,16,13.5);
+  // 화면 밖 유령: 가장자리에 보낸 사람 닉네임이 든 이름표 + 방향 화살표 + 거리
+  if(G){const sx=(G.x-camX)*ZM;
+    if(sx>W-6||sx<6){const R=sx>W-6,k=R?1:-1,dm=Math.abs(Math.round((G.x-p.x)/M));
+      let nm=gName(),fs=14;g.font='800 '+fs+'px system-ui';while(fs>10&&g.measureText(nm).width>84){fs--;g.font='800 '+fs+'px system-ui';}
+      if(g.measureText(nm).width>84){while(nm.length>1&&g.measureText(nm+'…').width>84)nm=nm.slice(0,-1);nm+='…';}
+      const bw=Math.max(54,g.measureText(nm).width+20),bh=30,cx=R?W-10-bw/2-12:10+bw/2+12,cy=Math.max(190,Math.min(690,G.y*ZM+H*(1-ZM)));
+      g.fillStyle='rgba(20,40,80,.85)';g.strokeStyle=GC;g.lineWidth=2.5;g.beginPath();if(g.roundRect)g.roundRect(cx-bw/2,cy-bh/2,bw,bh,15);else g.rect(cx-bw/2,cy-bh/2,bw,bh);g.fill();g.stroke();
+      g.fillStyle=GC;g.beginPath();g.moveTo(cx+k*(bw/2+12),cy);g.lineTo(cx+k*(bw/2+3),cy-8);g.lineTo(cx+k*(bw/2+3),cy+8);g.closePath();g.fill();
+      g.fillStyle='#fff';g.textAlign='center';g.fillText(nm,cx,cy+fs*0.36);
+      txt(dm+'m '+(R?'앞':'뒤'),cx,cy+bh/2+17,'800 13px system-ui','#fff','center');}} }
+
 // ---------------------------------------------------------------- 정식 버전: GA4·결과·랭킹·공유
 const GA_GAME = 'hello_swing';
 function track(name, params) { if (name === 'game_start' && window.HelloFair) HelloFair.start(GA_GAME); try { if (typeof gtag === 'function') gtag('event', name, Object.assign({ game: GA_GAME }, params || {})); } catch (e) {} }
 let finalScore = 0, overAt = 0;
 const $id = (id) => document.getElementById(id);
 function toast(msg) { const el = $id('toast'); el.textContent = msg; el.style.opacity = '1'; clearTimeout(el._h); el._h = setTimeout(() => { el.style.opacity = '0'; }, 2500); }
-function onGameOver() { if (dist() >= 60) tutDone(); finalScore = score(); overAt = Date.now(); track('game_over', { score: finalScore, dist: dist(), zone: zone + 1 }); setTimeout(showOverlay, 1300); }
+function onGameOver() { if (dist() >= 60) tutDone(); finalScore = score(); overAt = Date.now(); track('game_over', { score: finalScore, dist: dist(), zone: zone + 1 });
+  lastRun = { seed: mapSeed, dist: finalScore, g: { x: rx, y: ry, a: ra } }; // 도전장 보내기에 쓸 이번 판
+  try { if (window.HelloDuel) HelloDuel.finish(finalScore); } catch (e) {}
+  setTimeout(showOverlay, 1300); }
 function showOverlay() {
   if (state !== 'over') return;
   $id('ovTitle').textContent = why || '풍덩!';
   $id('ovScore').textContent = finalScore + 'm';
   $id('ovSub').textContent = ZONES[zoneOf(dist())].name + '까지 날아갔어요\n최고 기록 ' + best + 'm';
   $id('rankMsg').textContent = '';
+  $id('retryBtn').textContent = '다시 하기';
+  try { if (window.HelloDuel) HelloDuel.render(); } catch (e) {}
   $id('overlay').hidden = false;
   $id('retryBtn').focus({ preventScroll: true });
 }
@@ -477,6 +572,14 @@ $id('shareBtn').addEventListener('click', async (e) => {
     } finally { btn.disabled = false; btn.textContent = label; }
   }, 'image/png');
 });
+// 도전장(공용 /duel.js) — 받은 사람 첫 화면, 보내기 창, 결과 문구
+try { if (window.HelloDuel) HelloDuel.init({ game: 'hello_swing', name: '헬로 스윙', unit: 'm',
+  bgSrc: '/assets/duel/duel-bg-swing.webp', heroSrc: 'assets/heroR.webp', fallbackImg: '/games/hello-swing/assets/thumb-helloswing-wide.jpg',
+  getRun: () => lastRun,
+  onDuel: (d) => { ghost = { seed: d.seed, dist: d.dist, x: d.g.x, y: d.g.y, a: d.g.a, name: d.nick, msg: d.phrase }; mapSeed = d.seed; $id('overlay').hidden = true; reset(); },
+  onStart: () => { audioInit(); $id('overlay').hidden = true; reset(); state = 'play'; track('game_start'); },
+  onLeave: () => { ghost = null; $id('overlay').hidden = true; reset(); },
+  track: (n, p) => track(n, p), statEl: $id('duelStat'), titleEl: $id('ovTitle'), subEl: $id('ovSub'), retryBtn: $id('retryBtn'), sendBtn: $id('duelBtn') }); } catch (e) {}
 reset(); requestAnimationFrame(loop);
 </script>
 </body>

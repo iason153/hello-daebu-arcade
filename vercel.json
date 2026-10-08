@@ -6,6 +6,7 @@
     }
   ],
   "rewrites": [
-    { "source": "/c/:wid", "destination": "/api/wallet?share=:wid" }
+    { "source": "/c/:wid", "destination": "/api/wallet?share=:wid" },
+    { "source": "/d/:id", "destination": "/api/duel?share=:id" }
   ]
 }

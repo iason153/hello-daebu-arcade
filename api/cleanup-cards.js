@@ -11,6 +11,8 @@ import { list, del } from '@vercel/blob';
 // 같은 전통적인 (req, res) 방식으로 작성해 Node.js 런타임임을 명확히 한다.
 
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+// 도전장 카드(duel-cards/)는 도전장 기한 3일 + 여유 3시간 뒤에 지운다(api/duel.js)
+const DUEL_MS = (3 * 24 + 3) * 60 * 60 * 1000;
 
 export default async function handler(req, res) {
   // Vercel Cron이 아닌 외부에서의 호출을 막기 위한 간단한 가드.
@@ -21,18 +23,20 @@ export default async function handler(req, res) {
   }
 
   try {
-    let cursor;
     let deleted = 0;
     const now = Date.now();
-    do {
-      const { blobs, cursor: nextCursor } = await list({ prefix: 'kakao-cards/', cursor, limit: 1000, token: process.env.BLOBPUBLIC_READ_WRITE_TOKEN });
-      const stale = blobs.filter((b) => now - new Date(b.uploadedAt).getTime() > ONE_DAY_MS);
-      if (stale.length) {
-        await del(stale.map((b) => b.url), { token: process.env.BLOBPUBLIC_READ_WRITE_TOKEN });
-        deleted += stale.length;
-      }
-      cursor = nextCursor;
-    } while (cursor);
+    for (const [prefix, age] of [['kakao-cards/', ONE_DAY_MS], ['duel-cards/', DUEL_MS]]) {
+      let cursor;
+      do {
+        const { blobs, cursor: nextCursor } = await list({ prefix, cursor, limit: 1000, token: process.env.BLOBPUBLIC_READ_WRITE_TOKEN });
+        const stale = blobs.filter((b) => now - new Date(b.uploadedAt).getTime() > age);
+        if (stale.length) {
+          await del(stale.map((b) => b.url), { token: process.env.BLOBPUBLIC_READ_WRITE_TOKEN });
+          deleted += stale.length;
+        }
+        cursor = nextCursor;
+      } while (cursor);
+    }
 
     return res.status(200).json({ ok: true, deleted });
   } catch (e) {

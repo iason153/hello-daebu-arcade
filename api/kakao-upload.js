@@ -12,6 +12,7 @@
 //   (Vercel 대시보드 > Storage > Create Database > Blob 으로 생성 후 프로젝트에 연결)
 
 import { put } from '@vercel/blob';
+import { kv } from '@vercel/kv';
 
 // @vercel/blob은 내부적으로 Node.js 전용 모듈을 사용해서 Edge 런타임과 호환이
 // 안 된다. 웹 표준 Request/Response 방식으로 함수를 짜면 Vercel이 이걸 Edge
@@ -31,7 +32,17 @@ export default async function handler(req, res) {
 
   try {
     console.log('[kakao-upload] 요청 수신, body 타입:', typeof req.body);
-    const { imageBase64 } = req.body || {};
+    const { imageBase64, kind, id } = req.body || {};
+    // 도전장 카드(kind:'duel')는 도전장 번호로 저장하고, 도전장 기록에 그림 주소를 남긴다.
+    // 자랑 카드(kakao-cards/)는 24시간, 도전장 카드(duel-cards/)는 도전장 기한(3일)까지 남는다 — cleanup-cards.js
+    let duel = null;
+    if (kind === 'duel') {
+      if (!/^[a-z0-9]{8}$/.test(String(id || ''))) return res.status(400).json({ error: 'bad id' });
+      duel = await kv.get(`duel:${id}`);
+      if (typeof duel === 'string') { try { duel = JSON.parse(duel); } catch (e) { duel = null; } }
+      if (!duel) return res.status(404).json({ error: 'gone' });
+      if (duel.card) return res.status(200).json({ url: duel.card }); // 이미 만든 카드는 다시 올리지 않는다
+    }
     if (!imageBase64 || typeof imageBase64 !== 'string') {
       console.error('[kakao-upload] imageBase64 없음 또는 문자열 아님:', typeof imageBase64);
       return res.status(400).json({ error: 'imageBase64 required' });
@@ -44,7 +55,7 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'image too large' });
     }
 
-    const filename = `kakao-cards/${Date.now()}_${Math.random().toString(36).slice(2, 8)}.png`;
+    const filename = duel ? `duel-cards/${duel.id}.png` : `kakao-cards/${Date.now()}_${Math.random().toString(36).slice(2, 8)}.png`;
     console.log('[kakao-upload] Blob 업로드 시도:', filename);
     const blob = await put(filename, bytes, {
       access: 'public',
@@ -55,6 +66,11 @@ export default async function handler(req, res) {
       token: process.env.BLOBPUBLIC_READ_WRITE_TOKEN,
     });
     console.log('[kakao-upload] Blob 업로드 성공:', blob.url);
+    if (duel) {
+      duel.card = blob.url;
+      const left = Math.ceil((duel.exp - Date.now()) / 1000);
+      if (left > 30) await kv.set(`duel:${duel.id}`, duel, { ex: left });
+    }
 
     return res.status(200).json({ url: blob.url });
   } catch (e) {
