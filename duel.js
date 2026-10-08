@@ -84,11 +84,42 @@
       '.hd-note{font-size:11.5px;color:#9fb0d8;margin-top:8px;line-height:1.5}',
       '.hd-stat{margin:0 0 12px;background:rgba(10,20,44,.85);border:1.5px solid #3a4c78;border-radius:14px;padding:10px 12px;font-size:13px;line-height:1.6;text-align:left;color:#eef3ff}',
       '.hd-stat b{color:#ffc857}.hd-stat .big{font-size:15px;font-weight:800;color:#fff}.hd-stat .dim{color:#9fb0d8;font-size:12px}',
+      '.hd-loginbox{margin-top:12px;background:rgba(254,229,0,.08);border:1px solid rgba(254,229,0,.4);border-radius:14px;padding:10px 12px;text-align:center}',
+      '.hd-loginbox.strong{background:linear-gradient(180deg,rgba(255,200,87,.18),rgba(255,200,87,.06));border:2px solid #ffc857}',
+      '.hd-loginbox .lt{font-weight:800;font-size:14px;color:#fff;text-wrap:balance;word-break:keep-all}.hd-loginbox.strong .lt{font-size:16px;color:#ffc857}.hd-loginbox .ls{font-size:12px;color:#c9d3f2;margin-top:2px;word-break:keep-all}',
+      '.hd-kbtn{display:block;margin-top:8px;background:#fee500;color:#191600;font-weight:800;font-size:14px;text-decoration:none;border-radius:999px;padding:10px 0}',
       '.hd-toast{position:fixed;left:50%;bottom:12%;transform:translateX(-50%);z-index:70;background:rgba(0,0,0,.88);color:#fff;padding:11px 18px;border-radius:999px;font-size:13px;font-weight:700;max-width:86vw;text-align:center;transition:opacity .3s}',
       '.hd-toast.out{opacity:0}',
       '.hd-layer button:focus-visible,.hd-layer input:focus-visible{outline:2px solid #ffc857;outline-offset:2px}',
     ].join('\n');
     document.head.appendChild(s);
+  }
+
+  // ------------------------------------------------------------------ 로그인 유도(10/8 대표: 로그인을 유도하게)
+  // 로그인하면 같은 화면으로 돌아오고, 로그인 전에 이 기기로 한 도전·보낸 도전장은 claim으로 이어 붙는다.
+  function loginUrl(where) {
+    var next = location.pathname + (D ? '?duel=' + D.duel.id : '');
+    return '/api/auth?action=login&next=' + encodeURIComponent(next);
+  }
+  function loginBox(title, sub, btn, where, strong) {
+    var b = el('div', 'hd-loginbox' + (strong ? ' strong' : ''));
+    b.appendChild(el('div', 'lt', title)); if (sub) b.appendChild(el('div', 'ls', sub));
+    var a = el('a', 'hd-kbtn', btn); a.href = loginUrl(where);
+    a.addEventListener('click', function () { lsSet('hd_claim', '1'); track('duel_login_click', { where: where }); });
+    b.appendChild(a); return b;
+  }
+  var claimP = null;
+  function claim() {
+    if (!auth.loggedIn || lsGet('hd_claim') !== '1') return Promise.resolve(null);
+    return api('POST', { action: 'claim', cid: cid() }).then(function (r) {
+      if (r && r.ok) {
+        lsSet('hd_claim', '');
+        track('duel_claim', { moved: r.moved, recorded: r.recorded });
+        if (r.recorded) toast('로그인 전 결투 ' + r.recorded + '건을 올림포스 결투장에 기록했어요 ⚔️');
+        else if (r.moved) toast(r.waiting ? '내 기록으로 옮겼어요. 상대가 로그인하면 결투장에 기록돼요' : '로그인 전 도전 기록을 내 회원 기록으로 옮겼어요');
+      }
+      return r;
+    }).catch(function () { return null; });
   }
 
   // ------------------------------------------------------------------ 받은 사람 첫 화면
@@ -127,6 +158,7 @@
     go.addEventListener('click', function () { hide(intro); track('duel_start', { practice: !!(me.self || me.result) }); CFG.onStart(); });
     c.appendChild(go);
     c.appendChild(el('div', 'hd-sub', '로그인 없이 바로 · 한 판 1분 · 같은 맵에서 유령과 겨뤄요'));
+    if (!auth.loggedIn && !me.self) c.appendChild(loginBox('로그인하고 도전하면 전적이 남아요', '이긴 기록이 올림포스 결투장의 명성이 돼요', '카카오로 로그인하고 도전', 'intro', false));
     c.appendChild(boardEl(D.board || [], D.count || 0));
     var solo = el('button', 'hd-solo', '도전 없이 혼자 하기'); solo.type = 'button';
     solo.addEventListener('click', leave);
@@ -166,7 +198,7 @@
       .then(function (r) {
         if (mark !== last) return;
         last.pending = false;
-        if (r && r.me) { D.me = r.me; D.board = r.board || D.board; D.count = r.count || D.count; last.res = r; }
+        if (r && r.me) { D.me = r.me; D.board = r.board || D.board; D.count = r.count || D.count; last.res = r; if (!r.practice && !r.me.loggedIn) lsSet('hd_claim', '1'); }
         else last.res = { practice: true, why: r && r.__status === 404 ? 'gone' : 'error' };
         track('duel_result', { result: last.res.practice ? 'practice' : (last.win ? 'win' : (D.me.result === 'lose' ? 'lose' : 'miss')), tries: D.me.tries, score: score });
         render();
@@ -202,7 +234,11 @@
       var line = add('big', diff + U + ' 모자라요 · 남은 기회 '); line.appendChild(el('b', '', dots(left)));
     }
     if (!r.practice && me.rank > 0) add('dim', '이 도전장 순위 ' + me.rank + '위 / ' + (D.count || 1) + '명');
-    if (!r.practice && me.result && !me.loggedIn) add('dim', '로그인하면 다음 대결부터 올림포스 결투장에 전적이 남아요.');
+    if (!r.practice && !me.loggedIn) {
+      if (r.win) st.appendChild(loginBox('🏆 이 승리를 올림포스 결투장에 남기세요', '지금 로그인하면 방금 이긴 결투가 바로 기록돼요', '카카오로 로그인하고 승리 기록하기', 'win', true));
+      else if (me.result === 'lose') st.appendChild(loginBox('로그인하고 결투장에 들어가세요', '내 도전장으로 이기면 명성이 오르고 칭호가 생겨요', '카카오로 로그인', 'lose', false));
+      else st.appendChild(loginBox('로그인하면 이 도전이 결투장에 기록돼요', '남은 기회로 이기면 명성이 올라요', '카카오로 로그인', 'try', false));
+    }
     if (title && CFG.titleEl) CFG.titleEl.textContent = title;
     if (CFG.retryBtn) CFG.retryBtn.textContent = (!r.practice && !me.result) ? '다시 도전 (남은 기회 ' + left + '번)' : '같은 맵에서 다시 (연습)';
   }
@@ -302,6 +338,7 @@
       .then(function (r) {
         if (!r || !r.id) throw new Error((r && r.error) || '도전장을 만들지 못했어요');
         track('duel_create', { score: run.dist, phrase: phr, rematch: !!D });
+        if (!auth.loggedIn) lsSet('hd_claim', '1');
         return fontsReady().then(function () {
           var cv = buildCard({ nick: r.nick, dist: run.dist, unit: CFG.unit || 'm', phrase: PHRASES[phr], exp: r.exp, name: CFG.name });
           return new Promise(function (res) { cv.toBlob(res, 'image/png'); });
@@ -337,6 +374,7 @@
         var fail = function () { ui.msg.textContent = '아래 주소를 길게 눌러 복사해 주세요: ' + r.short; };
         if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(title + '\n' + desc + '\n' + r.short).then(done, fail); else fail();
       }
+      if (!auth.loggedIn && !ui.lb) { ui.lb = loginBox('로그인하면 이 도전장의 결과가 결투장에 남아요', '보낸 뒤에 로그인해도 이 폰이면 이어서 기록돼요', '카카오로 로그인', 'send', false); ui.msg.parentNode.insertBefore(ui.lb, ui.msg.nextSibling); }
     }).catch(function (e) { ui.msg.textContent = (e && e.message) || '도전장을 만들지 못했어요. 다시 시도해 주세요.'; })
       .then(function () { ui.kb.disabled = ui.cb.disabled = false; });
   }
@@ -349,13 +387,13 @@
     window.addEventListener('keydown', function (e) { if (openLayer && (e.code === 'Space' || e.key === ' ') && e.target === document.body) e.stopImmediatePropagation(); }, true);
     [intro, sheet].forEach(function (L) { ['pointerdown', 'touchstart'].forEach(function (ev) { L.addEventListener(ev, function (e) { e.stopPropagation(); }); }); });
     sheet.addEventListener('click', function (e) { if (e.target === sheet) hide(sheet); });
-    fetch('/api/auth', { credentials: 'same-origin', cache: 'no-store' }).then(function (r) { return r.json(); })
-      .then(function (d) { if (d && d.loggedIn) { auth.loggedIn = true; auth.nick = d.nick || ''; } }).catch(function () {});
+    claimP = fetch('/api/auth', { credentials: 'same-origin', cache: 'no-store' }).then(function (r) { return r.json(); })
+      .then(function (d) { if (d && d.loggedIn) { auth.loggedIn = true; auth.nick = d.nick || ''; } }).catch(function () {}).then(claim);
     var id = '';
     try { id = new URLSearchParams(location.search).get('duel') || ''; } catch (e) {}
     if (!id) { var m = /^#duel-([a-z0-9]{8})$/.exec(location.hash || ''); if (m) id = m[1]; }
     id = String(id).toLowerCase();
-    if (/^[a-z0-9]{8}$/.test(id)) load(id);
+    if (/^[a-z0-9]{8}$/.test(id)) claimP.then(function () { load(id); });
     if (cfg.sendBtn) cfg.sendBtn.addEventListener('click', function (e) { e.stopPropagation(); openSend(); });
   }
 

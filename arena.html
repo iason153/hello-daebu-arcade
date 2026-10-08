@@ -326,7 +326,12 @@
   renderTiers();
   get('/api/auth').then(function (a) {
     if (!a || !a.loggedIn) { $('loading').hidden = true; $('loginBox').hidden = false; $('rules').open = true; return; }
-    return get('/api/duel?arena=1').then(function (L) {
+    // 로그인 전에 이 폰으로 한 도전·보낸 도전장이 있으면 먼저 내 기록으로 이어 붙인다(duel.js와 같은 방식)
+    var cl = Promise.resolve();
+    try { var cid = localStorage.getItem('hd_cid') || ''; if (localStorage.getItem('hd_claim') === '1' && /^[a-z0-9]{8,24}$/.test(cid))
+      cl = fetch('/api/duel', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'claim', cid: cid }) })
+        .then(function (r) { return r.json(); }).then(function (r) { if (r && r.ok) { localStorage.setItem('hd_claim', ''); track('duel_claim', { moved: r.moved, recorded: r.recorded, where: 'arena' }); } }).catch(function () {}); } catch (e) {}
+    return cl.then(function () { return get('/api/duel?arena=1'); }).then(function (L) {
       if (!L || L.__s !== 200) throw new Error('arena');
       if (L.tiers) TIERS = L.tiers;
       ME = L.me; renderTiers();

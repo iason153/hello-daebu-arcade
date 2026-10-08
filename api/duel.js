@@ -5,6 +5,8 @@
 //   GET  ?id=도전장번호[&cid=…]   → 도전장(맵 번호·유령 길·보낸 사람·한마디) + 이 도전장 순위표 + 내 상태
 //   POST { action:'play', id, dist, cid, nick, ticket }
 //        → 받은 사람의 한 판 결과. 3번 안에 보낸 사람 기록을 넘으면 승, 못 넘으면 패로 확정
+//   POST { action:'claim', cid }  (로그인 필요)
+//        → 로그인하기 전에 이 기기(cid)로 보낸 도전장·한 도전을 내 회원 기록으로 옮기고, 승패가 난 결투는 결투장에 기록
 //   GET  ?share=도전장번호         → 짧은 주소(/d/번호)용 미리보기 페이지(카톡·카페에 붙였을 때 카드가 뜸) → 게임으로 이동
 //   GET  ?arena=1                  → 올림포스 결투장 서열(명성 순)            ※ 2단계 화면에서 사용
 //   GET  ?arena=카드첩주소         → 그 회원의 결투장 기록(로그인 회원만)      ※ 2단계 화면에서 사용
@@ -19,6 +21,7 @@
 //   arenam:{wid} (목록)  → 최근 대결 200개
 //   arenah:{wid1}:{wid2} → { wid: 이긴 횟수 }   (상대 전적)
 //   arenapair:{wid1}:{wid2}:{날짜} → 1  (같은 두 사람은 하루 1번만 명성에 반영)
+//   cidx:{cid} (해시)    → 도전장번호 → 's'(보냄) | 'p'(도전함)   (로그인 전 기록을 로그인 뒤 이어 붙이기용, 4일)
 //
 // 기록은 기기가 보낸 값을 믿는 구조라(오락실 전체의 알려진 한계), 아래만 확인한다.
 //   ① 게임 시작 확인표(score.js와 같은 방식)  ② 유령 길이 말이 되는지(한 칸 이동 거리·끝 위치와 기록 일치)
@@ -158,6 +161,7 @@ export default async function handler(req, res) {
       const b = req.body || {};
       if (b.action === 'create') return await create(req, res, b);
       if (b.action === 'play') return await play(req, res, b);
+      if (b.action === 'claim') return await claim(req, res, b);
       return res.status(400).json({ error: 'unknown action' });
     }
     if (req.method !== 'GET') return res.status(405).json({ error: 'method not allowed' });
@@ -201,6 +205,7 @@ async function create(req, res, b) {
   for (let i = 0; i < 3 && (await kv.exists(`duel:${id}`)); i++) id = newId();
   const d = { id, game: b.game, seed, dist, g: { x: b.g.x, y: b.g.y, a: b.g.a }, nick, msg, wid: me ? me.wid : null, cid, at: now, exp: now + TTL * 1000, from, card: null };
   await kv.set(`duel:${id}`, d, { ex: TTL });
+  if (!me) await markCid(cid, id, 's');
   return res.status(200).json({ id, exp: d.exp, nick, link: linkFor(d), short: `${SITE_ORIGIN}/d/${id}` });
 }
 
@@ -230,11 +235,60 @@ async function play(req, res, b) {
   if (me) { rec.nick = me.nick; rec.wid = me.wid; }
   rec.tries++; rec.best = Math.max(rec.best, dist); rec.at = Date.now();
   if (dist > d.dist) rec.result = 'win'; else if (rec.tries >= TRIES) rec.result = 'lose';
+  let arenaRes = null;
+  if (rec.result && !rec.arena) { arenaRes = await arenaRecord(d, rec).catch(() => null); if (arenaRes) rec.arena = 1; }
   await kv.hset(hk, { [key]: JSON.stringify(rec) });
   await kv.expire(hk, Math.max(60, Math.ceil((d.exp - Date.now()) / 1000)));
-  let arenaRes = null;
-  if (rec.result) arenaRes = await arenaRecord(d, rec).catch(() => null);
+  if (!me) await markCid(cid, d.id, 'p');
   return out({ practice: false, win: dist > d.dist, arena: arenaRes });
+}
+
+async function markCid(cid, id, role) {
+  const k = `cidx:${cid}`;
+  await kv.hset(k, { [id]: role });
+  await kv.expire(k, 4 * 24 * 3600);
+}
+
+// 로그인 뒤 이어 붙이기: 같은 기기(cid)로 로그인 전에 보낸 도전장과 한 도전을 내 회원 기록으로 옮긴다.
+// 이미 승패가 난 결투는 이때 결투장에 기록한다(상대도 회원일 때). 다른 기기에서 로그인하면 이어지지 않는다.
+async function claim(req, res, b) {
+  const me = await sessionUser(req).catch(() => null);
+  if (!me) return res.status(401).json({ error: 'login required' });
+  const cid = String(b.cid || '');
+  if (!CID_RE.test(cid)) return res.status(400).json({ error: 'bad cid' });
+  const idx = (await kv.hgetall(`cidx:${cid}`)) || {};
+  let moved = 0, recorded = 0, waiting = 0;
+  for (const [id, role] of Object.entries(idx)) {
+    const d = await getDuel(id);
+    if (!d) continue;
+    const hk = `duelplay:${d.id}`, left = Math.max(60, Math.ceil((d.exp - Date.now()) / 1000));
+    if (role === 's' && d.cid === cid && !d.wid) {
+      d.wid = me.wid; await kv.set(`duel:${d.id}`, d, { ex: left }); moved++;
+      // 내가 회원이 되기 전에 끝난, 회원과의 결투를 이제 기록
+      const plays = await getPlays(d.id);
+      for (const p of plays) {
+        if (!p.result || p.arena || !p.wid || p.wid === me.wid) continue;
+        const r = await arenaRecord(Object.assign({}, d, { nick: me.nick }), p).catch(() => null); // 결투장에는 회원 이름으로
+        if (r) { p.arena = 1; recorded++; const { k, ...rest } = p; await kv.hset(hk, { [k]: JSON.stringify(rest) }); }
+      }
+    }
+    if (role === 'p') {
+      const ck = `c:${cid}`, wk = `w:${me.wid}`;
+      const a = parse(await kv.hget(hk, ck));
+      if (!a) continue;
+      if (d.wid && d.wid === me.wid) { await kv.hdel(hk, ck); continue; } // 내 도전장에 손님으로 한 판은 연습으로 친다
+      const w = parse(await kv.hget(hk, wk));
+      const rec = w ? { nick: me.nick, wid: me.wid, tries: Math.min(TRIES, w.tries + a.tries), best: Math.max(w.best, a.best), at: Math.max(w.at, a.at),
+        result: (w.result === 'win' || a.result === 'win') ? 'win' : (w.result || a.result || (w.tries + a.tries >= TRIES ? 'lose' : null)), arena: w.arena || a.arena }
+        : Object.assign({}, a, { nick: me.nick, wid: me.wid });
+      if (rec.result && !rec.arena && d.wid) { const r = await arenaRecord(d, rec).catch(() => null); if (r) { rec.arena = 1; recorded++; } }
+      else if (rec.result && !d.wid) waiting++;
+      await kv.hdel(hk, ck); await kv.hset(hk, { [wk]: JSON.stringify(rec) }); await kv.expire(hk, left);
+      moved++;
+    }
+  }
+  await kv.del(`cidx:${cid}`);
+  return res.status(200).json({ ok: true, moved, recorded, waiting });
 }
 
 // 짧은 주소 /d/번호 — 카톡·카페에 주소를 붙였을 때 도전장 카드가 미리보기로 뜨고, 누르면 게임으로 간다
