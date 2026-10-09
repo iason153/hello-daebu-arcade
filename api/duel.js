@@ -85,9 +85,11 @@ function checkGhost(g, dist, G) {
   if (!g || !Array.isArray(g.x) || !Array.isArray(g.y) || !Array.isArray(g.a)) return '유령 기록 없음';
   const n = g.x.length;
   if (n < 2 || n > MAX_SAMPLES || g.y.length !== n || g.a.length !== n) return '유령 길이 오류';
+  // 10/9 고침: 먼치는 높이를 층×100으로 기록해서 200m(=20000)를 넘으면 막혔다 → 오르기 게임은 최대 기록까지 허용
+  const YMAX = G.kind === 'climb' ? (G.max + 5) * 100 : 20000;
   for (let i = 0; i < n; i++) {
     const x = g.x[i], y = g.y[i], a = g.a[i];
-    if (!Number.isInteger(x) || !Number.isInteger(y) || !Number.isInteger(a) || a < -1 || a > 100000 || Math.abs(y) > 20000) return '유령 값 오류';
+    if (!Number.isInteger(x) || !Number.isInteger(y) || !Number.isInteger(a) || a < -1 || a > 100000 || Math.abs(y) > YMAX) return '유령 값 오류';
     if (i && (Math.abs(x - g.x[i - 1]) > G.maxStep || Math.abs(y - g.y[i - 1]) > G.maxDy)) return '유령 이동 오류';
   }
   if (G.kind === 'climb') {
