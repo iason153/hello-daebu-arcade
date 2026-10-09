@@ -329,7 +329,7 @@ let now = performance.now();
 try { best = Number(localStorage.getItem('hm_best') || 0); } catch (e) { best = 0; }
 
 function reset() {
-  if (!ghost) mapSeed = newSeed(); mr = mulberry(mapSeed); rx = []; ry = []; ra = []; recNext = 0;
+  if (!ghost) mapSeed = newSeed(); mr = mulberry(mapSeed); rx = []; ry = []; ra = []; recNext = 0; recPrevEl = -1;
   floors = {}; lastSides = []; trav = {};
   ensureFloors(30);
   hero = { zone: '앞바다', floor: 0, side: 'L', anim: null, pos: 0, face: 'calm', standSince: now, js: 0, jv: 0, hs: 0, hv: 0, lastX: 0, skew: 0, splat: 0 };
@@ -1388,12 +1388,20 @@ syncSnd();
 // 기록: x = 화면 가로 위치, y = 높이(층×100), a = -1(먼치는 고리가 없음). 괴물·움직이는 발판의 타이밍은 판마다 다르다.
 // 시간 기준: 게임을 시작한 뒤 흐른 실제 시간(now - startedAt) — 화면을 1초에 몇 번 그리든 같은 속도로 따라간다.
 const REC_MS = 50, GA = 0.45, GC = '#8fe3ff';
-let recNext = 0;
+let recNext = 0, recPrevEl = -1, recPrevX = 0, recPrevY = 0;
 function recPush() { rx.push(Math.round(heroX)); ry.push(Math.round(hero.pos * 100)); ra.push(-1); }
 function recTick() { // frame()에서 매번 — 흐른 시간만큼 점을 채운다
   if (state !== 'play') return;
-  const el = now - startedAt;
-  while (recNext <= el && rx.length < 12000) { recPush(); recNext += REC_MS; }
+  const el = now - startedAt, cx = heroX, cy = hero.pos * 100;
+  if (recPrevEl < 0) { recPrevEl = el; recPrevX = cx; recPrevY = cy; }
+  // 10/9 고침: 화면이 잠깐 멈췄다 넘어가면(로켓 등) 한 칸에 크게 건너뛰어 서버가 '유령 이동 오류'로 막았다.
+  // 지난 화면과 이번 화면 사이를 시간 비율로 이어서 점을 채운다.
+  while (recNext <= el && rx.length < 12000) {
+    const u = el > recPrevEl ? Math.max(0, Math.min(1, (recNext - recPrevEl) / (el - recPrevEl))) : 1;
+    rx.push(Math.round(recPrevX + (cx - recPrevX) * u)); ry.push(Math.round(recPrevY + (cy - recPrevY) * u)); ra.push(-1);
+    recNext += REC_MS;
+  }
+  recPrevEl = el; recPrevX = cx; recPrevY = cy;
 }
 const gName = () => (ghost && ghost.name ? ghost.name : '유령');
 function ghostAt(elapsed) {
