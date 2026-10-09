@@ -34,7 +34,9 @@ import { sessionUser, cleanNick, SITE_ORIGIN } from './_session.js';
 import { sendPush, moveSubs } from './_push.js';
 
 const GAMES = {
-  hello_swing: { name: '헬로 스윙', path: '/games/hello-swing/', utm: 'swing_duel', unit: 'm', max: 5000, px: 40, maxStep: 90, maxDy: 240 },
+  hello_swing: { name: '헬로 스윙', path: '/games/hello-swing/', utm: 'swing_duel', unit: 'm', thumb: '/games/hello-swing/assets/thumb-helloswing-wide.jpg', max: 5000, px: 40, maxStep: 90, maxDy: 240 },
+  // 먼치: x = 화면 가로 위치(0~380), y = 높이×100. 기록(m) = 가장 높이 오른 층. 로켓(2.4초에 30층)도 담기게 한 점(0.05초)에 최대 4층
+  hello_munch: { name: '헬로 먼치', path: '/games/hello-munch/', utm: 'munch_duel', unit: 'm', thumb: '/games/hello-munch/assets/thumb-hellomunch-wide.jpg', max: 5000, kind: 'climb', maxStep: 400, maxDy: 420 },
 };
 // 정해진 한마디(아이들도 쓰므로 자유 입력은 받지 않는다) — duel.js(화면)와 순서가 같아야 한다
 export const PHRASES = ['헬로~! 한 판 붙자', '100m도 못 갈걸?', '이거 이기면 인정!', '지는 사람 아이스크림!', '내 유령 따라올 수 있어?',
@@ -48,7 +50,7 @@ const K = 40, START = 1000;     // 명성 점수(엘로 방식). 대표 결정 1
 
 // ---- 게임 시작 확인표: score.js 와 같은 비밀값·같은 형식(그 파일은 건드리지 않으려고 여기 따로 둔다)
 const TICKET_TTL = 6 * 3600 * 1000;
-const PACE = { hello_swing: { perSec: 30, base: 60 } };
+const PACE = { hello_swing: { perSec: 30, base: 60 }, hello_munch: { perSec: 8, base: 30 } }; // score.js와 같은 값
 function ticketSig(game, t) {
   const secret = process.env.SESSION_SECRET || '';
   if (!secret) return '';
@@ -87,6 +89,11 @@ function checkGhost(g, dist, G) {
     const x = g.x[i], y = g.y[i], a = g.a[i];
     if (!Number.isInteger(x) || !Number.isInteger(y) || !Number.isInteger(a) || a < -1 || a > 100000 || Math.abs(y) > 20000) return '유령 값 오류';
     if (i && (Math.abs(x - g.x[i - 1]) > G.maxStep || Math.abs(y - g.y[i - 1]) > G.maxDy)) return '유령 이동 오류';
+  }
+  if (G.kind === 'climb') {
+    if (g.x.some((x) => x < -50 || x > 450)) return '유령 값 오류';
+    if (Math.abs(Math.floor(Math.max(...g.y) / 100) - dist) > 1) return '유령 끝 위치 불일치';
+    return '';
   }
   if (Math.abs(Math.floor(Math.max(0, g.x[n - 1]) / G.px) - dist) > 2) return '유령 끝 위치 불일치';
   return '';
@@ -333,7 +340,7 @@ async function sharePage(res, id) {
     const G = GAMES[d.game];
     title = `🔥 ${d.nick}님의 ${G.name} 도전장 · ${d.dist}${G.unit}`;
     desc = `"${PHRASES[d.msg] || ''}" ${d.dist}${G.unit}를 넘으면 승리 · 단판 승부 · 로그인 없이 바로`;
-    if (d.card) img = d.card;
+    img = d.card || `${SITE_ORIGIN}${G.thumb}`;
     dest = `${SITE_ORIGIN}${G.path}?duel=${d.id}`;
   }
   res.setHeader('Content-Type', 'text/html; charset=utf-8');

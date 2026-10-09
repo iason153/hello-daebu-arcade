@@ -209,7 +209,7 @@
 <script>
 (function () {
   'use strict';
-  var GAME = { hello_swing: { name: '헬로 스윙', unit: 'm', url: '/games/hello-swing/' } };
+  var GAME = { hello_swing: { name: '헬로 스윙', unit: 'm', url: '/games/hello-swing/' }, hello_munch: { name: '헬로 먼치', unit: 'm', url: '/games/hello-munch/' } };
   var TIERS = [{ name: '견습생', min: 0, games: 0 }, { name: '전사', min: 980, games: 3 }, { name: '용사', min: 1080, games: 3 }, { name: '영웅', min: 1180, games: 10 }, { name: '반신', min: 1300, games: 20 }];
   var ME = null;
   var $ = function (id) { return document.getElementById(id); };
@@ -259,7 +259,7 @@
     if (fo.rival) tag('라이벌', personBtn(fo.rival.wid, fo.rival.nick));
     if (fo.nemesis) tag('천적', personBtn(fo.nemesis.wid, fo.nemesis.nick));
     if (tags.children.length) c.appendChild(tags);
-    var go = el('a', 'go', m.w + m.l ? '📨 새 도전장 보내러 가기' : '📨 첫 도전장 보내러 가기'); go.href = '/games/hello-swing/'; c.appendChild(go);
+    var go = el('a', 'go', m.w + m.l ? '📨 새 도전장 보내러 가기' : '📨 첫 도전장 보내러 가기'); go.href = '/'; c.appendChild(go);
   }
   function renderLadder(list, me) {
     var L = $('ladder'); L.textContent = ''; $('ladN').textContent = list.length ? list.length + '명' : '';

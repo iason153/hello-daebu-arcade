@@ -261,7 +261,7 @@
     else { // 그림을 못 불러왔을 때의 임시 배경(같은 배치)
       var g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#2c6fd6'); g.addColorStop(1, '#0a1530'); c.fillStyle = g; c.fillRect(0, 0, W, H);
       c.fillStyle = '#f1dfb8'; rr(c, 470, 20, 700, 380, 18); c.fill();
-      if (ok(hero)) { c.save(); c.translate(220, 430); c.rotate(-0.12); c.scale(5, 5); c.drawImage(hero, -27.7, -26.8, 56, 47.25); c.restore(); }
+      if (ok(hero)) { var hw = 300, hh = hw * hero.naturalHeight / hero.naturalWidth; c.save(); c.translate(220, 420); c.rotate(-0.12); c.drawImage(hero, -hw / 2, -hh / 2, hw, hh); c.restore(); }
     }
     // 낙관(10/8 대표: 더 크게) — 글자보다 먼저 찍어서 기록 숫자가 가려지지 않게
     if (ok(seal)) { c.save(); c.translate(1066, 300); c.rotate(0.2); c.globalAlpha = 0.9; c.drawImage(seal, -122, -122, 244, 244); c.restore(); } // 낙관(10/8 대표: 더 크게)

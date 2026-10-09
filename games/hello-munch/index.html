@@ -58,6 +58,8 @@
   #overlay .final { font-family: var(--ui); font-size: 56px; color: #fff; margin: 2px 0 0; text-shadow: 0 0 18px rgba(255,200,87,.6); }
   #overlay .sub { font-size: 13px; color: #c9d3f2; margin: 4px 0 16px; line-height: 1.6; }
   #overlay button { font-family: var(--body); cursor: pointer; }
+  #duelBtn { width: 100%; margin-top: 10px; background: #7fd3ff; border: none; border-radius: 999px; padding: 12px 0; font-size: 16px; font-weight: 700; color: #06243d; box-shadow: 0 4px 0 #3c8fbf; }
+  #duelBtn:active { transform: translateY(2px); box-shadow: 0 2px 0 #3c8fbf; }
   #retryBtn { width: 100%; background: var(--gold); border: none; border-radius: 999px; padding: 13px 0; font-size: 18px; font-weight: 700; color: #2a1c00; box-shadow: 0 4px 0 #b8862b; }
   #retryBtn:active { transform: translateY(2px); box-shadow: 0 2px 0 #b8862b; }
   #shareBtn { width: 100%; margin-top: 10px; background: #2a2f45; color: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 11px 0; font-size: 14px; font-weight: 700; }
@@ -83,7 +85,9 @@
       <h1 id="ovTitle">덥석!</h1>
       <div class="final" id="ovScore">0m</div>
       <div class="sub" id="ovSub"></div>
+      <div id="duelStat" class="hd-stat" role="status" hidden></div>
       <button id="retryBtn" type="button">다시 하기</button>
+      <button id="duelBtn" type="button">📨 친구에게 도전장 보내기</button>
       <button id="shareBtn" type="button">📤 친구에게 자랑하기!</button>
       <div id="rankPanel">
         <div class="lbl">🏆 이벤트 랭킹 등록</div>
@@ -103,6 +107,8 @@
 <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.8.1/kakao.min.js" crossorigin="anonymous"></script>
 <script src="/fair.js" data-game="hello_munch"></script>
 <script src="/member.js"></script>
+<script src="/duel.js"></script>
+<script src="/duel-inbox.js"></script>
 <script>
 try { if (window.Kakao && !window.Kakao.isInitialized()) window.Kakao.init('3994a3bda3b8146e709683fdb350c9cc'); } catch (e) {}
 (() => {
@@ -151,8 +157,14 @@ const isRest = (f) => ZONES.some(z => z.from > 0 && f >= z.from && f < z.from + 
 // ---------------------------------------------------------------- 발판 생성
 let floors, lastSides;
 function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+// [2026-10-09 도전장] 발판 배치는 "맵 번호"에서만 나온다(같은 번호 = 같은 발판). 평소에는 판마다 새 번호라 지금과 똑같이 매번 다른 맵.
+// 규칙·확률(발판 종류 비율, 양쪽 발판 확률, 부표 등)은 하나도 바꾸지 않고, 주사위만 맵 번호용 주사위(mr)로 바꿨다.
+function mulberry(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let x = Math.imul(a ^ a >>> 15, 1 | a); x = x + Math.imul(x ^ x >>> 7, 61 | x) ^ x; return ((x ^ x >>> 14) >>> 0) / 4294967296; }; }
+const newSeed = () => ((Math.random() * 2147483646) | 0) + 1;
+let mapSeed = newSeed(), mr = mulberry(mapSeed), rx = [], ry = [], ra = [], ghost = null, lastRun = null;
+function pickM(arr) { return arr[Math.floor(mr() * arr.length)]; }
 function makeLedge(f, allowHazard) {
-  const r = Math.random();
+  const r = mr();
   let type = 'rock';
   // 새 요소 등장: 60m 금 간 통나무 · 90m 미끄러운 슬라임(150m부터 얼음) · 210m 갈매기 · 270m 움직이는 발판 · 400m부터 비율 상승
   const hard = f >= 400 ? 1.25 : 1;
@@ -160,9 +172,9 @@ function makeLedge(f, allowHazard) {
   else if (f >= 210 && allowHazard && r < .28 * hard) type = 'gull';
   else if (f >= 90 && r < (f < 150 ? .30 : .40) * hard) type = 'weed';
   else if (f >= 60 && r < .58 * hard) type = 'crack';
-  const l = { type, broken: false, phase: Math.random() * Math.PI * 2 };
+  const l = { type, broken: false, phase: mr() * Math.PI * 2 };
   // 황금조개: 위험한 발판 위에 더 자주 → 욕심 vs 안전
-  if (f >= 5 && Math.random() < (type === 'rock' ? .06 : .26)) l.item = 'shell';
+  if (f >= 5 && mr() < (type === 'rock' ? .06 : .26)) l.item = 'shell';
   return l;
 }
 function genFloor(f) {
@@ -172,12 +184,12 @@ function genFloor(f) {
   const forced = floors[f] && floors[f].force;
   const bothP = Math.max(.18, .62 - f * .0016);   // 초반엔 양쪽 발판이 많아 여유 → 점점 한쪽만
   let sides;
-  if (Math.random() < bothP) sides = ['L', 'R'];
+  if (mr() < bothP) sides = ['L', 'R'];
   else {
-    let s = pick(['L', 'R']);
+    let s = pickM(['L', 'R']);
     // 같은 쪽 3층 연속 금지 → 좌우를 계속 오가게
     // (150m부터는 가끔 같은 쪽 3연속 허용 → 읽고 누르는 실력)
-    if (lastSides.length >= 2 && lastSides.slice(-2).every(x => x === s) && !(f >= 150 && Math.random() < .35)) s = s === 'L' ? 'R' : 'L';
+    if (lastSides.length >= 2 && lastSides.slice(-2).every(x => x === s) && !(f >= 150 && mr() < .35)) s = s === 'L' ? 'R' : 'L';
     sides = [s];
   }
   lastSides.push(sides.length === 1 ? sides[0] : 'B');
@@ -188,7 +200,7 @@ function genFloor(f) {
   // 한쪽뿐이면 그 발판은 반드시 밟을 수 있는 것
   if (sides.length === 1 && fl[sides[0]].type === 'gull') fl[sides[0]].type = 'rock';
   // 부표(3층 위로 튕김) — 착지할 3층 위에 바위 발판을 미리 확보
-  if (f >= 110 && sides.length === 1 && Math.random() < .07 && ![1, 2, 3].some(k => isRest(f + k))) {
+  if (f >= 110 && sides.length === 1 && mr() < .07 && ![1, 2, 3].some(k => isRest(f + k))) {
     fl[sides[0]].type = 'buoy';
     floors[f + 3] = { L: { type: 'rock', broken: false }, R: null, reserved: true };
   }
@@ -317,6 +329,7 @@ let now = performance.now();
 try { best = Number(localStorage.getItem('hm_best') || 0); } catch (e) { best = 0; }
 
 function reset() {
+  if (!ghost) mapSeed = newSeed(); mr = mulberry(mapSeed); rx = []; ry = []; ra = []; recNext = 0;
   floors = {}; lastSides = []; trav = {};
   ensureFloors(30);
   hero = { zone: '앞바다', floor: 0, side: 'L', anim: null, pos: 0, face: 'calm', standSince: now, js: 0, jv: 0, hs: 0, hv: 0, lastX: 0, skew: 0, splat: 0 };
@@ -570,11 +583,14 @@ function earnCard(key) {
 }
 let overAt = 0;
 function gameOver() {
+  recPush(); // 도전장: 마지막 위치
   earnCard('m_chomp'); // [카드] 처음 잡아먹히면 받는 카드
   helloIdle(false); rocketLoop(false);
   state = 'over'; overAt = now; shake = 22; sfx.chomp(); setTimeout(() => sfx.roar(), 350); shark.chompAt = now;
   spawnDebris(W / 2, HERO_Y, 26);
   track('game_over', { score, shells: shellsTotal });
+  lastRun = { seed: mapSeed, dist: score, g: { x: rx, y: ry, a: ra } }; // 도전장 보내기에 쓸 이번 판
+  try { if (window.HelloDuel) HelloDuel.finish(score); } catch (e) {}
   setTimeout(() => { showOverlay(); try { if (window.HelloCards) HelloCards.flush({ game: 'hello_munch', path: '/games/hello-munch/', getScore: () => score, soundOn: () => !muted }); } catch (e) {} }, 1300);
   if (score > best) { best = score; try { localStorage.setItem('hm_best', String(best)); } catch (e) {} }
 }
@@ -873,8 +889,8 @@ function draw() {
   drawParticles(false);
 
   drawRocketBack();
-  if (rocket) { drawShark(); drawRocketFront(); drawHero(); }   // 로켓 땐 헬로가 맨 앞
-  else { drawHero(); drawShark(); }                            // 평소엔 괴물 입이 헬로를 덮침
+  if (rocket) { drawShark(); drawRocketFront(); drawGhost(); drawHero(); }   // 로켓 땐 헬로가 맨 앞
+  else { drawGhost(); drawHero(); drawShark(); }               // 평소엔 괴물 입이 헬로를 덮침(유령은 내 헬로 뒤)
 
   drawGods();
   // 괴물이 화면 밖(아래)에 있으면: 바닥이 붉게 달아오르고 거리 표시
@@ -1339,12 +1355,14 @@ function drawHud(dd) {
   ctx.globalAlpha = 1;
 
   if (state === 'ready') {
+    if (ghost) { ctx.restore(); return; } // 도전장으로 열었으면 시작 안내는 도전 첫 화면(duel.js)이 대신한다
     panel('헬로 먼치', ['우주괴물이 올라와요! 위로 도망치세요', '화면 왼쪽 탭 → 왼쪽 윗발판', '화면 오른쪽 탭 → 오른쪽 윗발판', '황금조개 10개 모으면 헬로 로켓!'], assetsLoaded() ? '아무 데나 탭해서 시작' : '불러오는 중...');
     // 좌우 구분선
     ctx.setLineDash([6, 8]); ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(W / 2, 560); ctx.lineTo(W / 2, 800); ctx.stroke(); ctx.setLineDash([]);
   }
   ctx.restore();
+  drawGhostHud();
 }
 function panel(title, lines, cta) {
   const pw = 300, ph = 150 + lines.length * 26, px = (W - pw) / 2, py = 150;
@@ -1365,12 +1383,114 @@ sndBtn.addEventListener('click', (e) => {
 });
 syncSnd();
 
+// ---------------------------------------------------------------- 도전장 유령(2026-10-09, 헬로 스윙과 같은 공용 도전장 duel.js 사용)
+// 유령 = 도전장을 보낸 사람이 지나간 길. 같은 맵 번호(mapSeed)로 같은 발판이 나오고, 저장된 길(게임 시간 0.05초마다 한 점)을 따라간다.
+// 기록: x = 화면 가로 위치, y = 높이(층×100), a = -1(먼치는 고리가 없음). 괴물·움직이는 발판의 타이밍은 판마다 다르다.
+// 시간 기준: 게임을 시작한 뒤 흐른 실제 시간(now - startedAt) — 화면을 1초에 몇 번 그리든 같은 속도로 따라간다.
+const REC_MS = 50, GA = 0.45, GC = '#8fe3ff';
+let recNext = 0;
+function recPush() { rx.push(Math.round(heroX)); ry.push(Math.round(hero.pos * 100)); ra.push(-1); }
+function recTick() { // frame()에서 매번 — 흐른 시간만큼 점을 채운다
+  if (state !== 'play') return;
+  const el = now - startedAt;
+  while (recNext <= el && rx.length < 12000) { recPush(); recNext += REC_MS; }
+}
+const gName = () => (ghost && ghost.name ? ghost.name : '유령');
+function ghostAt(elapsed) {
+  if (!ghost) return null;
+  const n = ghost.x.length, f = elapsed / REC_MS, i = Math.floor(f);
+  if (i >= n - 1) return null;
+  if (i < 0) return { x: ghost.x[0], pos: ghost.y[0] / 100 };
+  const u = f - i;
+  return { x: ghost.x[i] + (ghost.x[i + 1] - ghost.x[i]) * u, pos: (ghost.y[i] + (ghost.y[i + 1] - ghost.y[i]) * u) / 100 };
+}
+const gElapsed = () => (state === 'play' || state === 'over') && startedAt ? (state === 'over' ? overAt : now) - startedAt : 0;
+function ghostBubble(s, x, y) {
+  ctx.font = '800 14px "Noto Sans KR", sans-serif'; const w = ctx.measureText(s).width + 20, h = 28;
+  ctx.fillStyle = '#fff'; ctx.strokeStyle = '#22364d'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.roundRect(x - w / 2, y - h, w, h, 12); ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x - 7, y - 1); ctx.lineTo(x, y + 9); ctx.lineTo(x + 7, y - 1); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.fillRect(x - 6, y - 4, 12, 4);
+  ctx.fillStyle = '#22364d'; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic'; ctx.fillText(s, x, y - 9);
+}
+function ghostTag(s, x, y, color) {
+  ctx.font = '800 13px "Noto Sans KR", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+  ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(10,20,50,.7)'; ctx.strokeText(s, x, y); ctx.fillStyle = color || '#e6f6ff'; ctx.fillText(s, x, y);
+}
+// 반투명 헬로(그림 그대로 + 눈) — 유령임을 알 수 있게 45%만 보이게
+function drawGhostHero(x, pos, wave) {
+  const HS = 66, key = 'hello_round', im = IMG[key];
+  ctx.save(); ctx.globalAlpha = GA; ctx.translate(x, screenY(pos) + 4);
+  if (wave) ctx.rotate(Math.sin(now / 160) * .25);
+  if (ready(im)) ctx.drawImage(im, -HS / 2, -HS, HS, HS);
+  drawHelloEyes(key, HS, false);
+  ctx.restore();
+}
+function drawGhost() { // 발판·헬로와 같은 세계 좌표에서(헬로보다 먼저 그려서 내 헬로가 위에)
+  if (!ghost || state === 'ready') return;
+  const fy = screenY(ghost.dist);
+  if (fy > -40 && fy < H + 40) { // 유령이 끝난 높이 = 넘어야 할 기록(깃발 줄)
+    ctx.save(); ctx.setLineDash([10, 8]); ctx.strokeStyle = 'rgba(255,90,90,.85)'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(WALL, fy); ctx.lineTo(W - WALL, fy); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = '#ff5a5a'; ctx.strokeStyle = '#22364d'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(W / 2, fy); ctx.lineTo(W / 2, fy - 46); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(W / 2, fy - 46); ctx.lineTo(W / 2 + 34, fy - 37); ctx.lineTo(W / 2, fy - 28); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ghostTag('🚩 ' + gName() + ' ' + ghost.dist + 'm', W / 2, fy + 20, '#fff');
+    ctx.restore();
+  }
+  const G = ghostAt(gElapsed());
+  if (!G) { // 다 간 유령은 깃발 위에 떠서 손을 흔들며 기다린다
+    const wy = ghost.dist + .7 + Math.sin(now / 500) * .08;
+    if (screenY(wy) > -40 && screenY(wy) < H + 40) { drawGhostHero(W / 2, wy, true); if (state === 'play' && hero.pos > ghost.dist - 6 && hero.pos < ghost.dist) ghostBubble('헬로~!', W / 2, screenY(wy) - 72); }
+    return;
+  }
+  const sy = screenY(G.pos);
+  if (sy < -60 || sy > H + 60) return;
+  drawGhostHero(G.x, G.pos, false);
+  ghostTag(gName(), G.x, sy - 70);
+  if (ghost.msg && gElapsed() < 3500) ghostBubble(ghost.msg, G.x, sy - 86);
+}
+function drawGhostHud() { // 화면 좌표(드는 곳: drawHud 끝)
+  if (!ghost || state === 'ready') return;
+  const G = ghostAt(gElapsed()), me = hero.pos;
+  // 위쪽 한 줄: 앞뒤 거리
+  ctx.save(); ctx.textBaseline = 'alphabetic';
+  if (G) { const d = Math.round(G.pos - me); ghostTag(d > 0 ? gName() + ' ' + d + 'm 위 ▲' : d < 0 ? '▼ ' + gName() + ' ' + (-d) + 'm 아래' : gName() + '와 나란히!', W / 2 + 40, 34, d > 0 ? '#ffb3b3' : d < 0 ? '#9dffb0' : '#fff'); }
+  else { const d = ghost.dist - score; ghostTag(d > 0 ? '🚩 깃발까지 ' + d + 'm' : '🚩 깃발을 넘었다! +' + (-d) + 'm', W / 2 + 40, 34, d > 0 ? '#ffe08a' : '#9dffb0'); }
+  // 경주 진행바(세로, 왼쪽 벽 위): 아래 0m → 위 깃발. 나(노랑)·유령(하늘색)
+  const x0 = 15, yTop = 130, yBot = 600, tot = Math.max(ghost.dist, score) * 1.06 + 3, Y = (m) => yBot - (yBot - yTop) * Math.max(0, Math.min(1, m / tot));
+  ctx.fillStyle = 'rgba(10,20,50,.55)'; ctx.beginPath(); ctx.roundRect(x0 - 7, yTop - 8, 14, yBot - yTop + 16, 7); ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,.28)'; ctx.fillRect(x0 - 2, yTop, 4, yBot - yTop);
+  ctx.fillStyle = '#ffd23c'; ctx.fillRect(x0 - 2, Y(me), 4, yBot - Y(me));
+  const fyb = Y(ghost.dist); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x0 - 7, fyb); ctx.lineTo(x0 + 13, fyb); ctx.stroke();
+  ctx.fillStyle = '#ff5a5a'; ctx.beginPath(); ctx.moveTo(x0 + 13, fyb); ctx.lineTo(x0 + 13, fyb - 11); ctx.lineTo(x0 + 23, fyb - 6); ctx.closePath(); ctx.fill();
+  const gm = G ? G.pos : ghost.dist;
+  ctx.fillStyle = GC; ctx.strokeStyle = '#22364d'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x0, Y(gm), 7, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#ffd23c'; ctx.beginPath(); ctx.arc(x0, Y(me), 8, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  // 화면 밖 유령: 위·아래 가장자리에 보낸 사람 닉네임 이름표 + 화살표 + 거리
+  if (G) {
+    const sy = screenY(G.pos), up = sy < 70, down = sy > H - 70;
+    if (up || down) {
+      let nm = gName(), fs = 14; ctx.font = '800 ' + fs + 'px "Noto Sans KR", sans-serif';
+      while (fs > 10 && ctx.measureText(nm).width > 90) { fs--; ctx.font = '800 ' + fs + 'px "Noto Sans KR", sans-serif'; }
+      if (ctx.measureText(nm).width > 90) { while (nm.length > 1 && ctx.measureText(nm + '…').width > 90) nm = nm.slice(0, -1); nm += '…'; }
+      const bw = Math.max(58, ctx.measureText(nm).width + 22), bh = 30, cx = Math.max(WALL + bw / 2 + 4, Math.min(W - WALL - bw / 2 - 30, G.x)), cy = up ? 150 : H - 120;
+      ctx.fillStyle = 'rgba(20,40,80,.85)'; ctx.strokeStyle = GC; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.roundRect(cx - bw / 2, cy - bh / 2, bw, bh, 15); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = GC; ctx.beginPath();
+      if (up) { ctx.moveTo(cx, cy - bh / 2 - 12); ctx.lineTo(cx - 8, cy - bh / 2 - 3); ctx.lineTo(cx + 8, cy - bh / 2 - 3); }
+      else { ctx.moveTo(cx, cy + bh / 2 + 12); ctx.lineTo(cx - 8, cy + bh / 2 + 3); ctx.lineTo(cx + 8, cy + bh / 2 + 3); }
+      ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.fillText(nm, cx, cy + fs * .36);
+      ghostTag(Math.abs(Math.round(G.pos - me)) + 'm ' + (up ? '위' : '아래'), cx, up ? cy + bh / 2 + 16 : cy - bh / 2 - 6, '#fff');
+    }
+  }
+  ctx.restore();
+}
+
 // ---------------------------------------------------------------- 루프
 let last = performance.now();
 function frame(t) {
   now = t;
   const dt = Math.min(.05, (t - last) / 1000); last = t;
-  update(dt); draw();
+  update(dt); draw(); recTick();
   requestAnimationFrame(frame);
 }
 
@@ -1388,6 +1508,8 @@ function showOverlay() {
   document.getElementById('ovSub').textContent = `${zoneAt(score).name}까지 도망쳤어요 · 황금조개 ${shellsTotal}개\n최고 기록 ${best}m`;
   document.getElementById('ovSub').style.whiteSpace = 'pre-line';
   document.getElementById('rankMsg').textContent = '';
+  document.getElementById('ovTitle').textContent = '덥석!'; document.getElementById('retryBtn').textContent = '다시 하기';
+  try { if (window.HelloDuel) HelloDuel.render(); } catch (e) {}
   document.getElementById('overlay').hidden = false;
   document.getElementById('retryBtn').focus({ preventScroll: true });
 }
@@ -1493,6 +1615,15 @@ document.getElementById('shareBtn').addEventListener('click', async (e) => {
     } finally { btn.disabled = false; btn.textContent = label; }
   }, 'image/png');
 });
+// 도전장(공용 /duel.js) — 받은 사람 첫 화면, 보내기 창, 결과 문구
+try { if (window.HelloDuel) HelloDuel.init({ game: 'hello_munch', name: '헬로 먼치', unit: 'm',
+  bgSrc: '/assets/duel/duel-bg-munch.webp', heroSrc: 'assets/hello_round.webp', fallbackImg: '/games/hello-munch/assets/thumb-hellomunch-wide.jpg',
+  getRun: () => lastRun,
+  onDuel: (d) => { ghost = { seed: d.seed, dist: d.dist, x: d.g.x, y: d.g.y, a: d.g.a, name: d.nick, msg: d.phrase }; mapSeed = d.seed; document.getElementById('overlay').hidden = true; reset(); },
+  onStart: () => { audio(); document.getElementById('overlay').hidden = true; reset(); if (assetsLoaded()) { state = 'play'; startedAt = now; track('game_start'); } },
+  onLeave: () => { ghost = null; document.getElementById('overlay').hidden = true; reset(); },
+  track: (n, p) => track(n, p), statEl: document.getElementById('duelStat'), titleEl: document.getElementById('ovTitle'), subEl: document.getElementById('ovSub'),
+  retryBtn: document.getElementById('retryBtn'), sendBtn: document.getElementById('duelBtn') }); } catch (e) {}
 reset(); fit(); requestAnimationFrame(frame);
 })();
 </script>
