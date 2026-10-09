@@ -264,7 +264,9 @@
       if (ok(hero)) { var hw = 300, hh = hw * hero.naturalHeight / hero.naturalWidth; c.save(); c.translate(220, 420); c.rotate(-0.12); c.drawImage(hero, -hw / 2, -hh / 2, hw, hh); c.restore(); }
     }
     // 낙관(10/8 대표: 더 크게) — 글자보다 먼저 찍어서 기록 숫자가 가려지지 않게
-    if (ok(seal)) { c.save(); c.translate(1066, 300); c.rotate(0.2); c.globalAlpha = 0.9; c.drawImage(seal, -122, -122, 244, 244); c.restore(); } // 낙관(10/8 대표: 더 크게)
+    // 게임마다 낙관 크기·자리를 따로 줄 수 있다(CFG.seal = {x, y, size}). 없으면 스윙과 같은 244px
+    var SL = CFG.seal || { x: 1066, y: 300, size: 244 };
+    if (ok(seal)) { c.save(); c.translate(SL.x, SL.y); c.rotate(0.2); c.globalAlpha = 0.9; c.drawImage(seal, -SL.size / 2, -SL.size / 2, SL.size, SL.size); c.restore(); }
     c.textBaseline = 'alphabetic'; c.textAlign = 'center'; c.lineJoin = 'round';
     // 보낸 사람
     var nm = o.nick + '님의 도전장'; fit(c, nm, '900 $px ' + FONT, 58, 500); outline(c, nm, CX, 100, INK, PAPER, 7);

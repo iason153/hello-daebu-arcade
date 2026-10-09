@@ -1617,7 +1617,8 @@ document.getElementById('shareBtn').addEventListener('click', async (e) => {
 });
 // 도전장(공용 /duel.js) — 받은 사람 첫 화면, 보내기 창, 결과 문구
 try { if (window.HelloDuel) HelloDuel.init({ game: 'hello_munch', name: '헬로 먼치', unit: 'm',
-  bgSrc: '/assets/duel/duel-bg-munch.webp', heroSrc: 'assets/hello_round.webp', fallbackImg: '/games/hello-munch/assets/thumb-hellomunch-wide.jpg',
+  bgSrc: '/assets/duel/duel-bg-munch.webp', seal: { x: 1030, y: 345, size: 320 }, // 10/9 대표: 먼치 낙관은 더 크게(종이 밖으로 나가도 됨)
+   heroSrc: 'assets/hello_round.webp', fallbackImg: '/games/hello-munch/assets/thumb-hellomunch-wide.jpg',
   getRun: () => lastRun,
   onDuel: (d) => { ghost = { seed: d.seed, dist: d.dist, x: d.g.x, y: d.g.y, a: d.g.a, name: d.nick, msg: d.phrase }; mapSeed = d.seed; document.getElementById('overlay').hidden = true; reset(); },
   onStart: () => { audio(); document.getElementById('overlay').hidden = true; reset(); if (assetsLoaded()) { state = 'play'; startedAt = now; track('game_start'); } },
