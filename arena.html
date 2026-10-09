@@ -351,6 +351,7 @@
         renderMe(L.mine, L.myNick || a.nick, (P && P.recent) || []);
         renderLadder(L.ladder || [], L.me);
         renderLog($('myLog'), (P && P.recent) || [], '아직 결투가 없어요. 게임을 한 판 하고 로그인한 친구에게 도전장을 보내 보세요!');
+        if (window.HelloPush && HelloPush.state() !== 'on') { var pb = HelloPush.box(); $('meCard').appendChild(pb); }
         if (window.HelloInbox) HelloInbox.load().then(function (r) {
           if (!r.items.length) return;
           var L2 = $('inbList'); r.items.slice(0, 10).forEach(function (x) { L2.appendChild(HelloInbox.itemEl(x, r.fresh.indexOf(x) >= 0, true)); });

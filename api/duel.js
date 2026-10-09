@@ -31,6 +31,7 @@
 import { kv } from '@vercel/kv';
 import { randomBytes, createHmac, timingSafeEqual } from 'crypto';
 import { sessionUser, cleanNick, SITE_ORIGIN } from './_session.js';
+import { sendPush, moveSubs } from './_push.js';
 
 const GAMES = {
   hello_swing: { name: '헬로 스윙', path: '/games/hello-swing/', utm: 'swing_duel', unit: 'm', max: 5000, px: 40, maxStep: 90, maxDy: 240 },
@@ -257,6 +258,13 @@ async function pushInbox(d, rec, arenaRes) {
   await kv.lpush(k, JSON.stringify(item));
   await kv.ltrim(k, 0, 29);
   await kv.expire(k, 14 * 24 * 3600);
+  // 휴대폰 알림(켜 둔 사람만). 받는 열쇠는 소식함과 같다(inbox:w:… → push:w:…)
+  const G = GAMES[d.game] || { name: '', unit: 'm' }, dr = item.dr != null ? ` · 명성 ${item.dr > 0 ? '+' : ''}${item.dr}` : '';
+  await sendPush(k.slice(6), {
+    title: item.r === 'w' ? '🛡️ 내 도전장을 지켰어요!' : '⚔️ 내 도전장이 깨졌어요!',
+    body: `${rec.nick}님이 응전했어요 · 내 ${d.dist}${G.unit} / ${rec.nick} ${rec.best}${G.unit}${dr}` + (item.r === 'l' ? ' · 반격하러 가요!' : ''),
+    url: '/?utm_source=push&utm_medium=notification&utm_campaign=duel_result', tag: 'duel-' + d.id,
+  }).catch(() => 0);
 }
 async function inbox(req, res, q) {
   const me = await sessionUser(req).catch(() => null);
@@ -312,6 +320,7 @@ async function claim(req, res, b) {
     }
   }
   await kv.del(`cidx:${cid}`);
+  await moveSubs(`c:${cid}`, `w:${me.wid}`).catch(() => {}); // 로그인 전에 켠 휴대폰 알림도 회원에게로
   return res.status(200).json({ ok: true, moved, recorded, waiting });
 }
 

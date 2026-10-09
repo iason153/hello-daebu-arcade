@@ -74,3 +74,21 @@ self.addEventListener('fetch', (event) => {
     );
   }
 });
+
+// ---- 휴대폰 알림(웹 푸시, 10/9) — 내 도전장의 승부가 나면 서버(api/_push.js)가 보낸다
+self.addEventListener('push', (event) => {
+  let d = {};
+  try { d = event.data ? event.data.json() : {}; } catch (e) { d = { body: event.data ? event.data.text() : '' }; }
+  event.waitUntil(self.registration.showNotification(d.title || '헬로 대부도 오락실', {
+    body: d.body || '', icon: '/icons/icon-192.png', badge: '/icons/badge-96.png',
+    tag: d.tag || 'arcade', renotify: true, data: { url: d.url || '/' },
+  }));
+});
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const url = new URL((event.notification.data && event.notification.data.url) || '/', self.location.origin).href;
+  event.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
+    for (const c of list) { if (c.url.startsWith(self.location.origin) && 'focus' in c) { return c.focus().then(() => (c.navigate ? c.navigate(url) : null)); } }
+    return self.clients.openWindow(url);
+  }));
+});

@@ -3,6 +3,7 @@
   "private": true,
   "dependencies": {
     "@vercel/kv": "^2.0.0",
-    "@vercel/blob": "latest"
+    "@vercel/blob": "latest",
+    "web-push": "^3.6.7"
   }
 }

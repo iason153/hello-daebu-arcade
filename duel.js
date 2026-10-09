@@ -375,6 +375,7 @@
         var fail = function () { ui.msg.textContent = '아래 주소를 길게 눌러 복사해 주세요: ' + r.short; };
         if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(title + '\n' + desc + '\n' + r.short).then(done, fail); else fail();
       }
+      if (window.HelloPush && !ui.pb && HelloPush.state() !== 'on') { ui.pb = HelloPush.box(); ui.msg.parentNode.insertBefore(ui.pb, ui.msg.nextSibling); }
       if (!auth.loggedIn && !ui.lb) { ui.lb = loginBox('로그인하면 이 도전장의 결과가 결투장에 남아요', '보낸 뒤에 로그인해도 이 폰이면 이어서 기록돼요', '카카오로 로그인', 'send', false); ui.msg.parentNode.insertBefore(ui.lb, ui.msg.nextSibling); }
     }).catch(function (e) { ui.msg.textContent = (e && e.message) || '도전장을 만들지 못했어요. 다시 시도해 주세요.'; })
       .then(function () { ui.kb.disabled = ui.cb.disabled = false; });
