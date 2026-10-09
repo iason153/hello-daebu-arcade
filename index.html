@@ -212,6 +212,11 @@ img{ max-width:100%; display:block; }
 .news-box li b{ color:var(--gold); }
 .news-box button{ margin-top:14px; width:100%; padding:11px; border-radius:999px; border:0; background:var(--gold); color:#2a1c00; font:inherit; font-weight:700; cursor:pointer; }
 .topbar :focus-visible{ outline:2px solid var(--gold); outline-offset:2px; }
+/* 10/9 내 도전장 결과 소식(상단 바 아래 띠) */
+.duel-news{ max-width:640px; margin:10px auto 0; padding:0 16px; }
+.duel-news .dn-head{ width:100%; display:flex; align-items:center; gap:8px; justify-content:space-between; background:linear-gradient(90deg, rgba(255,200,87,.22), rgba(255,107,74,.16)); border:1.5px solid var(--gold); color:var(--cream); border-radius:14px; padding:10px 12px; font:inherit; font-weight:700; font-size:13.5px; cursor:pointer; text-align:left; }
+.duel-news .dn-t{ min-width:0; word-break:keep-all; } .duel-news .dn-more{ color:var(--gold); white-space:nowrap; font-size:12px; }
+.duel-news .dn-list{ display:grid; gap:6px; margin-top:8px; }
 /* 10/8 결투장 칸 추가로 메뉴가 5칸 — 좁은 폰에서 글자가 두 줄로 꺾이지 않게 */
 .topbar .nav-links{ gap:6px; }
 .topbar .nav-links a, .topbar .nav-links button{ white-space:nowrap; font-size:12.5px; padding:8px 2px; }
@@ -303,11 +308,15 @@ footer{
   <div class="topbar-in nav-links">
     <a href="games/hello-tower/ranking.html">🏆 랭킹</a>
     <a href="hall-of-fame.html">🏛️ 신전</a>
-    <a href="arena.html">⚔️ 결투장</a>
+    <a href="arena.html" id="arenaLink" style="position:relative">⚔️ 결투장<span class="n" id="duelN" hidden>N</span></a>
     <a href="cardbook.html">🎴 카드첩</a>
     <button type="button" id="newsBtn" aria-haspopup="dialog">📢 소식<span class="n" id="newsN" hidden>N</span></button>
   </div>
 </nav>
+<div class="duel-news" id="duelNews" hidden>
+  <button type="button" class="dn-head" id="duelNewsBtn" aria-expanded="false"><span class="dn-t" id="duelNewsT"></span><span class="dn-more">보기 ▾</span></button>
+  <div class="dn-list" id="duelNewsList" hidden></div>
+</div>
 <div class="news-panel" id="newsPanel" role="dialog" aria-label="오락실 소식" hidden>
   <div class="news-box">
     <h2>📢 오락실 소식</h2>
@@ -478,6 +487,7 @@ footer{
 // ===== 오락실 소식 — 여기만 대표님이 직접 고치면 돼요 =====
 // 새 소식은 맨 위에 한 줄 추가하세요. date(날짜)가 바뀌면 방문자 화면의 "📢 소식" 버튼에 빨간 N이 붙어요.
 const NEWS = [
+  { date: '2026-10-09', title: '도전장 & 올림포스 결투장 오픈', text: '헬로 스윙 한 판이 끝나면 친구에게 도전장을 보내요! 받은 사람은 로그인 없이 같은 맵에서 내 유령과 단판 승부. 로그인하고 이기면 올림포스 결투장에 명성이 쌓이고 칭호가 생겨요. 위의 ⚔️ 결투장에서 서열을 확인하세요.' },
   { date: '2026-10-05', title: '새 게임 헬로 스윙 출시', text: '파도 괴물에게서 도망쳐요! 꾹 누르면 고리에 줄을 걸고, 떼면 휙 날아가요. 시화방조제에서 구름 위까지, 랭킹과 왕좌도 열렸어요.' },
   { date: '2026-10-03', title: '헬로먼치 우주괴물 도감 8장', text: '괴물에게 먹혀도 카드가 나와요! 비밀 카드 1장이 숨어 있어요. 8장을 다 모으면 칭호 "우주괴물 생존왕".' },
   { date: '2026-10-02', title: '카드첩에 방명록과 카드 뒤집기', text: '다른 사람 카드첩에 글과 답글을 남길 수 있어요. 카드를 누르면 뒤집혀서 비밀 이야기가 나와요.' },
@@ -516,12 +526,34 @@ const NEWS = [
 window.__newNotes = 0;
 window.__updateAppBadge = function () {
   try {
-    const c = (window.__newsCount || 0) + (window.__newNotes || 0);
+    const c = (window.__newsCount || 0) + (window.__newNotes || 0) + (window.__newDuels || 0);
     if (!('setAppBadge' in navigator)) return;
     if (c > 0) navigator.setAppBadge(c).catch(() => {}); else navigator.clearAppBadge().catch(() => {});
   } catch (e) { /* 지원하지 않는 기기 */ }
 };
 window.__updateAppBadge();
+</script>
+<script src="/duel-inbox.js"></script>
+<script>
+// 내가 보낸 도전장의 결과 소식 — 새 결과가 있으면 결투장 칸에 빨간 숫자, 상단 바 아래에 띠
+(function () {
+  if (!window.HelloInbox) return;
+  HelloInbox.load().then(function (r) {
+    if (!r.fresh.length) return;
+    const box = document.getElementById('duelNews'), n = document.getElementById('duelN'), list = document.getElementById('duelNewsList'), btn = document.getElementById('duelNewsBtn');
+    n.textContent = r.fresh.length > 9 ? '9+' : String(r.fresh.length); n.hidden = false;
+    window.__newDuels = r.fresh.length; if (window.__updateAppBadge) window.__updateAppBadge();
+    document.getElementById('duelNewsT').textContent = '📨 내 도전장 결과 ' + r.fresh.length + '건 · ' + HelloInbox.title(r.fresh[0]);
+    r.items.slice(0, Math.max(5, r.fresh.length)).forEach(function (x) { list.appendChild(HelloInbox.itemEl(x, r.fresh.indexOf(x) >= 0, r.loggedIn)); });
+    if (r.loggedIn) { const a = document.createElement('a'); a.href = 'arena.html'; a.textContent = '⚔️ 올림포스 결투장에서 전적 보기 →'; a.style.cssText = 'text-align:center;font-weight:700;font-size:13px;color:var(--gold);padding:6px'; list.appendChild(a); }
+    box.hidden = false;
+    btn.addEventListener('click', function () {
+      const open = list.hidden; list.hidden = !open; btn.setAttribute('aria-expanded', String(open));
+      btn.querySelector('.dn-more').textContent = open ? '접기 ▴' : '보기 ▾';
+      if (open) { HelloInbox.markSeen(); n.hidden = true; window.__newDuels = 0; if (window.__updateAppBadge) window.__updateAppBadge(); }
+    });
+  });
+})();
 </script>
 <script>
 // 상단 바의 로그인 영역 — 로그인 전: "카카오 로그인" 버튼 / 로그인 후: "닉네임님" 버튼(내 카드첩·로그아웃 메뉴)

@@ -18,6 +18,7 @@
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="64x64" href="/icons/favicon-64.png">
 <script src="/pwa.js" defer></script>
+<script src="/duel-inbox.js"></script>
 <title>올림포스 결투장 | 헬로 대부도 오락실</title>
 <meta name="description" content="도전장으로 겨룬 결과가 모이는 곳. 명성 점수와 칭호, 서열, 상대 전적을 확인하세요.">
 <meta property="og:type" content="website">
@@ -170,6 +171,10 @@
       <h2 id="meH">나의 결투</h2>
       <div class="me" id="meCard"></div>
     </section>
+    <section aria-labelledby="inbH" id="inbox" hidden>
+      <h2 id="inbH">내 도전장 소식 <small id="inbN"></small></h2>
+      <div class="log" id="inbList"></div>
+    </section>
     <section aria-labelledby="ladH">
       <h2 id="ladH">서열 <small id="ladN"></small></h2>
       <div class="ladder" id="ladder"></div>
@@ -185,10 +190,11 @@
       <summary>결투장 규칙과 칭호</summary>
       <ol>
         <li>게임이 끝나면 [📨 친구에게 도전장 보내기]로 내 기록을 걸고 도전장을 보내요.</li>
-        <li>받은 사람은 같은 맵에서 내 유령과 겨뤄요. 기회는 3번, 기한은 3일이에요.</li>
-        <li>보낸 사람과 받은 사람이 둘 다 로그인했을 때만 결투장에 기록돼요.</li>
-        <li>강한 상대를 이기면 명성이 많이 오르고, 지면 내려가요. 칭호도 함께 오르내려요.</li>
-        <li>같은 두 사람의 결투는 하루 한 번만 명성에 들어가요. 승패 기록은 모두 남아요.</li>
+        <li>받은 사람은 같은 맵에서 내 유령과 <b>단판 승부</b>를 해요. 기회는 한 번, 도전장 기한은 3일이에요.</li>
+        <li>보낸 사람과 받은 사람이 둘 다 로그인했을 때 결투장에 기록돼요. 로그인 없이 겨뤘어도 같은 폰에서 나중에 로그인하면 이어서 기록돼요.</li>
+        <li>강한 상대를 이길수록 명성이 크게 올라요. 명성이 같으면 ±20, 차이가 크면 최대 ±40까지 오르내려요. 칭호도 함께 오르내려요.</li>
+        <li>같은 두 사람의 결투는 하루 3번까지 명성에 들어가요. 그 뒤의 승패는 기록만 남아요.</li>
+        <li>내 도전장의 승부가 나면 오락실 첫 화면과 결투장에 결과 소식이 와요.</li>
         <li>모든 게임의 결투가 명성 하나로 합쳐져요. 게임별 성적은 각자의 화면에서 볼 수 있어요.</li>
       </ol>
       <div class="tiers" id="tierList"></div>
@@ -269,19 +275,24 @@
       L.appendChild(b);
     });
   }
-  function boutEl(x) {
-    var b = el('div', 'bout');
+  // 결투 한 줄. 내 기록이면 "내 도전장을 받음", 남의 기록이면 "정불주님이 쿠로님의 도전장을 받음"처럼 이름으로 쓴다
+  function boutEl(x, owner) {
+    var mine = !owner || owner.wid === ME, on = owner && owner.nick ? owner.nick : '(이름 없음)', b = el('div', 'bout');
     b.appendChild(el('span', 'res ' + x.r, x.r === 'w' ? '승' : '패'));
-    var m = el('div', 'mid'); m.appendChild(personBtn(x.o, x.on)); m.appendChild(document.createTextNode(x.role === 's' ? '님이 내 도전장을 받음' : '님의 도전장에 응전'));
-    m.appendChild(el('small', '', day(x.at) + ' · ' + gname(x.g) + ' · 나 ' + x.me + unit(x.g) + ' / 상대 ' + x.op + unit(x.g))); b.appendChild(m);
+    var m = el('div', 'mid');
+    if (mine) { m.appendChild(personBtn(x.o, x.on)); m.appendChild(document.createTextNode(x.role === 's' ? '님이 내 도전장을 받음' : '님의 도전장에 응전')); }
+    else if (x.role === 's') { m.appendChild(personBtn(x.o, x.on)); m.appendChild(document.createTextNode('님이 ' + on + '님의 도전장을 받음')); }
+    else { m.appendChild(document.createTextNode(on + '님이 ')); m.appendChild(personBtn(x.o, x.on)); m.appendChild(document.createTextNode('님의 도전장에 응전')); }
+    m.appendChild(el('small', '', day(x.at) + ' · ' + gname(x.g) + ' · ' + (mine ? '나 ' : on + ' ') + x.me + unit(x.g) + ' / ' + (mine ? '상대 ' : x.on + ' ') + x.op + unit(x.g)));
+    b.appendChild(m);
     var d = el('div', 'dm'); d.appendChild(el('span', x.dr > 0 ? 'up' : x.dr < 0 ? 'down' : 'flat', x.dr > 0 ? '+' + x.dr : x.dr < 0 ? String(x.dr) : '±0'));
-    d.appendChild(el('small', 'flat', x.dr ? '명성' : '하루 1번만 반영')); b.appendChild(d);
+    d.appendChild(el('small', 'flat', x.dr ? '명성' : '하루 3번 초과')); b.appendChild(d);
     return b;
   }
-  function renderLog(box, recent, emptyText) {
+  function renderLog(box, recent, emptyText, owner) {
     box.textContent = '';
     if (!recent.length) { box.appendChild(el('div', 'empty', emptyText)); return; }
-    recent.slice(0, 20).forEach(function (x) { box.appendChild(boutEl(x)); });
+    recent.slice(0, 20).forEach(function (x) { box.appendChild(boutEl(x, owner)); });
   }
   function renderTiers() {
     var T = $('tierList'); T.textContent = '';
@@ -316,7 +327,7 @@
       if (fo.rival || fo.nemesis) { var tg = el('div', 'tags'); if (fo.rival) { var a = el('span', 'tag'); a.appendChild(el('b', '', '라이벌 ')); a.appendChild(personBtn(fo.rival.wid, fo.rival.nick)); tg.appendChild(a); }
         if (fo.nemesis) { var b2 = el('span', 'tag'); b2.appendChild(el('b', '', '천적 ')); b2.appendChild(personBtn(fo.nemesis.wid, fo.nemesis.nick)); tg.appendChild(b2); } sheetIn.appendChild(tg); }
       var h = el('h2', '', '최근 결투'); h.style.marginTop = '16px'; sheetIn.appendChild(h);
-      var log = el('div', 'log'); renderLog(log, p.recent || [], '아직 결투 기록이 없어요.'); sheetIn.appendChild(log);
+      var log = el('div', 'log'); renderLog(log, p.recent || [], '아직 결투 기록이 없어요.', { wid: p.wid, nick: p.nick }); sheetIn.appendChild(log);
     });
   }
   sheet.addEventListener('click', function (e) { if (e.target === sheet) closeSheet(); });
@@ -340,6 +351,11 @@
         renderMe(L.mine, L.myNick || a.nick, (P && P.recent) || []);
         renderLadder(L.ladder || [], L.me);
         renderLog($('myLog'), (P && P.recent) || [], '아직 결투가 없어요. 게임을 한 판 하고 로그인한 친구에게 도전장을 보내 보세요!');
+        if (window.HelloInbox) HelloInbox.load().then(function (r) {
+          if (!r.items.length) return;
+          var L2 = $('inbList'); r.items.slice(0, 10).forEach(function (x) { L2.appendChild(HelloInbox.itemEl(x, r.fresh.indexOf(x) >= 0, true)); });
+          $('inbN').textContent = r.fresh.length ? '새 소식 ' + r.fresh.length + '건' : ''; $('inbox').hidden = false; HelloInbox.markSeen();
+        });
         var m = /^#p-([a-z0-9]{4,16})$/.exec(location.hash); if (m) showProfile(m[1]);
       });
     });

@@ -20,7 +20,8 @@
 //   arena:ladder (정렬)  → wid ↦ 명성
 //   arenam:{wid} (목록)  → 최근 대결 200개
 //   arenah:{wid1}:{wid2} → { wid: 이긴 횟수 }   (상대 전적)
-//   arenapair:{wid1}:{wid2}:{날짜} → 1  (같은 두 사람은 하루 1번만 명성에 반영)
+//   arenapair:{wid1}:{wid2}:{날짜} → 횟수  (같은 두 사람은 하루 3번까지만 명성에 반영, 대표 결정 10/9)
+//   inbox:w:{wid} / inbox:c:{cid} (목록) → 내가 보낸 도전장의 결과 소식 30개(14일)  — GET ?inbox=1&cid=…
 //   cidx:{cid} (해시)    → 도전장번호 → 's'(보냄) | 'p'(도전함)   (로그인 전 기록을 로그인 뒤 이어 붙이기용, 4일)
 //
 // 기록은 기기가 보낸 값을 믿는 구조라(오락실 전체의 알려진 한계), 아래만 확인한다.
@@ -38,10 +39,11 @@ const GAMES = {
 export const PHRASES = ['헬로~! 한 판 붙자', '100m도 못 갈걸?', '이거 이기면 인정!', '지는 사람 아이스크림!', '내 유령 따라올 수 있어?',
   '깃발에서 기다릴게', '봐줄 생각 없음', '대부도 최강은 나야', '한 번만 이겨 봐', '괴물보다 내가 더 무섭지?'];
 const TTL = 3 * 24 * 3600;      // 도전장 기한 3일(대표 결정 10/8)
-const TRIES = 3;                // 도전 기회 3번(대표 결정 10/8)
+const TRIES = 1;                // 단판 승부(대표 결정 10/9, 처음엔 3번이었음)
+const PAIR_PER_DAY = 3;         // 같은 두 사람의 결투는 하루 3번까지 명성에 반영(대표 결정 10/9)
 const MAX_SAMPLES = 12000;      // 유령 점 최대 개수(1초 20점 × 10분)
 const RATE_PER_HOUR = 30;
-const K = 24, START = 1000;     // 명성 점수(엘로 방식)
+const K = 40, START = 1000;     // 명성 점수(엘로 방식). 대표 결정 10/9: 오르내림을 화려하게 → 같은 명성끼리 ±20, 최대 ±40
 
 // ---- 게임 시작 확인표: score.js 와 같은 비밀값·같은 형식(그 파일은 건드리지 않으려고 여기 따로 둔다)
 const TICKET_TTL = 6 * 3600 * 1000;
@@ -132,7 +134,9 @@ async function arenaRecord(d, p) {
   const winner = p.result === 'win' ? c : s, loser = winner === c ? s : c;
   const [A, B] = await Promise.all([arenaGet(winner), arenaGet(loser)]);
   const pair = [s, c].sort();
-  const rated = await kv.set(`arenapair:${pair[0]}:${pair[1]}:${kstDay()}`, 1, { nx: true, ex: 2 * 24 * 3600 });
+  const pk = `arenapair:${pair[0]}:${pair[1]}:${kstDay()}`, cnt = await kv.incr(pk);
+  if (cnt === 1) await kv.expire(pk, 2 * 24 * 3600);
+  const rated = cnt <= PAIR_PER_DAY;
   let dA = 0, dB = 0;
   if (rated) { const ea = 1 / (1 + Math.pow(10, (B.r - A.r) / 400)); dA = Math.round(K * (1 - ea)); dB = -dA; }
   const now = Date.now();
@@ -168,6 +172,7 @@ export default async function handler(req, res) {
     const q = req.query || {};
     if (q.share) return await sharePage(res, String(q.share).toLowerCase());
     if (q.arena) return await arena(req, res, String(q.arena));
+    if (q.inbox) return await inbox(req, res, q);
     const d = await getDuel(String(q.id || '').toLowerCase());
     if (!d) return res.status(404).json({ error: 'gone' });
     const me = await sessionUser(req).catch(() => null);
@@ -240,7 +245,26 @@ async function play(req, res, b) {
   await kv.hset(hk, { [key]: JSON.stringify(rec) });
   await kv.expire(hk, Math.max(60, Math.ceil((d.exp - Date.now()) / 1000)));
   if (!me) await markCid(cid, d.id, 'p');
+  if (rec.result) await pushInbox(d, rec, arenaRes).catch(() => {});
   return out({ practice: false, win: dist > d.dist, arena: arenaRes });
+}
+
+// 보낸 사람에게 가는 결과 소식(보낸 사람 입장: r='w' 내가 지킴, 'l' 깨짐). 회원이면 회원 소식함, 아니면 그 기기 소식함
+async function pushInbox(d, rec, arenaRes) {
+  const k = d.wid ? `inbox:w:${d.wid}` : `inbox:c:${d.cid}`;
+  const item = { id: d.id, g: d.game, by: rec.nick, bw: rec.wid || null, r: rec.result === 'win' ? 'l' : 'w', me: d.dist, op: rec.best,
+    dr: arenaRes && arenaRes.rated ? -arenaRes.delta : null, at: Date.now() };
+  await kv.lpush(k, JSON.stringify(item));
+  await kv.ltrim(k, 0, 29);
+  await kv.expire(k, 14 * 24 * 3600);
+}
+async function inbox(req, res, q) {
+  const me = await sessionUser(req).catch(() => null);
+  const cid = CID_RE.test(String(q.cid || '')) ? String(q.cid) : '';
+  const lists = await Promise.all([me ? kv.lrange(`inbox:w:${me.wid}`, 0, 29) : [], cid ? kv.lrange(`inbox:c:${cid}`, 0, 29) : []]);
+  const seen = new Set(), items = [];
+  lists.flat().map(parse).filter(Boolean).sort((a, b) => b.at - a.at).forEach((x) => { const k = x.id + '|' + x.by + '|' + x.at; if (!seen.has(k)) { seen.add(k); items.push(x); } });
+  return res.status(200).json({ loggedIn: !!me, items: items.slice(0, 30) });
 }
 
 async function markCid(cid, id, role) {
@@ -299,7 +323,7 @@ async function sharePage(res, id) {
   if (d && GAMES[d.game]) {
     const G = GAMES[d.game];
     title = `🔥 ${d.nick}님의 ${G.name} 도전장 · ${d.dist}${G.unit}`;
-    desc = `"${PHRASES[d.msg] || ''}" ${d.dist}${G.unit}를 넘으면 승리 · 로그인 없이 바로`;
+    desc = `"${PHRASES[d.msg] || ''}" ${d.dist}${G.unit}를 넘으면 승리 · 단판 승부 · 로그인 없이 바로`;
     if (d.card) img = d.card;
     dest = `${SITE_ORIGIN}${G.path}?duel=${d.id}`;
   }

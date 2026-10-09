@@ -15,7 +15,7 @@
   'use strict';
   var PHRASES = ['헬로~! 한 판 붙자', '100m도 못 갈걸?', '이거 이기면 인정!', '지는 사람 아이스크림!', '내 유령 따라올 수 있어?',
     '깃발에서 기다릴게', '봐줄 생각 없음', '대부도 최강은 나야', '한 번만 이겨 봐', '괴물보다 내가 더 무섭지?']; // api/duel.js 와 같은 순서
-  var TRIES = 3;
+  var TRIES = 1; // 단판 승부(대표 결정 10/9). 서버가 알려 주는 값(duel.tries)으로 덮어쓴다
   var CFG = null, D = null, last = null, busy = null, auth = { loggedIn: false, nick: '' }, sent = {}, phr = 0, openLayer = null;
 
   function rand(n) { var a = 'abcdefghjkmnpqrstuvwxyz23456789', s = ''; for (var i = 0; i < n; i++) s += a[Math.floor(Math.random() * a.length)]; return s; }
@@ -150,7 +150,8 @@
     var ch = el('div', 'hd-chance'), left = TRIES - (me.tries || 0);
     if (me.self) ch.textContent = '내 도전장은 연습만 할 수 있어요';
     else if (me.result === 'win') ch.textContent = '이미 이겼어요! 🏆 지금부터는 연습판';
-    else if (me.result === 'lose') ch.textContent = '기회를 다 썼어요 · 지금부터는 연습판';
+    else if (me.result === 'lose') ch.textContent = (TRIES === 1 ? '이미 승부가 났어요' : '기회를 다 썼어요') + ' · 지금부터는 연습판';
+    else if (TRIES === 1) { ch.appendChild(el('b', '', '⚔ 단판 승부')); ch.appendChild(document.createTextNode(' · 기회는 딱 한 번!')); }
     else { ch.appendChild(document.createTextNode('도전 기회 ')); ch.appendChild(el('b', '', dots(left))); ch.appendChild(document.createTextNode(' ' + left + '번')); }
     c.appendChild(ch);
     c.appendChild(el('div', 'hd-exp', when(d.exp) + '까지 유효'));
@@ -183,7 +184,7 @@
     return api('GET', null, '?id=' + encodeURIComponent(id) + '&cid=' + cid()).then(function (r) {
       if (!r || !r.duel) { renderGone(); track('duel_open', { ok: false }); return; }
       if (r.duel.game !== CFG.game) { renderGone(); return; }
-      D = r; CFG.onDuel(r.duel); renderIntro(); track('duel_open', { ok: true, self: !!r.me.self });
+      D = r; if (r.duel.tries) TRIES = r.duel.tries; CFG.onDuel(r.duel); renderIntro(); track('duel_open', { ok: true, self: !!r.me.self });
     }).catch(function () { renderGone(); });
   }
 
@@ -226,12 +227,12 @@
       if (CFG.sendBtn) CFG.sendBtn.textContent = '📨 반격 도전장 보내기';
     } else if (me.result === 'lose') {
       title = '도전 실패…';
-      add('big', '기회 3번을 다 썼어요 (최고 ' + me.best + U + ')');
+      add('big', TRIES === 1 ? '단판 승부에서 졌어요 · ' + diff + U + ' 모자랐어요' : '기회 ' + TRIES + '번을 다 썼어요 (최고 ' + me.best + U + ')');
       add('dim', '연습은 계속할 수 있어요. 내 기록으로 도전장을 보내 복수해 보세요!');
       if (r.arena && r.arena.rated) { var al2 = el('a', '', '⚔️ 올림포스 결투장 명성 ' + r.arena.delta + ' →'); al2.href = '/arena.html'; al2.style.cssText = 'color:#9fb0d8;font-weight:700'; st.appendChild(el('div')).appendChild(al2); }
     } else {
       title = '아깝다!';
-      var line = add('big', diff + U + ' 모자라요 · 남은 기회 '); line.appendChild(el('b', '', dots(left)));
+      var line = add('big', diff + U + ' 모자라요 · 남은 기회 '); line.appendChild(el('b', '', dots(left))); // 기회가 2번 이상일 때만
     }
     if (!r.practice && me.rank > 0) add('dim', '이 도전장 순위 ' + me.rank + '위 / ' + (D.count || 1) + '명');
     if (!r.practice && !me.loggedIn) {
@@ -274,7 +275,7 @@
     c.save(); c.shadowColor = 'rgba(80,20,0,.35)'; c.shadowBlur = 10; outline(c, sc, CX, 292, '#c62a1c', '#fff3d6', 10); c.restore();
     c.font = '800 46px ' + FONT; outline(c, '넘을 수 있어?', CX, 352, INK, PAPER, 7);
     // 아래 안내(파도 위 띠)
-    var ft = '로그인 없이 바로 · ' + when(o.exp) + '까지 · ' + o.name; c.font = '700 26px ' + FONT;
+    var ft = '단판 승부 · 로그인 없이 바로 · ' + when(o.exp) + '까지 · ' + o.name; c.font = '700 26px ' + FONT;
     var fw = Math.min(560, c.measureText(ft).width + 48); fit(c, ft, '700 $px ' + FONT, 26, fw - 40);
     c.fillStyle = 'rgba(10,18,40,.84)'; rr(c, 1170 - fw, 524, fw, 56, 28); c.fill(); c.strokeStyle = '#ffc857'; c.lineWidth = 2.5; c.stroke();
     c.fillStyle = '#fff'; c.fillText(ft, 1170 - fw / 2, 561);
@@ -311,7 +312,7 @@
     var cb = el('button', 'hd-copy', '🔗 링크 복사하기'); cb.type = 'button';
     var msg = el('div', 'hd-msg'); msg.setAttribute('role', 'status');
     c.appendChild(kb); c.appendChild(cb); c.appendChild(msg);
-    c.appendChild(el('div', 'hd-note', '받은 사람은 로그인 없이 바로 도전해요 · 기회 3번 · 3일 동안 유효'));
+    c.appendChild(el('div', 'hd-note', '받은 사람은 로그인 없이 바로 도전해요 · 단판 승부 · 3일 동안 유효'));
     ui = { run: run, nk: nk, chips: chips, pv: pv, kb: kb, cb: cb, msg: msg };
     var t = null; nk.addEventListener('input', function () { clearTimeout(t); t = setTimeout(refresh, 250); });
     kb.addEventListener('click', function () { go('kakao'); });
@@ -357,7 +358,7 @@
     ui.kb.disabled = ui.cb.disabled = true; ui.msg.textContent = '도전장을 만드는 중…';
     ensure().then(function (r) {
       var title = '🔥 ' + r.nick + '님이 ' + CFG.name + ' 도전장을 보냈어요!';
-      var desc = '"' + PHRASES[phr] + '" ' + ui.run.dist + (CFG.unit || 'm') + '를 넘으면 승리 · 로그인 없이 바로';
+      var desc = '"' + PHRASES[phr] + '" ' + ui.run.dist + (CFG.unit || 'm') + '를 넘으면 승리 · 단판 승부 · 로그인 없이 바로';
       try { var list = JSON.parse(lsGet('hd_sent') || '[]'); if (list.indexOf(r.id) < 0) { list.unshift(r.id); lsSet('hd_sent', JSON.stringify(list.slice(0, 20))); } } catch (e) {}
       if (how === 'kakao' && window.Kakao && Kakao.isInitialized && Kakao.isInitialized() && Kakao.Share) {
         var link = { mobileWebUrl: r.link, webUrl: r.link };
@@ -394,6 +395,10 @@
     if (!id) { var m = /^#duel-([a-z0-9]{8})$/.exec(location.hash || ''); if (m) id = m[1]; }
     id = String(id).toLowerCase();
     if (/^[a-z0-9]{8}$/.test(id)) claimP.then(function () { load(id); });
+    // 내가 보낸 도전장의 결과가 새로 왔으면 알려 준다(자세한 건 오락실 첫 화면·결투장)
+    claimP.then(function () { if (!window.HelloInbox) return; HelloInbox.load().then(function (r) {
+      if (r.fresh.length) toast('📨 내 도전장 결과 ' + r.fresh.length + '건 · ' + HelloInbox.title(r.fresh[0]));
+    }); });
     if (cfg.sendBtn) cfg.sendBtn.addEventListener('click', function (e) { e.stopPropagation(); openSend(); });
   }
 
