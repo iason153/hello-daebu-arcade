@@ -634,6 +634,14 @@ function bgm(scene, duck) {
   bgmVol(); bgmEl.play().catch(() => {});
 }
 window.addEventListener('pointerdown', () => { ensureAC(); loadAllSnd(); if (bgmCur === null) bgm(bgmScene, bgmDuck); }, { once: false, passive: true });
+// 다른 탭·다른 앱으로 가거나 화면이 꺼지면 배경음악·효과음을 모두 멈추고, 돌아오면 다시 튼다
+function soundAway(away) {
+  try { if (away) { if (bgmEl) bgmEl.pause(); loopsOff(); if (AC && AC.state === 'running') AC.suspend(); }
+        else { if (AC && AC.state === 'suspended') AC.resume(); if (bgmEl && bgmCur) bgmEl.play().catch(() => {}); } } catch (e) {}
+}
+document.addEventListener('visibilitychange', () => soundAway(document.hidden));
+window.addEventListener('pagehide', () => soundAway(true));
+window.addEventListener('blur', () => { if (document.hidden) soundAway(true); });
 // ================================================================ 조작
 let sw = null;
 const glc = $('gl');
