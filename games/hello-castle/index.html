@@ -117,6 +117,48 @@
   #helpBtn[hidden] { display:none; }
   #toast { position:fixed; left:50%; top:18px; transform:translateX(-50%); z-index:30; background:#13284d; border:2px solid var(--gold); color:#fff; border-radius:999px; padding:10px 16px; font-size:14px; font-weight:700; max-width:90%; text-align:center; }
   #toast[hidden] { display:none; }
+  #edit .card { max-width:420px; }
+  .ehead { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .ehead .q { width:34px; height:34px; border-radius:50%; border:1px solid var(--line); background:#22406f; color:#fff; font-weight:900; }
+  .estat { background:rgba(0,0,0,.25); border-radius:12px; padding:8px 12px; margin:8px 0; font-size:13.5px; }
+  .estat .top { display:flex; justify-content:space-between; font-weight:800; }
+  .bbar { height:12px; border-radius:999px; background:rgba(255,255,255,.12); overflow:hidden; margin-top:6px; }
+  .bbar i { display:block; height:100%; background:linear-gradient(90deg,#ffd23c,#ffb347); border-radius:999px; transition:width .2s; }
+  .bbar.over i { background:#ff6b6b; }
+  .tools { display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; margin:6px 0; }
+  .tools button { border:1.5px solid var(--line); background:#1b335e; color:#fff; border-radius:12px; padding:9px 4px; font:inherit; font-size:13px; font-weight:800; }
+  .tools button.on { border-color:var(--gold); background:#2c4a7c; }
+  .map { display:flex; flex-direction:column-reverse; gap:3px; margin-top:6px; }
+  .mrow { display:grid; grid-template-columns:30px 1fr; gap:6px; align-items:stretch; }
+  .mrow .no { font-size:11px; opacity:.7; display:flex; align-items:center; justify-content:center; }
+  .mrow .strip { position:relative; display:flex; align-items:center; gap:8px; border-radius:10px; padding:7px 10px; min-height:22px; font-size:14px; font-weight:700; color:#fff; border:2px solid transparent; text-align:left; font-family:inherit; }
+  .mrow .strip .ic { font-size:20px; width:24px; text-align:center; }
+  .mrow .strip .sp { margin-left:auto; font-size:11.5px; padding:2px 8px; border-radius:999px; background:rgba(0,0,0,.3); }
+  .mrow .strip.grass { background:#3f7a3a; } .mrow .strip.rest { background:#5c7a4a; opacity:.8; font-weight:600; } .mrow .strip.part { background:#4a4f5b; opacity:.75; font-weight:600; }
+  .mrow .strip.trap { background:#3b404c; } .mrow .strip.lava { background:#8a3a12; } .mrow .strip.sea { background:#2a5f86; } .mrow .strip.god { background:#4a3f7a; }
+  .mrow .strip.sel { border-color:var(--gold); } .mrow .strip.bad { border-color:#ff6b6b; }
+  .mrow .cells2 { display:flex; gap:3px; flex:1; justify-content:space-between; }
+  .mrow .cells2 button { flex:1; height:30px; border-radius:7px; border:1px solid rgba(255,255,255,.25); background:rgba(0,0,0,.15); color:#fff; font-size:16px; padding:0; }
+  .mrow .cells2 button.on { background:rgba(0,0,0,.35); border-color:#9dffb0; }
+  .halfline { text-align:center; font-size:11.5px; color:#ffd9a0; padding:3px 0; border-top:1px dashed rgba(255,217,160,.5); border-bottom:1px dashed rgba(255,217,160,.5); }
+  .sheet { position:fixed; left:0; right:0; bottom:0; z-index:14; background:#0f2142; border-top:2px solid var(--gold); border-radius:20px 20px 0 0; max-height:72vh; overflow:auto; padding:12px 12px 20px; box-shadow:0 -10px 30px rgba(0,0,0,.5); }
+  .sheet[hidden] { display:none; }
+  .sheet .sh-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+  .sheet .sh-head button { border:0; background:#ffd23c; color:#2a1c00; font-weight:900; border-radius:999px; padding:7px 14px; font:inherit; }
+  .seg { display:flex; gap:6px; margin:4px 0 10px; } .seg[hidden] { display:none; }
+  .seg button { flex:1; border:1.5px solid var(--line); background:#1b335e; color:#fff; border-radius:10px; padding:8px 0; font:inherit; font-size:13.5px; font-weight:800; }
+  .seg button.on { border-color:var(--gold); background:#3a5a92; } .seg button:disabled { opacity:.4; }
+  .pgrid { display:grid; grid-template-columns:1fr 1fr; gap:7px; }
+  .pcard { position:relative; text-align:left; border:1.5px solid var(--line); background:#173159; color:#fff; border-radius:12px; padding:8px 9px; font-family:inherit; }
+  .pcard .ic { font-size:22px; } .pcard b { display:block; font-size:14px; margin-top:2px; } .pcard .st { position:absolute; right:8px; top:7px; font-size:12.5px; color:var(--gold); font-weight:900; }
+  .pcard small { display:block; font-size:11.5px; opacity:.78; line-height:1.35; margin-top:2px; }
+  .pcard.on { border-color:var(--gold); background:#2c4a7c; }
+  .pcard.no { opacity:.5; } .pcard.no small.why { opacity:1; color:#ffb3b3; font-weight:700; }
+  #edTut, #autoBox { position:fixed; inset:0; z-index:15; background:rgba(3,8,20,.86); display:flex; align-items:center; justify-content:center; padding:16px; }
+  #edTut[hidden], #autoBox[hidden] { display:none; }
+  #edTut .card, #autoBox .card { text-align:left; }
+  .step { display:grid; grid-template-columns:34px 1fr; gap:8px; align-items:center; margin:8px 0; font-size:15px; }
+  .step .n { width:30px; height:30px; border-radius:50%; background:var(--gold); color:#2a1c00; font-weight:900; display:flex; align-items:center; justify-content:center; }
   #nogl { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; padding:24px; text-align:center; z-index:9; background:#0b1a33; }
   #nogl[hidden] { display:none; }
 </style>
@@ -204,16 +246,18 @@
 
 <div class="scr" id="edit" hidden>
   <div class="card">
-    <h2>🏰 내 성 꾸미기</h2>
-    <p class="small">아래가 성문, 위가 보물방. 줄마다 함정을 고르고, 풀밭에는 나무·바위를 놓을 수 있어요.</p>
-    <div class="budget"><span>명성 <span id="fame">0</span> · <b id="tierN"></b></span><span id="bud">0 / 0</span></div>
-    <div class="small" id="tierInfo"></div>
-    <label class="opt"><input type="checkbox" id="capt"> 👁 경비대장 배치 (★3) — 의심 눈금이 1.6배 빨리 차요</label>
-    <div style="display:flex;flex-direction:column;gap:5px;margin-top:8px">
-      <div class="treasure">💎 보물방</div>
-      <div id="laneList" style="display:flex;flex-direction:column-reverse;gap:5px"></div>
-      <div class="gate">🚪 성문 (헬로 출발)</div>
+    <div class="ehead"><h2>🏰 내 성 꾸미기</h2><button type="button" class="q" id="edQ" aria-label="꾸미기 안내">?</button></div>
+    <div class="estat">
+      <div class="top"><span>명성 <span id="fame">0</span> · <b id="tierN"></b></span><span id="bud">★0 / ★0</span></div>
+      <div class="bbar" id="bbar"><i id="bbarI" style="width:0"></i></div>
+      <div class="small" id="tierInfo" style="margin-top:6px"></div>
     </div>
+    <div class="tools"><button type="button" id="tTrap" class="on">🧱 함정 놓기</button><button type="button" id="tTree">🌳 나무·바위</button><button type="button" id="tAuto">🪄 자동으로</button></div>
+    <div class="small" id="toolHint"></div>
+    <label class="opt"><input type="checkbox" id="capt"> 👁 경비대장 (★3) — 의심 눈금이 1.6배 빨리 차요</label>
+    <div class="treasure" style="margin-top:8px">💎 보물방</div>
+    <div class="map" id="laneList"></div>
+    <div class="gate" style="margin-top:3px">🚪 성문 (헬로 출발)</div>
     <div class="row2"><button class="btn sub" id="lAdd" type="button">＋ 줄 추가</button><button class="btn sub" id="lDel" type="button">－ 줄 빼기</button></div>
     <div class="msg" id="eMsg"></div>
     <button class="btn" id="bTest" type="button">저장하고 직접 깨 보기 (깨야 공개돼요)</button>
@@ -221,6 +265,28 @@
     <button class="btn sub" id="bHome1" type="button">처음으로</button>
   </div>
 </div>
+<div class="sheet" id="sheet" hidden>
+  <div class="sh-head"><b id="shT"></b><button type="button" id="shX">완료</button></div>
+  <div class="seg" id="shSpd" hidden></div>
+  <div class="pgrid" id="shGrid"></div>
+</div>
+<div id="edTut" hidden><div class="card">
+  <h2>🏰 내 성은 이렇게 지어요</h2>
+  <div class="step"><span class="n">1</span><span><b>줄을 눌러</b> 함정 카드를 골라요. 못 놓는 카드는 회색으로, 이유가 적혀 있어요</span></div>
+  <div class="step"><span class="n">2</span><span>위쪽 <b>★ 예산</b> 안에서 놓아요. 명성 10점 = ★1 = 성 1줄</span></div>
+  <div class="step"><span class="n">3</span><span><b>직접 깨면 공개!</b> 친구들이 털러 와요</span></div>
+  <p class="small">처음이라면 🪄 자동으로 지어 주기로 시작해서 마음에 안 드는 줄만 바꿔 보세요.</p>
+  <button class="btn" id="edTutAuto" type="button">🪄 자동으로 지어 주기</button>
+  <button class="btn sub" id="edTutOk" type="button">직접 지을래요</button>
+</div></div>
+<div id="autoBox" hidden><div class="card">
+  <h2>🪄 자동으로 지어 주기</h2>
+  <p class="small">내 예산과 등급에 맞는 성을 한 번에 지어요. 지금 성은 바뀌어요(저장하기 전까지는 공개된 성 그대로).</p>
+  <button class="btn" type="button" data-d="0">🙂 쉬움 — 느긋한 함정, 쉬는 풀밭 많이</button>
+  <button class="btn" type="button" data-d="1">😎 보통 — 예산을 꽤 써요</button>
+  <button class="btn" type="button" data-d="2">😈 어려움 — 예산 꽉 채우기</button>
+  <button class="btn sub" type="button" id="autoX">닫기</button>
+</div></div>
 
 <div class="scr" id="res" hidden>
   <div class="card">
@@ -316,20 +382,20 @@ const trapAt = (L, i) => i >= 0 && (L[i].t !== 'grass' || (i > 0 && TWO[L[i - 1]
 // 틀린 곳이 있으면 { i: 줄 번호(없으면 -1), why } 를 돌려준다
 function checkCastle(L, capt, R, U) {
   const n = L.length, half = Math.floor(n / 2), god = {}; let blocks = 0;
-  if (n < MIN_LEN) return { i: -1, why: '성은 ' + MIN_LEN + '줄 이상이어야 해요' };
-  if (n > R.len) return { i: -1, why: '지금 명성으로는 ' + R.len + '줄까지 지을 수 있어요' };
-  if (capt && !R.capt) return { i: -1, why: '경비대장은 용사부터 둘 수 있어요' };
+  if (n < MIN_LEN) return { i: -1, code: 'len', why: '성은 ' + MIN_LEN + '줄 이상이어야 해요' };
+  if (n > R.len) return { i: -1, code: 'len', why: '지금 명성으로는 ' + R.len + '줄까지 지을 수 있어요' };
+  if (capt && !R.capt) return { i: -1, code: 'capt', why: '경비대장은 용사부터 둘 수 있어요' };
   for (let i = 0; i < n; i++) { const l = L[i], part = i > 0 && TWO[L[i - 1].t], sp = l.s || 0;
-    if (part && l.t !== 'grass') return { i, why: (i + 1) + '줄: 두 줄짜리 함정이 쓰는 줄이에요' };
-    if (sp > R.spd) return { i, why: (i + 1) + '줄: ' + eun(R.tier) + ' ' + SPEED_NAME[R.spd] + '까지만 고를 수 있어요' };
-    if (TWO[l.t] && i === n - 1) return { i, why: '맨 위 줄에는 두 줄짜리 함정을 둘 수 없어요' };
-    if (GODP[l.t]) { if (!U[GODP[l.t]]) return { i, why: (i + 1) + '줄: 아직 열지 않은 신의 함정이에요' }; if (god[l.t]) return { i, why: '신의 함정은 신마다 한 줄만 둘 수 있어요' }; god[l.t] = 1; }
-    if (i < half && l.t !== 'grass' && trapAt(L, i - 1)) return { i, why: (i + 1) + '줄: 앞쪽 절반은 함정과 풀밭을 번갈아 놓아야 해요' };
-    const b = l.b || []; if (b.length > 3) return { i, why: (i + 1) + '줄: 나무·바위는 한 줄에 3개까지예요' }; if (b.length && (l.t !== 'grass' || part)) return { i, why: (i + 1) + '줄: 나무·바위는 풀밭에만 놓아요' }; blocks += b.length; }
-  if (blocks > Math.floor(n / 3)) return { i: -1, why: '나무·바위는 모두 ' + Math.floor(n / 3) + '개까지예요' };
-  let cur = 0; for (let i = half; i < n; i++) { cur = trapAt(L, i) ? cur + 1 : 0; if (cur > R.run) return { i, why: eun(R.tier) + ' 뒤쪽 절반에서 함정을 ' + R.run + '줄까지만 연달아 놓을 수 있어요. 사이에 풀밭을 넣어 주세요' }; }
-  if (costOf(L, capt) > R.bud) return { i: -1, why: '예산(★' + R.bud + ')을 넘었어요. 함정을 줄이거나 느리게 해 주세요' };
-  if (!pathOk(L)) return { i: -1, why: '나무·바위로 길이 막혔어요. 보물방까지 갈 길을 남겨 주세요' };
+    if (part && l.t !== 'grass') return { i, code: 'part', why: (i + 1) + '줄: 두 줄짜리 함정이 쓰는 줄이에요' };
+    if (sp > R.spd) return { i, code: 'speed', why: (i + 1) + '줄: ' + eun(R.tier) + ' ' + SPEED_NAME[R.spd] + '까지만 고를 수 있어요' };
+    if (TWO[l.t] && i === n - 1) return { i, code: 'top2', why: '맨 위 줄에는 두 줄짜리 함정을 둘 수 없어요' };
+    if (GODP[l.t]) { if (!U[GODP[l.t]]) return { i, code: 'godlock', why: (i + 1) + '줄: 아직 열지 않은 신의 함정이에요' }; if (god[l.t]) return { i, code: 'godone', why: '신의 함정은 신마다 한 줄만 둘 수 있어요' }; god[l.t] = 1; }
+    if (i < half && l.t !== 'grass' && trapAt(L, i - 1)) return { i, code: 'alt', why: (i + 1) + '줄: 앞쪽 절반은 함정과 풀밭을 번갈아 놓아야 해요' };
+    const b = l.b || []; if (b.length > 3) return { i, code: 'tree', why: (i + 1) + '줄: 나무·바위는 한 줄에 3개까지예요' }; if (b.length && (l.t !== 'grass' || part)) return { i, code: 'tree', why: (i + 1) + '줄: 나무·바위는 풀밭에만 놓아요' }; blocks += b.length; }
+  if (blocks > Math.floor(n / 3)) return { i: -1, code: 'treeTot', why: '나무·바위는 모두 ' + Math.floor(n / 3) + '개까지예요' };
+  let cur = 0; for (let i = half; i < n; i++) { cur = trapAt(L, i) ? cur + 1 : 0; if (cur > R.run) return { i, code: 'run', why: eun(R.tier) + ' 뒤쪽 절반에서 함정을 ' + R.run + '줄까지만 연달아 놓을 수 있어요. 사이에 풀밭을 넣어 주세요' }; }
+  if (costOf(L, capt) > R.bud) return { i: -1, code: 'bud', why: '예산(★' + R.bud + ')을 넘었어요. 함정을 줄이거나 느리게 해 주세요' };
+  if (!pathOk(L)) return { i: -1, code: 'path', why: '나무·바위로 길이 막혔어요. 보물방까지 갈 길을 남겨 주세요' };
   return null;
 }
 // 신의 시험: 신마다 40줄 고정, 끝에서 신이 기다린다(대표 결정 10/12). 업데이트 때마다 2명씩(다음: 헤르메스·아테나)
@@ -671,7 +737,8 @@ function showResult(ok, msg) {
     $('rT').textContent = ok ? '✅ 내 성을 깼어요!' : '내 성을 못 깼어요'; $('rS').textContent = ok ? '공개하는 중…' : msg + ' · 직접 한 번 깨야 공개돼요.';
     add('<p class="small">아무도 못 깨는 성을 막으려고, 주인이 먼저 깨야 공개되는 규칙이에요. 새 성이 공개되기 전까지는 예전 성이 그대로 공개돼 있어요.</p>');
     more.hidden = false; more.textContent = '🛠 성 고치러 가기'; more.onclick = openEdit;
-    if (ok) api(null, { action: 'publish', t: tt, inputs: recIn2 }).then(d => { if (d.ok) { $('rT').textContent = '✅ 내 성 공개 완료!'; $('rS').textContent = '이제 다른 사람이 공략하러 와요. 깃발도 내려갔어요.'; if (ME) { ME.castle.pub = d.pub; ME.castle.draft = null; ME.castle.flag = null; } track('castle_publish', { len: d.pub.len }); shareBox(sh, 'mycastle', () => makeMyCastle()); }
+    if (ok && EDEMO) { $('rT').textContent = '✅ 내 성을 깼어요! (체험판)'; $('rS').textContent = '체험판이라 공개는 안 돼요. 오락실에서 로그인하면 진짜로 공개돼요.'; }
+    else if (ok) api(null, { action: 'publish', t: tt, inputs: recIn2 }).then(d => { if (d.ok) { $('rT').textContent = '✅ 내 성 공개 완료!'; $('rS').textContent = '이제 다른 사람이 공략하러 와요. 깃발도 내려갔어요.'; if (ME) { ME.castle.pub = d.pub; ME.castle.draft = null; ME.castle.flag = null; } track('castle_publish', { len: d.pub.len }); shareBox(sh, 'mycastle', () => makeMyCastle()); }
       else $('rS').textContent = d.error || '공개하지 못했어요. 한 번 더 깨 주세요.'; });
   }
   $('bWing').hidden = true; $('helpBtn').hidden = true;
@@ -1300,8 +1367,8 @@ function localCards() { try { return JSON.parse(localStorage.getItem('ht_cards')
 // 신의 시험이 열렸나: 헬로타워의 그 신 카드가 있거나, 오늘의 신들의 성에서 그 신의 구역까지 간 적이 있으면(로그인하면 서버 기록 기준)
 function trialOpen(god) { const T = TRIALS[god]; if (ME) return !!(ME.unlock.cards[god] || ME.unlock.trials[god] || ME.best >= T.zone); return !!(localCards()[god] || Number(ls.get('hc_best') || 0) >= T.zone); }
 function loadMe() {
-  return fetch('/api/auth', { credentials: 'same-origin', cache: 'no-store' }).then(r => r.json()).catch(() => ({})).then(a => {
-    AUTH.loggedIn = !!(a && a.loggedIn); AUTH.nick = (a && a.nick) || ''; AUTH.wid = (a && a.wid) || ''; AUTH.ready = !(a && a.ready === false);
+  return fetch('/api/auth', { credentials: 'same-origin', cache: 'no-store' }).then(r => r.json()).catch(() => ({ __down: 1 })).then(a => {
+    AUTH.down = !!(a && a.__down); AUTH.loggedIn = !!(a && a.loggedIn); AUTH.nick = (a && a.nick) || ''; AUTH.wid = (a && a.wid) || ''; AUTH.ready = !(a && a.ready === false);
     return AUTH.loggedIn ? api('me=1') : null;
   }).then(m => { ME = m && m.loggedIn ? m : null; renderHome(); return ME; });
 }
@@ -1392,73 +1459,162 @@ function openBoard() {
   }));
 }
 
-// ================================================================ 성 꾸미기(새 규칙)
-let ED = null;
+// ================================================================ 성 꾸미기(새 규칙) — v17 새 화면(대표 결정 10/12)
+// 성 그림을 누르면 함정 카드 판이 올라온다. 규칙에 안 맞는 카드는 회색 + 이유. 나무·바위는 따로 하는 단계. 🪄 자동으로 지어 주기
+const ED_ICON = { grass: '🌿', log: '🪵', soldier: '🦀', patrol: '🛡', water: '🌋', cannon: '💣', wave: '🔱', bolt: '⚡', guard: '👾', octo: '🐙', jelly: '🪼', bomb: '🐦', tide: '🌊', cart: '🍇', star: '⭐', tiller: '🚜', whirl: '🌪', rock: '🪨' };
+const ED_NAME = { grass: '풀밭(비우기)', log: '통나무', soldier: '꽃게 병사', patrol: '순찰 기사', water: '용암+뗏목', cannon: '성벽 대포', wave: '포세이돈의 파도', bolt: '제우스의 번개', guard: '우주괴물 수문장', octo: '문어 촉수', jelly: '해파리 점프', bomb: '큰 갈매기 폭격', tide: '밀물', cart: '포도 수레', star: '불가사리 바퀴', tiller: '경운기', whirl: '회오리', rock: '시시포스의 바위' };
+const ED_DESC = { grass: '안전한 쉬는 줄', log: '굴러오는 통나무', soldier: '좌우로 순찰하는 꽃게', patrol: '두 줄을 네모로 도는 기사', water: '뗏목을 타야 건너요', cannon: '대포알이 가로질러요', wave: '파도가 휩쓸어요', bolt: '번개가 칸을 내리쳐요', guard: '깨어나면 덥석!', octo: '촉수가 3칸에서 솟아요', jelly: '두 줄을 통통 튀어요', bomb: '알을 떨궈요', tide: '옆으로 밀려나요', cart: '덜컹덜컹 수레', star: '굴러다니는 바퀴', tiller: '길고 빠른 경운기', whirl: '닿으면 옆으로 휙', rock: '위에서 바위가 굴러와요(두 줄)' };
+const ED_COLOR = { water: 'lava', tide: 'sea', wave: 'god', bolt: 'god', guard: 'god' };
+const DEMO_TIERS = [['견습생', 1000, 0], ['전사', 1000, 3], ['용사', 1100, 3], ['영웅', 1200, 10], ['반신', 1350, 20]];
+const TIER_MIN = { '견습생': [0, 0], '전사': [980, 3], '용사': [1080, 3], '영웅': [1180, 10], '반신': [1300, 20] };
+let ED = null, EM = null, EDEMO = false, edTool = 'trap', edSel = -1;
+const cloneL = (L) => JSON.parse(JSON.stringify(L));
+// 체험판(서버가 없는 곳 — 아티팩트 시험판)에서만 쓰는 가짜 회원 정보. 실제 오락실에서는 쓰지 않는다
+function demoMe(k) { const [tier, fame, games] = DEMO_TIERS[k], ti = k, c = CT[ti], len = maxLen(fame);
+  return { demo: true, demoK: k, nick: '체험', wid: 'demo', fame, games, rules: { tier, ti, len, bud: len, run: c.run, spd: c.spd, capt: c.capt, minLen: MIN_LEN },
+    tiers: Object.entries(TIER_MIN).map(([name, [min, g]]) => ({ name, min, games: g })), unlock: { poseidon: true, zeus: false, munch: true, cards: {}, trials: { poseidon: 1 } }, castle: { pub: null, draft: null } }; }
 function openEdit() {
-  if (!ME) return needLogin('내 성을 지으려면 로그인이 필요해요.');
-  const src = ME.castle.draft || ME.castle.pub || { lanes: [], capt: false };
-  ED = { lanes: JSON.parse(JSON.stringify(src.lanes)), capt: !!src.capt }; while (ED.lanes.length < MIN_LEN) ED.lanes.push({ t: 'grass' });
-  hideAll(); $('edit').hidden = false; renderEdit(); bgm('menu');
+  EDEMO = !ME && AUTH.down && !/daebugame\.com$/.test(location.hostname);
+  if (!ME && !EDEMO) return needLogin('내 성을 지으려면 로그인이 필요해요.');
+  EM = ME || demoMe(0);
+  const src = EM.castle.draft || EM.castle.pub || { lanes: [], capt: false };
+  ED = { lanes: cloneL(src.lanes), capt: !!src.capt }; while (ED.lanes.length < MIN_LEN) ED.lanes.push({ t: 'grass' });
+  edTool = 'trap'; edSel = -1; hideAll(); $('edit').hidden = false; renderEdit(); bgm('menu');
+  if (!ls.get('hc_edtut')) $('edTut').hidden = false;
 }
 // 자동으로 맞추기: 두 줄 함정의 위 줄·앞쪽 절반의 쉬는 줄은 풀밭, 등급보다 빠른 속도는 낮춤
-function normalize() {
-  const L = ED.lanes, n = L.length, half = Math.floor(n / 2), R = ME.rules;
+function normalize(L) {
+  const n = L.length, half = Math.floor(n / 2), R = EM.rules;
   for (let i = 0; i < n; i++) { const l = L[i];
     if (i > 0 && TWO[L[i - 1].t]) { L[i] = { t: 'grass' }; continue; }
-    if (i < half && l.t !== 'grass' && trapAt(L, i - 1)) { L[i] = { t: 'grass' }; continue; }
-    if (l.t !== 'grass') delete l.b; if ((l.s || 0) > R.spd) l.s = R.spd; if (!PIECES[l.t].speed) delete l.s; }
+    if (i < half && l.t !== 'grass' && trapAt(L, i - 1)) { L[i] = { t: 'grass', b: l.b }; if (!L[i].b) delete L[i].b; continue; }
+    if (l.t !== 'grass') delete l.b; if ((l.s || 0) > R.spd) l.s = R.spd; if (!PIECES[l.t].speed || !l.s) delete l.s; }
   if (TWO[L[n - 1].t]) L[n - 1] = { t: 'grass' };
-  if (ED.capt && !R.capt) ED.capt = false;
 }
+// 줄 상태: 'part' 두 줄 함정의 위 줄 · 'rest' 앞쪽 절반의 쉬는 줄 · '' 고를 수 있음
+function rowLock(L, i) { const half = Math.floor(L.length / 2); if (i > 0 && TWO[L[i - 1].t]) return 'part'; if (i < half && trapAt(L, i - 1)) return 'rest'; return ''; }
+const sameBad = (a, b) => a && b && a.code === b.code && a.i === b.i;
+// i줄에 k를 놓으면? → 못 놓는 이유(짧게) 또는 null
+function placeWhy(i, k, sp) {
+  const R = EM.rules, U = EM.unlock, L = cloneL(ED.lanes), n = L.length, base = checkCastle(ED.lanes, ED.capt, R, U);
+  if (GODP[k] && !U[GODP[k]]) return GODP[k] === 'munch' ? '헬로먼치 카드가 있으면 열려요' : (GODP[k] === 'zeus' ? '제우스' : '포세이돈') + '의 시험을 통과하면 열려요';
+  if (GODP[k] && L.some((x, j) => j !== i && x.t === k)) return '이 신의 함정은 이미 놓았어요';
+  if (TWO[k] && i === n - 1) return '맨 위 줄에는 못 놓아요';
+  if (TWO[k] && L[i + 1].t !== 'grass') return '바로 위 줄이 비어 있어야 해요';
+  const s0 = PIECES[k].speed ? Math.min(sp == null ? (L[i].s || 0) : sp, R.spd) : 0;
+  L[i] = { t: k }; if (s0) L[i].s = s0; if (TWO[k]) L[i + 1] = { t: 'grass' };
+  const bad = checkCastle(L, ED.capt, R, U);
+  if (!bad || sameBad(bad, base)) return null;
+  if (TWO[k] && (bad.code === 'alt' || bad.code === 'run')) return '두 줄을 차지해서 위쪽 함정과 붙어요';
+  return { alt: '앞쪽 절반은 함정 사이에 쉬는 풀밭이 있어야 해요', run: '함정이 ' + R.run + '줄 넘게 이어져요', bud: '★가 모자라요', path: '길이 막혀요', speed: '이 속도는 아직 못 골라요' }[bad.code] || bad.why;
+}
+function apply(i, k, sp) { const L = ED.lanes, s0 = PIECES[k].speed ? Math.min(sp == null ? (L[i].s || 0) : sp, EM.rules.spd) : 0; const keepB = k === 'grass' ? L[i].b : null; L[i] = { t: k }; if (s0) L[i].s = s0; if (keepB) L[i].b = keepB; if (TWO[k]) L[i + 1] = { t: 'grass' }; normalize(L); }
 function renderEdit() {
-  normalize();
-  const R = ME.rules, L = ED.lanes, n = L.length, half = Math.floor(n / 2), nx = ME.tiers[R.ti + 1];
-  $('fame').textContent = ME.fame; $('tierN').textContent = R.tier;
-  $('tierInfo').innerHTML = '명성 10점 = ★1 = 성 1줄 → 성 최대 <b>' + R.len + '줄</b> · 예산 <b>★' + R.bud + '</b><br>앞쪽 절반: 함정과 풀밭 번갈아 · 뒤쪽 절반: 함정 <b>' + R.run + '줄</b>까지 연달아 · 속도 <b>' + SPEED_NAME[R.spd] + '</b>까지 · 경비대장 ' + (R.capt ? '○' : '✕(용사부터)') +
-    (nx ? '<br>다음 등급 <b>' + nx.name + '</b>: 명성 ' + nx.min + ' · ' + nx.games + '판' : '<br>최고 등급이에요');
-  $('capt').checked = ED.capt; $('capt').disabled = !R.capt; $('capt').onchange = (e) => { ED.capt = e.target.checked; renderEdit(); };
-  const list = $('laneList'); list.innerHTML = '';
-  let blocks = 0; L.forEach(l => { blocks += (l.b || []).length; });
-  const bad = checkCastle(L, ED.capt, R, ME.unlock);
+  normalize(ED.lanes);
+  const R = EM.rules, L = ED.lanes, n = L.length, half = Math.floor(n / 2), nx = EM.tiers[R.ti + 1];
+  $('fame').textContent = EM.fame; $('tierN').textContent = R.tier;
+  const used = costOf(L, ED.capt); $('bud').innerHTML = '★' + used + ' / ★' + R.bud + ' · ' + n + '/' + R.len + '줄';
+  $('bbar').classList.toggle('over', used > R.bud); $('bbarI').style.width = Math.min(100, used / R.bud * 100) + '%';
+  $('tierInfo').innerHTML = '앞쪽 절반은 함정·풀밭 번갈아 · 뒤쪽 절반은 함정 <b>' + R.run + '줄</b>까지 연달아 · 속도 <b>' + SPEED_NAME[R.spd] + '</b>까지' + (nx ? ' · 다음 등급 ' + nx.name + '(명성 ' + nx.min + ' · ' + nx.games + '판)' : '');
+  if (EDEMO) { $('tierInfo').insertAdjacentHTML('beforeend', '<br><b>체험판</b>(저장 안 됨) · 등급 바꿔 보기: ' + DEMO_TIERS.map((d, k) => '<button type="button" class="btn mini sub" data-dk="' + k + '" style="padding:3px 8px;margin:2px">' + d[0] + '</button>').join(''));
+    $('tierInfo').querySelectorAll('[data-dk]').forEach(b => b.onclick = () => { EM = demoMe(+b.dataset.dk); renderEdit(); }); }
+  $('capt').checked = ED.capt; $('capt').disabled = !R.capt || (!ED.capt && used + CAPT_COST > R.bud); $('capt').parentNode.style.opacity = $('capt').disabled && !ED.capt ? .55 : 1;
+  $('capt').onchange = (e) => { ED.capt = e.target.checked; renderEdit(); };
+  ['trap', 'tree'].forEach(k => $('t' + k[0].toUpperCase() + k.slice(1)).classList.toggle('on', edTool === k));
+  let blocks = 0; L.forEach(l => { blocks += (l.b || []).length; }); const bmax = Math.floor(n / 3);
+  $('tTree').textContent = '🌳 나무·바위 ' + blocks + '/' + bmax;
+  $('toolHint').textContent = edTool === 'tree' ? '풀밭 칸을 눌러 나무·바위를 놓거나 치워요 · 한 줄 3개까지 · 길은 꼭 남겨요' : '줄을 누르면 함정 카드가 나와요';
+  const bad = checkCastle(L, ED.capt, R, EM.unlock), list = $('laneList'); list.innerHTML = '';
   L.forEach((ln, i) => {
-    const row = el('div', 'lane' + (bad && bad.i === i ? ' bad' : '')), no = el('div', 'no', (i + 1) + '줄' + (i === half ? '<br>↑뒤쪽' : ''));
-    const part = i > 0 && TWO[L[i - 1].t], rest = !part && i < half && trapAt(L, i - 1);
-    if (part || rest) { row.classList.add('lock'); row.append(no, el('div', 'why', part ? '↑ ' + (L[i - 1].t === 'jelly' ? '해파리가 튀는 줄' : L[i - 1].t === 'rock' ? '바위가 굴러오는 비탈' : '순찰 기사의 길') + ' (아래 줄과 함께)' : '🌿 쉬는 풀밭 (앞쪽 절반은 함정과 번갈아)')); }
-    else {
-      const sel = document.createElement('select');
-      for (const [k, v] of Object.entries(PIECES)) { const o = document.createElement('option'); o.value = k; const godUsed = GODP[k] && L.some((x, j) => j !== i && x.t === k);
-        const lock = (GODP[k] && !ME.unlock[GODP[k]]) || (v.two && i === n - 1) || godUsed; o.textContent = (lock ? '🔒 ' : '') + v.name + (v.cost ? ' ★' + v.cost : '') + (godUsed ? ' (신은 한 줄만)' : GODP[k] && !ME.unlock[GODP[k]] ? (GODP[k] === 'munch' ? ' (헬로먼치 카드 필요)' : ' (신의 시험 통과 필요)') : ''); o.disabled = lock && k !== ln.t; if (k === ln.t) o.selected = true; sel.appendChild(o); }
-      sel.onchange = () => { ln.t = sel.value; if (ln.t !== 'grass') delete ln.b; renderEdit(); };
-      const sp = document.createElement('select');
-      if (PIECES[ln.t].speed) { SPEED_NAME.forEach((nm, j) => { const o = document.createElement('option'); o.value = j; o.textContent = (j > R.spd ? '🔒 ' : '') + nm + (j === 2 ? ' ★+1' : ''); o.disabled = j > R.spd; if ((ln.s || 0) === j) o.selected = true; sp.appendChild(o); }); sp.onchange = () => { ln.s = +sp.value; if (!ln.s) delete ln.s; renderEdit(); }; }
-      else { sp.disabled = true; sp.appendChild(document.createElement('option')).textContent = '—'; }
-      row.append(no, sel, sp);
-    }
-    // 풀밭(두 줄 함정의 위 줄 빼고)에는 나무·바위: 칸을 눌러 놓기/치우기
-    if (ln.t === 'grass' && !part) { const cells = el('div', 'cells');
-      for (let c = 0; c < COLS; c++) { const on = (ln.b || []).includes(c), bt = document.createElement('button'); bt.type = 'button'; bt.className = on ? 'on' : ''; bt.textContent = on ? ((i * 7 + c * 3) % 5 < 3 ? '🌳' : '🪨') : '·';
-        bt.onclick = () => { const b0 = (ln.b || []).slice();
-          if (on) ln.b = b0.filter(x => x !== c); else { if (b0.length >= 3) return toast('한 줄에 3개까지예요'); if (blocks >= Math.floor(n / 3)) return toast('나무·바위는 모두 ' + Math.floor(n / 3) + '개까지예요'); ln.b = b0.concat(c).sort((a, b) => a - b); if (!pathOk(L)) { ln.b = b0; return toast('그러면 길이 막혀요!'); } }
+    if (i === half) list.appendChild(el('div', 'halfline', '▲ 여기부터 뒤쪽 절반 — 함정을 ' + R.run + '줄까지 연달아 ▲'));
+    const lock = rowLock(L, i), row = el('div', 'mrow'), no = el('div', 'no', String(i + 1)), strip = document.createElement('button'); strip.type = 'button';
+    const kind = lock === 'part' ? 'part' : lock === 'rest' ? 'rest' : ln.t === 'grass' ? 'grass' : (ED_COLOR[ln.t] || 'trap');
+    strip.className = 'strip ' + kind + (edSel === i ? ' sel' : '') + (bad && bad.i === i ? ' bad' : '');
+    if (edTool === 'tree' && ln.t === 'grass' && lock !== 'part') {
+      const cells = el('div', 'cells2');
+      for (let c = 0; c < COLS; c++) { const on = (ln.b || []).includes(c), bt = document.createElement('button'); bt.type = 'button'; bt.className = on ? 'on' : ''; bt.textContent = on ? ((i * 7 + c * 3) % 5 < 3 ? '🌳' : '🪨') : '';
+        bt.onclick = (e) => { e.stopPropagation(); const b0 = (ln.b || []).slice();
+          if (on) ln.b = b0.filter(x => x !== c); else { if (b0.length >= 3) return toast('한 줄에 3개까지예요'); if (blocks >= bmax) return toast('나무·바위는 모두 ' + bmax + '개까지예요'); ln.b = b0.concat(c).sort((a, b) => a - b); if (!pathOk(L)) { ln.b = b0; return toast('그러면 길이 막혀요!'); } }
           if (!ln.b.length) delete ln.b; renderEdit(); };
         cells.appendChild(bt); }
-      row.appendChild(cells); }
-    list.appendChild(row);
+      strip.appendChild(cells); strip.disabled = false;
+    } else {
+      const label = lock === 'part' ? '↑ ' + (L[i - 1].t === 'jelly' ? '해파리가 튀는 줄' : L[i - 1].t === 'rock' ? '바위가 굴러오는 비탈' : '순찰 기사의 길') : lock === 'rest' ? '쉬는 풀밭' : ED_NAME[ln.t].replace('(비우기)', '');
+      strip.innerHTML = '<span class="ic">' + (lock === 'part' ? '↑' : ED_ICON[ln.t]) + '</span><span>' + label + '</span>' + (ln.b && ln.b.length ? '<span class="small">🌳' + ln.b.length + '</span>' : '') + (PIECES[ln.t].speed && !lock ? '<span class="sp">' + SPEED_NAME[ln.s || 0] + '</span>' : '');
+      if (edTool === 'tree' && ln.t !== 'grass') strip.style.opacity = .45;
+      strip.onclick = () => { if (edTool === 'tree') return toast('나무·바위는 풀밭에만 놓아요'); if (lock === 'part') return toast('두 줄짜리 함정이 함께 쓰는 줄이에요. 아래 줄을 바꿔 주세요'); if (lock === 'rest') return toast('앞쪽 절반은 함정 다음 줄이 쉬는 풀밭이에요'); openSheet(i); };
+    }
+    row.append(no, strip); list.appendChild(row);
   });
-  const used = costOf(L, ED.capt);
-  $('bud').innerHTML = '<span class="' + (used > R.bud ? 'over' : '') + '">★' + used + '</span> / ★' + R.bud + ' · ' + n + '/' + R.len + '줄';
   $('bTest').disabled = !!bad; $('eMsg').className = 'msg' + (bad ? ' bad' : '');
-  $('eMsg').textContent = bad ? bad.why : '남은 예산 ★' + (R.bud - used) + ' · 나무·바위 ' + blocks + '/' + Math.floor(n / 3) + '개';
+  $('eMsg').textContent = bad ? bad.why : '남은 예산 ★' + (R.bud - used) + (EDEMO ? ' · 체험판이라 공개는 안 돼요' : '');
   $('lAdd').disabled = n >= R.len; $('lDel').disabled = n <= MIN_LEN;
-  const es = $('eShare'); es.innerHTML = ''; if (ME.castle.pub) shareBox(es, 'mycastle', () => makeMyCastle());
+  const es = $('eShare'); es.innerHTML = ''; if (!EDEMO && EM.castle.pub) shareBox(es, 'mycastle', () => makeMyCastle());
+}
+function openSheet(i) {
+  edSel = i; renderEdit(); const R = EM.rules, ln = ED.lanes[i];
+  $('shT').textContent = (i + 1) + '줄에 놓을 함정 · 남은 ★' + (R.bud - costOf(ED.lanes, ED.capt));
+  const seg = $('shSpd'); seg.innerHTML = ''; seg.hidden = !PIECES[ln.t].speed;
+  if (PIECES[ln.t].speed) SPEED_NAME.forEach((nm, j) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = (j > R.spd ? '🔒 ' : '') + nm + (j === 2 ? ' ★+1' : ''); b.className = (ln.s || 0) === j ? 'on' : '';
+    const why = j > R.spd ? eun(R.tier) + ' ' + SPEED_NAME[R.spd] + '까지' : placeWhy(i, ln.t, j); b.disabled = !!why && (ln.s || 0) !== j; if (why && j <= R.spd) b.title = why;
+    b.onclick = () => { apply(i, ln.t, j); openSheet(i); }; seg.appendChild(b); });
+  const grid = $('shGrid'); grid.innerHTML = '';
+  Object.keys(PIECES).forEach(k => { const why = k === ln.t ? null : placeWhy(i, k), c = document.createElement('button'); c.type = 'button'; c.className = 'pcard' + (k === ln.t ? ' on' : '') + (why ? ' no' : '');
+    c.innerHTML = '<span class="ic">' + ED_ICON[k] + '</span><span class="st">' + (PIECES[k].cost ? '★' + PIECES[k].cost : '무료') + '</span><b>' + ED_NAME[k] + '</b><small' + (why ? ' class="why"' : '') + '>' + (why ? '🔒 ' + why : ED_DESC[k]) + '</small>';
+    c.onclick = () => { if (why) return toast(why); apply(i, k); if (PIECES[k].speed && EM.rules.spd > 0) openSheet(i); else closeSheet(); };
+    grid.appendChild(c); });
+  $('sheet').hidden = false;
+}
+function closeSheet() { $('sheet').hidden = true; edSel = -1; renderEdit(); }
+$('shX').onclick = closeSheet;
+$('tTrap').onclick = () => { edTool = 'trap'; renderEdit(); };
+$('tTree').onclick = () => { edTool = 'tree'; closeSheet(); };
+$('tAuto').onclick = () => { $('autoBox').hidden = false; };
+$('autoX').onclick = () => { $('autoBox').hidden = true; };
+$('edQ').onclick = () => { $('edTut').hidden = false; };
+$('edTutOk').onclick = () => { $('edTut').hidden = true; ls.set('hc_edtut', '1'); };
+$('edTutAuto').onclick = () => { $('edTut').hidden = true; ls.set('hc_edtut', '1'); $('autoBox').hidden = false; };
+document.querySelectorAll('#autoBox [data-d]').forEach(b => b.onclick = () => { autoBuild(+b.dataset.d); $('autoBox').hidden = true; toast('🪄 성을 지었어요! 마음에 안 드는 줄을 눌러 바꿔 보세요'); track('castle_autobuild', { d: +b.dataset.d }); });
+// 🪄 자동으로 지어 주기: 쉬움 0 · 보통 1 · 어려움 2. 규칙에 맞을 때까지 함정을 덜어 낸다
+function autoBuild(d) {
+  const R = EM.rules, U = EM.unlock, n = R.len, half = Math.floor(n / 2), rnd = Math.random;
+  const pools = [['log', 'cart', 'star', 'soldier', 'tide'], ['log', 'cart', 'star', 'soldier', 'tide', 'water', 'octo', 'bomb', 'cannon', 'whirl', 'tiller'], ['soldier', 'water', 'octo', 'bomb', 'cannon', 'whirl', 'tiller', 'patrol', 'jelly', 'rock', 'star', 'cart']];
+  const gods = Object.keys(GODP).filter(k => U[GODP[k]]), runMax = d === 0 ? 1 : d === 1 ? Math.max(1, R.run - 1) : R.run, fill = [.55, .8, 1][d];
+  const pick = (back) => { const pool = pools[d].filter(k => back || !TWO[k]); return pool[Math.floor(rnd() * pool.length)]; };
+  const spd = () => Math.min(R.spd, d === 0 ? 0 : Math.floor(rnd() * (d + 1)));
+  let L = [];
+  for (let i = 0; i < n; i++) {
+    if (i > 0 && TWO[L[i - 1].t]) { L.push({ t: 'grass' }); continue; }
+    if (i < half) { L.push(i % 2 === 0 && rnd() < [.8, .95, 1][d] ? { t: pick(false) } : { t: 'grass' }); continue; }
+    let run = 0; for (let j = i - 1; j >= half && trapAt(L, j); j--) run++;
+    const want = run < runMax && rnd() < [.45, .7, .85][d] && i < n - 1;
+    if (!want) { L.push({ t: 'grass' }); continue; }
+    let k = pick(true); if (TWO[k] && (run + 2 > runMax || i >= n - 2)) k = 'log';
+    L.push({ t: k });
+  }
+  if (d >= 1) gods.forEach(k => { const cand = []; L.forEach((l, i) => { if (i >= half && l.t !== 'grass' && !TWO[l.t] && !(i > 0 && TWO[L[i - 1].t])) cand.push(i); }); if (cand.length && rnd() < (d === 2 ? 1 : .6)) L[cand[Math.floor(rnd() * cand.length)]] = { t: k }; });
+  L.forEach(l => { if (PIECES[l.t].speed) { const s0 = spd(); if (s0) l.s = s0; } });
+  const capt = d === 2 && R.capt;
+  // 예산 안으로: 빠른 속도부터 낮추고, 그래도 넘으면 함정을 뒤에서부터 풀밭으로
+  let guard = 0;
+  while (costOf(L, capt) > R.bud * (d === 2 ? 1 : fill) && guard++ < 200) { const sp = L.findIndex(l => l.s === 2); if (sp >= 0) { L[sp].s = 1; continue; } const ti = [...L.keys()].filter(i => L[i].t !== 'grass' && !(i > 0 && TWO[L[i - 1].t])); if (!ti.length) break; const j = ti[Math.floor(rnd() * ti.length)]; if (TWO[L[j].t]) L[j + 1] = { t: 'grass' }; L[j] = { t: 'grass' }; }
+  ED.capt = capt && costOf(L, true) <= R.bud;
+  // 나무·바위(보통·어려움): 뒤쪽 절반 풀밭에 조금
+  if (d >= 1) { let left = Math.floor(n / 3) * (d === 1 ? .4 : .8) | 0; for (let t2 = 0; t2 < 60 && left > 0; t2++) { const i = half + Math.floor(rnd() * (n - half)); const l = L[i]; if (l.t !== 'grass' || (i > 0 && TWO[L[i - 1].t])) continue; const b = l.b || []; if (b.length >= 2) continue; const c = Math.floor(rnd() * COLS); if (b.includes(c)) continue; l.b = b.concat(c).sort((a, b2) => a - b2); if (!pathOk(L)) { l.b = b; if (!l.b.length) delete l.b; continue; } left--; } }
+  normalize(L);
+  for (let t3 = 0; t3 < 50 && checkCastle(L, ED.capt, R, U); t3++) { const bad = checkCastle(L, ED.capt, R, U); if (bad.code === 'bud' && ED.capt) { ED.capt = false; continue; } const i = bad.i >= 0 ? bad.i : L.findIndex(l => l.t !== 'grass'); if (i < 0) break; L[i] = { t: 'grass' }; normalize(L); }
+  ED.lanes = L; edTool = 'trap'; renderEdit();
 }
 $('lAdd').onclick = () => { ED.lanes.push({ t: 'grass' }); renderEdit(); };
 $('lDel').onclick = () => { ED.lanes.pop(); renderEdit(); };
 $('bTest').onclick = () => {
-  if (checkCastle(ED.lanes, ED.capt, ME.rules, ME.unlock)) return;
+  if (checkCastle(ED.lanes, ED.capt, EM.rules, EM.unlock)) return;
+  const go = () => startRun('test', { owner: EM.nick, fame: EM.fame, wid: EM.wid, capt: ED.capt, lanes: cloneL(ED.lanes) });
+  if (EDEMO) return go();
   $('bTest').disabled = true; $('eMsg').textContent = '저장하는 중…';
   api(null, { action: 'save', lanes: ED.lanes, capt: ED.capt }).then(d => { $('bTest').disabled = false;
     if (!d.ok) { $('eMsg').className = 'msg bad'; $('eMsg').textContent = d.error || '저장하지 못했어요'; return; }
-    ME.castle.draft = d.draft; startRun('test', { owner: ME.nick, fame: ME.fame, wid: ME.wid, capt: ED.capt, lanes: JSON.parse(JSON.stringify(ED.lanes)) }); });
+    ME.castle.draft = d.draft; go(); });
 };
 $('bHome1').onclick = goHome;
 $('bGods').onclick = () => startRun('gods');
@@ -1623,7 +1779,7 @@ function openVisit(wid) {
   $('aGo').onclick = () => { const k = sel.value, lanes = []; for (let n = 0; n < 6; n++) { lanes.push({ t: k, s: n < 2 ? 0 : n < 4 ? 1 : 2 }); lanes.push({ t: 'grass' }); if (n % 2) lanes.push({ t: 'grass' }); } $('adm').hidden = true; startRun('practice', { owner: PIECES[k].name + ' 연습', fame: 0, capt: false, lanes }); };
 })();
 
-window.__castle = { buildCard, get REC() { return REC; }, get stepN() { return stepN; }, startRun, TRIALS, checkCastle, get ME() { return ME; }, get RP() { return RP; }, get mode() { return mode; }, get summitT() { return summitT; }, octoS, rowsRef: () => rows, get deadMsg() { return deadMsg; }, calls: () => renderer.info.render.calls, sndDbg: () => [Object.keys(LOADING).length, Object.keys(SCFG.ev).length, !!AC, AC && AC.state], runLanes: (lanes) => startRun('practice', { owner: '시험', fame: 0, capt: false, lanes }), loops: () => Object.fromEntries(Object.entries(LOOPS).map(([k, L]) => [k, L.g ? +L.g.gain.value.toFixed(2) : null])), sndDef: () => [SCFG.range, SCFG.master, SCFG.bgm, SCFG.focus, JSON.stringify(SCFG.bgmMap)], bgmInfo: () => [bgmCur, bgmEl ? !bgmEl.paused : null, bgmEl ? +bgmEl.currentTime.toFixed(1) : 0, bgmScene], get focusRow() { return focusRow; }, sndBufs: () => Object.keys(BUF), sndPlayed: () => Object.keys(lastSnd).filter(k => !k.endsWith("~")), get guarded() { return guarded; }, get popups() { return popups; }, blocked, get shellN() { return shellN; },
+window.__castle = { ed: { autoBuild, placeWhy, openSheet, get ED() { return ED; }, setTier: (k) => { EM = demoMe(k); }, check: () => checkCastle(ED.lanes, ED.capt, EM.rules, EM.unlock), cost: () => costOf(ED.lanes, ED.capt), get EM() { return EM; } }, buildCard, get REC() { return REC; }, get stepN() { return stepN; }, startRun, TRIALS, checkCastle, get ME() { return ME; }, get RP() { return RP; }, get mode() { return mode; }, get summitT() { return summitT; }, octoS, rowsRef: () => rows, get deadMsg() { return deadMsg; }, calls: () => renderer.info.render.calls, sndDbg: () => [Object.keys(LOADING).length, Object.keys(SCFG.ev).length, !!AC, AC && AC.state], runLanes: (lanes) => startRun('practice', { owner: '시험', fame: 0, capt: false, lanes }), loops: () => Object.fromEntries(Object.entries(LOOPS).map(([k, L]) => [k, L.g ? +L.g.gain.value.toFixed(2) : null])), sndDef: () => [SCFG.range, SCFG.master, SCFG.bgm, SCFG.focus, JSON.stringify(SCFG.bgmMap)], bgmInfo: () => [bgmCur, bgmEl ? !bgmEl.paused : null, bgmEl ? +bgmEl.currentTime.toFixed(1) : 0, bgmScene], get focusRow() { return focusRow; }, sndBufs: () => Object.keys(BUF), sndPlayed: () => Object.keys(lastSnd).filter(k => !k.endsWith("~")), get guarded() { return guarded; }, get popups() { return popups; }, blocked, get shellN() { return shellN; },
   get t() { return t; }, shout, get shouts() { return shouts; }, get state() { return state; }, get hero() { return hero; }, get susp() { return susp; }, get maxRow() { return maxRow; }, move, rows: () => rows,
   hazard: (i, x) => hazardAt(i, x), raft: (i, x) => rows[i].t !== 'water' || rafts(rows[i]).some(f => x + .5 > f.x + .25 && x + .5 < f.x + f.w - .25),
   safeFor: (i, x, d) => { MG = 0; const t0 = t; let ok = true; for (let k = 0; k <= d; k += .05) { t = t0 + k; if (hazardAt(i, x)) { ok = false; break; } } t = t0; return ok; },
