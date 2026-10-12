@@ -189,6 +189,7 @@ img{ max-width:100%; display:block; }
 .topbar-in{ max-width:640px; margin:0 auto; padding:10px 16px 0; display:flex; align-items:center; justify-content:space-between; gap:10px; }
 .topbar .brand{ font-family:'Jua',sans-serif; font-size:18px; text-decoration:none; color:var(--cream); white-space:nowrap; }
 .topbar .brand b{ color:var(--coral); font-weight:400; }
+.topbar .snd-btn{ margin-left:auto; width:34px; height:34px; border-radius:50%; border:1px solid var(--line); background:var(--navy-card); color:var(--cream); font-size:16px; line-height:1; cursor:pointer; flex:0 0 auto; }
 .topbar .member{ position:relative; min-height:34px; display:flex; align-items:center; }
 .topbar .login-btn{ background:#fee500; color:#191600; font-weight:700; font-size:13px; padding:7px 13px; border-radius:999px; text-decoration:none; white-space:nowrap; }
 .topbar .me-btn{ background:var(--navy-card); color:var(--cream); border:1.5px solid var(--gold); font:inherit; font-weight:700; font-size:13px; padding:6px 12px; border-radius:999px; cursor:pointer; max-width:190px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
@@ -303,6 +304,7 @@ footer{
 <nav class="topbar" aria-label="오락실 메뉴">
   <div class="topbar-in">
     <a class="brand" href="/">헬로 대부도 <b>오락실</b></a>
+    <button type="button" class="snd-btn" id="hubSnd" aria-label="배경음 끄기">🔊</button>
     <div class="member" id="memberArea"></div>
   </div>
   <div class="topbar-in nav-links">
@@ -598,6 +600,66 @@ window.__updateAppBadge();
     // 로그인하고 돌아온 주소(?login=ok) 정리
     try { const q = new URLSearchParams(location.search); if (q.has('login')) { q.delete('login'); history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q.toString() : '')); } } catch (e) {}
   } catch (e) { /* 로그인 기능이 꺼져 있으면 메뉴만 보임 */ }
+})();
+</script>
+<script>
+// 오락실 배경음(Country Sky) + 단계별 인사말 — 대표 결정 10/12
+//  · 휴대폰 브라우저는 사람이 화면을 한 번 누르기 전에는 소리를 막는다 → 첫 터치·클릭·키 입력 때 시작
+//  · 인사말은 로그인한 회원만, 결투장 칭호(견습생·전사·용사·영웅·반신)에 맞게, 하루(한국 날짜)에 한 번
+//  · 다른 탭·앱으로 가면 멈추고 돌아오면 다시. 🔊 버튼으로 끄면 이 폰에 기억(hub_bgm_off)
+(function () {
+  var BGM_VOL = 0.2, DUCK = 0.07, GREET_VOL = 0.9;
+  var GREET = { '견습생': 'apprentice', '전사': 'warrior', '용사': 'brave', '영웅': 'hero', '반신': 'demigod' };
+  var btn = document.getElementById('hubSnd');
+  function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function lsSet(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) {} }
+  var off = lsGet('hub_bgm_off') === '1', started = false, starting = false, ac = null, gBgm = null, bgm = null, tierP = null;
+  function track(n, p) { try { if (typeof gtag === 'function') gtag('event', n, p || {}); } catch (e) {} }
+  function today() { return new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10); }
+  function show() { btn.textContent = off ? '🔇' : '🔊'; btn.setAttribute('aria-label', off ? '배경음 켜기' : '배경음 끄기'); }
+  show();
+  // 오늘 인사말을 아직 안 들은 회원만 칭호를 미리 알아 둔다
+  if (!off && lsGet('hub_greet_day') !== today()) {
+    tierP = fetch('/api/auth', { credentials: 'same-origin', cache: 'no-store' }).then(function (r) { return r.json(); })
+      .then(function (a) { if (!a || !a.loggedIn || !a.wid) return null; return fetch('/api/duel?arena=' + encodeURIComponent(a.wid), { credentials: 'same-origin', cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; }); })
+      .then(function (d) { return d && d.tier ? d.tier : (d ? '견습생' : null); }).catch(function () { return null; });
+  }
+  function makeBgm() {
+    if (bgm) return; bgm = window.__hubPre || new Audio('/assets/sound/hub-bgm.mp3'); bgm.loop = true; bgm.preload = 'auto';
+    try { var C = window.AudioContext || window.webkitAudioContext; ac = new C(); var src = ac.createMediaElementSource(bgm); gBgm = ac.createGain(); gBgm.gain.value = BGM_VOL; src.connect(gBgm); gBgm.connect(ac.destination); }
+    catch (e) { ac = null; gBgm = null; bgm.volume = BGM_VOL; }
+  }
+  // 화면이 뜬 뒤 배경음을 미리 받아 둔다(끈 사람은 받지 않음)
+  window.addEventListener('load', function () { if (!off) setTimeout(function () { if (!bgm && !off && !window.__hubPre) { var b0 = new Audio(); b0.preload = 'auto'; b0.src = '/assets/sound/hub-bgm.mp3'; window.__hubPre = b0; } }, 1200); });
+  function setBgmVol(v, sec) { if (gBgm && ac) { gBgm.gain.cancelScheduledValues(ac.currentTime); gBgm.gain.setTargetAtTime(v, ac.currentTime, sec || .2); } else if (bgm) bgm.volume = v; }
+  function playGreet() {
+    if (!tierP) return;
+    tierP.then(function (tier) {
+      var k = tier && GREET[tier]; if (!k || off || document.hidden) return;
+      lsSet('hub_greet_day', today());
+      var a = new Audio('/assets/sound/greet-' + k + '.mp3');
+      try { if (ac) { var s2 = ac.createMediaElementSource(a), g2 = ac.createGain(); g2.gain.value = GREET_VOL; s2.connect(g2); g2.connect(ac.destination); } else a.volume = GREET_VOL; } catch (e) {}
+      setBgmVol(DUCK, .15);
+      a.addEventListener('ended', function () { if (!off) setBgmVol(BGM_VOL, .5); });
+      setTimeout(function () { a.play().catch(function () { setBgmVol(BGM_VOL); }); }, 600);
+      track('hub_greet', { tier: tier });
+    });
+    tierP = null;
+  }
+  function start() {
+    if (off || started || starting || document.hidden) return;
+    makeBgm(); starting = true;
+    try { if (ac && ac.state === 'suspended') ac.resume(); } catch (e) {}
+    bgm.play().then(function () { starting = false; started = true; playGreet(); track('hub_bgm_start', {}); }).catch(function () { starting = false; /* 다음 터치에 다시 시도 */ });
+  }
+  ['pointerdown', 'touchend', 'click', 'keydown'].forEach(function (ev) { document.addEventListener(ev, function (e) { if (e.target === btn) return; start(); }, { capture: true, passive: true }); });
+  btn.addEventListener('click', function () {
+    off = !off; lsSet('hub_bgm_off', off ? '1' : null); show(); track('hub_bgm_toggle', { on: !off });
+    if (off) { if (bgm) bgm.pause(); started = false; } else { started = false; start(); }
+  });
+  function away() { if (bgm && !bgm.paused) bgm.pause(); started = false; }
+  document.addEventListener('visibilitychange', function () { if (document.hidden) away(); else if (!off && bgm) { try { if (ac) ac.resume(); } catch (e) {} bgm.play().then(function () { started = true; }).catch(function () {}); } });
+  window.addEventListener('pagehide', away);
 })();
 </script>
 </body>
