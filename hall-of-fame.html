@@ -126,6 +126,7 @@
   }
   .god.left { left: -10px; }
   .god.right { right: -10px; }
+  .god.wide { width: 120px; bottom: 125px; } /* 옆으로 나는 신(헤르메스) 그림 */
   .pedestal {
     width: 72%; margin: 0 auto; height: 16px;
     background: linear-gradient(var(--marble-shade), var(--marble-deep));
@@ -203,6 +204,7 @@
     .god { width: 104px; }
     .statue img { max-height: 164px; }
     .god.left { left: 0; } .god.right { right: 0; }
+    .god.wide { width: 160px; }
   }
   @media (prefers-reduced-motion: no-preference) {
     .statue { animation: glint 6s ease-in-out infinite; }
@@ -309,6 +311,14 @@ const SHRINES = [
     ascendedTitle: '구름 위에 오른 자들',
     ascendedNote: '1700m, 파도 괴물을 따돌리고 구름 위까지 날아간 이들이에요. 먼저 닿은 순서대로 새겼어요.',
   },
+  {
+    key: 'hello_castle', name: '헬로캐슬', unit: '줄', href: 'games/hello-castle/',
+    statue: 'games/hello-castle/art/hello_shout.webp',
+    god: 'games/hello-tower/assets/gods/hermes.webp', godName: '헤르메스', godSide: 'right', godWide: true,
+    guardian: '전령의 신 헤르메스가 지키는 성소',
+    ascendedTitle: '올림포스 정상에 오른 자들',
+    ascendedNote: '오늘의 신들의 성 100줄, 신들의 함정을 몰래 지나 올림포스 정상에 선 이들이에요. 먼저 오른 순서대로 새겼어요.',
+  },
 ];
 
 function el(tag, attrs = {}, ...children) {
@@ -375,7 +385,7 @@ function renderShrine(cfg, data) {
   );
 
   const statueWrap = el('div', { class: 'statue-wrap' },
-    el('img', { class: `god ${cfg.godSide}`, src: cfg.god, alt: cfg.godName, loading: 'lazy' }),
+    el('img', { class: `god ${cfg.godSide}${cfg.godWide ? ' wide' : ''}`, src: cfg.god, alt: cfg.godName, loading: 'lazy' }),
     el('div', { class: 'statue-cell' },
       el('div', { class: 'statue', style: `--src:url('${cfg.statue}')` },
         el('img', { src: cfg.statue, alt: `${cfg.name} 1위를 기리는 황금 헬로 조각상` }))),
@@ -574,7 +584,7 @@ async function buildThroneCard(cfg, champ) {
   // 받침대(460)에 붙지 않게 살짝 띄워서 후광 한가운데에 오도록
   ctx.drawImage(goldStatue(statueImg, Math.round(sw), Math.round(shh)), cx - sw / 2, 440 - shh, sw, shh);
   ctx.restore();
-  const gw = 118, gh = godImg.height * gw / godImg.width;
+  const gw = cfg.godWide ? 230 : 118, gh = godImg.height * gw / godImg.width;
   const gx = cfg.godSide === 'right' ? CARD_W - gw - 26 : 26;
   ctx.drawImage(godImg, gx, 470 - gh, gw, gh);
 

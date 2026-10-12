@@ -396,7 +396,12 @@ async function gods(req, res, b) {
   await kv.hset(k, { [me.wid]: JSON.stringify(rec) }); await kv.expire(k, 3 * 24 * 3600);
   if (row > prev.row) { await kv.zadd(`cgods:${day}`, { score: row, member: me.wid }); await kv.expire(`cgods:${day}`, 3 * 24 * 3600); }
   const best = Number(await kv.hget('cgbest', me.wid) || 0);
-  if (row > best) await kv.hset('cgbest', { [me.wid]: row });
+  if (row > best) {
+    await kv.hset('cgbest', { [me.wid]: row });
+    // 오락실 🏆 랭킹·🏛️ 신전(score:hello_castle): 내 역대 최고 줄이 새로 나왔을 때만 한 줄 올린다(score.js와 같은 모양, 연락처 없음)
+    const entry = { id: `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`, nickname: me.nick, contact: '', meters: row, submittedAt: new Date().toISOString(), wid: me.wid, dur: Math.round(t) };
+    await kv.zadd('score:hello_castle', { score: row, member: JSON.stringify(entry) });
+  }
   return res.status(200).json({ ok: true, best: Math.max(best, row), day: rec });
 }
 

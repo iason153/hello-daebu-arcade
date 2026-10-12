@@ -29,7 +29,9 @@ import { timingSafeEqual, createHmac } from 'crypto';
 import { sessionUser } from './_session.js';
 
 const MAX_METERS = 5000; // 터무니없는 점수 최소 검증용 상한선(헬로런 기준, 필요시 게임별로 분리 가능)
-const ALLOWED_GAMES = ['hello_run', 'hello_bird', 'hello_tower', 'hello_munch', 'hello_swing'];
+const ALLOWED_GAMES = ['hello_run', 'hello_bird', 'hello_tower', 'hello_munch', 'hello_swing', 'hello_castle'];
+// 헬로 캐슬은 게임 서버(api/castle.js)가 로그인 회원의 신들의 성 최고 기록을 직접 올린다 — 여기로 등록하는 것은 막는다(조회·관리만)
+const SERVER_ONLY = ['hello_castle'];
 
 // [기록 확인표 — 2026-10 조작 방지]
 // 게임을 시작할 때 서버가 "확인표"를 내준다(게임 이름 + 시작 시각 + 서명). 기록을 등록할 때 이 표를 함께 보내면
@@ -120,6 +122,7 @@ export default async function handler(req, res) {
 async function handleSubmit(req, res) {
   try {
     const { game, nickname, contact, meters, ticket } = req.body || {};
+    if (SERVER_ONLY.includes(game)) return res.status(400).json({ error: 'this game records on its own server' });
 
     if (!ALLOWED_GAMES.includes(game)) {
       return res.status(400).json({ error: 'invalid game' });

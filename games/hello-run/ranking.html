@@ -76,6 +76,7 @@
   </header>
 
   <div class="tabs">
+    <div class="tab" data-game="hello_castle">🏰 헬로캐슬</div>
     <div class="tab" data-game="hello_swing">🕸️ 헬로스윙</div>
     <div class="tab" data-game="hello_munch">👾 헬로먼치</div>
     <div class="tab" data-game="hello_tower">🗼 헬로타워</div>
@@ -128,7 +129,7 @@ function renderList(entries){
     const topClass = rank<=3 ? ' top'+rank : '';
     const rankLabel = rank<=3 ? RANK_ICONS[rank-1] : rank;
     const nick = (e.nickname||'').toString().slice(0,12);
-    const unit = (currentGame==='hello_tower') ? '층' : (currentGame==='hello_bird') ? '점' : 'm';
+    const unit = (currentGame==='hello_tower') ? '층' : (currentGame==='hello_bird') ? '점' : (currentGame==='hello_castle') ? '줄' : 'm';
     const meters = (e.meters!=null) ? e.meters+unit : '-';
     return '<div class="row'+topClass+'"><div class="rank">'+rankLabel+'</div><div class="nick">'+(/^[a-z0-9]{4,16}$/.test(e.wid||'') ? '<a class="cb-link" href="/cardbook.html?w='+e.wid+'" title="카드첩 구경하기">'+escapeHtml(nick)+' <span aria-hidden="true">🎴</span></a>' : escapeHtml(nick))+'</div><div class="meters">'+meters+'</div></div>';
   }).join('');
@@ -160,7 +161,7 @@ document.querySelectorAll('.tab').forEach(tab=>{
   });
 });
 // 게임하러 가기 버튼 — 지금 보고 있는 탭의 게임으로 연결
-const PLAY = { hello_swing: ['🕸️ 헬로스윙', '/games/hello-swing/'], hello_munch: ['👾 헬로먼치', '/games/hello-munch/'], hello_tower: ['🗼 헬로타워', '/games/hello-tower/'], hello_run: ['🏃 헬로런', '/games/hello-run/'], hello_bird: ['🐦 헬로버드', '/games/hello-bird/'] };
+const PLAY = { hello_castle: ['🏰 헬로캐슬', '/games/hello-castle/'], hello_swing: ['🕸️ 헬로스윙', '/games/hello-swing/'], hello_munch: ['👾 헬로먼치', '/games/hello-munch/'], hello_tower: ['🗼 헬로타워', '/games/hello-tower/'], hello_run: ['🏃 헬로런', '/games/hello-run/'], hello_bird: ['🐦 헬로버드', '/games/hello-bird/'] };
 function updatePlayBtn(){ const p = PLAY[currentGame]; const b = document.getElementById('playBtn'); if (p && b) { b.textContent = p[0] + ' 하러 가기'; b.href = p[1]; } }
 // 주소에 ?g=hello_run 처럼 붙어 오면 그 탭부터 보여줌
 try { const q = new URLSearchParams(location.search).get('g'); const tab = q && document.querySelector('.tab[data-game="' + q + '"]'); if (tab) { document.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); tab.classList.add('active'); currentGame = q; } } catch (e) {}

@@ -24,6 +24,7 @@ const GAMES = {
   hello_bird: {},
   hello_munch: { maxScore: 500 }, // 500m = 신들의 나라 도착
   hello_swing: { maxScore: 1700 }, // 1700m = 구름 위 도착
+  hello_castle: { maxScore: 100 }, // 오늘의 신들의 성 100줄 = 올림포스 정상
 };
 
 // 회원 닉네임 → 카드첩 주소. 같은 닉네임 회원이 둘 이상이면 누구 것인지 알 수 없으므로 합치지 않는다.
