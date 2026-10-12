@@ -77,8 +77,8 @@ img{ max-width:100%; display:block; }
 .pwa-slot{ margin-top:22px; min-height:0; }
 .pwa-slot:empty{ display:none; }
 .cabinet{
-  margin:36px auto 0;
-  max-width:280px;
+  margin:30px auto 0;
+  max-width:230px;
   position:relative;
 }
 .cabinet-frame{
@@ -106,6 +106,14 @@ img{ max-width:100%; display:block; }
   transition:opacity 0.9s ease;
 }
 .cabinet-slides img.active{ opacity:1; }
+.cabinet-frame{ display:block; position:relative; text-decoration:none; }
+.cab-new{ position:absolute; z-index:2; top:6px; right:-8px; background:var(--coral); color:#fff; font-weight:900; font-size:12px; padding:4px 10px; border-radius:999px; box-shadow:0 4px 10px rgba(0,0,0,.35); transform:rotate(8deg); transition:opacity .4s; }
+.cab-new[hidden]{ display:none; }
+.cab-cap{ margin-top:14px; font-size:13.5px; color:var(--dim); }
+.cab-cap b{ color:var(--cream); }
+.cab-dots{ display:flex; justify-content:center; gap:7px; margin-top:8px; }
+.cab-dots button{ width:9px; height:9px; padding:0; border-radius:50%; border:0; background:rgba(255,255,255,.28); cursor:pointer; }
+.cab-dots button[aria-selected="true"]{ background:var(--gold); width:22px; border-radius:999px; }
 @keyframes floaty{
   0%,100%{ transform: translateY(0) rotate(-1.2deg); }
   50%{ transform: translateY(-10px) rotate(1deg); }
@@ -337,16 +345,19 @@ footer{
     <p class="tagline">대부도 곳곳을 배경으로 한 아주 가벼운 미니게임들을 하나씩 만들고 있어요.</p>
     <div class="pwa-slot" data-pwa-install></div>
     <div class="cabinet">
-      <div class="cabinet-frame">
+      <a class="cabinet-frame" id="cabLink" href="games/hello-castle/" aria-label="게임 하러 가기">
+        <span class="cab-new" id="cabNew">NEW</span>
         <div class="cabinet-slides">
-          <img class="active" src="games/hello-bird/assets/start_screen.png" alt="헬로버드 시작 화면" loading="eager">
-          <img src="games/hello-run/assets/hero-card.jpg" alt="헬로런 타이틀 화면" loading="eager">
-          <img src="games/hello-tower/assets/thumb-hellotower.jpg" alt="헬로타워 타이틀 화면" loading="eager">
-          <img src="games/hello-munch/assets/thumb-hellomunch.jpg" alt="헬로 먼치 타이틀 화면" loading="eager">
-          <img src="games/hello-swing/assets/thumb-helloswing.jpg" alt="헬로 스윙 타이틀 화면" loading="eager">
-          <img src="games/hello-castle/assets/thumb-hellocastle.jpg" alt="헬로 캐슬 타이틀 화면" loading="eager">
+          <img class="active" src="games/hello-castle/assets/thumb-hellocastle.jpg" alt="헬로 캐슬 타이틀 화면" data-href="games/hello-castle/" data-name="헬로 캐슬" data-new="1" loading="eager">
+          <img src="games/hello-swing/assets/thumb-helloswing.jpg" alt="헬로 스윙 타이틀 화면" data-href="games/hello-swing/" data-name="헬로 스윙" loading="lazy">
+          <img src="games/hello-munch/assets/thumb-hellomunch.jpg" alt="헬로 먼치 타이틀 화면" data-href="games/hello-munch/" data-name="헬로 먼치" loading="lazy">
+          <img src="games/hello-tower/assets/thumb-hellotower.jpg" alt="헬로타워 타이틀 화면" data-href="games/hello-tower/" data-name="헬로타워" loading="lazy">
+          <img src="games/hello-run/assets/hero-card.jpg" alt="헬로런 타이틀 화면" data-href="games/hello-run/" data-name="헬로런" loading="lazy">
+          <img src="games/hello-bird/assets/start_screen.png" alt="헬로버드 시작 화면" data-href="games/hello-bird/" data-name="헬로버드" loading="lazy">
         </div>
-      </div>
+      </a>
+      <div class="cab-cap"><b id="cabName">헬로 캐슬</b> · 눌러서 바로 하기</div>
+      <div class="cab-dots" id="cabDots" role="tablist" aria-label="게임 고르기"></div>
     </div>
   </div>
 </section>
@@ -487,17 +498,23 @@ footer{
 <footer>© 헬로 대부도 오락실</footer>
 
 <script>
-// 상단 게임 미리보기 카드를 몇 초마다 자동으로 바꿔서(크로스페이드), 헬로버드/헬로런
-// 둘 다 눈에 띄게 한다 — 게임이 늘어나면 이 배열에만 추가하면 됨
+// 상단 오락실 게임기: 게임 표지가 3.8초마다 바뀐다(새 게임부터). 누르면 지금 보이는 게임으로, 아래 점을 누르면 그 게임 표지로 (10/12)
 (function(){
-  const slides = document.querySelectorAll('.cabinet-slides img');
-  if(slides.length < 2) return;
-  let i = 0;
-  setInterval(()=>{
-    slides[i].classList.remove('active');
-    i = (i+1) % slides.length;
-    slides[i].classList.add('active');
-  }, 3800);
+  const slides = [...document.querySelectorAll('.cabinet-slides img')];
+  const link = document.getElementById('cabLink'), name = document.getElementById('cabName'), badge = document.getElementById('cabNew'), dots = document.getElementById('cabDots');
+  if(!slides.length) return;
+  let i = 0, timer = null;
+  const show = (k) => {
+    slides[i].classList.remove('active'); i = k; const s = slides[i]; s.classList.add('active');
+    if(s.loading === 'lazy') s.loading = 'eager';
+    link.href = s.dataset.href; link.setAttribute('aria-label', s.dataset.name + ' 하러 가기'); name.textContent = s.dataset.name; badge.hidden = !s.dataset.new;
+    [...dots.children].forEach((d, j) => d.setAttribute('aria-selected', String(j === i)));
+    const nx = slides[(i + 1) % slides.length]; if(nx.loading === 'lazy') nx.loading = 'eager';
+  };
+  slides.forEach((s, j) => { const d = document.createElement('button'); d.type = 'button'; d.setAttribute('role', 'tab'); d.setAttribute('aria-label', s.dataset.name); d.addEventListener('click', () => { show(j); restart(); }); dots.appendChild(d); });
+  const restart = () => { clearInterval(timer); timer = setInterval(() => show((i + 1) % slides.length), 3800); };
+  link.addEventListener('click', () => { try { if (typeof gtag === 'function') gtag('event', 'hub_cabinet_click', { game: slides[i].dataset.name }); } catch (e) {} });
+  show(0); restart();
 })();
 </script>
 
