@@ -3,7 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="robots" content="noindex,nofollow">
+<meta name="description" content="몰래 들어가 보물을 털어라! 내 성을 짓고, 남의 성을 털고, 신들의 성에 도전하는 헬로 대부도 오락실 게임.">
+<meta property="og:type" content="website"><meta property="og:site_name" content="헬로 대부도 오락실">
+<meta property="og:title" content="헬로 캐슬 | 헬로 대부도 오락실"><meta property="og:description" content="몰래 들어가 보물을 털어라! 내 성을 짓고, 남의 성을 털고, 신들의 성에 도전해요.">
+<meta property="og:image" content="https://daebugame.com/games/hello-castle/assets/thumb-hellocastle-wide.jpg">
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-5YPGVVP49T"></script>
 <script>
@@ -12,7 +15,7 @@
   gtag("js", new Date());
   gtag("config", "G-5YPGVVP49T");
 </script>
-<title>헬로 캐슬 (시험판) | 헬로 대부도 오락실</title>
+<title>헬로 캐슬 | 헬로 대부도 오락실</title>
 <style>
   :root { --bg:#0b1a33; --ink:#fff; --gold:#ffd23c; --card:#13284d; --line:#2c4778; }
   html,body { margin:0; height:100%; background:var(--bg); color:var(--ink); font-family:"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif; -webkit-user-select:none; user-select:none; }
@@ -30,6 +33,7 @@
   .lane.bad { outline:2px solid #ff5a5a; border-radius:8px; }
   .btn { display:block; margin-top:10px; width:100%; border:none; border-radius:999px; padding:13px 0; font:inherit; font-weight:800; font-size:16.5px; background:var(--gold); color:#2a1c00; cursor:pointer; }
   .btn:disabled { opacity:.45; }
+  .btn[hidden] { display:none; }
   .btn.sub { background:#2b4a80; color:#fff; }
   .btn.god { background:linear-gradient(90deg,#8fd3ff,#c9a6ff); color:#1a1033; }
   .box { text-align:left; background:rgba(255,255,255,.06); border-radius:12px; padding:9px 12px; margin-top:8px; }
@@ -80,11 +84,47 @@
   #adm select, #adm button { font:inherit; font-size:13px; border-radius:8px; border:1px solid #2c4778; background:#0f2142; color:#fff; padding:4px 6px; }
   #adm .arow { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
   #adm .aclose { background:#ffd23c; color:#2a1c00; border:none; font-weight:800; padding:7px; }
+  .btn.kakao { background:#fee500; color:#191600; }
+  .btn.god2 { background:linear-gradient(90deg,#ffe08a,#ffb36b); color:#3a1c00; }
+  .btn.mini { display:inline-block; width:auto; padding:7px 13px; font-size:13.5px; margin:0; }
+  .news { display:grid; grid-template-columns:30px 1fr; gap:8px; align-items:center; text-align:left; background:rgba(255,255,255,.06); border:1px solid var(--line); border-radius:12px; padding:9px 10px; margin-top:8px; }
+  .news.new { border-color:var(--gold); background:rgba(255,210,60,.1); }
+  .news .ic { font-size:22px; text-align:center; } .news b { display:block; font-size:14px; line-height:1.35; word-break:keep-all; } .news small { display:block; font-size:12px; opacity:.75; margin-top:2px; }
+  .news .acts { grid-column:1/-1; display:flex; gap:6px; justify-content:flex-end; }
+  .tgt { display:flex; gap:8px; align-items:center; justify-content:space-between; text-align:left; background:rgba(255,255,255,.06); border:1px solid var(--line); border-radius:12px; padding:10px; margin-top:8px; }
+  .tgt b { display:block; font-size:15px; } .tgt small { display:block; font-size:12px; opacity:.78; margin-top:2px; line-height:1.45; } .tgt.done { opacity:.55; } .tgt.rev { border-color:#ff8a8a; background:rgba(255,90,90,.1); }
+  .rank { display:grid; grid-template-columns:34px 1fr auto; gap:6px; align-items:center; padding:7px 9px; border-radius:10px; background:rgba(255,255,255,.05); margin-top:5px; text-align:left; font-size:14px; }
+  .rank.me { outline:2px solid var(--gold); } .rank .n { font-weight:900; text-align:center; } .rank .v { font-weight:800; color:var(--gold); }
+  .shareBox { margin-top:10px; padding:10px; border-radius:14px; background:rgba(254,229,0,.08); border:1px solid rgba(254,229,0,.4); }
+  .shareBox img { width:62%; border-radius:10px; margin:8px auto 0; display:block; }
+  .shareBox .msg { color:#fff; }
+  .cells { grid-column:1/-1; display:flex; gap:4px; justify-content:center; padding-top:2px; }
+  .cells button { width:34px; height:30px; border-radius:8px; border:1px solid var(--line); background:#1d3a28; color:#fff; font-size:17px; padding:0; }
+  .cells button.on { background:#3d5a2c; border-color:#9dffb0; }
+  .lane .why { grid-column:2/-1; font-size:12px; opacity:.75; }
+  #tut { position:fixed; inset:0; z-index:12; background:rgba(3,8,20,.86); display:flex; align-items:center; justify-content:center; padding:16px; }
+  #tut[hidden] { display:none; }
+  #tut .tbox { max-width:360px; width:100%; text-align:center; }
+  #tut .stage2 { position:relative; height:150px; margin:0 auto 6px; width:220px; border-radius:18px; background:rgba(255,255,255,.06); border:1px dashed rgba(255,255,255,.3); }
+  #tut .hand { position:absolute; left:50%; top:50%; font-size:56px; margin:-34px 0 0 -24px; animation:hand 6s infinite; }
+  @keyframes hand { 0% { transform:translate(0,0) scale(1); } 6% { transform:translate(0,0) scale(.82); } 12% { transform:translate(0,0) scale(1); } 18% { transform:translate(0,0) scale(.82); } 26% { transform:translate(0,0) scale(1); }
+    34% { transform:translate(-55px,0); } 58% { transform:translate(55px,0); } 64% { transform:translate(55px,0); opacity:1; } 66% { transform:translate(0,-35px); opacity:0; } 68% { transform:translate(0,-35px); opacity:1; } 92% { transform:translate(0,40px); } 100% { transform:translate(0,40px); } }
+  #tut .tl { font-size:18px; margin:6px 0; padding:6px 10px; border-radius:12px; opacity:.35; animation:hl 6s infinite; }
+  #tut .tl b { color:var(--gold); } #tut .t2 { animation-delay:-4s; } #tut .t3 { animation-delay:-2s; }
+  @keyframes hl { 0%, 31% { opacity:1; background:rgba(255,210,60,.16); } 34%, 100% { opacity:.35; background:transparent; } }
+  #tut .tx { font-size:15.5px; margin:8px 0 0; }
+  #helpBtn { position:fixed; right:10px; top:116px; width:40px; height:40px; border-radius:50%; border:1px solid rgba(255,255,255,.3); background:rgba(10,25,55,.7); color:#fff; font-size:18px; font-weight:900; z-index:3; }
+  #helpBtn[hidden] { display:none; }
+  #toast { position:fixed; left:50%; top:18px; transform:translateX(-50%); z-index:30; background:#13284d; border:2px solid var(--gold); color:#fff; border-radius:999px; padding:10px 16px; font-size:14px; font-weight:700; max-width:90%; text-align:center; }
+  #toast[hidden] { display:none; }
   #nogl { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; padding:24px; text-align:center; z-index:9; background:#0b1a33; }
   #nogl[hidden] { display:none; }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>if (!window.THREE) document.write('<script src="three.min.js"><\/script>');</script>
+<script src="https://t1.kakaocdn.net/kakao_js_sdk/2.8.1/kakao.min.js" crossorigin="anonymous"></script>
+<script>try { if (window.Kakao && !window.Kakao.isInitialized()) window.Kakao.init('3994a3bda3b8146e709683fdb350c9cc'); } catch (e) {}</script>
+<script src="/duel-inbox.js"></script>
 </head>
 <body>
 <div id="wrap"><div id="stage"><canvas id="gl"></canvas><canvas id="hud"></canvas></div></div>
@@ -92,6 +132,8 @@
 <button type="button" id="bWing" hidden>🪽<small id="wgN">0</small></button>
 <button id="mute" type="button" hidden aria-label="소리">🔊</button>
 <button id="admBtn" type="button" hidden aria-label="관리자판">⚙</button>
+<button id="helpBtn" type="button" hidden aria-label="조작 안내">?</button>
+<div id="toast" hidden></div>
 <div id="sndAdm" hidden>
   <div class="sa-head"><b>🔊 효과음 관리</b><button type="button" id="saClose">닫기 ✕</button></div>
   <p class="sa-note">파일 이름이 한글이라 깨져서 들어와 "이름 모름 A~N"으로 보여요. ▶로 들어 보고 각 장면에 맞는 파일을 골라 주세요. 바꾼 값은 이 폰에 바로 저장되고, 게임에 바로 적용돼요. 다 고르면 아래 "설정 복사"를 눌러 Claude에게 붙여 주면 정식판 기본값으로 넣어요.</p>
@@ -116,35 +158,56 @@
   <div class="arow">장애물 하나만 연습 <select id="aPrac"></select><button type="button" id="aGo">시작</button></div>
   <button type="button" id="aClose" class="aclose">닫기</button>
 </div>
+<div id="tut" hidden><div class="tbox">
+  <h2>🐥 이렇게 움직여요</h2>
+  <div class="stage2"><span class="hand">👆</span></div>
+  <div class="tl t1"><b>톡</b> = 앞으로 한 칸</div>
+  <div class="tl t2"><b>옆으로 밀기</b> = 옆 칸으로</div>
+  <div class="tl t3"><b>아래로 밀기</b> = 뒤로 한 칸</div>
+  <p class="tx">📣 = 괴물 잠깐 멈춤</p>
+  <p class="tx">👁 머뭇거리면 들킨다!</p>
+  <p class="small">아래 화살표 버튼으로도 움직일 수 있어요</p>
+  <button class="btn" id="tutOk" type="button">알겠어요!</button>
+</div></div>
 <div id="nogl" hidden><p>이 기기에서는 입체 화면을 그릴 수 없어요.</p></div>
 
 <div class="scr" id="home">
   <div class="card">
     <h1>🏰 헬로 캐슬</h1><p class="small" style="margin-top:0">몰래 들어가 보물을 털어라!</p>
-    <p class="small">시험판 v3 · 오락실 그림을 빌려 쓴 임시판</p>
-    <div class="box">
-      <p><b>조작</b> — 누르면 앞으로 한 칸 폴짝, 옆으로 밀면 옆 칸. 아래 버튼으로도 돼요.</p>
-      <p><b>📣 헬로~!</b> — 헬로는 먼저 인사하는 갈매기! 외치면 근처 게·갈매기 경비·우주괴물이 "어? 안녕?" 하고 1.8초 멈춰요. 한 번에 3번(신들의 성은 구역마다 +1).</p>
-      <p><b>머뭇거리면 들켜요</b> — 한 줄에 오래 서 있으면 👁 의심 눈금이 차요. 앞으로 나아가면 다시 0.</p>
-      <p><b>공략</b> — 남의 성 꼭대기 💎 보물방까지 가면 함락! 같은 성은 하루 한 번.</p>
-      <p><b>방어</b> — 내 성은 <b>명성</b>만큼 함정을 놓고, <b>올림포스 카드</b>로 신의 함정을 열어요.</p>
-    </div>
-    <button class="btn god" id="bGods" type="button">⛅ 신들의 성 (끝없는 도전)</button>
+    <div class="box" id="meBox"><p class="small">불러오는 중…</p></div>
+    <div id="newsBox"></div>
+    <div id="pushSlot"></div>
+    <button class="btn god" id="bGods" type="button">⛅ 오늘의 신들의 성</button>
     <div class="best" id="bestT"></div>
-    <button class="btn" id="bAttack" type="button">⚔ 쿠로의 성 공략하기</button>
+    <button class="btn" id="bRaid" type="button">⚔ 남의 성 공략</button>
+    <button class="btn god2" id="bTrial" type="button">🏛 신의 시험</button>
     <button class="btn sub" id="bEdit" type="button">🏰 내 성 꾸미기</button>
+    <div class="row2"><button class="btn sub" id="bBoard" type="button">📜 오늘의 순위</button><button class="btn sub" id="bHelp" type="button">❓ 조작 안내</button></div>
+    <details class="box" style="margin-top:10px"><summary style="cursor:pointer;font-weight:800">게임 방법</summary>
+      <p><b>📣 헬로~!</b> — 외치면 근처 괴물이 "어? 안녕?" 하고 1.8초 멈춰요. 한 판에 3번(신들의 성은 구역마다 +1).</p>
+      <p><b>👁 머뭇거리면 들켜요</b> — 한 줄에 오래 서 있으면 의심 눈금이 차요. 앞으로 나아가면 다시 0.</p>
+      <p><b>⛅ 오늘의 신들의 성</b> — 하루 한 번 바뀌는, 모두에게 같은 끝없는 성. 100줄이 올림포스 정상, 그 뒤는 구름 위.</p>
+      <p><b>⚔ 남의 성 공략</b> — 💎 보물방까지 가면 함락! 명성이 오르고 깃발이 24시간 꽂혀요. 같은 성은 하루 한 번.</p>
+      <p><b>🏰 내 성</b> — 명성 10점 = ★1 = 성 1줄. 내가 직접 깨야 공개돼요.</p>
+      <p><b>🏛 신의 시험</b> — 통과하면 그 신의 카드·신의 함정·가호를 받아요.</p>
+    </details>
+  </div>
+</div>
+
+<div class="scr" id="list" hidden>
+  <div class="card">
+    <h2 id="lT"></h2>
+    <div id="lBody"></div>
+    <button class="btn sub" id="lBack" type="button">처음으로</button>
   </div>
 </div>
 
 <div class="scr" id="edit" hidden>
   <div class="card">
     <h2>🏰 내 성 꾸미기</h2>
-    <p class="small">아래가 성문, 위가 보물방. 줄마다 함정을 골라요.</p>
-    <div class="budget"><span>명성 <span id="fame">1080</span> · <b id="tierN">전사</b> → 함정 예산</span><span id="bud">0 / 14</span></div>
+    <p class="small">아래가 성문, 위가 보물방. 줄마다 함정을 고르고, 풀밭에는 나무·바위를 놓을 수 있어요.</p>
+    <div class="budget"><span>명성 <span id="fame">0</span> · <b id="tierN"></b></span><span id="bud">0 / 0</span></div>
     <div class="small" id="tierInfo"></div>
-    <div class="row2" style="margin:4px 0"><button class="btn sub" id="fDn" type="button" style="padding:6px">시험용 명성 −50</button><button class="btn sub" id="fUp" type="button" style="padding:6px">시험용 명성 +50</button></div>
-    <div class="small">내가 가진 올림포스 카드 (시험판에서는 직접 켜 보세요)</div>
-    <div class="cards" id="cards"></div>
     <label class="opt"><input type="checkbox" id="capt"> 👁 경비대장 배치 (★3) — 의심 눈금이 1.6배 빨리 차요</label>
     <div style="display:flex;flex-direction:column;gap:5px;margin-top:8px">
       <div class="treasure">💎 보물방</div>
@@ -153,7 +216,8 @@
     </div>
     <div class="row2"><button class="btn sub" id="lAdd" type="button">＋ 줄 추가</button><button class="btn sub" id="lDel" type="button">－ 줄 빼기</button></div>
     <div class="msg" id="eMsg"></div>
-    <button class="btn" id="bTest" type="button">내 성 직접 깨 보기 (깨야 공개돼요)</button>
+    <button class="btn" id="bTest" type="button">저장하고 직접 깨 보기 (깨야 공개돼요)</button>
+    <div id="eShare"></div>
     <button class="btn sub" id="bHome1" type="button">처음으로</button>
   </div>
 </div>
@@ -163,7 +227,9 @@
     <h1 id="rT">함락!</h1>
     <p id="rS"></p>
     <div class="box" id="rBox"></div>
+    <div id="rShare"></div>
     <button class="btn" id="rAgain" type="button">다시 도전</button>
+    <button class="btn sub" id="rMore" type="button" hidden></button>
     <button class="btn sub" id="rHome" type="button">처음으로</button>
   </div>
 </div>
@@ -235,34 +301,45 @@ const PIECES = {
   rock:    { name: '🪨 시시포스의 바위 (두 줄)', cost: 2, speed: true, two: true },
 };
 const TWO = { patrol: 1, jelly: 1, rock: 1 };
-const CARDS = { poseidon: '포세이돈', zeus: '제우스', munch: '우주괴물(먼치)' };
-const SPEED_COST = [0, 0, 1], SPEED_NAME = ['느림', '보통', '빠름'], CAPT_COST = 3;
-// 성 등급: 결투장 명성 구간이 곧 성의 크기. 공식 없이 표 하나로 예측할 수 있게
-const TIERS = [
-  { name: '견습생', min: -1e9, bud: 14, run: 2, max: 16 },
-  { name: '전사', min: 1000, bud: 18, run: 3, max: 20 },
-  { name: '용사', min: 1100, bud: 23, run: 4, max: 24 },
-  { name: '영웅', min: 1220, bud: 28, run: 5, max: 28 },
-  { name: '반신', min: 1350, bud: 34, run: 99, max: 32 },
-];
+const SPEED_NAME = ['느림', '보통', '빠름'], CAPT_COST = 3, MIN_LEN = 20;
+// 성 규칙(대표 결정 10/12) — 서버 api/castle.js 의 checkCastle 과 같은 규칙. 명성 10점 = ★1 = 성 1줄, 최소 20줄
+const CT = [{ run: 2, spd: 0, capt: false }, { run: 2, spd: 1, capt: false }, { run: 3, spd: 2, capt: true }, { run: 4, spd: 2, capt: true }, { run: 5, spd: 2, capt: true }];
+const maxLen = (fame) => Math.max(MIN_LEN, Math.floor((fame - 700) / 10));
+const iga = (w) => w + ((w.charCodeAt(w.length - 1) - 0xac00) % 28 ? '이' : '가');
 const eun = (w) => w + ((w.charCodeAt(w.length - 1) - 0xac00) % 28 ? '은' : '는');
-const tierOf = (fame) => { let k = 0; TIERS.forEach((q, j) => { if (fame >= q.min) k = j; }); return k; };
-const budgetOf = (fame) => TIERS[tierOf(fame)].bud;
 const GODP = { wave: 'poseidon', bolt: 'zeus', guard: 'munch' }; // 신 함정: 성마다 신별 1줄까지
-// 연달아 깔린 함정 줄 수(두 줄짜리 함정의 위 줄도 함정으로 센다)
-function runsOf(lanes) { let cur = 0, mx = 0, at = -1; lanes.forEach((l, i) => { const trap = l.t !== 'grass' || (i > 0 && TWO[lanes[i - 1].t]); cur = trap ? cur + 1 : 0; if (cur > mx) { mx = cur; at = i; } }); return { mx, at }; }
-const KURO = { owner: '쿠로', fame: 1120, capt: false, lanes: [
-  { t: 'log', s: 0 }, { t: 'soldier', s: 0 }, { t: 'grass' }, { t: 'water', s: 0 }, { t: 'water', s: 1 }, { t: 'grass' },
-  { t: 'patrol', s: 0 }, { t: 'grass' }, { t: 'cart', s: 0 }, { t: 'grass' }, { t: 'octo' }, { t: 'tide', s: 0 }, { t: 'grass' },
-  { t: 'star', s: 0 }, { t: 'jelly', s: 0 }, { t: 'grass' }, { t: 'grass' }, { t: 'cannon', s: 0 }, { t: 'bomb', s: 0 }, { t: 'grass' },
-  { t: 'wave' }, { t: 'grass' }, { t: 'tiller', s: 0 }, { t: 'grass' },
-] };
-const MY = { owner: '나', fame: 1080, capt: false, lanes: [
-  { t: 'log', s: 0 }, { t: 'grass' }, { t: 'soldier', s: 0 }, { t: 'grass' }, { t: 'water', s: 0 },
-  { t: 'grass' }, { t: 'cannon', s: 0 }, { t: 'grass' }, { t: 'log', s: 1 }, { t: 'grass' },
-] };
-const owned = { poseidon: true, zeus: false, munch: true };
-
+function costOf(lanes, capt) { let u = capt ? CAPT_COST : 0; lanes.forEach((l, i) => { if (i > 0 && TWO[lanes[i - 1].t]) return; const p = PIECES[l.t]; u += p.cost + (p.speed && l.s === 2 ? 1 : 0); }); return u; }
+function pathOk(lanes) { const RN = lanes.length + 2, bl = (r, c) => r >= 1 && r <= lanes.length && (lanes[r - 1].b || []).includes(c), seen = new Set(['0:3']), q = [[0, 3]];
+  while (q.length) { const [r, c] = q.shift(); if (r === RN - 1) return true; for (const [dr, dc] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nr = r + dr, nc = c + dc, k = nr + ':' + nc; if (nr < 0 || nr >= RN || nc < 0 || nc >= COLS || bl(nr, nc) || seen.has(k)) continue; seen.add(k); q.push([nr, nc]); } }
+  return false; }
+const trapAt = (L, i) => i >= 0 && (L[i].t !== 'grass' || (i > 0 && TWO[L[i - 1].t]));
+// 틀린 곳이 있으면 { i: 줄 번호(없으면 -1), why } 를 돌려준다
+function checkCastle(L, capt, R, U) {
+  const n = L.length, half = Math.floor(n / 2), god = {}; let blocks = 0;
+  if (n < MIN_LEN) return { i: -1, why: '성은 ' + MIN_LEN + '줄 이상이어야 해요' };
+  if (n > R.len) return { i: -1, why: '지금 명성으로는 ' + R.len + '줄까지 지을 수 있어요' };
+  if (capt && !R.capt) return { i: -1, why: '경비대장은 용사부터 둘 수 있어요' };
+  for (let i = 0; i < n; i++) { const l = L[i], part = i > 0 && TWO[L[i - 1].t], sp = l.s || 0;
+    if (part && l.t !== 'grass') return { i, why: (i + 1) + '줄: 두 줄짜리 함정이 쓰는 줄이에요' };
+    if (sp > R.spd) return { i, why: (i + 1) + '줄: ' + eun(R.tier) + ' ' + SPEED_NAME[R.spd] + '까지만 고를 수 있어요' };
+    if (TWO[l.t] && i === n - 1) return { i, why: '맨 위 줄에는 두 줄짜리 함정을 둘 수 없어요' };
+    if (GODP[l.t]) { if (!U[GODP[l.t]]) return { i, why: (i + 1) + '줄: 아직 열지 않은 신의 함정이에요' }; if (god[l.t]) return { i, why: '신의 함정은 신마다 한 줄만 둘 수 있어요' }; god[l.t] = 1; }
+    if (i < half && l.t !== 'grass' && trapAt(L, i - 1)) return { i, why: (i + 1) + '줄: 앞쪽 절반은 함정과 풀밭을 번갈아 놓아야 해요' };
+    const b = l.b || []; if (b.length > 3) return { i, why: (i + 1) + '줄: 나무·바위는 한 줄에 3개까지예요' }; if (b.length && (l.t !== 'grass' || part)) return { i, why: (i + 1) + '줄: 나무·바위는 풀밭에만 놓아요' }; blocks += b.length; }
+  if (blocks > Math.floor(n / 3)) return { i: -1, why: '나무·바위는 모두 ' + Math.floor(n / 3) + '개까지예요' };
+  let cur = 0; for (let i = half; i < n; i++) { cur = trapAt(L, i) ? cur + 1 : 0; if (cur > R.run) return { i, why: eun(R.tier) + ' 뒤쪽 절반에서 함정을 ' + R.run + '줄까지만 연달아 놓을 수 있어요. 사이에 풀밭을 넣어 주세요' }; }
+  if (costOf(L, capt) > R.bud) return { i: -1, why: '예산(★' + R.bud + ')을 넘었어요. 함정을 줄이거나 느리게 해 주세요' };
+  if (!pathOk(L)) return { i: -1, why: '나무·바위로 길이 막혔어요. 보물방까지 갈 길을 남겨 주세요' };
+  return null;
+}
+// 신의 시험: 신마다 40줄 고정, 끝에서 신이 기다린다(대표 결정 10/12). 업데이트 때마다 2명씩(다음: 헤르메스·아테나)
+const LN = (q) => q.split(' ').map(x => { const [t2, sp] = x.split(':'); return sp ? { t: t2, s: +sp } : { t: t2 }; });
+const TRIALS = {
+  poseidon: { god: 'poseidon', name: '포세이돈', icon: '🔱', zone: 50, owner: '포세이돈', fame: 0, capt: false,
+    lanes: LN('log:0 grass tide:0 grass water:0 water:0 grass octo grass wave grass cart:1 tide:1 grass jelly:0 grass grass water:1 water:1 grass octo wave grass log:1 tide:1 grass water:1 water:1 grass jelly:1 grass grass wave grass octo tide:2 grass water:1 grass wave') },
+  zeus: { god: 'zeus', name: '제우스', icon: '⚡', zone: 75, owner: '제우스', fame: 0, capt: false,
+    lanes: LN('soldier:0 grass star:0 grass bolt grass whirl:0 grass cannon:0 grass bolt log:1 grass bomb:0 grass rock:0 grass grass bolt whirl:1 grass cannon:1 star:1 grass bolt grass bomb:1 soldier:1 grass rock:1 grass grass bolt whirl:1 grass cannon:1 grass bolt grass bolt') },
+};
 // ================================================================ 신들의 성(끝없음)
 const ZONES = [
   { at: 0,   name: '헤르메스의 뜰',   g1: 0x7cc25f, g2: 0x71b555 },
@@ -270,6 +347,7 @@ const ZONES = [
   { at: 50,  name: '포세이돈의 해자', g1: 0x6fbba2, g2: 0x63ad95 },
   { at: 75,  name: '제우스의 탑',     g1: 0x9fa9cc, g2: 0x929dc0 },
   { at: 100, name: '올림포스 정상',   g1: 0xe6cd7c, g2: 0xd9c070 },
+  { at: 101, name: '☁ 구름 위',       g1: 0xdfe8f5, g2: 0xd0dbec },
 ];
 const zoneAt = (i) => { let z = ZONES[0]; for (const q of ZONES) if (i >= q.at) z = q; return z; };
 function mulberry(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
@@ -302,6 +380,11 @@ let rideDy = 0, lavaV = 0, riverV = 0;
 let shellN = 0, shellGot = new Set(), scoreT = -9, deathKind = '', deadT = 0, wings = 0, guarded = {};
 // 오늘의 신들의 성: 한국 날짜로 매일 바뀐다(그날은 모두 같은 성). 관리자판에서 다른 날을 미리 볼 수 있다
 let dayOff = 0;
+// 입력 기록: [몇 번째 계산, 동작] — 0 앞 1 뒤 2 왼쪽 3 오른쪽 4 헬로~! 5 날개. 서버에 보내 다시보기·검사에 쓴다
+let REC = [], stepN = 0, RP = null, GH = { r: [], x: [] }, GHO = null, cseed = 0, summitT = -1;
+const CODE = { U: 0, D: 1, L: 2, R: 3 };
+const recIn = (c) => { if (!RP && REC.length < 6000) REC.push([stepN, c]); };
+function feedReplay() { if (!RP || state !== 'play') return; while (RP.i < RP.inp.length && RP.inp[RP.i][0] <= stepN) { const c = RP.inp[RP.i][1]; RP.i++; RP.on = 1; if (c < 4) move('UDLR'[c]); else if (c === 4) shout(); else useWing(); RP.on = 0; } }
 const kstDay = () => { const d = new Date(Date.now() + 9 * 3600e3 + dayOff * 864e5); return { n: d.getUTCFullYear() * 10000 + (d.getUTCMonth() + 1) * 100 + d.getUTCDate(), label: (d.getUTCMonth() + 1) + '/' + d.getUTCDate() }; };
 let DAY = kstDay().n;
 function rowFrom(l, i) { return { t: l.t, s: l.s || 0, dir: i % 2 ? -1 : 1, ph: (i * 1.37) % 5, rest: !!l.rest, seed: i, fzS: 0, fzE: 0, fzAcc: 0 }; }
@@ -312,6 +395,7 @@ function ensureGodRows(upTo) { while (rows.length <= upTo) { const i = rows.leng
 // 풀밭 줄의 나무·바위(지나갈 수 없는 칸)와 길에 떨어진 조개. 줄 번호만으로 정해짐(누가 해도 같은 자리)
 function dress(i) {
   const r = rows[i], pv = rows[i - 1], rnd = mulberry(i * 131 + 7 + (mode === 'gods' ? DAY * 3 : 0)); r.block = []; r.shell = -1;
+  if (!['gods', 'trial', 'practice'].includes(mode)) { if (r.t === 'grass' && r.b) r.block = r.b.slice(); return; }
   if (r.t === 'grass' && !r.rest && i >= 2 && !(pv && TWO[pv.t])) {
     const q = rnd(), n = q < .15 ? 0 : q < .5 ? 1 : q < .82 ? 2 : 3;
     while (r.block.length < n) { const c = Math.floor(rnd() * COLS); if (!r.block.includes(c) && !(i < 4 && c === 3)) r.block.push(c); }
@@ -319,16 +403,18 @@ function dress(i) {
   const okRow = mode === 'gods' && !['yard', 'treasure', 'water', 'wave', 'tide'].includes(r.t) && !r.rest && i >= 2; // 조개는 신들의 성에만
   if (okRow && rnd() < .32) { for (let k = 0; k < 6; k++) { const c = Math.floor(rnd() * COLS); if (!r.block.includes(c)) { r.shell = c; break; } } }
 }
+function hashStr(s) { let h = 7; for (const ch of String(s)) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return h % 2147483647; }
 const blocked = (i, c) => !!(rows[i] && rows[i].block && rows[i].block.includes(c));
-function startRun(m, c) {
-  mode = m; castle = c || null;
+function startRun(m, c, opt) {
+  opt = opt || {}; mode = m; castle = c || null; REC = []; stepN = 0; RP = opt.replay ? { inp: opt.replay, i: 0, on: 0 } : null; GH = { r: [], x: [] }; GHO = opt.ghost || null; summitT = -1;
+  cseed = m === 'gods' ? kstDay().n : hashStr(c && (c.wid || c.god || c.owner) || 'castle');
   t = 0; shouts = 3; shoutT = -9; nearAt = -9; nearN = 0; combo = 0; bestCombo = 0; lastHop = -9; lastBeat = -1; lastHeart = -9; flash = 0; popups = []; parts = []; deadMsg = ''; susp = 0; maxRow = 0; shake = 0; zoneShown = -1; zoneBanner = null; shellN = 0; shellGot = new Set(); scoreT = -9; deathKind = ''; deadT = 0; wings = 0; guarded = {}; DAY = kstDay().n;
   clearWorld();
   if (m === 'gods') { godRng = mulberry(DAY); rows = [rowFrom({ t: 'yard' }, 0)]; dress(0); ensureGodRows(44); }
-  else { rows = [rowFrom({ t: 'yard' }, 0)]; c.lanes.forEach((l, i) => rows.push(rowFrom(l, i + 1))); rows.push(rowFrom({ t: 'treasure' }, rows.length)); rows.forEach((_, i) => dress(i)); }
+  else { rows = [rowFrom({ t: 'yard' }, 0)]; c.lanes.forEach((l, i) => { const rw = rowFrom(l, i + 1); rw.b = l.b || null; rows.push(rw); }); rows.push(rowFrom({ t: 'treasure' }, rows.length)); rows.forEach((_, i) => dress(i)); }
   hero = { row: 0, x: 3, fromX: 3, fromRow: 0, hopT: 1, face: 0, moved: false };
-  camZ = 0; state = 'play'; bgm(m === 'attack' || m === 'test' ? 'attack' : 'gods'); for (const k in lastSnd) if (k.indexOf(':') > 0) delete lastSnd[k]; setTimeout(() => auRare('hello', null), 350);
-  ['home', 'edit', 'res'].forEach(id => $(id).hidden = true); $('pad').hidden = false; $('mute').hidden = false; $('admBtn').hidden = !ADMIN_ON; updShoutBtn(); updWing();
+  camZ = 0; state = 'play'; heroSp.material.opacity = RP ? .62 : 1; bgm(m === 'gods' || m === 'trial' ? 'gods' : 'attack'); track('castle_start', { mode: m }); for (const k in lastSnd) if (k.indexOf(':') > 0) delete lastSnd[k]; setTimeout(() => auRare('hello', null), 350);
+  ['home', 'edit', 'res', 'list'].forEach(id => $(id).hidden = true); $('pad').hidden = !!RP; $('helpBtn').hidden = !!RP; maybeTut(); $('mute').hidden = false; $('admBtn').hidden = !ADMIN_ON; updShoutBtn(); updWing();
 }
 const captOn = () => mode !== 'gods' && castle && castle.capt;
 
@@ -350,7 +436,11 @@ function waveS(r) { const T = 3.4, u = wrap(t + r.ph, T); if (u < 2.0) return { 
 function boltS(r) { const T = 1.8, u = wrap(t + r.ph, T), k = Math.floor(wrap(t + r.ph, T * 3) / T); return { p: u >= 1.25 ? 'hit' : u >= .65 ? 'warn' : 'calm', on: (c) => (c + k) % 3 === 0 }; }
 function guardS(r) { const T = 3.2, u = wrap(ct(r) + r.ph, T); return u >= 1.8 ? 'hit' : u >= 1.3 ? 'warn' : 'calm'; }
 // 문어 촉수(생물): 거품으로 예고 → 3칸에서 쑥 → 쉼. 칸은 매번 바뀐다
-function octoS(r) { const T = 2.6, c = ct(r) + r.ph, u = wrap(c, T), k = Math.floor(wrap(c, T * 7) / T), set = [(k * 2) % 7, (k * 2 + 3) % 7, (k * 2 + 5) % 7]; return { p: u < 1.0 ? 'warn' : u < 1.6 ? 'hit' : 'calm', u, set }; }
+function octoPick(r, k, salt) { const rn = mulberry((cseed * 977 + r.seed * 131 + k * 7919 + salt * 104729) | 0), out = []; while (out.length < 3) { const c = Math.floor(rn() * COLS); if (!out.includes(c)) out.push(c); } return out.sort((a, b) => a - b); }
+function octoSet(r, k) { const m = r._os || (r._os = {}); if (m[k]) return m[k]; if (k > 1 && !m[k - 1]) for (let q = Math.max(0, (r._osTop || 0)); q < k; q++) octoSet(r, q); r._osTop = k; let s0 = octoPick(r, k, 0);
+  if (k > 0) { const pv = octoSet(r, k - 1).join(); for (let j = 1; s0.join() === pv && j < 9; j++) s0 = octoPick(r, k, j); }
+  return (m[k] = s0); }
+function octoS(r) { const T = 2.6, c = ct(r) + r.ph, u = wrap(c, T), k = Math.max(0, Math.floor(c / T)), set = octoSet(r, k); return { p: u < 1.0 ? 'warn' : u < 1.6 ? 'hit' : 'calm', u, set }; }
 // 해파리(생물): 두 줄 사이를 통통 튀며 옆으로 이동. 바닥에 닿을 때만 위험
 function jelly(r, i) { const span = COLS - 1, ux = wrap(r.ph + spd(r) * .45 * ct(r), span * 2), x = ux < span ? ux : span * 2 - ux, u = wrap(ct(r) / .85 + r.ph, 2), e = (q) => q * q * (3 - 2 * q);
   return u < 1 ? { x, rowf: i + e(u), h: Math.sin(Math.PI * u) } : { x, rowf: i + 1 - e(u - 1), h: Math.sin(Math.PI * (u - 1)) }; }
@@ -431,7 +521,8 @@ function update(dt) {
   shake = Math.max(0, shake - dt * 3); flash = Math.max(0, flash - dt * 3);
   for (let i = popups.length - 1; i >= 0; i--) if (t - popups[i].t0 > 1) popups.splice(i, 1);
   if (state !== 'play') return;
-  t += dt;
+  t += dt; stepN++;
+  if (mode === 'gods' && !RP && stepN % 3 === 0 && GH.r.length < 12000) { GH.r.push(hero.row); GH.x.push(Math.round(heroX() * 10)); }
   if (hero.fly) { if (t - hero.fly.t0 >= hero.fly.dur) { hero.x = hero.fromX = hero.fly.tx; hero.row = hero.fromRow = hero.fly.tr; hero.fly = null; hero.hopT = 1; land(); } else { if (mode === 'gods') ensureGodRows(hero.row + 44); return; } }
   if (hero.hopT < 1) { hero.hopT += dt; if (hero.hopT >= HOP) { hero.hopT = 1; land(); } }
   if (mode === 'gods') ensureGodRows(hero.row + 44);
@@ -447,7 +538,7 @@ function update(dt) {
   if (hero.hopT >= HOP * .5) { const h = hazardAt(hero.row, heroX()); if (h) {
     // 신의 가호: 남의 성을 공략할 때, 그 신의 카드가 있으면 그 신의 함정에 딱 한 번 버틴다
     const g = h[2]; if (g && guarded[g] && t - guarded[g] < 1.6) { /* 가호 중 */ }
-    else if (g && mode === 'attack' && owned[g] && !guarded[g]) { guarded[g] = t; flash = .6; shake = Math.max(shake, .5); SFX.zone(); popup({ poseidon: '🔱 포세이돈의 가호!', zeus: '⚡ 제우스의 가호!', munch: '👾 먼치 카드의 가호!' }[g], heroX(), hero.row, '#fff2a8'); burst(heroX(), hero.row, 16, 0xfff2a8); }
+    else if (g && (mode === 'attack' || mode === 'replay' || mode === 'visit') && castle && castle.guard && castle.guard[g] && !guarded[g]) { guarded[g] = t; flash = .6; shake = Math.max(shake, .5); SFX.zone(); popup({ poseidon: '🔱 포세이돈의 가호!', zeus: '⚡ 제우스의 가호!', munch: '👾 먼치 카드의 가호!' }[g], heroX(), hero.row, '#fff2a8'); burst(heroX(), hero.row, 16, 0xfff2a8); }
     else return die(h[0], h[1]); } }
   // 아슬아슬: 아주 가까이 스쳐 갔지만 안 맞음
   if (hero.hopT >= 1 && t - nearAt > .9) { MG = .38; const n = hazardAt(hero.row, hero.x); MG = 0; if (n) { nearAt = t; nearN++; popup('아슬아슬!', heroX(), hero.row, '#9dffb0'); SFX.near(); shake = Math.max(shake, .22); } }
@@ -475,7 +566,8 @@ function land() {
     maxRow = hero.row; susp = 0; scoreT = t;
     combo = t - lastHop < .9 ? combo + 1 : 1; lastHop = t; bestCombo = Math.max(bestCombo, combo);
     if (combo >= 3 && combo % 1 === 0) popup(combo + '연속!', heroX(), hero.row, '#ffd23c'); if (combo >= 6) auRare('hello', null);
-    if (mode === 'gods') { const z = zoneAt(hero.row), zi = ZONES.indexOf(z); if (zi > zoneShown && z.at > 0) { zoneShown = zi; zoneBanner = { text: z.name, t0: t }; SFX.zone(); auRare('hello', null); shake = Math.max(shake, .35); shouts++; } }
+    if (mode === 'gods') { const z = zoneAt(hero.row), zi = ZONES.indexOf(z); if (zi > zoneShown && z.at > 0) { zoneShown = zi; if (z.at === 101) { /* 정상 바로 뒤는 배너 없이 */ } else { zoneBanner = { text: z.name, t0: t }; SFX.zone(); auRare('hello', null); shake = Math.max(shake, .35); shouts++; updShoutBtn(); } } }
+    if (mode === 'gods' && hero.row >= 100 && summitT < 0) { summitT = t; zoneBanner = { text: '🏛 올림포스 정상 도착!', sub: '이제부터는 구름 위 — 오늘의 왕좌에 도전!', t0: t }; SFX.win(); [0xffd23c, 0x9de3ff, 0xff9ad5].forEach(cc => burst(heroX(), hero.row, 14, cc)); shake = Math.max(shake, .6); track('castle_summit', {}); }
   }
   if (r.t === 'water') { hero.raftT = t; puff(heroX(), hero.row, 8, 0xffa040, .6); }
   if (r.t !== 'water') puff(heroX(), hero.row, 7, r.t === 'grass' ? 0xe9f5d0 : 0xf3e2b8, .7);
@@ -483,17 +575,18 @@ function land() {
   if (r.shell === Math.round(hero.x) && !shellGot.has(key)) { shellGot.add(key); shellN++; if (shellN % 10 === 0) { wings++; updWing(); popup('🪽 헤르메스의 날개!', hero.x, hero.row + 1, '#bfe8ff'); if (!au('wing_gain', null)) SFX.zone(); } else popup('🐚 ' + (shellN % 10) + '/10', hero.x, hero.row, '#ffe27a'); if (!au('shell', null)) SFX.coin(); burst(hero.x, hero.row, 10, 0xffe27a); shake = Math.max(shake, .12); }
 }
 function move(d) {
-  if (state !== 'play' || hero.hopT < 1) return;
+  if (state !== 'play' || (RP && !RP.on)) return; recIn(CODE[d]);
+  if (hero.hopT < 1) return;
   let nc = Math.round(hero.x), nr = hero.row;
   if (d === 'U') { nr++; hero.face = 0; } else if (d === 'D') { nr--; hero.face = Math.PI; } else if (d === 'L') { nc--; hero.face = Math.PI / 2; } else if (d === 'R') { nc++; hero.face = -Math.PI / 2; }
   if (nc < 0 || nc >= COLS || nr < 0 || nr >= rows.length) return;
   if (blocked(nr, nc)) { hero.bumpT = t; hero.bumpD = d; hero.moved = true; shake = Math.max(shake, .18); SFX.bump(); return; }
   hero.fromX = hero.x; hero.fromRow = hero.row; hero.x = nc; hero.row = nr; hero.hopT = 0; hero.moved = true;
-  if (d === 'U') SFX.hop(Math.min(combo, 8)); else SFX.side();
+  if (d === 'U') { if (!au('hop', null)) SFX.hop(Math.min(combo, 8)); } else SFX.side();
 }
 const SHOUT_DUR = 1.8, CREATURE = { soldier: 1, patrol: 1, guard: 1, octo: 1, jelly: 1, star: 1, whirl: 1 };
 function shout() {
-  if (state !== 'play' || shouts <= 0) return;
+  if (state !== 'play' || shouts <= 0 || (RP && !RP.on)) return; recIn(4);
   if (!ADM.inf) shouts--; shoutT = t; hero.moved = true; if (!au('shout', null)) SFX.hello();
   for (let i = Math.max(0, hero.row - 2); i <= hero.row + 3 && i < rows.length; i++) {
     const r = rows[i]; if (!CREATURE[r.t]) continue;
@@ -513,29 +606,77 @@ function die(msg, kind) {
   setTimeout(() => showResult(false, msg), 1100);
 }
 function win() { bgm(bgmScene, .55); state = 'won'; $('pad').hidden = true; SFX.win(); [0xffd23c, 0x9de3ff, 0xff9ad5, 0x9dffb0].forEach(c => burst(heroX(), hero.row, 12, c)); setTimeout(() => showResult(true), 1300); }
+
 function showResult(ok, msg) {
-  const passed = Math.max(0, maxRow - 1), total = rows.length - 2;
+  track('castle_end', { mode, ok: !!ok, row: maxRow });
+  const passed = Math.max(0, maxRow - 1), total = rows.length - 2, tt = Math.round(t * 10) / 10, box = $('rBox'), sh = $('rShare');
+  box.innerHTML = ''; sh.innerHTML = '';
+  const add = (h) => box.insertAdjacentHTML('beforeend', h);
+  const again = $('rAgain'), more = $('rMore'); again.hidden = false; again.textContent = '다시 도전'; more.hidden = true;
+  again.onclick = () => startRun(mode, castle, { ghost: GHO });
+  const recIn2 = REC.slice(), mode0 = mode, castle0 = castle;
   if (mode === 'gods') {
     const best = Math.max(Number(ls.get('hc_best') || 0), maxRow); ls.set('hc_best', best); const bestD = Math.max(Number(ls.get('hc_best_' + DAY) || 0), maxRow); ls.set('hc_best_' + DAY, bestD);
-    $('rT').textContent = '⛅ ' + maxRow + '줄'; $('rS').textContent = msg + ' · ' + zoneAt(maxRow).name;
-    $('rBox').innerHTML = '<p>오늘의 성 내 최고 <b>' + bestD + '줄</b> · 전체 최고 <b>' + best + '줄</b></p><p> · 이번 판 최고 ' + bestCombo + '연속 · 아슬아슬 ' + nearN + '번</p><p class="small">25줄마다 새 구역(헤르메스의 뜰 → 아테나의 성벽 → 포세이돈의 해자 → 제우스의 탑 → 올림포스 정상). 뒤로 갈수록 함정이 늘고 빨라져요.</p>';
+    const summit = summitT >= 0;
+    $('rT').textContent = summit ? '🏛 정상! ' + maxRow + '줄' : '⛅ ' + maxRow + '줄'; $('rS').textContent = msg + ' · ' + zoneAt(maxRow).name;
+    add('<p class="shells">🐚 주운 조개 <b>' + shellN + '개</b> · 🪽 날개 ' + Math.floor(shellN / 10) + '번 얻음</p>');
+    if (GHO) add('<p>' + (maxRow > GHO.row ? '🎉 <b>' + esc(GHO.nick) + '</b>님 유령을 이겼어요! (' + maxRow + '줄 vs ' + GHO.row + '줄)' : maxRow === GHO.row ? '🤝 ' + esc(GHO.nick) + '님과 비겼어요 (' + maxRow + '줄)' : '😤 아깝다! ' + esc(GHO.nick) + '님 ' + GHO.row + '줄 · 나 ' + maxRow + '줄') + '</p>');
+    add('<p>오늘의 성 내 최고 <b>' + bestD + '줄</b> · 전체 최고 <b>' + best + '줄</b></p><p class="small">이번 판 최고 ' + bestCombo + '연속 · 아슬아슬 ' + nearN + '번 · 100줄이 올림포스 정상, 그 뒤는 구름 위</p>');
+    if (AUTH.loggedIn && maxRow > 0) { add('<p class="small" id="rRank">순위에 올리는 중…</p>');
+      api(null, { action: 'gods', row: maxRow, t: tt, summit }).then(() => api('gods=1')).then(d => { const el = $('rRank'); if (!el) return; if (!d || !d.list) { el.textContent = '순위에 올리지 못했어요'; return; } const r = d.me && d.me.rank; el.innerHTML = r ? '📜 오늘 순위 <b>' + r + '등</b>' + (r === 1 && d.throne ? ' · 👑 오늘의 왕좌!' : '') : '📜 오늘 순위 30등 밖이에요'; }); }
+    else if (!AUTH.loggedIn && AUTH.ready !== false) add('<p class="small">로그인하면 오늘의 순위·정상 명단에 이름이 올라가요.</p>');
+    if (maxRow >= 1 && GH.r.length) shareBox(sh, summit ? 'summit' : 'gods', () => makeGhost(tt, summit));
   } else if (mode === 'practice') {
-    $('rT').textContent = ok ? '연습 성공!' : '연습 — 다시 해 봐요'; $('rS').textContent = ok ? castle.owner + ' 연습판을 끝까지 갔어요' : msg; $('rBox').innerHTML = '<p class="small">관리자판의 연습판이에요. 기록은 남지 않아요.</p>';
+    $('rT').textContent = ok ? '연습 성공!' : '연습 — 다시 해 봐요'; $('rS').textContent = ok ? castle.owner + ' 연습판을 끝까지 갔어요' : msg; add('<p class="small">관리자판의 연습판이에요. 기록은 남지 않아요.</p>');
+  } else if (mode === 'trial') {
+    const T = TRIALS[castle.god];
+    $('rT').textContent = ok ? T.icon + ' ' + T.name + '의 시험 통과!' : T.icon + ' ' + T.name + '의 시험'; $('rS').textContent = ok ? clock(tt) + ' 만에 옥좌 앞에 섰어요' : msg + ' · 40줄 중 ' + Math.min(40, passed) + '줄';
+    if (FREE && FREE.god === castle.god && !trialOpen(castle.god)) { again.hidden = true; add('<p class="small">공짜 도전은 한 번이에요. 헬로타워에서 ' + T.name + ' 카드를 얻거나, 오늘의 신들의 성 ' + T.zone + '줄까지 가면 언제든 열려요.</p>'); }
+    if (ok && AUTH.loggedIn) { add('<p id="rGift">선물 받는 중…</p>');
+      api(null, { action: 'trial', god: castle.god, ok: true, t: tt, inputs: recIn2, free: FREE && FREE.god === castle.god ? FREE.id : '' }).then(d => { const el = $('rGift'); if (!el) return;
+        if (!d.passed) { el.textContent = d.error || '통과 기록을 올리지 못했어요'; return; }
+        if (d.card) { try { const c = JSON.parse(localStorage.getItem('ht_cards') || '{}') || {}; if (!c[castle.god]) { c[castle.god] = { at: new Date().toISOString(), floor: castle.god === 'zeus' ? 110 : 140, count: 1 }; localStorage.setItem('ht_cards', JSON.stringify(c)); } } catch (e) {} }
+        el.innerHTML = (d.card ? '🎴 <b>' + T.name + ' 카드</b>를 받아 카드첩에 넣었어요!<br>' : '') + (d.first ? '🏰 내 성에 <b>' + T.name + '의 함정</b>을 놓을 수 있어요<br>🛡 남의 성을 털 때 ' + T.name + '의 함정을 <b>한 번 버티는 가호</b>가 생겼어요' : '이미 통과한 시험이에요. 기록만 새로 남겼어요');
+        if (d.unlock && ME) ME.unlock = d.unlock; track('castle_trial_pass', { god: castle.god, first: !!d.first, card: !!d.card }); }); }
+    else if (ok) { add('<p>🎴 로그인하면 통과 선물(' + T.name + ' 카드·신의 함정·가호)을 받아요. 로그인한 뒤 한 번 더 통과해 주세요.</p>'); if (AUTH.ready !== false) addBtn(box, '💬 카카오 로그인', 'kakao', () => login()); }
+    if (ok) shareBox(sh, 'trial', () => makeTShare(castle.god, tt));
   } else if (mode === 'attack') {
-    $('rT').textContent = ok ? '🏰 쿠로의 성 함락!' : '🛡️ 쿠로의 성이 막아 냈어요';
-    $('rS').textContent = ok ? Math.floor(t * 10) / 10 + '초 만에 보물방 도착' : msg + ' · ' + total + '줄 중 ' + passed + '줄 통과';
-    $('rBox').innerHTML = ok
-      ? '<p>⚔️ 명성 <b>+18</b> (쿠로 -18) · 쿠로의 성에 내 깃발이 24시간 꽂혀요</p><p class="small">쿠로에게 알림: "◯◯님이 내 성을 함락했어요! 다시보기 · 복수하러 가기"</p><p class="small">같은 성은 하루 한 번 — 시험판이라 다시 할 수 있어요.</p>'
-      : '<p>🛡️ 쿠로 명성 <b>+12</b> · 내 명성 -12</p><p class="small">쿠로에게 알림: "◯◯님이 ' + passed + '줄까지 왔다가 막혔어요 · 다시보기"</p><p class="small">같은 성은 하루 한 번 — 시험판이라 다시 할 수 있어요.</p>';
+    const raidId = castle.raidId;
+    $('rT').textContent = ok ? '🏴 ' + castle.owner + '의 성 함락!' : '🛡️ ' + castle.owner + '의 성이 막아 냈어요';
+    $('rS').textContent = ok ? clock(tt) + ' 만에 보물방 도착' : msg + ' · ' + total + '줄 중 ' + passed + '줄 통과';
+    again.hidden = true; more.hidden = false; more.textContent = '⚔ 다른 성 털러 가기'; more.onclick = openRaid;
+    add('<p id="rFame">결과를 올리는 중…</p>');
+    api(null, { action: 'raid_end', id: raidId, ok: !!ok, row: maxRow, t: tt, inputs: recIn2 }).then(d => { const el = $('rFame'); if (!el) return;
+      if (d.__s !== 200) { el.textContent = d.error || '결과를 올리지 못했어요'; return; }
+      el.innerHTML = d.win ? '⚔️ 명성 <b>+' + d.dA + '</b> (' + esc(castle.owner) + ' ' + d.dO + ') · 지금 명성 ' + d.fame + '<br><span class="small">' + esc(castle.owner) + '님 성에 내 깃발이 24시간 꽂혀요 🏴</span>'
+        : '🛡️ 명성 <b>' + d.dA + '</b> · ' + esc(castle.owner) + ' +' + d.dO + ' · 🛡철벽 +1' + (d.why ? '<br><span class="small">기록을 확인할 수 없어 실패로 처리했어요</span>' : '');
+      if (ME) ME.fame = d.fame; track('castle_raid_end', { win: !!d.win });
+      shareBox(sh, d.win ? 'raid' : 'raidfail', () => Promise.resolve({ id: raidId, short: location.origin + '/k/r' + raidId, link: location.origin + PATH + '?raid=' + raidId, dA: d.dA, fame: d.fame, t: tt, row: maxRow, len: total }));
+      addBtn(sh, '▶ 다시보기', 'sub', () => openReplay(raidId)); });
+  } else if (mode === 'visit') {
+    $('rT').textContent = ok ? '🏰 ' + castle.owner + '의 성을 깼어요!' : castle.owner + '의 성에 막혔어요';
+    $('rS').textContent = ok ? clock(tt) + ' 만에 보물방 도착 (연습이라 명성은 그대로예요)' : msg + ' · ' + total + '줄 중 ' + passed + '줄';
+    if (AUTH.loggedIn && ME && castle.wid !== ME.wid) { more.hidden = false; more.textContent = '⚔ 진짜로 털러 가기 (명성 걸기)'; more.onclick = () => startRaid(castle.wid, false); }
+    else if (!AUTH.loggedIn && AUTH.ready !== false) { add('<p class="small">로그인하면 이 성을 진짜로 털어서 명성을 얻고, 내 성도 지을 수 있어요.</p>'); addBtn(box, '💬 카카오 로그인', 'kakao', () => login()); }
+  } else if (mode === 'replay') {
+    const rc = castle.rec;
+    $('rT').textContent = '▶ 다시보기 끝'; $('rS').textContent = rc.an + ' → ' + rc.on + '의 성 · ' + (rc.ok ? '함락 (' + clock(rc.t) + ')' : rc.len + '줄 중 ' + Math.max(0, rc.row - 1) + '줄에서 막힘');
+    if (Boolean(ok) !== Boolean(rc.ok)) add('<p class="small">다시보기가 실제 결과와 조금 다르게 끝났어요(기기 차이). 실제 결과: ' + (rc.ok ? '함락' : '막힘') + '</p>');
+    again.textContent = '▶ 한 번 더 보기'; again.onclick = () => openReplay(rc.id);
+    const revOk = ME && ME.wid === rc.o && rc.ok && (ME.revenge || []).some(x => x.wid === rc.a);
+    if (revOk) { more.hidden = false; more.textContent = '🔥 ' + rc.an + '에게 복수하러 가기'; more.onclick = () => startRaid(rc.a, true); }
+    else if (!AUTH.loggedIn) { more.hidden = false; more.textContent = '🏰 나도 헬로 캐슬 하기'; more.onclick = goHome; }
   } else {
-    $('rT').textContent = ok ? '✅ 내 성 공개 완료!' : '내 성을 못 깼어요';
-    $('rS').textContent = ok ? '직접 깰 수 있는 성이라 공개됐어요. 이제 다른 사람이 공략하러 와요.' : msg + ' · 직접 한 번 깨야 공개돼요.';
-    $('rBox').innerHTML = '<p class="small">아무도 못 깨는 성을 막으려고, 주인이 먼저 깨야 공개되는 규칙이에요.</p>';
+    // 내 성 직접 깨 보기 → 공개
+    $('rT').textContent = ok ? '✅ 내 성을 깼어요!' : '내 성을 못 깼어요'; $('rS').textContent = ok ? '공개하는 중…' : msg + ' · 직접 한 번 깨야 공개돼요.';
+    add('<p class="small">아무도 못 깨는 성을 막으려고, 주인이 먼저 깨야 공개되는 규칙이에요. 새 성이 공개되기 전까지는 예전 성이 그대로 공개돼 있어요.</p>');
+    more.hidden = false; more.textContent = '🛠 성 고치러 가기'; more.onclick = openEdit;
+    if (ok) api(null, { action: 'publish', t: tt, inputs: recIn2 }).then(d => { if (d.ok) { $('rT').textContent = '✅ 내 성 공개 완료!'; $('rS').textContent = '이제 다른 사람이 공략하러 와요. 깃발도 내려갔어요.'; if (ME) { ME.castle.pub = d.pub; ME.castle.draft = null; ME.castle.flag = null; } track('castle_publish', { len: d.pub.len }); shareBox(sh, 'mycastle', () => makeMyCastle()); }
+      else $('rS').textContent = d.error || '공개하지 못했어요. 한 번 더 깨 주세요.'; });
   }
-  if (mode === 'gods') $('rBox').insertAdjacentHTML('afterbegin', '<p class="shells">🐚 주운 조개 <b>' + shellN + '개</b> · 🪽 날개 ' + Math.floor(shellN / 10) + '번 얻음</p>');
-  $('rAgain').onclick = () => startRun(mode, castle);
-  $('bWing').hidden = true;
+  $('bWing').hidden = true; $('helpBtn').hidden = true;
   $('res').hidden = false; $('mute').hidden = true; $('admBtn').hidden = true; $('adm').hidden = true; showBest();
+  void mode0; void castle0;
 }
 
 // ================================================================ 효과음(녹음 파일) — 거리에 따라 커지고 작아진다
@@ -577,6 +718,7 @@ const SND_EV = [ // 기본값은 소리 모양(주파수 그림)을 보고 짐�
   { k: 'octo', name: '🐙 문어 촉수 솟을 때', file: '', vol: 0.7 },
   { k: 'shell', name: '🐚 조개 주울 때', file: '', vol: 0.8 },
   { k: 'death', name: '💀 죽을 때', file: '', vol: 0.9 },
+  { k: 'hop', name: '🐥 헬로 뛰기', file: '', vol: 1 },
 ];
 // 기본값 = 대표가 관리 화면에서 맞춘 값(10/11)
 // 10/12 대표 설정
@@ -614,6 +756,8 @@ const SYN = {
   rock: (g) => { snd(90, .35, 'square', .12 * g, 40); setTimeout(() => snd(60, .4, 'sawtooth', .08 * g, 35), 120); }, // 쿵 우르르
   rock_hit: (g) => { snd(140, .12, 'square', .1 * g, 60); setTimeout(() => snd(500, .35, 'triangle', .07 * g, 1400), 60); }, // 퍽! 뿅~
   rock_break: (g) => { noise(.45, .22 * g, 900); snd(80, .3, 'square', .08 * g, 40); }, // 와장창
+  // 헬로 뛰기(10/12): 낮은 '통' + 짧은 '뿅' — 예전보다 2.5배쯤 크게
+  hop: (g) => { snd(150, .09, 'sine', .15 * g, 75); setTimeout(() => snd(640, .07, 'square', .045 * g, 1180), 35); },
   death: (g) => { snd(880, .45, 'square', .07 * g, 160); setTimeout(() => snd(220, .25, 'triangle', .06 * g, 90), 380); }, // 뿅~
 };
 function au(k, i, x, minG, src) { const e = SCFG.ev[k]; if (!e || !e.on) return false; const g = Math.max(minG || 0, i == null ? 1 : distGain(i, x) * focusMul(src == null ? Math.round(i) : src)) * e.vol * SCFG.master; if (g < .02) return false;
@@ -709,7 +853,7 @@ $('bShout').addEventListener('pointerdown', (e) => { e.preventDefault(); shout()
 // 헤르메스의 날개: 조개 10개마다 하나. 누르면 앞쪽 5~9줄 사이의 풀밭으로 훨훨 날아간다(신들의 성 전용)
 function updWing() { const b = $('bWing'); b.hidden = mode !== 'gods' || state !== 'play'; $('wgN').textContent = wings; b.disabled = wings <= 0; b.classList.toggle('ready', wings > 0); }
 function useWing() {
-  if (state !== 'play' || mode !== 'gods' || wings <= 0 || hero.hopT < 1 || hero.fly) return;
+  if (state !== 'play' || mode !== 'gods' || wings <= 0 || hero.hopT < 1 || hero.fly || (RP && !RP.on)) return; recIn(5);
   ensureGodRows(hero.row + 50); let tr = -1;
   for (let i = hero.row + 5; i <= hero.row + 12; i++) { const r = rows[i]; if (r && r.t === 'grass' && r.block.length < COLS) { tr = i; break; } }
   if (tr < 0) return;
@@ -838,6 +982,9 @@ const wz = (row) => -row;
 const heroG = new THREE.Group(); scene.add(heroG);
 const heroSp = sprite('hello_back', 1.0); heroG.add(heroSp);
 const heroSh = blobShadow(heroG, .8);
+heroSp.material = heroSp.material.clone();
+const ghostG = new THREE.Group(); scene.add(ghostG); const ghostSp = sprite('hello_back', .95); ghostSp.material = ghostSp.material.clone(); ghostSp.material.opacity = .45; ghostSp.material.color.setHex(0xbfe8ff); ghostG.add(ghostSp); ghostG.visible = false;
+function ghostAt() { if (!GHO) return null; const n = GHO.g.r.length; if (!n) return null; const f = Math.min(n - 1, stepN / 3), a = Math.floor(f), b = Math.min(n - 1, a + 1), k = f - a; return { row: GHO.g.r[a] + (GHO.g.r[b] - GHO.g.r[a]) * k, x: (GHO.g.x[a] + (GHO.g.x[b] - GHO.g.x[a]) * k) / 10, done: stepN / 3 >= n - 1 }; }
 const ring = new THREE.Mesh(new THREE.RingGeometry(.4, .55, 28), new THREE.MeshBasicMaterial({ color: 0xff3b3b, transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false }));
 ring.rotation.x = -Math.PI / 2; scene.add(ring);
 const shoutRing = new THREE.Mesh(new THREE.RingGeometry(.9, 1, 40), new THREE.MeshBasicMaterial({ color: 0xff9ad5, transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false }));
@@ -907,7 +1054,8 @@ function buildRow(i) {
   if (safe) for (let q = decoFrom; q < g.children.length; q++) g.children[q].position.y += SAFE_H; // 장식·나무·조개를 한 단 위로
   dyn.pickBase = safe ? SAFE_H : 0;
   if (r.t === 'yard') { for (const sgn of [-1, 1]) { box(g, painted('wall', '#9aa1ae', 1), .7, 1.5, .8, sgn * 3.1, .5, z + .45); box(g, painted('wall', '#b0b7c3', 2), .9, .35, .9, sgn * 3.1, 1.4, z + .45); } }
-  if (r.t === 'treasure') { dyn.shell = sprite('shell', 1.3); dyn.shell.position.set(0, .05 + SAFE_H, z); g.add(dyn.shell); blobShadow(g, 1.2).position.set(0, .03 + SAFE_H, z); }
+  if (r.t === 'treasure' && mode === 'trial') { const gf = godFig(g, castle.god, 1, z, castle.god === 'zeus' ? 0xfff07a : 0x7fd8ff); gf.s.position.x = 0; gf.aura.position.x = 0; gf.s.userData.bx = 0; dyn.gf = gf; dyn.throne = 1; }
+  else if (r.t === 'treasure') { dyn.shell = sprite('shell', 1.3); dyn.shell.position.set(0, .05 + SAFE_H, z); g.add(dyn.shell); blobShadow(g, 1.2).position.set(0, .03 + SAFE_H, z); }
   // 움직이는 것
   if (r.t === 'log') dyn.logs = logs(r).map(() => { const s = sprite('log', .62); s.center.set(.5, .1); g.add(s); const sh = blobShadow(g, 1); return { s, sh }; });
   if (r.t === 'water') dyn.rafts = rafts(r).map(() => { const m = new THREE.Mesh(PLANE, mat('raft', () => new THREE.MeshLambertMaterial({ map: ART.raft, transparent: true, alphaTest: .1 }))); m.rotation.x = -Math.PI / 2; m.receiveShadow = true; g.add(m); return m; });
@@ -970,6 +1118,7 @@ function animRow(i, o) {
   if (d.knight) { const p = patrol(r, i); d.knight.position.set(wx(p.x), fr ? 0 : Math.abs(Math.sin(t * 8)) * .06, wz(p.rowf)); d.ksh.position.set(wx(p.x), .02, wz(p.rowf)); skin(d.knight, fr ? 'gullknight_hi' : p.fx ? (Math.floor(t * 6) % 2 ? 'gullknight_side1' : 'gullknight_side2') : 'gullknight_front', .92, !fr && p.fx < 0); d.knight.material.rotation = 0; d.knight.visible = d.ksh.visible = true; kApply(r, Math.round(p.rowf), 'k', kTwo(r, i, patrol), d.knight, d.ksh); }
   if (d.ball) { const c = cannon(r); d.ball.visible = c.ball != null && c.ball > -.5 && c.ball < COLS - .5; if (d.ball.visible) { d.ball.position.set(wx(c.ball), .3, z); d.ball.material.rotation = -r.dir * t * 12; } d.warn.material.opacity = c.warn ? .2 + .1 * Math.sin(t * 25) : 0; skin(d.cannon, 'cannon', .7, r.dir < 0); { const T = [3.0, 2.4, 1.9][r.s || 0], u = wrap(t + r.ph, T), kick = u < .18 ? Math.sin(u / .18 * Math.PI) : 0, sw = c.warn ? 1 + Math.sin(t * 40) * .04 : 1; d.cannon.scale.set(d.cannon.userData.h * d.cannon.userData.a * sw * (1 - kick * .12), d.cannon.userData.h * sw * (1 + kick * .08), 1); d.cannon.position.x = (r.dir > 0 ? -(COLS / 2 + .5) : COLS / 2 + .5) + r.dir * (.2 - kick * .18); d.cannon.material.rotation = (c.warn ? Math.sin(t * 40) * .04 : 0) + r.dir * kick * .1 + LT; if (u < .06 && Math.abs(i - hero.row) < 3) shake = Math.max(shake, .3); } }
   if (d.wv) godAnim(d.gf, waveS(r).p);
+  if (d.throne) godAnim(d.gf, 'calm');
   if (d.wv) { const w = waveS(r), fl = r.dir < 0, f = Math.floor(t * 8) % 2 ? 'wave2' : 'wave1'; d.wv.visible = d.wvSh.visible = w.p !== 'calm';
     if (w.p === 'warn') { const st = r.dir > 0 ? -.6 : COLS - .4, k = .35 + w.k * .4; skin(d.wv, f, 1.6 * k, fl); d.wv.position.set(wx(st), -.2, z + .45); d.wvSh.position.set(wx(st), .02, z); d.wvSh.scale.set(1.2 * k, .5 * k, 1); }
     if (w.p === 'hit') { skin(d.wv, f, 1.6, fl); d.wv.position.set(wx(w.cx), -.2 + Math.abs(Math.sin(t * 9)) * .05, z + .45); d.wv.material.rotation = LT + (fl ? 2 * LT : 0) * 0; d.wvSh.position.set(wx(w.cx), .02, z); d.wvSh.scale.set(2, .7, 1); if (Math.abs(i - hero.row) < 3) shake = Math.max(shake, .15); } }
@@ -1048,6 +1197,7 @@ function render() {
   sun.position.set(look.x + 4, 12, look.z + 6); sun.target.position.copy(look);
   while (PM.length < parts.length) { const m = new THREE.Mesh(SPH, new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true })); scene.add(m); PM.push(m); }
   PM.forEach((m, j) => { const p = parts[j]; m.visible = !!p; if (!p) return; m.material.color.setHex(p.c); m.material.opacity = Math.max(0, p.life / p.max); m.position.set(X0 + p.x, p.y, -p.z); m.scale.setScalar(p.s * 1.4); });
+  const gp = ghostAt(); ghostG.visible = !!gp; if (gp) ghostG.position.set(wx(gp.x), baseY(Math.round(gp.row)) + (gp.done ? 0 : Math.abs(Math.sin(stepN / 3 * 1.4)) * .12), wz(gp.row));
   renderer.render(scene, camera);
   drawHud();
 }
@@ -1079,18 +1229,19 @@ function drawHud() {
     if (r.t === 'bomb') { const b = bombS(r); if (b.fly != null && b.fly < .45) { const p = proj(0, 3.9, o.z); tag('끼룩! 🐦', p.x, p.y, '#fff'); } }
     if (r.t === 'cart' && i === hero.row + 1) { }
     if (r.rest) { const p = proj(0, .1, o.z); tag('— ' + zoneAt(i).name + ' —', p.x, p.y + 4, 'rgba(255,255,255,.95)', 12); }
-    if (r.t === 'yard' && i === 0 && !hero.moved) { const p = proj(0, 2.2, o.z + .3); tag('🚪 ' + (mode === 'gods' ? '신들의 성' : mode === 'practice' ? castle.owner : castle.owner + '의 성') + ' 성문', p.x, p.y, '#ffd23c'); }
-    if (r.t === 'treasure') { const p = proj(0, 1.7, o.z); tag('💎 보물방 — 황금 조개', p.x, p.y, '#ffd23c'); }
+    if (r.t === 'yard' && i === 0 && !hero.moved) { const p = proj(0, 2.2, o.z + .3); tag('🚪 ' + (mode === 'gods' ? '신들의 성' : mode === 'practice' || mode === 'trial' ? (mode === 'trial' ? (castle.god === 'zeus' ? '제우스의 시험' : '포세이돈의 시험') : castle.owner) : castle.owner + '의 성') + ' 성문', p.x, p.y, '#ffd23c'); }
+    if (r.t === 'treasure') { const p = proj(0, mode === 'trial' ? 2.9 : 1.7, o.z); tag(mode === 'trial' ? (castle.god === 'zeus' ? '⚡ 제우스의 옥좌 — 여기까지 와 봐라!' : '🔱 포세이돈의 옥좌 — 여기까지 와 보거라!') : '💎 보물방 — 황금 조개', p.x, p.y, '#ffd23c'); }
   }
+  { const gp = ghostAt(); if (gp) { const p = proj(wx(gp.x), 1.25, wz(gp.row)); tag('👻 ' + GHO.nick + (gp.done ? ' · ' + GHO.row + '줄에서 멈춤' : ''), p.x, p.y, '#bfe8ff', 12.5); } }
   for (const q of popups) { const k = (t - q.t0), p = proj(wx(q.x), 1.4 + k * .8, wz(q.row)); hx.save(); hx.globalAlpha = Math.max(0, 1 - k); tag(q.text, p.x, p.y, q.color, 17); hx.restore(); }
   if (combo >= 2 && state === 'play') { hx.save(); hx.font = '900 20px sans-serif'; hx.textAlign = 'left'; hx.lineWidth = 5; hx.strokeStyle = 'rgba(10,20,50,.85)'; const s2 = '🔥 ' + combo + '연속'; hx.strokeText(s2, 12, 92); hx.fillStyle = '#ffd23c'; hx.fillText(s2, 12, 92); hx.restore(); }
   if (flash > 0) { hx.fillStyle = 'rgba(255,255,255,' + (flash * .7) + ')'; hx.fillRect(0, 0, W, H); }
   if (state === 'play' && t - shoutT < 1.1) { const p = proj(wx(heroX()), 1.35, wz(heroRowF())); bubble('헬로~!', p.x, p.y, '#fff'); }
   hx.fillStyle = 'rgba(8,16,36,.86)'; hx.fillRect(0, 0, W, 62);
   hx.textAlign = 'left'; hx.fillStyle = '#fff'; hx.font = '900 18px sans-serif';
-  hx.fillText(mode === 'gods' ? '⛅ ' + kstDay().label + ' 오늘의 성 · ' + zoneAt(hero.row).name : mode === 'attack' ? '⚔ ' + castle.owner + '의 성' : mode === 'practice' ? '🧪 ' + castle.owner : '🏰 내 성 시험', 12, 26);
+  hx.fillText(mode === 'gods' ? '⛅ ' + kstDay().label + ' 오늘의 성 · ' + zoneAt(hero.row).name : mode === 'attack' ? '⚔ ' + castle.owner + '의 성' : mode === 'visit' ? '🏰 ' + castle.owner + '의 성 (연습)' : mode === 'replay' ? '▶ 다시보기 · ' + castle.by + ' → ' + castle.owner + '의 성' : mode === 'trial' ? (castle.god === 'zeus' ? '⚡ 제우스의 시험' : '🔱 포세이돈의 시험') : mode === 'practice' ? '🧪 ' + castle.owner : '🏰 내 성 시험', 12, 26);
   hx.font = '700 12.5px sans-serif'; hx.globalAlpha = .85;
-  hx.fillText(mode === 'gods' ? maxRow + '줄 · 최고 ' + Math.max(maxRow, Number(ls.get('hc_best') || 0)) + '줄' : (rows.length - 2) + '줄 중 ' + Math.min(rows.length - 2, maxRow) + '줄 · 성주 명성 ' + castle.fame + (castle.capt ? ' · 👁 경비대장' : ''), 12, 47);
+  hx.fillText(mode === 'gods' ? maxRow + '줄 · 최고 ' + Math.max(maxRow, Number(ls.get('hc_best') || 0)) + '줄' : (rows.length - 2) + '줄 중 ' + Math.min(rows.length - 2, maxRow) + '줄' + (castle.fame ? ' · 성주 명성 ' + castle.fame : '') + (castle.capt ? ' · 👁 경비대장' : ''), 12, 47);
   hx.globalAlpha = 1;
   // 오른쪽 위: 주운 조개
   hx.save(); hx.font = '900 21px sans-serif'; hx.textAlign = 'right'; hx.fillStyle = '#ffe27a'; if (mode === 'gods') hx.fillText('🐚 ' + (shellN % 10) + '/10', W - 14, 29); hx.restore();
@@ -1109,7 +1260,7 @@ function drawHud() {
     hx.font = '800 10.5px sans-serif'; hx.textAlign = 'left'; hx.textBaseline = 'middle'; hx.fillStyle = v > .7 ? '#ffd0d0' : '#fff'; hx.fillText(v > .7 ? '들킨다!' : '의심', bw / 2 + 5, 1); hx.restore(); }
   hx.font = '700 10.5px sans-serif'; hx.fillStyle = 'rgba(255,255,255,.5)'; hx.textAlign = 'right'; hx.fillText('화면 ' + fpsShow + '번/초 · 게임 60칸/초', W - 12, 50);
   if (v > .7 && state === 'play') { const a = (v - .7) / .3, g = hx.createRadialGradient(W / 2, H / 2, H * .3, W / 2, H / 2, H * .7); g.addColorStop(0, 'rgba(255,0,0,0)'); g.addColorStop(1, 'rgba(255,0,0,' + (.35 * a) + ')'); hx.fillStyle = g; hx.fillRect(0, 0, W, H); }
-  if (zoneBanner && t - zoneBanner.t0 < 2.2) { const a = Math.min(1, (2.2 - (t - zoneBanner.t0)) / .5); hx.save(); hx.globalAlpha = a; hx.fillStyle = 'rgba(10,20,50,.75)'; rr(40, 150, W - 80, 64, 16); hx.fill(); hx.font = '900 22px sans-serif'; hx.textAlign = 'center'; hx.fillStyle = '#ffd23c'; hx.fillText('⛅ ' + zoneBanner.text, W / 2, 182); hx.font = '700 13px sans-serif'; hx.fillStyle = '#ffe0ef'; hx.fillText('📣 헬로~! 한 번 더 생겼어요', W / 2, 203); hx.restore(); }
+  if (zoneBanner && t - zoneBanner.t0 < 2.2) { const a = Math.min(1, (2.2 - (t - zoneBanner.t0)) / .5); hx.save(); hx.globalAlpha = a; hx.fillStyle = 'rgba(10,20,50,.75)'; rr(40, 150, W - 80, 64, 16); hx.fill(); hx.font = '900 22px sans-serif'; hx.textAlign = 'center'; hx.fillStyle = '#ffd23c'; hx.fillText((zoneBanner.sub ? '' : '⛅ ') + zoneBanner.text, W / 2, 182); hx.font = '700 13px sans-serif'; hx.fillStyle = '#ffe0ef'; hx.fillText(zoneBanner.sub || '📣 헬로~! 한 번 더 생겼어요', W / 2, 203); hx.restore(); }
   if (state === 'play' && !hero.moved) tag('누르면 앞으로 · 옆으로 밀면 옆으로 · 📣 인사로 괴물 멈추기', W / 2, H - 100, '#fff', 13.5);
   if (state === 'dead') { hx.fillStyle = 'rgba(0,0,0,.3)'; hx.fillRect(0, 62, W, H); tag(deadMsg, W / 2, H / 2, '#fff', 20); }
 }
@@ -1121,56 +1272,311 @@ function frame(now) {
   const el = (now - last) / 1000; last = now;
   fpsN++; fpsT += el; if (fpsT >= 1) { fpsShow = Math.round(fpsN / fpsT); fpsN = 0; fpsT = 0; }
   acc += Math.min(el, .1) * ADM.speed;
-  let n = 0; while (acc >= STEP && n < 6) { update(STEP); acc -= STEP; n++; }
+  if (paused()) acc = 0;
+  let n = 0; while (acc >= STEP && n < 6) { feedReplay(); update(STEP); acc -= STEP; n++; }
   if (n === 6) acc = 0;
   render(); requestAnimationFrame(frame);
 }
 document.addEventListener('visibilitychange', () => { last = 0; acc = 0; });
+const paused = () => !$('tut').hidden;
 
-// ================================================================ 성 꾸미기
-function costOf(c) { let u = c.capt ? CAPT_COST : 0; c.lanes.forEach((l, i) => { if (i > 0 && TWO[c.lanes[i - 1].t]) return; const p = PIECES[l.t]; u += p.cost + (p.speed ? SPEED_COST[l.s || 0] : 0); }); return u; }
-function renderEdit() {
-  const bud = budgetOf(MY.fame), ti = tierOf(MY.fame), T = TIERS[ti], nx = TIERS[ti + 1]; $('fame').textContent = MY.fame; $('tierN').textContent = T.name;
-  $('tierInfo').innerHTML = '예산 ★' + T.bud + ' · 함정 줄은 <b>' + (T.run > 50 ? '제한 없이' : T.run + '줄까지') + '</b> 연달아 · 성 길이 최대 ' + T.max + '줄' + (nx ? '<br>다음 등급 <b>' + nx.name + '</b>까지 명성 +' + (nx.min - MY.fame) + ' → 예산 ★' + nx.bud + ' · ' + (nx.run > 50 ? '연속 제한 없음' : nx.run + '줄 연속') + ' · 최대 ' + nx.max + '줄' : '<br>최고 등급이에요');
-  const cs = $('cards'); cs.innerHTML = '';
-  for (const k of Object.keys(CARDS)) { const l = document.createElement('label'); l.innerHTML = '<input type="checkbox"' + (owned[k] ? ' checked' : '') + '>' + CARDS[k] + ' 카드'; l.querySelector('input').onchange = (e) => { owned[k] = e.target.checked; MY.lanes.forEach(x => { if (PIECES[x.t].card === k && !owned[k]) x.t = 'grass'; }); renderEdit(); }; cs.appendChild(l); }
-  $('capt').checked = MY.capt; $('capt').onchange = (e) => { MY.capt = e.target.checked; renderEdit(); };
-  // 순찰 기사는 두 줄을 쓴다: 바로 위 줄은 순찰 길(풀밭)로 고정
-  MY.lanes.forEach((l, i) => { if (i > 0 && TWO[MY.lanes[i - 1].t]) l.t = 'grass'; });
-  if (MY.lanes.length && TWO[MY.lanes[MY.lanes.length - 1].t]) MY.lanes[MY.lanes.length - 1].t = 'grass';
-  const list = $('laneList'); list.innerHTML = '';
-  MY.lanes.forEach((ln, i) => {
-    const row = document.createElement('div'); row.className = 'lane';
-    const no = document.createElement('div'); no.className = 'no'; no.textContent = (i + 1) + '줄';
-    if (i > 0 && TWO[MY.lanes[i - 1].t]) { row.classList.add('lock'); const s = document.createElement('select'); s.disabled = true; const o = document.createElement('option'); o.textContent = '↑ ' + (MY.lanes[i - 1].t === 'jelly' ? '해파리가 튀는 줄' : MY.lanes[i - 1].t === 'rock' ? '바위가 굴러오는 비탈' : '순찰 기사의 길') + ' (아래 줄과 함께)'; s.appendChild(o); const s2 = document.createElement('select'); s2.disabled = true; s2.appendChild(document.createElement('option')).textContent = '—'; row.append(no, s, s2); list.appendChild(row); return; }
-    const p = PIECES[ln.t];
-    const sel = document.createElement('select');
-    for (const [k, v] of Object.entries(PIECES)) { const o = document.createElement('option'); o.value = k; const godUsed = GODP[k] && MY.lanes.some((x, j) => j !== i && x.t === k); const lock = (v.card && !owned[v.card]) || (v.two && i === MY.lanes.length - 1) || godUsed; o.textContent = (lock ? '🔒 ' : '') + v.name + (v.cost ? ' ★' + v.cost : '') + (godUsed ? ' (신은 한 줄만)' : ''); o.disabled = lock; if (k === ln.t) o.selected = true; sel.appendChild(o); }
-    sel.onchange = () => { ln.t = sel.value; renderEdit(); };
-    const sp = document.createElement('select');
-    if (p.speed) { SPEED_NAME.forEach((n, j) => { const o = document.createElement('option'); o.value = j; o.textContent = n + (SPEED_COST[j] ? ' ★+' + SPEED_COST[j] : ''); if ((ln.s || 0) === j) o.selected = true; sp.appendChild(o); }); sp.onchange = () => { ln.s = +sp.value; renderEdit(); }; }
-    else { sp.disabled = true; sp.appendChild(document.createElement('option')).textContent = '—'; }
-    row.append(no, sel, sp); list.appendChild(row);
-  });
-  const used = costOf(MY), rn = runsOf(MY.lanes), runBad = rn.mx > T.run, lenBad = MY.lanes.length > T.max;
-  if (runBad) { const rowsEl = [...list.children]; for (let j = rn.at; j > rn.at - rn.mx && j >= 0; j--) if (rowsEl[j]) rowsEl[j].classList.add('bad'); }
-  $('bud').innerHTML = '<span class="' + (used > bud ? 'over' : '') + '">★' + used + '</span> / ★' + bud;
-  const bad = used > bud || runBad || lenBad; $('bTest').disabled = bad;
-  $('eMsg').className = 'msg' + (bad ? ' bad' : '');
-  $('eMsg').textContent = used > bud ? '예산을 넘었어요. 함정을 줄이거나 느리게 해 주세요.' : runBad ? eun(T.name) + ' 함정 줄을 ' + T.run + '줄까지만 연달아 깔 수 있어요. 빨간 줄 사이에 풀밭을 넣어 주세요.' : lenBad ? eun(T.name) + ' 성 길이가 ' + T.max + '줄까지예요.' : '남은 예산 ★' + (bud - used) + ' · 줄 ' + MY.lanes.length + '/' + T.max + '개';
-  $('lAdd').disabled = MY.lanes.length >= T.max; $('lDel').disabled = MY.lanes.length <= 6;
+
+// ================================================================ 오락실 회원 · 서버
+const PATH = '/games/hello-castle/';
+function track(name, params) { try { if (typeof gtag === 'function') gtag('event', name, params || {}); } catch (e) {} }
+const esc = (x) => String(x == null ? '' : x).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const clock = (sec) => { const m = Math.floor(sec / 60), q = Math.floor(sec % 60); return m ? m + '분 ' + q + '초' : q + '초'; };
+const AUTH = { loggedIn: false, nick: '', wid: '', ready: true }; let ME = null, FREE = null;
+function api(q, body) {
+  const o = body ? { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : { credentials: 'same-origin', cache: 'no-store' };
+  return fetch('/api/castle' + (body ? '' : '?' + q), o).then(r => r.json().catch(() => ({})).then(d => { d.__s = r.status; return d; })).catch(() => ({ __s: 0, error: '인터넷 연결을 확인해 주세요' }));
 }
-$('lAdd').onclick = () => { MY.lanes.push({ t: 'grass' }); renderEdit(); };
-$('fUp').onclick = () => { MY.fame += 50; renderEdit(); }; $('fDn').onclick = () => { MY.fame = Math.max(800, MY.fame - 50); renderEdit(); };
-$('lDel').onclick = () => { MY.lanes.pop(); renderEdit(); };
-function showBest() { const b = Number(ls.get('hc_best') || 0); $('bestT').textContent = b ? '신들의 성 내 최고 ' + b + '줄 · ' + zoneAt(b).name : '25줄마다 새 구역 · 뒤로 갈수록 어려워져요'; }
+function cid() { let c = ls.get('hd_cid'); if (!/^[a-z0-9]{8,24}$/.test(c || '')) { c = (Math.random().toString(36).slice(2, 10) + Date.now().toString(36)).replace(/[^a-z0-9]/g, 'a').slice(0, 20); ls.set('hd_cid', c); } return c; }
+function login(next) { track('login_click', { from: 'hello_castle' }); location.href = '/api/auth?action=login&next=' + encodeURIComponent(next || (PATH + location.search)); }
+function toast(m) { const e = $('toast'); e.textContent = m; e.hidden = false; clearTimeout(toast.tm); toast.tm = setTimeout(() => { e.hidden = true; }, 2600); }
+function addBtn(parent, label, cls, fn) { const b = document.createElement('button'); b.type = 'button'; b.className = 'btn ' + (cls || ''); b.textContent = label; b.onclick = fn; parent.appendChild(b); return b; }
+function el(tag, cls, html) { const n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+function localCards() { try { return JSON.parse(localStorage.getItem('ht_cards') || '{}') || {}; } catch (e) { return {}; } }
+// 신의 시험이 열렸나: 헬로타워의 그 신 카드가 있거나, 오늘의 신들의 성에서 그 신의 구역까지 간 적이 있으면(로그인하면 서버 기록 기준)
+function trialOpen(god) { const T = TRIALS[god]; if (ME) return !!(ME.unlock.cards[god] || ME.unlock.trials[god] || ME.best >= T.zone); return !!(localCards()[god] || Number(ls.get('hc_best') || 0) >= T.zone); }
+function loadMe() {
+  return fetch('/api/auth', { credentials: 'same-origin', cache: 'no-store' }).then(r => r.json()).catch(() => ({})).then(a => {
+    AUTH.loggedIn = !!(a && a.loggedIn); AUTH.nick = (a && a.nick) || ''; AUTH.wid = (a && a.wid) || ''; AUTH.ready = !(a && a.ready === false);
+    return AUTH.loggedIn ? api('me=1') : null;
+  }).then(m => { ME = m && m.loggedIn ? m : null; renderHome(); return ME; });
+}
+function renderHome() {
+  const mb = $('meBox'); mb.innerHTML = '';
+  if (ME) {
+    const c = ME.castle, R = ME.rules;
+    mb.innerHTML = '<p><b>' + esc(ME.nick) + '</b>님 · 명성 <b>' + ME.fame + '</b> · ' + R.tier + '</p><p class="small">🏰 내 성 ' + (c.pub ? c.pub.len + '줄 공개 중' + (c.basic ? ' (기본 성)' : '') : '없음') + (c.draft ? ' · 고치는 중인 성 있음' : '') + ' · 🛡철벽 ' + c.wall + (c.flag ? '<br>🏴 <b>' + esc(c.flag.by) + '</b>님의 깃발이 꽂혀 있어요 — 성을 고쳐 다시 공개하면 내려가요' : '') + '</p>';
+  } else if (!AUTH.ready) mb.innerHTML = '<p class="small">지금은 회원 기능이 꺼져 있어요. 신들의 성은 바로 할 수 있어요.</p>';
+  else { mb.innerHTML = '<p class="small">로그인하면 <b>내 성</b>을 짓고, 남의 성을 털고, 신의 시험으로 <b>올림포스 카드</b>를 받아요.</p>'; addBtn(mb, '💬 카카오 로그인', 'kakao', () => login()); }
+  const nb = $('newsBox'); nb.innerHTML = '';
+  if (ME && ME.inbox.length) { const seen = Number(ls.get('hc_inbox_seen') || 0); ME.inbox.slice(0, 4).forEach(x => nb.appendChild(newsEl(x, x.at > seen))); ls.set('hc_inbox_seen', String(Date.now())); }
+  const ps = $('pushSlot'); ps.innerHTML = ''; if (ME && window.HelloPush && HelloPush.state() === 'off') { const b2 = HelloPush.box(); const hb = b2.querySelector('b'); if (hb) hb.textContent = '🔔 내 성이 털리면 휴대폰으로 알림 받기'; const tx = b2.querySelector('.hp-t'); if (tx) tx.textContent = '누가 내 성을 털거나 막히면 바로 알려 드려요.'; ps.appendChild(b2); }
+  $('bTrial').textContent = '🏛 신의 시험' + (['poseidon', 'zeus'].some(g => trialOpen(g) && !(ME && ME.unlock.trials[g])) ? ' · 열린 시험 있음!' : '');
+  showBest();
+}
+// 내 성 소식 한 줄: 함락당함(다시보기·복수) / 막아 냄(다시보기)
+function newsEl(x, isNew) {
+  const lost = x.r === 'l', n = el('div', 'news' + (isNew ? ' new' : ''));
+  n.innerHTML = '<span class="ic">' + (lost ? '🏴' : '🛡️') + '</span><div><b>' + esc(x.by) + (lost ? '님이 내 성을 함락했어요!' : '님이 ' + Math.max(0, x.row - 1) + '줄까지 왔다가 막혔어요') + '</b><small>명성 ' + (x.dr > 0 ? '+' : '') + x.dr + ' · ' + new Date(x.at).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit' }) + '</small></div>';
+  const acts = el('div', 'acts'); addBtn(acts, '▶ 다시보기', 'sub mini', () => openReplay(x.id));
+  if (lost && ME && (ME.revenge || []).some(r => r.wid === x.bw)) addBtn(acts, '🔥 복수하기', 'mini', () => startRaid(x.bw, true));
+  n.appendChild(acts); return n;
+}
+function showBest() { const b = Number(ls.get('hc_best') || 0), d = Number(ls.get('hc_best_' + DAY) || 0); $('bestT').textContent = (d ? '오늘 내 최고 ' + d + '줄 · ' : '') + (b ? '전체 최고 ' + b + '줄' : '25줄마다 새 구역 · 100줄이 올림포스 정상'); $('bGods').textContent = '⛅ 오늘의 신들의 성 · ' + kstDay().label; }
+function hideAll() { ['home', 'edit', 'res', 'list'].forEach(id => $(id).hidden = true); }
+function goHome() { hideAll(); $('home').hidden = false; bgm('menu'); try { history.replaceState(null, '', PATH); } catch (e) {} loadMe(); }
+function showList(title, build) { hideAll(); $('list').hidden = false; $('lT').textContent = title; const b = $('lBody'); b.innerHTML = '<p class="small">불러오는 중…</p>'; bgm('menu'); build(b); }
+function needLogin(why) { showList('💬 로그인이 필요해요', b => { b.innerHTML = '<p>' + why + '</p>'; if (AUTH.ready) addBtn(b, '💬 카카오 로그인', 'kakao', () => login()); else b.insertAdjacentHTML('beforeend', '<p class="small">지금은 회원 기능이 꺼져 있어요.</p>'); }); }
+$('lBack').onclick = goHome;
+
+// ---- 남의 성 공략
+function openRaid() {
+  if (!ME) return needLogin('남의 성을 털려면 로그인이 필요해요. 내 성도 같이 생겨요!');
+  showList('⚔ 남의 성 공략', b => api('targets=1').then(d => {
+    b.innerHTML = '<p class="small">내 명성 <b>' + (d.fame || ME.fame) + '</b> 근처(±100)의 성이에요. 같은 성은 하루 한 번 · 털면 명성 ↑, 막히면 걸린 명성의 절반을 잃어요.</p>';
+    if (d.error) { b.insertAdjacentHTML('beforeend', '<p class="msg bad">' + esc(d.error) + '</p>'); return; }
+    (d.revenge || []).forEach(x => b.appendChild(targetEl(x, true)));
+    (d.list || []).forEach(x => b.appendChild(targetEl(x, false)));
+    if (!(d.list || []).length && !(d.revenge || []).length) b.insertAdjacentHTML('beforeend', '<p>아직 털 성이 없어요. 친구에게 내 성 도전장을 보내 보세요!</p>');
+  }));
+}
+function targetEl(x, rev) {
+  const done = x.done && !rev, row = el('div', 'tgt' + (done ? ' done' : '') + (rev ? ' rev' : ''));
+  row.innerHTML = '<div><b>' + (rev ? '🔥 복수 · ' : '') + esc(x.nick) + '의 성</b><small>' + x.tier + ' · 명성 ' + x.fame + ' · ' + x.len + '줄' + (x.capt ? ' · 👁 경비대장' : '') + (x.wall ? ' · 🛡철벽 ' + x.wall : '') + (x.flag ? '<br>🏴 ' + esc(x.flag.by) + '님 깃발' : '') + '</small></div>';
+  const b = addBtn(row, done ? '오늘 끝' : rev ? '복수하기' : '털러 가기', 'mini', () => startRaid(x.wid, rev)); b.disabled = done; return row;
+}
+function startRaid(wid, rev) {
+  if (!ME) return needLogin('남의 성을 털려면 로그인이 필요해요.');
+  api(null, { action: 'raid_start', target: wid, rev: !!rev }).then(d => {
+    if (!d.id) { toast(d.error || '공략을 시작하지 못했어요'); return; }
+    track('castle_raid_start', { rev: !!d.rev });
+    startRun('attack', { owner: d.castle.nick, fame: d.castle.fame, wid: d.castle.wid, capt: d.castle.capt, lanes: d.castle.lanes, guard: d.guard, raidId: d.id });
+  });
+}
+function openReplay(id) {
+  showList('▶ 다시보기', b => api('raid=' + encodeURIComponent(id)).then(d => {
+    if (!d.raid) { b.innerHTML = '<p>다시보기 기한(14일)이 지났거나 없는 기록이에요.</p>'; return; }
+    const rc = d.raid; track('castle_replay', {});
+    startRun('replay', { owner: rc.on, by: rc.an, fame: 0, wid: rc.o, capt: rc.capt, lanes: rc.lanes, guard: rc.guard, rec: rc }, { replay: rc.inputs });
+  }));
+}
+// ---- 신의 시험
+function openTrials() {
+  showList('🏛 신의 시험', b => {
+    b.innerHTML = '<p class="small">신마다 40줄짜리 시험 성. 끝에서 신이 기다려요. 통과하면 ① 그 신의 <b>올림포스 카드</b>(없으면) ② 내 성에 놓을 <b>신의 함정</b> ③ 남의 성을 털 때 그 신의 함정을 한 번 버티는 <b>가호</b>를 받아요.</p>';
+    ['poseidon', 'zeus'].forEach(g => { const T = TRIALS[g], open = trialOpen(g), free = FREE && FREE.god === g && !ls.get('hc_free_' + FREE.id), done = ME && ME.unlock.trials[g];
+      const row = el('div', 'tgt' + (open || free ? '' : ' done'));
+      row.innerHTML = '<div><b>' + T.icon + ' ' + T.name + '의 시험' + (done ? ' ✓ 통과' : '') + '</b><small>' + (open ? (done ? '카드·함정·가호를 받았어요. 몇 번이든 다시 할 수 있어요' : '열렸어요! 40줄 · 끝에서 ' + iga(T.name) + ' 기다려요') : free ? '친구가 보내 준 공짜 도전 한 번!' : '🔒 헬로타워에서 ' + T.name + ' 카드를 얻거나, 오늘의 신들의 성 ' + T.zone + '줄(' + zoneAt(T.zone).name + ')까지 가면 열려요') + '</small></div>';
+      const bt = addBtn(row, open || free ? '도전' : '잠김', 'mini', () => startTrial(g)); bt.disabled = !(open || free); b.appendChild(row); });
+    b.insertAdjacentHTML('beforeend', '<p class="small">다음 업데이트: 헤르메스 · 아테나의 시험 (업데이트마다 두 신씩, 열 신까지)</p>');
+  });
+}
+function startTrial(g) {
+  const T = TRIALS[g];
+  if (!trialOpen(g)) { if (FREE && FREE.god === g && !ls.get('hc_free_' + FREE.id)) ls.set('hc_free_' + FREE.id, '1'); else { toast(T.name + '의 시험은 아직 닫혀 있어요'); return; } }
+  startRun('trial', T);
+}
+// ---- 오늘의 순위
+function openBoard() {
+  showList('📜 오늘의 신들의 성 순위', b => api('gods=1').then(d => {
+    b.innerHTML = '<p class="small">' + kstDay().label + ' · 매일 자정에 새 성 · 100줄이 올림포스 정상, 그 뒤는 구름 위</p>';
+    if (d.throne) b.insertAdjacentHTML('beforeend', '<p>👑 오늘의 왕좌: <b>' + esc(d.throne.nick) + '</b> · 구름 위 ' + d.throne.row + '줄</p>');
+    (d.list || []).forEach(x => { const r = el('div', 'rank' + (ME && x.wid === ME.wid ? ' me' : '')); r.innerHTML = '<span class="n">' + (x.rank === 1 ? '👑' : x.rank) + '</span><span>' + esc(x.nick) + (x.row >= 100 ? ' 🏛' : '') + '</span><span class="v">' + x.row + '줄</span>'; b.appendChild(r); });
+    if (!(d.list || []).length) b.insertAdjacentHTML('beforeend', '<p>아직 오늘 기록이 없어요. 첫 번째가 되어 보세요!</p>');
+    if ((d.summit || []).length) b.insertAdjacentHTML('beforeend', '<div class="box"><b>🏛 오늘 정상에 오른 사람 (먼저 오른 순)</b><p>' + d.summit.map(x => esc(x.nick)).join(' · ') + '</p></div>');
+    if (!AUTH.loggedIn) b.insertAdjacentHTML('beforeend', '<p class="small">로그인하면 내 기록도 순위에 올라가요.</p>');
+  }));
+}
+
+// ================================================================ 성 꾸미기(새 규칙)
+let ED = null;
+function openEdit() {
+  if (!ME) return needLogin('내 성을 지으려면 로그인이 필요해요.');
+  const src = ME.castle.draft || ME.castle.pub || { lanes: [], capt: false };
+  ED = { lanes: JSON.parse(JSON.stringify(src.lanes)), capt: !!src.capt }; while (ED.lanes.length < MIN_LEN) ED.lanes.push({ t: 'grass' });
+  hideAll(); $('edit').hidden = false; renderEdit(); bgm('menu');
+}
+// 자동으로 맞추기: 두 줄 함정의 위 줄·앞쪽 절반의 쉬는 줄은 풀밭, 등급보다 빠른 속도는 낮춤
+function normalize() {
+  const L = ED.lanes, n = L.length, half = Math.floor(n / 2), R = ME.rules;
+  for (let i = 0; i < n; i++) { const l = L[i];
+    if (i > 0 && TWO[L[i - 1].t]) { L[i] = { t: 'grass' }; continue; }
+    if (i < half && l.t !== 'grass' && trapAt(L, i - 1)) { L[i] = { t: 'grass' }; continue; }
+    if (l.t !== 'grass') delete l.b; if ((l.s || 0) > R.spd) l.s = R.spd; if (!PIECES[l.t].speed) delete l.s; }
+  if (TWO[L[n - 1].t]) L[n - 1] = { t: 'grass' };
+  if (ED.capt && !R.capt) ED.capt = false;
+}
+function renderEdit() {
+  normalize();
+  const R = ME.rules, L = ED.lanes, n = L.length, half = Math.floor(n / 2), nx = ME.tiers[R.ti + 1];
+  $('fame').textContent = ME.fame; $('tierN').textContent = R.tier;
+  $('tierInfo').innerHTML = '명성 10점 = ★1 = 성 1줄 → 성 최대 <b>' + R.len + '줄</b> · 예산 <b>★' + R.bud + '</b><br>앞쪽 절반: 함정과 풀밭 번갈아 · 뒤쪽 절반: 함정 <b>' + R.run + '줄</b>까지 연달아 · 속도 <b>' + SPEED_NAME[R.spd] + '</b>까지 · 경비대장 ' + (R.capt ? '○' : '✕(용사부터)') +
+    (nx ? '<br>다음 등급 <b>' + nx.name + '</b>: 명성 ' + nx.min + ' · ' + nx.games + '판' : '<br>최고 등급이에요');
+  $('capt').checked = ED.capt; $('capt').disabled = !R.capt; $('capt').onchange = (e) => { ED.capt = e.target.checked; renderEdit(); };
+  const list = $('laneList'); list.innerHTML = '';
+  let blocks = 0; L.forEach(l => { blocks += (l.b || []).length; });
+  const bad = checkCastle(L, ED.capt, R, ME.unlock);
+  L.forEach((ln, i) => {
+    const row = el('div', 'lane' + (bad && bad.i === i ? ' bad' : '')), no = el('div', 'no', (i + 1) + '줄' + (i === half ? '<br>↑뒤쪽' : ''));
+    const part = i > 0 && TWO[L[i - 1].t], rest = !part && i < half && trapAt(L, i - 1);
+    if (part || rest) { row.classList.add('lock'); row.append(no, el('div', 'why', part ? '↑ ' + (L[i - 1].t === 'jelly' ? '해파리가 튀는 줄' : L[i - 1].t === 'rock' ? '바위가 굴러오는 비탈' : '순찰 기사의 길') + ' (아래 줄과 함께)' : '🌿 쉬는 풀밭 (앞쪽 절반은 함정과 번갈아)')); }
+    else {
+      const sel = document.createElement('select');
+      for (const [k, v] of Object.entries(PIECES)) { const o = document.createElement('option'); o.value = k; const godUsed = GODP[k] && L.some((x, j) => j !== i && x.t === k);
+        const lock = (GODP[k] && !ME.unlock[GODP[k]]) || (v.two && i === n - 1) || godUsed; o.textContent = (lock ? '🔒 ' : '') + v.name + (v.cost ? ' ★' + v.cost : '') + (godUsed ? ' (신은 한 줄만)' : GODP[k] && !ME.unlock[GODP[k]] ? (GODP[k] === 'munch' ? ' (헬로먼치 카드 필요)' : ' (신의 시험 통과 필요)') : ''); o.disabled = lock && k !== ln.t; if (k === ln.t) o.selected = true; sel.appendChild(o); }
+      sel.onchange = () => { ln.t = sel.value; if (ln.t !== 'grass') delete ln.b; renderEdit(); };
+      const sp = document.createElement('select');
+      if (PIECES[ln.t].speed) { SPEED_NAME.forEach((nm, j) => { const o = document.createElement('option'); o.value = j; o.textContent = (j > R.spd ? '🔒 ' : '') + nm + (j === 2 ? ' ★+1' : ''); o.disabled = j > R.spd; if ((ln.s || 0) === j) o.selected = true; sp.appendChild(o); }); sp.onchange = () => { ln.s = +sp.value; if (!ln.s) delete ln.s; renderEdit(); }; }
+      else { sp.disabled = true; sp.appendChild(document.createElement('option')).textContent = '—'; }
+      row.append(no, sel, sp);
+    }
+    // 풀밭(두 줄 함정의 위 줄 빼고)에는 나무·바위: 칸을 눌러 놓기/치우기
+    if (ln.t === 'grass' && !part) { const cells = el('div', 'cells');
+      for (let c = 0; c < COLS; c++) { const on = (ln.b || []).includes(c), bt = document.createElement('button'); bt.type = 'button'; bt.className = on ? 'on' : ''; bt.textContent = on ? ((i * 7 + c * 3) % 5 < 3 ? '🌳' : '🪨') : '·';
+        bt.onclick = () => { const b0 = (ln.b || []).slice();
+          if (on) ln.b = b0.filter(x => x !== c); else { if (b0.length >= 3) return toast('한 줄에 3개까지예요'); if (blocks >= Math.floor(n / 3)) return toast('나무·바위는 모두 ' + Math.floor(n / 3) + '개까지예요'); ln.b = b0.concat(c).sort((a, b) => a - b); if (!pathOk(L)) { ln.b = b0; return toast('그러면 길이 막혀요!'); } }
+          if (!ln.b.length) delete ln.b; renderEdit(); };
+        cells.appendChild(bt); }
+      row.appendChild(cells); }
+    list.appendChild(row);
+  });
+  const used = costOf(L, ED.capt);
+  $('bud').innerHTML = '<span class="' + (used > R.bud ? 'over' : '') + '">★' + used + '</span> / ★' + R.bud + ' · ' + n + '/' + R.len + '줄';
+  $('bTest').disabled = !!bad; $('eMsg').className = 'msg' + (bad ? ' bad' : '');
+  $('eMsg').textContent = bad ? bad.why : '남은 예산 ★' + (R.bud - used) + ' · 나무·바위 ' + blocks + '/' + Math.floor(n / 3) + '개';
+  $('lAdd').disabled = n >= R.len; $('lDel').disabled = n <= MIN_LEN;
+  const es = $('eShare'); es.innerHTML = ''; if (ME.castle.pub) shareBox(es, 'mycastle', () => makeMyCastle());
+}
+$('lAdd').onclick = () => { ED.lanes.push({ t: 'grass' }); renderEdit(); };
+$('lDel').onclick = () => { ED.lanes.pop(); renderEdit(); };
+$('bTest').onclick = () => {
+  if (checkCastle(ED.lanes, ED.capt, ME.rules, ME.unlock)) return;
+  $('bTest').disabled = true; $('eMsg').textContent = '저장하는 중…';
+  api(null, { action: 'save', lanes: ED.lanes, capt: ED.capt }).then(d => { $('bTest').disabled = false;
+    if (!d.ok) { $('eMsg').className = 'msg bad'; $('eMsg').textContent = d.error || '저장하지 못했어요'; return; }
+    ME.castle.draft = d.draft; startRun('test', { owner: ME.nick, fame: ME.fame, wid: ME.wid, capt: ED.capt, lanes: JSON.parse(JSON.stringify(ED.lanes)) }); });
+};
+$('bHome1').onclick = goHome;
 $('bGods').onclick = () => startRun('gods');
-$('bAttack').onclick = () => startRun('attack', KURO);
-$('bEdit').onclick = () => { $('home').hidden = true; $('edit').hidden = false; renderEdit(); bgm('menu'); };
-$('bTest').onclick = () => startRun('test', MY);
-$('bHome1').onclick = () => { $('edit').hidden = true; $('home').hidden = false; bgm('menu'); };
-$('rHome').onclick = () => { $('res').hidden = true; $('home').hidden = false; showBest(); bgm('menu'); };
-showBest();
+$('bRaid').onclick = openRaid;
+$('bTrial').onclick = openTrials;
+$('bEdit').onclick = openEdit;
+$('bBoard').onclick = openBoard;
+$('bHelp').onclick = () => { $('tut').hidden = false; };
+$('helpBtn').onclick = () => { $('tut').hidden = false; };
+$('tutOk').onclick = () => { $('tut').hidden = true; ls.set('hc_tut', '1'); last = 0; acc = 0; };
+$('rHome').onclick = goHome;
+function maybeTut() { if (!RP && !ls.get('hc_tut')) $('tut').hidden = false; }
+
+// ================================================================ 카톡 공유 카드(4:5, 1122×1402) — 배치는 대표 확정(10/12)
+const CW = 1122, CH = 1402;
+const loadImg = (src) => new Promise((ok) => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => ok(null); i.src = src; });
+function crr(g, x, y, w, h, r) { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
+function ctxt(g, s2, x, y, size, color) { g.font = '900 ' + size + 'px "Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif'; g.textAlign = 'center'; g.lineJoin = 'round'; g.lineWidth = size * .16; g.strokeStyle = 'rgba(20,25,60,.9)'; g.strokeText(s2, x, y); g.fillStyle = color; g.fillText(s2, x, y); }
+async function buildCard(bg, o) {
+  const c = document.createElement('canvas'); c.width = CW; c.height = CH; const g = c.getContext('2d');
+  const im = await loadImg('share/' + bg + '.jpg'); if (im) g.drawImage(im, 0, 0, CW, CH); else { g.fillStyle = '#13284d'; g.fillRect(0, 0, CW, CH); }
+  const py = o.panelY || 430, ph = o.panelH || 470;
+  g.fillStyle = 'rgba(15,25,60,.42)'; crr(g, 150, py, CW - 300, ph, 48); g.fill(); g.lineWidth = 6; g.strokeStyle = 'rgba(255,255,255,.55)'; g.stroke();
+  if (o.icon) { const ic = await loadImg('art/' + o.icon + '.webp'); if (ic) { const h2 = o.iconH || 260, w2 = ic.width / ic.height * h2; g.drawImage(ic, CW / 2 - w2 / 2, py - h2 * .62, w2, h2); } }
+  ctxt(g, o.t1, CW / 2, py + (o.icon ? 150 : 95), 62, '#fff');
+  ctxt(g, o.big, CW / 2, py + (o.icon ? 315 : 285), o.bigSize || 190, o.bigColor || '#ffd23c');
+  ctxt(g, o.t2, CW / 2, py + ph - 70, 52, '#ffffff');
+  g.fillStyle = 'rgba(15,25,60,.78)'; g.fillRect(0, CH - 120, CW, 120);
+  ctxt(g, '🏰 헬로 캐슬 · 헬로 대부도 오락실', CW / 2, CH - 52, 46, '#ffd23c');
+  return c;
+}
+// 공유할 거리 만들기(서버에 도전장·공유 주소를 만들고 카드 글자를 정한다)
+function makeGhost(tt, summit) {
+  const gr = GH.r.map(v => Math.min(v, maxRow)), gx = GH.x.slice(); if (Math.max(0, ...gr) < maxRow) { gr.push(maxRow); gx.push(Math.round(heroX() * 10)); }
+  return api(null, { action: 'ghost', row: maxRow, t: tt, g: { r: gr, x: gx }, nick: AUTH.nick || ls.get('hd_nick') || '헬로', cid: cid() }).then(d => { if (!d.id) throw new Error(d.error || '도전장을 만들지 못했어요');
+    const z = zoneAt(maxRow).name, day = kstDay().label;
+    return { link: d.link, short: d.short, bg: summit ? 'card_summit' : 'card_gods', title: summit ? '🏛 ' + d.nick + '님이 올림포스 정상에 올랐어요! · ' + maxRow + '줄' : '⛅ ' + d.nick + '님의 신들의 성 도전장 · ' + maxRow + '줄', desc: '오늘(' + day + ') 자정까지 · 유령 헬로를 넘으면 승리 · 로그인 없이 바로', btn: '도전 받기',
+      card: summit ? { t1: '🏛 올림포스 정상 도착!', big: maxRow + '줄', t2: '오늘의 신들의 성 · ' + clock(tt), icon: 'hello_shout', iconH: 280, panelY: 520 } : { t1: '⛅ 오늘의 신들의 성 · ' + day, big: maxRow + '줄', t2: z + '까지 갔어요! 너는 몇 줄?' } }; });
+}
+function makeTShare(god, tt) {
+  const T = TRIALS[god];
+  return api(null, { action: 'tshare', god, t: tt, nick: AUTH.nick || '헬로', cid: cid() }).then(d => { if (!d.id) throw new Error(d.error || '공유 주소를 만들지 못했어요');
+    const mm = Math.floor(tt / 60) + ':' + String(Math.floor(tt % 60)).padStart(2, '0');
+    return { link: d.link, short: d.short, bg: 'card_trial', title: T.icon + ' ' + (AUTH.nick || '헬로') + '님이 ' + T.name + '의 시험을 통과했어요!', desc: '이 주소로 들어오면 ' + T.name + '의 시험을 한 번 공짜로 받아 볼 수 있어요', btn: '시험 받아 보기',
+      card: { t1: T.icon + ' ' + T.name + '의 시험 통과!', big: mm, t2: '40줄 · 너도 시험 받아 볼래?', icon: god, iconH: 330, panelY: 560 } }; });
+}
+function makeMyCastle() {
+  const pub = ME.castle.pub, traps = pub.lanes.filter((l, i) => l.t !== 'grass' && !(i > 0 && TWO[pub.lanes[i - 1].t])).length;
+  return Promise.resolve({ link: location.origin + PATH + '?castle=' + ME.wid, short: location.origin + '/k/c' + ME.wid, bg: 'card_mycastle', title: '🏰 ' + ME.nick + '님의 성 · ' + pub.len + '줄 — 깨 봐!', desc: '들어올 테면 와 봐 · 로그인 없이 바로 도전', btn: '성 깨러 가기',
+    card: { t1: '🏰 ' + ME.nick + '의 성 · ' + pub.len + '줄', big: '깨 봐!', bigSize: 170, t2: '함정 ' + traps + '개 · 들어올 테면 와 봐', panelY: 140, panelH: 420 } });
+}
+// 공유 상자: 카톡으로 보내기 · 주소 복사. kind = gods | summit | trial | raid | raidfail | mycastle
+function shareBox(parent, kind, make) {
+  const LABEL = { gods: '📨 신들의 성 도전장 보내기', summit: '📨 정상 도착 자랑하기', trial: '📨 시험 통과 자랑하기', raid: '📨 함락 소식 보내기', raidfail: '📨 다시보기 보내기', mycastle: '📨 내 성 도전장 보내기' };
+  const box = el('div', 'shareBox', '<b>' + LABEL[kind] + '</b>'); parent.appendChild(box);
+  const msg = el('div', 'msg'), kb = addBtn(box, '💬 카카오톡으로 보내기', 'kakao', () => go('kakao')), cb = addBtn(box, '🔗 주소 복사', 'sub', () => go('copy')); box.appendChild(msg);
+  let P = null, img = null;
+  const ready = () => { if (P) return P; P = Promise.resolve().then(make).then(o => {
+    if (kind === 'raid' || kind === 'raidfail') { const nm = castle ? castle.owner : '';
+      Object.assign(o, kind === 'raid' ? { bg: 'card_raid', title: '🏴 ' + (AUTH.nick || '헬로') + '님이 ' + nm + '님의 성을 털었어요!', desc: '공략 다시보기 · 로그인 없이 바로 보기', btn: '다시보기', card: { t1: '🏴 ' + nm + '의 성을 털었다!', big: (o.dA > 0 ? '+' : '') + o.dA, t2: '보물방까지 ' + clock(o.t) + ' · 명성 ' + o.fame, panelY: 230, panelH: 420 } }
+        : { bg: 'card_gods', title: '🛡️ ' + nm + '님의 성이 ' + (AUTH.nick || '헬로') + '님을 막아 냈어요', desc: '공략 다시보기 · 함정을 같이 살펴봐요', btn: '다시보기', card: { t1: '🛡 ' + nm + '의 성에 막혔어요', big: Math.max(0, o.row - 1) + '줄', t2: o.len + '줄 중 · 다시보기로 함정 살펴보기' } }); }
+    return o; }); P.catch(() => { P = null; }); return P; };
+  function go(how) {
+    kb.disabled = cb.disabled = true; msg.textContent = '만드는 중…';
+    ready().then(async (o) => {
+      if (how === 'copy') { const txt = o.title + '\n' + o.desc + '\n' + o.short; try { await navigator.clipboard.writeText(txt); msg.textContent = '주소를 복사했어요! 카톡·카페에 붙여 넣으세요: ' + o.short; } catch (e) { msg.textContent = '아래 주소를 길게 눌러 복사해 주세요: ' + o.short; } track('castle_share', { kind, method: 'copy' }); return; }
+      let url = o.img; if (!url) { const cv = await buildCard(o.bg, o.card); if (!img) { img = new Image(); img.alt = '공유 카드'; box.appendChild(img); } img.src = cv.toDataURL('image/jpeg', .8);
+        url = await fetch('/api/kakao-upload', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ imageBase64: cv.toDataURL('image/jpeg', .86) }) }).then(r => r.ok ? r.json() : {}).then(u => u.url || null).catch(() => null); o.img = url; }
+      const imageUrl = url || (location.origin + PATH + 'share/' + o.bg + '.jpg');
+      if (window.Kakao && Kakao.isInitialized && Kakao.isInitialized() && Kakao.Share) {
+        const link = { mobileWebUrl: o.link, webUrl: o.link };
+        Kakao.Share.sendDefault({ objectType: 'feed', content: { title: o.title, description: o.desc, imageUrl, imageWidth: CW, imageHeight: CH, link }, buttons: [{ title: o.btn, link }] });
+        msg.textContent = '카카오톡 공유창을 열었어요!'; track('castle_share', { kind, method: 'kakao' });
+      } else if (navigator.share) { navigator.share({ title: o.title, text: o.desc, url: o.short }).catch(() => {}); msg.textContent = '공유창을 열었어요. 주소: ' + o.short; track('castle_share', { kind, method: 'webshare' }); }
+      else { try { await navigator.clipboard.writeText(o.title + '\n' + o.desc + '\n' + o.short); msg.textContent = '주소를 복사했어요: ' + o.short; } catch (e) { msg.textContent = '주소: ' + o.short; } track('castle_share', { kind, method: 'copy' }); }
+    }).catch((e) => { msg.textContent = (e && e.message) || '만들지 못했어요. 다시 해 주세요.'; }).then(() => { kb.disabled = cb.disabled = false; });
+  }
+}
+
+// ================================================================ 받은 주소로 들어왔을 때
+function openGhost(id) {
+  showList('⛅ 신들의 성 도전장', b => api('ghost=' + encodeURIComponent(id)).then(d => {
+    const g = d.ghost;
+    if (!g || g.day !== String(kstDay().n)) { b.innerHTML = '<p>기한(그날 자정)이 지난 도전장이에요. 오늘의 신들의 성에 도전해 보세요!</p>'; addBtn(b, '⛅ 오늘의 신들의 성', 'god', () => startRun('gods')); return; }
+    b.innerHTML = '<p><b>' + esc(g.nick) + '</b>님이 오늘의 신들의 성에서 <b>' + g.row + '줄</b>' + (g.summit ? ' (🏛 정상!)' : '') + '까지 갔어요.</p><p class="small">반투명한 👻 유령 헬로가 ' + esc(g.nick) + '님이 간 길을 그대로 가요. 유령보다 멀리 가면 승리! · 오늘 자정까지 · 로그인 없이 바로</p>';
+    track('castle_ghost_open', {});
+    addBtn(b, '👻 유령과 겨루기', 'god', () => startRun('gods', null, { ghost: { nick: g.nick, row: g.row, g: g.g, id: g.id } }));
+  }));
+}
+function openTShare(id) {
+  showList('🏛 신의 시험 초대장', b => api('tshare=' + encodeURIComponent(id)).then(d => {
+    const x = d.tshare; if (!x || !TRIALS[x.god]) { b.innerHTML = '<p>기한이 지난 초대장이에요.</p>'; addBtn(b, '🏛 신의 시험 보러 가기', 'god2', openTrials); return; }
+    const T = TRIALS[x.god]; FREE = { god: x.god, id: x.id };
+    b.innerHTML = '<p><b>' + esc(x.nick) + '</b>님이 ' + T.icon + ' <b>' + T.name + '의 시험</b>을 통과했어요!</p><p class="small">' + (trialOpen(x.god) ? '이미 열린 시험이에요. 마음껏 도전하세요!' : ls.get('hc_free_' + x.id) ? '공짜 도전은 이미 썼어요. 헬로타워에서 ' + T.name + ' 카드를 얻거나, 오늘의 신들의 성 ' + T.zone + '줄까지 가면 열려요.' : '이 초대장으로 한 번 공짜로 도전할 수 있어요. 통과하면 ' + T.name + ' 카드·신의 함정·가호!') + '</p>';
+    track('castle_tshare_open', { god: x.god });
+    const bt = addBtn(b, T.icon + ' 시험 받기', 'god2', () => startTrial(x.god)); bt.disabled = !trialOpen(x.god) && !!ls.get('hc_free_' + x.id);
+  }));
+}
+function openVisit(wid) {
+  showList('🏰 성 도전장', b => api('castle=' + encodeURIComponent(wid)).then(d => {
+    const c = d.castle; if (!c) { b.innerHTML = '<p>없는 성이에요.</p>'; return; }
+    const mine = ME && ME.wid === c.wid;
+    b.innerHTML = '<p><b>' + esc(c.nick) + '</b>님의 성 · ' + c.tier + ' · 명성 ' + c.fame + ' · <b>' + c.len + '줄</b>' + (c.capt ? ' · 👁 경비대장' : '') + '</p><p class="small">' + (mine ? '내 성이에요. 친구들이 이 주소로 도전해요.' : '연습 도전이라 명성은 바뀌지 않아요. 로그인하면 진짜로 털어서 명성을 얻을 수도 있어요.') + '</p>';
+    track('castle_visit_open', {});
+    const guard = ME ? { poseidon: ME.unlock.poseidon, zeus: ME.unlock.zeus, munch: ME.unlock.munch } : {};
+    addBtn(b, '🏰 연습으로 도전하기', '', () => startRun('visit', { owner: c.nick, fame: c.fame, wid: c.wid, capt: c.capt, lanes: c.lanes, guard }));
+    if (ME && !mine) addBtn(b, '⚔ 진짜로 털기 (명성 걸기)', 'sub', () => startRaid(c.wid, false));
+  }));
+}
+(function boot() {
+  let q = null; try { q = new URLSearchParams(location.search); } catch (e) {}
+  if (q && q.has('login')) { try { q.delete('login'); history.replaceState(null, '', PATH + (q.toString() ? '?' + q.toString() : '')); } catch (e) {} }
+  loadMe().then(() => {
+    if (!q) return;
+    if (q.get('ghost')) openGhost(q.get('ghost')); else if (q.get('trial')) openTShare(q.get('trial'));
+    else if (q.get('castle')) openVisit(q.get('castle')); else if (q.get('raid')) openReplay(q.get('raid'));
+  });
+})();
 // ---- 관리자판(시험용)
 (function () {
   // 효과음 관리 화면
@@ -1217,7 +1623,7 @@ showBest();
   $('aGo').onclick = () => { const k = sel.value, lanes = []; for (let n = 0; n < 6; n++) { lanes.push({ t: k, s: n < 2 ? 0 : n < 4 ? 1 : 2 }); lanes.push({ t: 'grass' }); if (n % 2) lanes.push({ t: 'grass' }); } $('adm').hidden = true; startRun('practice', { owner: PIECES[k].name + ' 연습', fame: 0, capt: false, lanes }); };
 })();
 
-window.__castle = { get deadMsg() { return deadMsg; }, calls: () => renderer.info.render.calls, sndDbg: () => [Object.keys(LOADING).length, Object.keys(SCFG.ev).length, !!AC, AC && AC.state], runLanes: (lanes) => startRun('practice', { owner: '시험', fame: 0, capt: false, lanes }), loops: () => Object.fromEntries(Object.entries(LOOPS).map(([k, L]) => [k, L.g ? +L.g.gain.value.toFixed(2) : null])), sndDef: () => [SCFG.range, SCFG.master, SCFG.bgm, SCFG.focus, JSON.stringify(SCFG.bgmMap)], bgmInfo: () => [bgmCur, bgmEl ? !bgmEl.paused : null, bgmEl ? +bgmEl.currentTime.toFixed(1) : 0, bgmScene], get focusRow() { return focusRow; }, sndBufs: () => Object.keys(BUF), sndPlayed: () => Object.keys(lastSnd).filter(k => !k.endsWith("~")), get guarded() { return guarded; }, get popups() { return popups; }, blocked, get shellN() { return shellN; },
+window.__castle = { buildCard, get REC() { return REC; }, get stepN() { return stepN; }, startRun, TRIALS, checkCastle, get ME() { return ME; }, get RP() { return RP; }, get mode() { return mode; }, get summitT() { return summitT; }, octoS, rowsRef: () => rows, get deadMsg() { return deadMsg; }, calls: () => renderer.info.render.calls, sndDbg: () => [Object.keys(LOADING).length, Object.keys(SCFG.ev).length, !!AC, AC && AC.state], runLanes: (lanes) => startRun('practice', { owner: '시험', fame: 0, capt: false, lanes }), loops: () => Object.fromEntries(Object.entries(LOOPS).map(([k, L]) => [k, L.g ? +L.g.gain.value.toFixed(2) : null])), sndDef: () => [SCFG.range, SCFG.master, SCFG.bgm, SCFG.focus, JSON.stringify(SCFG.bgmMap)], bgmInfo: () => [bgmCur, bgmEl ? !bgmEl.paused : null, bgmEl ? +bgmEl.currentTime.toFixed(1) : 0, bgmScene], get focusRow() { return focusRow; }, sndBufs: () => Object.keys(BUF), sndPlayed: () => Object.keys(lastSnd).filter(k => !k.endsWith("~")), get guarded() { return guarded; }, get popups() { return popups; }, blocked, get shellN() { return shellN; },
   get t() { return t; }, shout, get shouts() { return shouts; }, get state() { return state; }, get hero() { return hero; }, get susp() { return susp; }, get maxRow() { return maxRow; }, move, rows: () => rows,
   hazard: (i, x) => hazardAt(i, x), raft: (i, x) => rows[i].t !== 'water' || rafts(rows[i]).some(f => x + .5 > f.x + .25 && x + .5 < f.x + f.w - .25),
   safeFor: (i, x, d) => { MG = 0; const t0 = t; let ok = true; for (let k = 0; k <= d; k += .05) { t = t0 + k; if (hazardAt(i, x)) { ok = false; break; } } t = t0; return ok; },

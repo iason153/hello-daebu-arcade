@@ -7,6 +7,7 @@
   ],
   "rewrites": [
     { "source": "/c/:wid", "destination": "/api/wallet?share=:wid" },
-    { "source": "/d/:id", "destination": "/api/duel?share=:id" }
+    { "source": "/d/:id", "destination": "/api/duel?share=:id" },
+    { "source": "/k/:id", "destination": "/api/castle?share=:id" }
   ]
 }

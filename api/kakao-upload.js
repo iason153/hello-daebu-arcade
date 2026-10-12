@@ -55,11 +55,14 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'image too large' });
     }
 
-    const filename = duel ? `duel-cards/${duel.id}.png` : `kakao-cards/${Date.now()}_${Math.random().toString(36).slice(2, 8)}.png`;
+    // 헬로 캐슬 공유 카드(세로 1122×1402)는 용량을 줄이려고 jpg로 보낸다 — 앞머리(data:image/jpeg)로 구분
+    const jpg = /^data:image\/jpeg/.test(imageBase64);
+    const ext = jpg ? 'jpg' : 'png';
+    const filename = duel ? `duel-cards/${duel.id}.png` : `kakao-cards/${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`;
     console.log('[kakao-upload] Blob 업로드 시도:', filename);
     const blob = await put(filename, bytes, {
       access: 'public',
-      contentType: 'image/png',
+      contentType: jpg ? 'image/jpeg' : 'image/png',
       addRandomSuffix: false,
       // 환경변수 이름이 BLOB_READ_WRITE_TOKEN이 아니라 BLOBPUBLIC_READ_WRITE_TOKEN으로
       // 생성돼서(접두사 충돌 방지용으로 그렇게 만듦), 여기서 명시적으로 지정한다.
