@@ -1381,6 +1381,7 @@ function renderHome() {
   else { mb.innerHTML = '<p class="small">로그인하면 <b>내 성</b>을 짓고, 남의 성을 털고, 신의 시험으로 <b>올림포스 카드</b>를 받아요.</p>'; addBtn(mb, '💬 카카오 로그인', 'kakao', () => login()); }
   const nb = $('newsBox'); nb.innerHTML = '';
   if (ME && ME.inbox.length) { const seen = Number(ls.get('hc_inbox_seen') || 0); ME.inbox.slice(0, 4).forEach(x => nb.appendChild(newsEl(x, x.at > seen))); ls.set('hc_inbox_seen', String(Date.now())); }
+  if (ME && window.HelloMail) HelloMail.load().then(m => { if (!m.ok || !m.items.length) return; m.items.slice(0, 3).reverse().forEach(x => nb.insertBefore(HelloMail.cardEl(x, x.at > m.seen), nb.firstChild)); if (m.unread) HelloMail.markSeen(); });
   const ps = $('pushSlot'); ps.innerHTML = ''; if (ME && window.HelloPush && HelloPush.state() === 'off') { const b2 = HelloPush.box(); const hb = b2.querySelector('b'); if (hb) hb.textContent = '🔔 내 성이 털리면 휴대폰으로 알림 받기'; const tx = b2.querySelector('.hp-t'); if (tx) tx.textContent = '누가 내 성을 털거나 막히면 바로 알려 드려요.'; ps.appendChild(b2); }
   $('bTrial').textContent = '🏛 신의 시험' + (['poseidon', 'zeus'].some(g => trialOpen(g) && !(ME && ME.unlock.trials[g])) ? ' · 열린 시험 있음!' : '');
   showBest();
@@ -1651,7 +1652,7 @@ function makeGhost(tt, summit) {
   const gr = GH.r.map(v => Math.min(v, maxRow)), gx = GH.x.slice(); if (Math.max(0, ...gr) < maxRow) { gr.push(maxRow); gx.push(Math.round(heroX() * 10)); }
   return api(null, { action: 'ghost', row: maxRow, t: tt, g: { r: gr, x: gx }, nick: AUTH.nick || ls.get('hd_nick') || '헬로', cid: cid() }).then(d => { if (!d.id) throw new Error(d.error || '도전장을 만들지 못했어요');
     const z = zoneAt(maxRow).name, day = kstDay().label;
-    return { link: d.link, short: d.short, bg: summit ? 'card_summit' : 'card_gods', title: summit ? '🏛 ' + d.nick + '님이 올림포스 정상에 올랐어요! · ' + maxRow + '줄' : '⛅ ' + d.nick + '님의 신들의 성 도전장 · ' + maxRow + '줄', desc: '오늘(' + day + ') 자정까지 · 유령 헬로를 넘으면 승리 · 로그인 없이 바로', btn: '도전 받기',
+    return { id: d.id, link: d.link, short: d.short, bg: summit ? 'card_summit' : 'card_gods', title: summit ? '🏛 ' + d.nick + '님이 올림포스 정상에 올랐어요! · ' + maxRow + '줄' : '⛅ ' + d.nick + '님의 신들의 성 도전장 · ' + maxRow + '줄', desc: '오늘(' + day + ') 자정까지 · 유령 헬로를 넘으면 승리 · 로그인 없이 바로', btn: '도전 받기',
       card: summit ? { t1: '🏛 올림포스 정상 도착!', big: maxRow + '줄', t2: '오늘의 신들의 성 · ' + clock(tt), icon: 'hello_shout', iconH: 280, panelY: 520 } : { t1: '⛅ 오늘의 신들의 성 · ' + day, big: maxRow + '줄', t2: z + '까지 갔어요! 너는 몇 줄?' } }; });
 }
 function makeTShare(god, tt) {
@@ -1670,7 +1671,10 @@ function makeMyCastle() {
 function shareBox(parent, kind, make) {
   const LABEL = { gods: '📨 신들의 성 도전장 보내기', summit: '📨 정상 도착 자랑하기', trial: '📨 시험 통과 자랑하기', raid: '📨 함락 소식 보내기', raidfail: '📨 다시보기 보내기', mycastle: '📨 내 성 도전장 보내기' };
   const box = el('div', 'shareBox', '<b>' + LABEL[kind] + '</b>'); parent.appendChild(box);
-  const msg = el('div', 'msg'), kb = addBtn(box, '💬 카카오톡으로 보내기', 'kakao', () => go('kakao')), cb = addBtn(box, '🔗 주소 복사', 'sub', () => go('copy')); box.appendChild(msg);
+  const msg = el('div', 'msg'), kb = addBtn(box, '💬 카카오톡으로 보내기', 'kakao', () => go('kakao')), cb = addBtn(box, '🔗 주소 복사', 'sub', () => go('copy'));
+  // 📮 오락실 안의 회원에게 바로 보내기(로그인 회원, 신들의 성 도전장·내 성 도전장) — 대표 결정 10/12
+  if (AUTH.loggedIn && window.HelloMail && ['gods', 'summit', 'mycastle'].includes(kind)) HelloMail.button(box, { kind: kind === 'mycastle' ? 'castle' : 'ghost', getRef: () => ready().then(o => o.id || '') });
+  box.appendChild(msg);
   let P = null, img = null;
   const ready = () => { if (P) return P; P = Promise.resolve().then(make).then(o => {
     if (kind === 'raid' || kind === 'raidfail') { const nm = castle ? castle.owner : '';

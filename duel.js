@@ -313,7 +313,10 @@
     var kb = el('button', 'hd-kakao', '💬 카카오톡으로 보내기'); kb.type = 'button';
     var cb = el('button', 'hd-copy', '🔗 링크 복사하기'); cb.type = 'button';
     var msg = el('div', 'hd-msg'); msg.setAttribute('role', 'status');
-    c.appendChild(kb); c.appendChild(cb); c.appendChild(msg);
+    c.appendChild(kb); c.appendChild(cb);
+    // 📮 오락실 안의 회원에게 바로 보내기(로그인 회원만) — 대표 결정 10/12
+    if (auth.loggedIn && window.HelloMail) HelloMail.button(c, { kind: 'duel', getRef: function () { return ensure().then(function (r) { return r.id; }); } });
+    c.appendChild(msg);
     c.appendChild(el('div', 'hd-note', '받은 사람은 로그인 없이 바로 도전해요 · 단판 승부 · 3일 동안 유효'));
     ui = { run: run, nk: nk, chips: chips, pv: pv, kb: kb, cb: cb, msg: msg };
     var t = null; nk.addEventListener('input', function () { clearTimeout(t); t = setTimeout(refresh, 250); });
@@ -399,6 +402,8 @@
     id = String(id).toLowerCase();
     if (/^[a-z0-9]{8}$/.test(id)) claimP.then(function () { load(id); });
     // 내가 보낸 도전장의 결과가 새로 왔으면 알려 준다(자세한 건 오락실 첫 화면·결투장)
+    // 오락실 안에서 받은 도전장이 있으면 알려 준다
+    claimP.then(function () { if (!auth.loggedIn || !window.HelloMail) return; HelloMail.load().then(function (m) { if (m.unread) setTimeout(function () { toast('📮 받은 도전장 ' + m.unread + '통 · 오락실 첫 화면에서 확인해요'); }, 3200); }); });
     claimP.then(function () { if (!window.HelloInbox) return; HelloInbox.load().then(function (r) {
       if (r.fresh.length) toast('📨 내 도전장 결과 ' + r.fresh.length + '건 · ' + HelloInbox.title(r.fresh[0]));
     }); });

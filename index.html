@@ -319,6 +319,10 @@ footer{
   <button type="button" class="dn-head" id="duelNewsBtn" aria-expanded="false"><span class="dn-t" id="duelNewsT"></span><span class="dn-more">보기 ▾</span></button>
   <div class="dn-list" id="duelNewsList" hidden></div>
 </div>
+<div class="duel-news" id="mailNews" hidden>
+  <button type="button" class="dn-head" id="mailNewsBtn" aria-expanded="true"><span class="dn-t" id="mailNewsT"></span><span class="dn-more">접기 ▴</span></button>
+  <div class="dn-list" id="mailNewsList"></div>
+</div>
 <div class="news-panel" id="newsPanel" role="dialog" aria-label="오락실 소식" hidden>
   <div class="news-box">
     <h2>📢 오락실 소식</h2>
@@ -549,6 +553,22 @@ window.__updateAppBadge = function () {
 window.__updateAppBadge();
 </script>
 <script src="/duel-inbox.js"></script>
+<script>
+// 📮 오락실 안에서 받은 도전장(로그인 회원) — 기한이 남은 것만, 새로 온 것이 있으면 펼쳐서 보여 준다
+(function () {
+  if (!window.HelloMail) return;
+  HelloMail.load().then(function (m) {
+    if (!m.ok || !m.items.length) return;
+    var box = document.getElementById('mailNews'), list = document.getElementById('mailNewsList'), btn = document.getElementById('mailNewsBtn'), t = document.getElementById('mailNewsT');
+    var count = function () { var n = list.querySelectorAll('.hm-item').length; t.textContent = '📮 받은 도전장 ' + n + '통' + (m.unread ? ' · 새 도전장 ' + m.unread + '통!' : ''); if (!n) box.hidden = true; };
+    m.items.slice(0, 6).forEach(function (x) { list.appendChild(HelloMail.cardEl(x, x.at > m.seen, count)); });
+    count(); box.hidden = false;
+    if (!m.unread) { list.hidden = true; btn.setAttribute('aria-expanded', 'false'); btn.querySelector('.dn-more').textContent = '보기 ▾'; }
+    btn.addEventListener('click', function () { var open = list.hidden; list.hidden = !open; btn.setAttribute('aria-expanded', String(open)); btn.querySelector('.dn-more').textContent = open ? '접기 ▴' : '보기 ▾'; });
+    if (m.unread) HelloMail.markSeen();
+  });
+})();
+</script>
 <script>
 // 내가 보낸 도전장의 결과 소식 — 새 결과가 있으면 결투장 칸에 빨간 숫자, 상단 바 아래에 띠
 (function () {
