@@ -613,7 +613,7 @@ window.__updateAppBadge();
   var btn = document.getElementById('hubSnd');
   function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
   function lsSet(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) {} }
-  var off = lsGet('hub_bgm_off') === '1', started = false, starting = false, ac = null, gBgm = null, bgm = null, tierP = null;
+  var greetEl = null, off = lsGet('hub_bgm_off') === '1', started = false, starting = false, ac = null, gBgm = null, bgm = null, tierP = null;
   function track(n, p) { try { if (typeof gtag === 'function') gtag('event', n, p || {}); } catch (e) {} }
   function today() { return new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10); }
   function show() { btn.textContent = off ? '🔇' : '🔊'; btn.setAttribute('aria-label', off ? '배경음 켜기' : '배경음 끄기'); }
@@ -622,7 +622,7 @@ window.__updateAppBadge();
   if (!off && lsGet('hub_greet_day') !== today()) {
     tierP = fetch('/api/auth', { credentials: 'same-origin', cache: 'no-store' }).then(function (r) { return r.json(); })
       .then(function (a) { if (!a || !a.loggedIn || !a.wid) return null; return fetch('/api/duel?arena=' + encodeURIComponent(a.wid), { credentials: 'same-origin', cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; }); })
-      .then(function (d) { return d && d.tier ? d.tier : (d ? '견습생' : null); }).catch(function () { return null; });
+      .then(function (d) { var tr = d && d.tier ? d.tier : (d ? '견습생' : null); if (tr && GREET[tr]) { greetEl = new Audio('/assets/sound/greet-' + GREET[tr] + '.mp3'); greetEl.preload = 'auto'; try { greetEl.load(); } catch (e) {} } return tr; }).catch(function () { return null; });
   }
   function makeBgm() {
     if (bgm) return; bgm = window.__hubPre || new Audio('/assets/sound/hub-bgm.mp3'); bgm.loop = true; bgm.preload = 'auto';
@@ -637,11 +637,11 @@ window.__updateAppBadge();
     tierP.then(function (tier) {
       var k = tier && GREET[tier]; if (!k || off || document.hidden) return;
       lsSet('hub_greet_day', today());
-      var a = new Audio('/assets/sound/greet-' + k + '.mp3');
+      var a = greetEl || new Audio('/assets/sound/greet-' + k + '.mp3');
       try { if (ac) { var s2 = ac.createMediaElementSource(a), g2 = ac.createGain(); g2.gain.value = GREET_VOL; s2.connect(g2); g2.connect(ac.destination); } else a.volume = GREET_VOL; } catch (e) {}
       setBgmVol(DUCK, .15);
       a.addEventListener('ended', function () { if (!off) setBgmVol(BGM_VOL, .5); });
-      setTimeout(function () { a.play().catch(function () { setBgmVol(BGM_VOL); }); }, 600);
+      setTimeout(function () { a.play().catch(function () { setBgmVol(BGM_VOL); }); }, 800);
       track('hub_greet', { tier: tier });
     });
     tierP = null;
