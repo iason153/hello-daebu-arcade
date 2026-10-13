@@ -158,7 +158,8 @@ const DEFAULTS = {
 // 예전에 패널을 한 번이라도 연 기기에서는 옛 수치가 그대로 고정돼 새 난이도가 적용되지 않았음.
 let T = Object.assign({}, DEFAULTS);
 try{
-  const saved = JSON.parse(localStorage.getItem('hr_tune_v2')||'{}');
+  // 설정 패널에서 저장한 값은 ?dev=1 로 열었을 때만 적용 — 평소 접속에서는 늘 기본값
+  const saved = IS_DEV ? JSON.parse(localStorage.getItem('hr_tune_v2')||'{}') : {};
   T = Object.assign({}, DEFAULTS, saved);
 }catch(e){}
 function saveTune(){ localStorage.setItem('hr_tune_v2', JSON.stringify(T)); }

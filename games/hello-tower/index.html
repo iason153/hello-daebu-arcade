@@ -357,6 +357,9 @@
 // 게임 시계 — 화면이 숨겨져 멈춘(일시정지) 시간은 빼고 흐른다. 게임 안의 모든 타이머(태풍·기울기 유예·연출)가 이 시계를 쓴다.
 var pausedTotal = 0, pauseStart = 0, hiddenPause = false;
 function gnow() { return performance.now() - pausedTotal; }
+// 로그인하고 돌아온 길에 "방금 기록"을 등록할 때는, 그 판이 시작될 때 받아 둔 확인표를 그대로 써야 한다.
+// (페이지가 다시 열리며 새 판이 시작되면 확인표가 새것으로 바뀌므로, 지금 이 순간의 것을 미리 적어 둔다)
+var PENDING_TICKET = (function () { try { return sessionStorage.getItem('ht_pending') && window.HelloFair ? (HelloFair.ticket('hello_tower') || '') : ''; } catch (e) { return ''; } })();
 // 카카오톡 공유용 SDK 초기화 — 헬로런/헬로버드랑 같은 daebugame.com 앱 키 그대로 재사용
 try {
   if (window.Kakao && !window.Kakao.isInitialized()) {
@@ -2254,7 +2257,7 @@ function showPendingScore() {
     try { localStorage.setItem('ht_nickname', nick); localStorage.setItem('ht_contact', contact); } catch (e) { /* 무시 */ }
     msg.textContent = '등록 중...';
     try {
-      const res = await fetch('/api/score', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ game: 'hello_tower', nickname: nick, contact, meters: p.floor }) });
+      const res = await fetch('/api/score', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ game: 'hello_tower', nickname: nick, contact, meters: p.floor, ticket: PENDING_TICKET || undefined }) });
       msg.textContent = res.ok ? '등록됐어요! 🎉 랭킹에서 이름 옆 🎴를 확인해 보세요.' : '등록에 실패했어요. 다시 시도해주세요.';
       if (res.ok) { try { const data = await res.json(); if (data && data.lower) msg.textContent = '이미 더 높은 기록(' + data.best + '층)이 랭킹에 있어요. 최고 기록만 남겨요.'; } catch (e) { /* 무시 */ } }
       if (res.ok) { track('score_submit', { score: p.floor, after_login: true }); document.getElementById('pendingSubmit').style.display = 'none'; document.getElementById('pendingClose').textContent = '닫기'; }
