@@ -39,6 +39,9 @@ const SERVER_ONLY = ['hello_castle'];
 // 통과하지 못한 기록은 버리지 않고 "확인 대기"(pending:{game})에 따로 모아 두며, 랭킹·왕좌·신전에는 나오지 않는다.
 // 관리실에서 확인 후 올려 주거나 지울 수 있다. (정상 이용자가 통신 문제로 표를 못 받은 경우를 살리기 위함)
 const TICKET_TTL = 6 * 3600 * 1000;
+// 연락처 입력 규칙: 평소에는 로그인 회원이면 연락처 없이 등록할 수 있다.
+// 이벤트 보상 연락이 필요할 때는 Vercel 환경변수 CONTACT_REQUIRED=1 로 켜면 모두에게 연락처를 받는다.
+const CONTACT_REQUIRED = process.env.CONTACT_REQUIRED === '1';
 // 게임별 "1초에 올릴 수 있는 최대 기록"과 여유분 — 사람이 낼 수 있는 속도보다 넉넉하게 잡았다.
 const PACE = {
   hello_munch: { perSec: 8, base: 30 },
@@ -131,7 +134,9 @@ async function handleSubmit(req, res) {
     const cont = String(contact || '').trim().slice(0, 30);
     const score = Number(meters);
 
-    if (!nick || !cont) {
+    let me = null;
+    try { me = await sessionUser(req); } catch (e) { /* 로그인 확인 실패해도 등록은 계속 */ }
+    if (!nick || (!cont && !(me && !CONTACT_REQUIRED))) {
       return res.status(400).json({ error: 'nickname/contact required' });
     }
     if (!Number.isFinite(score) || score <= 0 || score > MAX_METERS) {
@@ -150,10 +155,7 @@ async function handleSubmit(req, res) {
     };
     // [올림포스 카드첩] 로그인한 회원이 등록한 기록이면 카드첩 주소를 함께 저장 —
     // 랭킹·신전에서 그 이름을 누르면 카드첩을 구경 갈 수 있게 한다(로그인 안 했으면 예전과 동일).
-    try {
-      const me = await sessionUser(req);
-      if (me) entry.wid = me.wid;
-    } catch (e) { /* 로그인 확인 실패해도 등록은 계속 */ }
+    if (me) entry.wid = me.wid;
     // [조작 방지] 확인표 검사 — 통과 못 하면 "확인 대기"로 따로 보관(랭킹·왕좌에 반영 안 됨)
     const chk = checkTicket(ticket, game, score);
     if (chk.dur != null) entry.dur = chk.dur;
@@ -162,6 +164,16 @@ async function handleSubmit(req, res) {
       await kv.zadd(`pending:${game}`, { score, member: JSON.stringify(entry) });
       return res.status(200).json({ ok: true, saved: false, pending: true, throne: false });
     }
+    // 같은 확인표는 한 번만 — 한 판의 확인표로 기록을 여러 번 올리면 두 번째부터는 "확인 대기"
+    try {
+      const sig = String(ticket).split('.')[2];
+      const fresh = await kv.set(`scoreticket:${sig}`, 1, { nx: true, ex: Math.ceil(TICKET_TTL / 1000) + 60 });
+      if (!fresh) {
+        entry.why = '확인표 재사용';
+        await kv.zadd(`pending:${game}`, { score, member: JSON.stringify(entry) });
+        return res.status(200).json({ ok: true, saved: false, pending: true, throne: false });
+      }
+    } catch (e) { /* 저장소 문제면 그냥 진행 */ }
     // 왕좌 판정(명예의 전당 /hall-of-fame.html 규칙과 동일): 지금 최고 기록 "이상"이면
     // 이 기록이 새 왕좌의 주인이 된다(같은 기록이면 나중에 오른 사람이 왕좌를 가져감).
     // 게임 화면이 이 값을 보고 "왕좌에 올랐어요! 왕좌 카드 받기" 안내를 띄운다.

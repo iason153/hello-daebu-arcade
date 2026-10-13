@@ -493,8 +493,8 @@ $id('snd').addEventListener('click', () => { sndOn = !sndOn; audioInit(); if (ma
 // 랭킹 등록 — 다른 게임과 같은 /api/score (점수 필드 이름은 공용 "meters")
 (function () {
   try {
-    const n = localStorage.getItem('hsw_nickname') || localStorage.getItem('hm_nickname') || localStorage.getItem('ht_nickname');
-    const c = localStorage.getItem('hsw_contact') || localStorage.getItem('hm_contact') || localStorage.getItem('ht_contact');
+    const n = localStorage.getItem('hsw_nickname') || localStorage.getItem('hm_nickname') || localStorage.getItem('ht_nickname') || localStorage.getItem('hr_nickname');
+    const c = localStorage.getItem('hsw_contact') || localStorage.getItem('hm_contact') || localStorage.getItem('ht_contact') || localStorage.getItem('hr_contact');
     if (n) $id('rankNickname').value = n;
     if (c) $id('rankContact').value = c;
   } catch (e) {}
@@ -503,7 +503,8 @@ $id('snd').addEventListener('click', () => { sndOn = !sndOn; audioInit(); if (ma
   $id('rankSubmitBtn').addEventListener('click', async (e) => {
     { const sbtn = e.currentTarget; if (sbtn.disabled) return; sbtn.disabled = true; setTimeout(() => { sbtn.disabled = false; }, 3000); } // 연타로 같은 기록이 두 번 저장되지 않게
     const nick = $id('rankNickname').value.trim(), contact = $id('rankContact').value.trim(), msg = $id('rankMsg');
-    if (!nick || !contact) { msg.textContent = '닉네임과 연락처를 모두 입력해주세요.'; return; }
+    const skipContact = !!(window.HelloMember && HelloMember.canSkipContact && HelloMember.canSkipContact()); // 로그인 회원은 연락처 생략 가능
+    if (!nick || (!contact && !skipContact)) { msg.textContent = skipContact ? '닉네임을 입력해주세요.' : '닉네임과 연락처를 모두 입력해주세요.'; return; }
     if (finalScore <= 0) { msg.textContent = '1m 이상 날아가야 등록할 수 있어요.'; return; }
     if (sentFor === overAt) { msg.textContent = '이번 기록은 이미 등록했어요.'; return; }
     try { localStorage.setItem('hsw_nickname', nick); localStorage.setItem('hsw_contact', contact); } catch (e) {}

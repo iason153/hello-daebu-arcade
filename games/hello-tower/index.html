@@ -1554,8 +1554,9 @@ document.getElementById('retryBtn').addEventListener('click', () => {
 // 구분, 점수 필드는 API가 공용으로 쓰는 "meters" 이름 그대로 넣되 실제로는 층수(floorCount).
 (function () {
   try {
-    const savedNick = localStorage.getItem('ht_nickname');
-    const savedContact = localStorage.getItem('ht_contact');
+    // 다른 게임에서 입력해 둔 닉네임·연락처도 가져온다(게임마다 다시 입력하지 않게)
+    const savedNick = ['ht_nickname', 'hm_nickname', 'hsw_nickname', 'hr_nickname'].map((k) => localStorage.getItem(k)).find(Boolean) || null;
+    const savedContact = ['ht_contact', 'hm_contact', 'hsw_contact', 'hr_contact'].map((k) => localStorage.getItem(k)).find(Boolean) || null;
     if (savedNick) document.getElementById('rankNickname').value = savedNick;
     if (savedContact) document.getElementById('rankContact').value = savedContact;
   } catch (e) { /* 무시 */ }
@@ -1565,8 +1566,9 @@ document.getElementById('retryBtn').addEventListener('click', () => {
     const nick = document.getElementById('rankNickname').value.trim();
     const contact = document.getElementById('rankContact').value.trim();
     const msg = document.getElementById('rankMsg');
-    if (!nick || !contact) { msg.textContent = '닉네임과 연락처를 모두 입력해주세요.'; return; }
-    try { localStorage.setItem('ht_nickname', nick); localStorage.setItem('ht_contact', contact); } catch (e) { /* 무시 */ }
+    const skipContact = !!(member && !contactRequired); // 로그인 회원은 연락처 생략 가능
+    if (!nick || (!contact && !skipContact)) { msg.textContent = skipContact ? '닉네임을 입력해주세요.' : '닉네임과 연락처를 모두 입력해주세요.'; return; }
+    try { localStorage.setItem('ht_nickname', nick); if (contact) localStorage.setItem('ht_contact', contact); } catch (e) { /* 무시 */ }
     msg.textContent = '등록 중...';
     try {
       const res = await fetch('/api/score', {
@@ -2196,6 +2198,8 @@ function showGodUnlock(key) {
 // 기기(localStorage 'ht_cards')에 먼저 저장하고, 로그인한 회원이면 올림포스 카드첩(서버)에도 등록한다.
 // 로그인하지 않은 사람의 카드는 기기에만 남아 있다가, 나중에 카드첩을 만들면 그때 옮겨진다.
 let member = null; // 로그인한 회원이면 { wid, nick }
+let contactRequired = true; // 서버가 알려 준다(이벤트 때만 회원에게도 연락처를 받음)
+const CONTACT_OPT = '카카오톡 ID (선택 · 이벤트 연락용)';
 function claimCardsToServer(claims) {
   if (NO_SAVE() || !claims.length) return;
   const say = (t) => { if (TEST_SAVE) { const b = document.querySelector('#cardReveal .crBook'); if (b) b.textContent = t; console.log('[카드 발급 테스트]', t); } };
@@ -2216,9 +2220,10 @@ function renderMemberBox() {
   box.textContent = '';
   if (TEST_MODE) return;
   if (member) {
-    box.textContent = `✅ ${member.nick}님으로 로그인됨 · 기록을 등록하면 랭킹에서 내 카드첩으로 연결돼요`;
+    box.textContent = `✅ ${member.nick}님으로 로그인됨 · ` + (contactRequired ? '기록을 등록하면 랭킹에서 내 카드첩으로 연결돼요' : '연락처 없이 바로 등록돼요. 랭킹에서 내 카드첩으로 연결돼요');
     const n = document.getElementById('rankNickname');
-    if (n && !n.value) n.value = member.nick;
+    if (n) n.value = member.nick; // 회원 닉네임을 우선(고쳐 쓰는 건 자유)
+    if (!contactRequired) ['rankContact', 'pendingContact'].forEach((id) => { const c = document.getElementById(id); if (c) c.placeholder = CONTACT_OPT; });
     return;
   }
   const n = localCardCount();
@@ -2251,7 +2256,7 @@ function showPendingScore() {
   if (!p || !member || !(p.floor > 0) || Date.now() - p.at > 15 * 60 * 1000) return;
   const box = document.getElementById('pendingBox');
   document.getElementById('pendingFloor').textContent = p.floor + '층';
-  try { document.getElementById('pendingNick').value = localStorage.getItem('ht_nickname') || member.nick; document.getElementById('pendingContact').value = localStorage.getItem('ht_contact') || ''; } catch (e) { /* 무시 */ }
+  try { document.getElementById('pendingNick').value = member.nick || localStorage.getItem('ht_nickname') || ''; document.getElementById('pendingContact').value = localStorage.getItem('ht_contact') || ''; if (!contactRequired) document.getElementById('pendingContact').placeholder = CONTACT_OPT; } catch (e) { /* 무시 */ }
   box.classList.add('show');
   ['pointerdown', 'click', 'touchstart'].forEach((ev) => box.addEventListener(ev, (e) => e.stopPropagation()));
   document.getElementById('pendingClose').addEventListener('click', () => box.classList.remove('show'));
@@ -2259,8 +2264,9 @@ function showPendingScore() {
     { const sbtn = e.currentTarget; if (sbtn.disabled) return; sbtn.disabled = true; setTimeout(() => { sbtn.disabled = false; }, 3000); } // 연타 방지
     const nick = document.getElementById('pendingNick').value.trim(), contact = document.getElementById('pendingContact').value.trim();
     const msg = document.getElementById('pendingMsg');
-    if (!nick || !contact) { msg.textContent = '닉네임과 연락처를 모두 입력해주세요.'; return; }
-    try { localStorage.setItem('ht_nickname', nick); localStorage.setItem('ht_contact', contact); } catch (e) { /* 무시 */ }
+    const skipContact = !!(member && !contactRequired); // 로그인 회원은 연락처 생략 가능
+    if (!nick || (!contact && !skipContact)) { msg.textContent = skipContact ? '닉네임을 입력해주세요.' : '닉네임과 연락처를 모두 입력해주세요.'; return; }
+    try { localStorage.setItem('ht_nickname', nick); if (contact) localStorage.setItem('ht_contact', contact); } catch (e) { /* 무시 */ }
     msg.textContent = '등록 중...';
     try {
       const res = await fetch('/api/score', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ game: 'hello_tower', nickname: nick, contact, meters: p.floor, ticket: PENDING_TICKET || undefined }) });
@@ -2280,6 +2286,7 @@ async function syncMember() {
     const w = await r.json();
     if (!w || !w.isMine) { renderMemberBox(); return; }
     member = { wid: w.wid, nick: w.nick };
+    contactRequired = w.contactRequired !== false;
     const cards = loadCards();
     let changed = false;
     const claims = [];

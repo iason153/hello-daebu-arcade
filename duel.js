@@ -194,7 +194,7 @@
     var d = D.duel, mine = D.me;
     last = { score: score, win: score > d.dist, pending: true, res: null };
     var mark = last;
-    busy = api('POST', { action: 'play', id: d.id, dist: score, cid: cid(), nick: lsGet('hd_nick') || lsGet('hsw_nickname'),
+    busy = api('POST', { action: 'play', id: d.id, dist: score, cid: cid(), nick: lsGet('hd_nick') || lsGet('hsw_nickname') || lsGet('hm_nickname') || lsGet('ht_nickname') || lsGet('hr_nickname'),
       ticket: (window.HelloFair && HelloFair.ticket) ? HelloFair.ticket(CFG.game) : '' })
       .then(function (r) {
         if (mark !== last) return;
@@ -300,7 +300,7 @@
     c.appendChild(el('p', 'hd-p', run.dist + (CFG.unit || 'm') + ' 기록으로 도전장을 보내요. 받은 사람은 같은 맵에서 내 유령과 겨뤄요.'));
     var lab = el('label', 'hd-l', '보내는 사람 이름'); lab.htmlFor = 'hdNick'; c.appendChild(lab);
     var nk = el('input', 'hd-in'); nk.id = 'hdNick'; nk.maxLength = 10; nk.autocomplete = 'nickname';
-    nk.value = auth.loggedIn ? auth.nick : (lsGet('hd_nick') || lsGet('hsw_nickname') || '');
+    nk.value = auth.loggedIn ? auth.nick : (lsGet('hd_nick') || lsGet('hsw_nickname') || lsGet('hm_nickname') || lsGet('ht_nickname') || lsGet('hr_nickname') || '');
     if (auth.loggedIn) { nk.readOnly = true; }
     c.appendChild(nk);
     if (auth.loggedIn) c.appendChild(el('div', 'hd-note', '로그인한 이름으로 보내요. 양쪽 다 로그인하면 올림포스 결투장에 전적이 남아요.'));

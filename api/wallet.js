@@ -197,7 +197,7 @@ export default async function handler(req, res) {
     let visits = Number(await kv.get(`visits:${wid}`)) || 0;
     if (!isMine) visits = await kv.incr(`visits:${wid}`);
     return res.status(200).json({
-      loggedIn: !!me, isMine, wid, nick: owner.nick, createdAt: owner.createdAt,
+      loggedIn: !!me, isMine, wid, nick: owner.nick, createdAt: owner.createdAt, contactRequired: process.env.CONTACT_REQUIRED === '1',
       cards: publicCards(cards), count: Object.keys(cards).length, total: GODS.length, visits,
       myWid: me ? me.wid : null,
       notes: publicNotes(notes, me ? me.wid : null, wid, isAdminRequest(req), owner.nick),

@@ -1553,8 +1553,8 @@ document.getElementById('retryBtn').addEventListener('click', () => { reset(); }
 // 랭킹 등록 — 다른 게임과 같은 /api/score (점수 필드 이름은 공용 "meters")
 (function () {
   try {
-    const n = localStorage.getItem('hm_nickname') || localStorage.getItem('ht_nickname');
-    const c = localStorage.getItem('hm_contact') || localStorage.getItem('ht_contact');
+    const n = localStorage.getItem('hm_nickname') || localStorage.getItem('ht_nickname') || localStorage.getItem('hsw_nickname') || localStorage.getItem('hr_nickname');
+    const c = localStorage.getItem('hm_contact') || localStorage.getItem('ht_contact') || localStorage.getItem('hsw_contact') || localStorage.getItem('hr_contact');
     if (n) document.getElementById('rankNickname').value = n;
     if (c) document.getElementById('rankContact').value = c;
   } catch (e) {}
@@ -1565,7 +1565,8 @@ document.getElementById('retryBtn').addEventListener('click', () => { reset(); }
     const nick = document.getElementById('rankNickname').value.trim();
     const contact = document.getElementById('rankContact').value.trim();
     const msg = document.getElementById('rankMsg');
-    if (!nick || !contact) { msg.textContent = '닉네임과 연락처를 모두 입력해주세요.'; return; }
+    const skipContact = !!(window.HelloMember && HelloMember.canSkipContact && HelloMember.canSkipContact()); // 로그인 회원은 연락처 생략 가능
+    if (!nick || (!contact && !skipContact)) { msg.textContent = skipContact ? '닉네임을 입력해주세요.' : '닉네임과 연락처를 모두 입력해주세요.'; return; }
     if (score <= 0) { msg.textContent = '1m 이상 올라가야 등록할 수 있어요.'; return; }
     if (sentFor === overAt) { msg.textContent = '이번 기록은 이미 등록했어요.'; return; }
     try { localStorage.setItem('hm_nickname', nick); localStorage.setItem('hm_contact', contact); } catch (e) {}

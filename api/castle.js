@@ -205,7 +205,7 @@ export default async function handler(req, res) {
     if (q.castle) return await publicCastle(res, String(q.castle));
     if (q.gods) return await godsBoard(req, res);
     const me = await sessionUser(req).catch(() => null);
-    if (q.me) return await mine(res, me);
+    if (q.me) { await settleAbandoned(me); return await mine(res, me); }
     if (q.targets) return await targets(res, me);
     return res.status(400).json({ error: 'bad request' });
   } catch (e) {
@@ -295,6 +295,7 @@ async function targets(res, me) {
 async function raidStart(req, res, b) {
   const me = await sessionUser(req).catch(() => null);
   if (!me) return res.status(401).json({ error: 'login required' });
+  await settleAbandoned(me); // 끝내지 않고 나가 버린 지난 공략이 있으면 먼저 실패로 정산
   const target = String(b.target || '');
   if (!WID_RE.test(target) || target === me.wid) return res.status(400).json({ error: '공략할 수 없는 성이에요' });
   const c = parse(await kv.get(`castle:${target}`));
@@ -316,6 +317,7 @@ async function raidStart(req, res, b) {
   const snap = { id, a: me.wid, an: me.nick, af: aA.r, o: target, on: c.nick, of: aO.r, lanes: c.pub.lanes, capt: !!c.pub.capt, len: c.pub.len, rev, at: Date.now(),
     guard: { poseidon: U.poseidon, zeus: U.zeus, munch: U.munch } };
   await kv.set(`craidp:${id}`, snap, { ex: 40 * 60 });
+  await kv.set(`craidopen:${me.wid}`, id, { ex: 40 * 60 }); // 지금 진행 중인 공략(끝내지 않고 나가면 다음에 실패로 정산)
   return res.status(200).json({ id, castle: { wid: target, nick: c.nick, fame: aO.r, lanes: snap.lanes, capt: snap.capt, len: snap.len }, guard: snap.guard, rev });
 }
 
@@ -326,8 +328,27 @@ async function raidEnd(req, res, b) {
   const s = ID_RE.test(id) ? parse(await kv.get(`craidp:${id}`)) : null;
   if (!s || s.a !== me.wid) return res.status(404).json({ error: '공략 기록이 없어요' });
   await kv.del(`craidp:${id}`); // 한 번만
-  const t = Number(b.t), ok = !!b.ok, row = Math.max(0, Math.min(s.len + 1, Math.floor(Number(b.row) || 0)));
-  let why = checkInputs(b.inputs, t, s.len + 1, ok);
+  try { if ((await kv.get(`craidopen:${me.wid}`)) === id) await kv.del(`craidopen:${me.wid}`); } catch (e) { /* 무시 */ }
+  const out = await settleRaid(s, me, b, null);
+  return res.status(200).json(out);
+}
+// 끝내지 않고 나가 버린 공략(새로고침·뒤로가기)이 남아 있으면 실패로 정산한다 — 질 것 같을 때 나가 버리는 꼼수 방지
+async function settleAbandoned(me) {
+  if (!me) return;
+  try {
+    const openId = await kv.get(`craidopen:${me.wid}`);
+    if (!openId) return;
+    const os = parse(await kv.get(`craidp:${openId}`));
+    const old = !os || Date.now() - Number(os.at || 0) > 20 * 1000;
+    if (os && os.a === me.wid && old) { await kv.del(`craidp:${openId}`); await settleRaid(os, me, {}, 'abandon'); }
+    if (old) await kv.del(`craidopen:${me.wid}`);
+  } catch (e) { /* 무시 */ }
+}
+// 공략 결과 정산(명성·깃발·소식·다시보기). forcedWhy가 있으면 그 이유로 실패 처리
+async function settleRaid(s, me, b, forcedWhy) {
+  const id = s.id;
+  const t = Number(b.t) || 0, ok = !forcedWhy && !!b.ok, row = Math.max(0, Math.min(s.len + 1, Math.floor(Number(b.row) || 0)));
+  let why = forcedWhy || checkInputs(b.inputs, t, s.len + 1, ok);
   if (!why && t > (Date.now() - s.at) / 1000 + 3) why = 'clock';  // 게임 시간이 실제로 흐른 시간보다 길 수 없다
   const win = ok && !why;
   // 명성: 엘로(K=32) — 같은 명성끼리 ±16, 최대 30, 최소 5. 실패하면 공략한 사람이 절반을 잃고 주인이 절반을 얻는다
@@ -369,7 +390,7 @@ async function raidEnd(req, res, b) {
     body: win ? `${me.nick}님이 보물방까지 왔어요 · 명성 ${dO} · 다시보기·복수하러 가요!` : `${me.nick}님이 ${Math.max(0, row - 1)}줄까지 왔다가 막혔어요 · 명성 +${dO} · 🛡철벽 +1`,
     url: `${PATH}?raid=${id}&utm_source=push&utm_medium=notification&utm_campaign=castle_raid`, tag: 'castle-' + id,
   }).catch(() => 0);
-  return res.status(200).json({ ok: true, win, why: why || null, dA, dO, fame: nA.r, id, flag: win });
+  return { ok: true, win, why: why || null, dA, dO, fame: nA.r, id, flag: win };
 }
 
 async function godsBoard(req, res) {
