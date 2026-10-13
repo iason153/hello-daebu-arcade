@@ -123,9 +123,11 @@ function pop(text,col){pops.push({text,col,l:70});}
 // 고리 잡기 규칙(구간별): 1·2구간은 앞쪽 고리만(바다 가까이 떨어질 때만 머리 위도 허용) → 3구간은 빠르게 날 때만 머리 위를 건너뜀 → 4구간부터는 머리 위도 늘 걸림
 function pick(){const zi=zoneOf(p.x/M),low=p.y>540&&p.vy>0,fast=zi<=1?!low:zi===2?(p.vx>6.5&&p.vy<5&&p.y<470):false,minDx=fast?75:-30;let bestA=null,bd=1e9;for(const a of anchors){const dx=a.x-p.x,dy=a.y-p.y,d=Math.hypot(dx,dy);
   if(dx>minDx&&dy<-20&&d<(fast?440:410)&&d<bd){bd=d;bestA=a;}}return bestA;}
-function down(){audioInit();holding=true;if(state==='over')return;if(state==='ready'){state='play';track('game_start');return;}
+// 시작 탭(과 일시정지 해제 탭): 짧게 톡 친 것이면 손을 떼도 줄을 놓지 않는다. 꾹 누르고 있다 떼면 평소처럼 날아간다.
+let startTap=false,downAt=0;
+function down(){audioInit();if(hiddenPause){hiddenPause=false;holding=true;startTap=true;downAt=performance.now();return;}holding=true;if(state==='over')return;if(state==='ready'){state='play';track('game_start');startTap=true;downAt=performance.now();return;}
   if(!rope&&!cannon){const a=pick();if(a)attach(a);}}
-function up(){holding=false;if(state==='play'&&rope){if(tutOn&&++tutN>=5)tutDone();lastPassX=rope.a.hx;rope=null;p.vx*=1.08;p.vy*=1.08;kick(0.14);}}
+function up(){if(startTap){startTap=false;if(performance.now()-downAt<350){holding=false;return;}}holding=false;if(state==='play'&&rope){if(tutOn&&++tutN>=5)tutDone();lastPassX=rope.a.hx;rope=null;p.vx*=1.08;p.vy*=1.08;kick(0.14);}}
 const SND={"bgm": "assets/snd/bgm.mp3", "sea": "assets/snd/sea.mp3", "mon": "assets/snd/mon.mp3", "hello": "assets/snd/hello.mp3", "rk1": "assets/snd/rk1.mp3", "rk2": "assets/snd/rk2.mp3"};
 const AC=window.AudioContext||window.webkitAudioContext;let ac=null,BUF={},master=null,seaG=null,monG=null,monSrc=null,lastHello=-99,helloN=0,sndOn=(()=>{try{return localStorage.getItem('swing-mute')!=='1'}catch(e){return true}})();
 function b64buf(d){const b=atob(d.split(',')[1]),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u.buffer;}
@@ -147,8 +149,10 @@ function audioTick(){ if(!ac||!master)return; // 괴물이 화면에 보이는 �
   if(seaG)seaG.gain.value+=((state==='play'&&gap<420?0.3:0.12)-seaG.gain.value)*0.05; }
 // 화면이 가려지거나 탭이 바뀌거나 꺼지면 소리를 멈추고, 돌아오면 다시 켠다
 function audioPause(){if(ac&&ac.state==='running')ac.suspend();}
-function audioBack(){if(ac&&ac.state==='suspended'&&!document.hidden)ac.resume();}
-document.addEventListener('visibilitychange',()=>{document.hidden?audioPause():audioBack();});addEventListener('pagehide',audioPause);addEventListener('blur',audioPause);addEventListener('focus',audioBack);addEventListener('pageshow',audioBack);
+function audioBack(){if(ac&&ac.state==='suspended'&&!document.hidden&&!hiddenPause)ac.resume();}
+// 화면이 숨겨지면(다른 앱·탭, 화면 꺼짐) 게임을 멈추고, 돌아오면 "탭해서 계속"을 기다린다
+let hiddenPause=false;
+document.addEventListener('visibilitychange',()=>{if(document.hidden){if(state==='play')hiddenPause=true;holding=false;audioPause();}else audioBack();});addEventListener('pagehide',audioPause);addEventListener('blur',audioPause);addEventListener('focus',audioBack);addEventListener('pageshow',audioBack);
 cv.addEventListener('pointerdown',e=>{e.preventDefault();down();});addEventListener('pointerup',up);addEventListener('pointercancel',up);
 addEventListener('keydown',e=>{if(e.code==='Space'&&!e.repeat&&document.getElementById('overlay').hidden)down();});addEventListener('keyup',e=>{if(e.code==='Space')up();});
 const seaY=(x)=>SEA+Math.sin(x*0.012+t*0.05)*10+Math.sin(x*0.031-t*0.08)*5;
@@ -355,6 +359,8 @@ function drawCore(){
     ['꾹 누르면 줄을 쏘고 감는다 · 떼면 날아간다','바다에 빠져도 물수제비(●)가 있으면 튕겨요','⚠ 삐삐 경보가 울리면 괴물이 덮쳐요','고리를 지나쳐 날면 패스!','황금조개 10개 = 헬로 대포'].forEach((s,i)=>g.fillText(s,W/2,(state==='over'?408:354)+i*23));
     g.fillStyle='#ffd23c';g.font='700 16px system-ui';g.fillText(state==='over'?'탭해서 다시':'탭해서 시작',W/2,532);}
 }
+function drawPause(){g.fillStyle='rgba(14,26,43,.55)';g.fillRect(0,0,W,H);g.fillStyle='rgba(14,26,43,.85)';g.fillRect(40,330,W-80,150);
+  txt('잠시 멈춤',W/2,390,'900 30px system-ui','#fff','center');txt('탭해서 계속',W/2,440,'800 20px system-ui','#ffd23c','center');}
 let tutOn=(()=>{try{return localStorage.getItem('hsw_tut')!=='1'}catch(e){return false}})();
 function tutDone(){if(!tutOn)return;tutOn=false;try{localStorage.setItem('hsw_tut','1')}catch(e){}}
 function drawTut(){ if(!tutOn||state!=='play'||cannon)return;
@@ -370,6 +376,7 @@ const STEP_MS=1000/60;let loopLast=0,loopAcc=0,fpsN=0,fpsT=0,fpsShow=0,spsN=0,sp
 const SHOW_FPS=/[?&]fps=1/.test(location.search);
 function loop(ts){
   if(!loopLast)loopLast=ts;
+  if(hiddenPause){loopLast=ts;loopAcc=0;draw();drawPause();requestAnimationFrame(loop);return;} // 멈춘 동안은 시간이 흐르지 않는다
   loopAcc+=Math.min(250,Math.max(0,ts-loopLast));loopLast=ts;
   let n=0;while(loopAcc>=STEP_MS&&n<6){step();loopAcc-=STEP_MS;n++;spsN++;}
   if(n===6)loopAcc=0;                       // 너무 밀렸으면(백그라운드 복귀 등) 따라잡지 않고 버린다

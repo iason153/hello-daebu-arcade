@@ -457,7 +457,8 @@ const sfx = {
 // ---------------------------------------------------------------- 입력
 function press(side) {
   audio();
-  if (state === 'ready') { if (!assetsLoaded()) return; state = 'play'; startedAt = now; track('game_start'); }
+  if (hiddenPause) { hiddenPause = false; return; }            // 일시정지 해제 탭은 점프하지 않는다
+  if (state === 'ready') { if (!assetsLoaded()) return; state = 'play'; startedAt = now; track('game_start'); return; } // 시작 탭은 시작만
   if (state === 'over') return;
   if (rocket) return;
   if (hero.anim) { queued = side; return; }   // 점프 중이면 한 번 기억했다 착지 즉시 실행
@@ -1506,12 +1507,21 @@ function drawGhostHud() { // 화면 좌표(드는 곳: drawHud 끝)
 }
 
 // ---------------------------------------------------------------- 루프
-let last = performance.now();
+// now = "게임 시계". 화면이 멈춘 동안(앱 전환·일시정지)에는 흐르지 않아서, 발판 타이머·괴물·유령이 한꺼번에 건너뛰지 않는다.
+let last = performance.now(), hiddenPause = false;
 function frame(t) {
-  now = t;
-  const dt = Math.min(.05, (t - last) / 1000); last = t;
+  const dt = Math.min(.05, Math.max(0, (t - last) / 1000)); last = t;
+  if (hiddenPause) { draw(); drawPause(); requestAnimationFrame(frame); return; }
+  now += dt * 1000;
   update(dt); draw(); recTick();
   requestAnimationFrame(frame);
+}
+function drawPause() {
+  ctx.fillStyle = 'rgba(11,20,48,.55)'; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = 'rgba(11,20,48,.88)'; ctx.beginPath(); ctx.roundRect((W - 260) / 2, 340, 260, 130, 18); ctx.fill();
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  ctx.fillStyle = '#fff'; ctx.font = '30px Jua, sans-serif'; ctx.fillText('잠시 멈춤', W / 2, 362);
+  ctx.fillStyle = '#ffc857'; ctx.font = '19px Jua, sans-serif'; ctx.fillText('탭해서 계속', W / 2, 418);
 }
 
 // ---------------------------------------------------------------- 정식 버전: 로딩·GA4·결과·랭킹·공유
@@ -1519,7 +1529,11 @@ const GA_GAME = 'hello_munch';
 function track(name, params) { if (name === 'game_start' && window.HelloFair) HelloFair.start(GA_GAME); try { if (typeof gtag === 'function') gtag('event', name, Object.assign({ game: GA_GAME }, params || {})); } catch (e) {} }
 const CRITICAL = ['m1_open', 'hello_round', 'bg_start', 'ledge_grass', 'ledge_rock'];
 function assetsLoaded() { return CRITICAL.every(k => ready(IMG[k])); }
-document.addEventListener('visibilitychange', () => { if (!ac) return; if (document.hidden) ac.suspend(); else ac.resume(); });
+// 화면이 숨겨지면(다른 앱·탭, 화면 꺼짐) 소리를 멈추고 게임을 일시정지. 돌아오면 "탭해서 계속"(소리도 그 탭에서 다시 켜진다)
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) { if (state === 'play') { hiddenPause = true; queued = null; } if (ac) ac.suspend(); }
+  else { last = performance.now(); if (ac && !hiddenPause) ac.resume(); }
+});
 
 function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.style.opacity = '1'; clearTimeout(t._h); t._h = setTimeout(() => { t.style.opacity = '0'; }, 2500); }
 function showOverlay() {
