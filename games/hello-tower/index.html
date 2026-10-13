@@ -12,6 +12,13 @@
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>헬로타워 | 헬로 대부도 오락실</title>
+<meta name="description" content="대부도 캐릭터들을 쓰러지지 않게 쌓아 올려 하늘 끝 신들의 나라까지 도전하는 균형 게임. 헬로 대부도 오락실.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="헬로 대부도 오락실">
+<meta property="og:title" content="헬로타워 | 헬로 대부도 오락실">
+<meta property="og:description" content="대부도 캐릭터들을 쓰러지지 않게 하나씩 쌓아 올려요. 100층 신들의 나라까지 갈 수 있을까요? 태풍도 조심!">
+<meta property="og:image" content="https://daebugame.com/games/hello-tower/assets/thumb-hellotower.jpg">
+<meta property="og:url" content="https://daebugame.com/games/hello-tower/">
 <style>
   html, body {
     margin: 0; padding: 0; width: 100%; height: 100%;
@@ -68,6 +75,14 @@
     color: #fff; font-weight: 700; font-size: 15px; text-shadow: 0 1px 3px rgba(0,0,0,0.4);
     pointer-events: none; z-index: 10; transition: opacity 0.4s; opacity: 0;
   }
+
+  #pauseHint {
+    position: fixed; inset: 0; z-index: 40; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+    background: rgba(0,0,0,0.45); color: #fff; text-align: center; touch-action: none;
+  }
+  #pauseHint[hidden] { display: none; }
+  #pauseHint .pt { font-size: 30px; font-weight: 900; text-shadow: 0 2px 8px rgba(0,0,0,0.6); }
+  #pauseHint .ps { font-size: 20px; font-weight: 800; color: #ffd166; text-shadow: 0 2px 8px rgba(0,0,0,0.6); }
 
   #milestone {
     position: fixed; top: 26%; left: 0; right: 0; text-align: center;
@@ -275,6 +290,7 @@
 </div>
 <a id="rankLinkBtn" href="./ranking.html">🏆 랭킹 확인</a>
 <div id="hint">화면을 탭해서 조각을 떨어뜨리세요</div>
+<div id="pauseHint" hidden><div class="pt">잠시 멈춤</div><div class="ps">탭해서 계속</div></div>
 <div id="milestone"></div>
 <div id="banner"></div>
 <div id="perfectPop"></div>
@@ -338,6 +354,9 @@
 <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.8.1/kakao.min.js" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
 <script>
+// 게임 시계 — 화면이 숨겨져 멈춘(일시정지) 시간은 빼고 흐른다. 게임 안의 모든 타이머(태풍·기울기 유예·연출)가 이 시계를 쓴다.
+var pausedTotal = 0, pauseStart = 0, hiddenPause = false;
+function gnow() { return performance.now() - pausedTotal; }
 // 카카오톡 공유용 SDK 초기화 — 헬로런/헬로버드랑 같은 daebugame.com 앱 키 그대로 재사용
 try {
   if (window.Kakao && !window.Kakao.isInitialized()) {
@@ -963,7 +982,7 @@ function drawStars() {
   let alpha = Math.min((floorCount - STAR_START_FLOOR) / (STAR_FULL_FLOOR - STAR_START_FLOOR), 1);
   if (floorCount > HEAVEN_FLOOR) alpha *= 0.4; // 2막 밝은 하늘에선 반짝이 정도로만
   ctx.save();
-  const now = performance.now();
+  const now = gnow();
   for (const s of stars) {
     const y = s.worldY - cameraY;
     if (y < -20 || y > GAME_H + 20) continue;
@@ -1058,7 +1077,7 @@ function maybeSpawnTravelers() {
 function drawTravelers() {
   if (travelers.length === 0) return;
   ctx.save();
-  const now = performance.now();
+  const now = gnow();
   for (const t of travelers) {
     const y = t.worldY - cameraY;
     if (y < -40 || y > GAME_H + 40) continue;
@@ -1164,7 +1183,7 @@ function drawHeavenGlow() {
   grad.addColorStop(1, 'rgba(255,246,210,0)');
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, GAME_W, GAME_H);
-  const now = performance.now();
+  const now = gnow();
   ctx.globalAlpha = t * 0.35;
   ctx.strokeStyle = '#fff3c4';
   ctx.lineWidth = 3;
@@ -1386,9 +1405,9 @@ function bgmIndexForFloor(floor) {
 }
 function fadeAudio(audio, toVolume, ms) {
   const fromVolume = audio.volume;
-  const start = performance.now();
+  const start = gnow();
   function step() {
-    const t = Math.min((performance.now() - start) / ms, 1);
+    const t = Math.min((gnow() - start) / ms, 1);
     audio.volume = fromVolume + (toVolume - fromVolume) * t;
     if (t < 1) requestAnimationFrame(step);
     else if (toVolume === 0) audio.pause();
@@ -1421,10 +1440,29 @@ document.addEventListener('visibilitychange', () => {
   const bgm = bgmAudios[currentBgmIndex];
   if (document.hidden) {
     bgm.pause();
-  } else if (SOUND_ENABLED) {
+  } else if (SOUND_ENABLED && !hiddenPause) {
     bgm.play().catch(() => {});
   }
 });
+// 화면이 숨겨지면(다른 앱·탭, 화면 꺼짐) 게임을 멈추고, 돌아오면 "탭해서 계속"을 기다린다.
+// 멈춘 동안 게임 시계(gnow)가 서 있어서 태풍·기울기 유예 같은 타이머가 복귀 순간 한꺼번에 터지지 않는다.
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden || hiddenPause) return;
+  if (state !== 'pendulum' && state !== 'falling' && state !== 'wobbling') return;
+  hiddenPause = true; pauseStart = performance.now();
+  stopPendulumSound();
+  document.getElementById('pauseHint').hidden = false;
+});
+function resumeFromPause() {
+  if (!hiddenPause) return;
+  pausedTotal += performance.now() - pauseStart;
+  hiddenPause = false;
+  document.getElementById('pauseHint').hidden = true;
+  lastTime = gnow();
+  if (currentBgmIndex >= 0 && SOUND_ENABLED) bgmAudios[currentBgmIndex].play().catch(() => {});
+  if (state === 'pendulum') startPendulumSound(currentType);
+}
+document.getElementById('pauseHint').addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); resumeFromPause(); });
 
 // ---------- 천둥 효과음(녹음 파일) ----------
 const thunderSoundSrc = new Audio('assets/sfx/thunder.mp3');
@@ -1441,7 +1479,7 @@ function playThunderClip() {
 // ---------- 돌풍 이벤트 (테스트용) ----------
 // 정착된 블록은 static이라 직접 못 미니, 대신 "지금 공중에 떠 있는(낙하 중이거나
 // 위태롭게 버티는 중인) 조각"에 옆바람을 불어넣어서 조준이 흔들리게 한다.
-let nextGustAt = performance.now() + 6000 + Math.random() * 4000;
+let nextGustAt = gnow() + 6000 + Math.random() * 4000;
 let gustState = 'idle'; // idle | warning | blow
 let gustWarnUntil = 0;
 let gustBlowUntil = 0;
@@ -1483,9 +1521,10 @@ function newSwingMul() {
 // 입력 — 탭하면 시계추 위치에서 조각을 낙하시킴
 // =========================================================================
 function onTap() {
+  if (hiddenPause) { resumeFromPause(); return; } // 일시정지 해제 탭은 조각을 떨어뜨리지 않는다
   if (state === 'gameover') return;
   if (state !== 'pendulum') return;
-  if (performance.now() < pendulumArmedAt) return; // 너무 빨리 연타 — 아직 안 받아줌
+  if (gnow() < pendulumArmedAt) return; // 너무 빨리 연타 — 아직 안 받아줌
 
   document.getElementById('hint').style.opacity = '0';
   stopPendulumSound();
@@ -1812,8 +1851,8 @@ function showMilestone(floor) {
   el.classList.add('show');
   if (milestoneTimer) clearTimeout(milestoneTimer);
   milestoneTimer = setTimeout(() => { el.classList.remove('show'); }, 1300);
-  milestoneFlashUntil = performance.now() + 350;
-  shakeTime = performance.now(); // 착지 흔들림과 같은 효과를 재사용해서 한 번 더 텅 하는 느낌
+  milestoneFlashUntil = gnow() + 350;
+  shakeTime = gnow(); // 착지 흔들림과 같은 효과를 재사용해서 한 번 더 텅 하는 느낌
   spawnMilestoneBurst();
 }
 
@@ -1837,7 +1876,7 @@ function startEndingIntro() {
   state = 'ending_intro';
   stopPendulumSound();
   spawnMilestoneBurst();
-  lightningUntil = performance.now() + 140;
+  lightningUntil = gnow() + 140;
   setTimeout(showEnding, 2600);
 }
 function showEnding() {
@@ -1990,7 +2029,7 @@ function playPerfectSound(combo) {
 const TILT_HOLD_MS = 450;
 let lastCollapseReason = '';
 function liveTowerCollapsed() {
-  const now = performance.now();
+  const now = gnow();
   for (const b of settledBodies) {
     if (!b.live) continue;
     const lim = (b.tiltLimitRad || TILT_LIMIT) + 0.06;
@@ -2109,7 +2148,7 @@ function advanceTurn() {
   }
   activeBody = null;
   state = 'pendulum';
-  pendulumArmedAt = performance.now() + PENDULUM_ARM_DELAY; // 이 시각 전엔 탭해도 안 떨어짐(연타 악용 방지)
+  pendulumArmedAt = gnow() + PENDULUM_ARM_DELAY; // 이 시각 전엔 탭해도 안 떨어짐(연타 악용 방지)
   startPendulumSound(currentType);
   if (floorCount === 1) {
     document.getElementById('hint').style.opacity = '1';
@@ -2123,7 +2162,7 @@ function startAct2Intro() {
   stopPendulumSound();
   track('act2_start', { score: floorCount });
   spawnMilestoneBurst();
-  milestoneFlashUntil = performance.now() + 500;
+  milestoneFlashUntil = gnow() + 500;
   setTimeout(() => {
     showBanner('🏛️ 2막 시작! 신들의 탑', '이제부터 10층마다 신이 한 명씩 내려와요', 2600);
     setTimeout(() => { if (state === 'ending_intro') advanceTurn(); }, 900);
@@ -2308,13 +2347,13 @@ function showCardReveal(key, onDone) {
   void el.offsetWidth;
   el.classList.add('show');
   cardRevealDone = onDone;
-  cardRevealOpenAt = performance.now();
+  cardRevealOpenAt = gnow();
   playCardFanfare(info.grade);
   cardRevealTimer = setTimeout(closeCardReveal, 5000);
 }
 function closeCardReveal() {
   if (!cardRevealDone) return;
-  if (performance.now() - cardRevealOpenAt < 1000) return; // 너무 빨리 눌러서 못 보고 넘기는 것 방지
+  if (gnow() - cardRevealOpenAt < 1000) return; // 너무 빨리 눌러서 못 보고 넘기는 것 방지
   clearTimeout(cardRevealTimer);
   document.getElementById('cardReveal').classList.remove('show');
   const cb = cardRevealDone; cardRevealDone = null;
@@ -2385,7 +2424,7 @@ function spawnDustBurst(x, y) {
       x, y,
       vx: Math.cos(angle) * speed,
       vy: Math.sin(angle) * speed * 0.6,
-      born: performance.now(),
+      born: gnow(),
       r: 5 + Math.random() * 5 // 3~6 → 5~10, 훨씬 크게
     });
   }
@@ -2396,7 +2435,7 @@ function spawnDustBurst(x, y) {
 // 바로 그 자리에서 터져야 박진감이 사니까, 정착이 "확정"되는 순간(finalizeSettle)에
 // 그 블록의 착지 지점에서 스폰한다.
 function spawnFloorPopup(x, y) {
-  floorPopups.push({ x, y, born: performance.now() });
+  floorPopups.push({ x, y, born: gnow() });
   if (floorPopups.length > 20) floorPopups.splice(0, floorPopups.length - 20);
 }
 
@@ -2439,7 +2478,7 @@ let WHISPER_CHANCE = 0.3; // 착지할 때 말풍선이 뜰 확률(관리자 페
 
 function spawnWhisper(x, y) {
   const text = WHISPER_LINES[Math.floor(Math.random() * WHISPER_LINES.length)];
-  whisperPopups.push({ x, y, born: performance.now(), text });
+  whisperPopups.push({ x, y, born: gnow(), text });
   if (whisperPopups.length > 6) whisperPopups.splice(0, whisperPopups.length - 6);
 }
 
@@ -2455,7 +2494,7 @@ function spawnMilestoneBurst() {
       x: cx, y: cy,
       vx: Math.cos(angle) * speed,
       vy: Math.sin(angle) * speed,
-      born: performance.now(),
+      born: gnow(),
       color: colors[Math.floor(Math.random() * colors.length)],
       size: 4 + Math.random() * 4
     });
@@ -2578,7 +2617,7 @@ function settlePiece(body) {
   // 지금, 실제로 닿는 이 순간 바로 터뜨린다. 안착 확정(층수 카운트 등)은 여전히
   // 안정화를 기다리지만, 감각적 피드백은 접촉 즉시 나가야 "한 박자 느리다"는
   // 느낌이 없어짐.
-  const now = performance.now();
+  const now = gnow();
   impactTime = now;
   body.landTime = now; // 이 블록만 잠깐 impact(찌푸림) 표정으로
   setTimeout(() => { body.landTime = 0; }, IMPACT_FACE_DURATION + 40); // 확실하게 되돌리는 안전장치
@@ -2593,7 +2632,7 @@ function settlePiece(body) {
   playThudClip();  // 그 자리에서 "쿵" 소리로 넘어감
   const landSpec = PIECES[body.pieceType];
   if (landSpec.landFlash) { lightningUntil = now + 140; playThunderClip(); } // [제우스] 번쩍
-  if (landSpec.heavy) { setTimeout(() => { shakeTime = performance.now(); impactTime = performance.now(); }, 140); } // [하데스] 쿵 한 번 더
+  if (landSpec.heavy) { setTimeout(() => { shakeTime = gnow(); impactTime = gnow(); }, 140); } // [하데스] 쿵 한 번 더
   if (landSpec.sway) body.swayUntil = now + 1500; // [포세이돈] 출렁
 
   // [추가] 닿는 순간 남아있던 가로 방향 관성(특히 돌풍에 밀린 경우)이 그대로 남아서
@@ -2662,9 +2701,11 @@ Events.on(engine, 'collisionStart', (event) => {
 // =========================================================================
 // 메인 루프
 // =========================================================================
-let lastTime = performance.now();
+let lastTime = gnow();
 
-function loop(now) {
+function loop() {
+  const now = gnow(); // 게임 시계(일시정지 동안 멈춤)
+  if (hiddenPause) { lastTime = now; render(); requestAnimationFrame(loop); return; }
   const dt = Math.min(now - lastTime, 32);
   lastTime = now;
   // [안전장치] 프레임 간격이 0이면 물리 계산을 건너뜀 — 이때 엔진 내부 시간이 0이 되고,
@@ -2698,21 +2739,21 @@ function loop(now) {
   // 지금 공중에 떠 있는 조각(낙하 중 또는 위태롭게 버티는 중)이 있을 때만 발동.
   // 정착된 블록들은 static이라 안 건드림 — 조준 중인/막 착지한 조각만 옆으로 밀림.
   const gustHasTarget = (activeBody && (state === 'falling' || state === 'wobbling')) || (state === 'pendulum' && currentSupport().live);
-  if (gustState === 'idle' && gustHasTarget && performance.now() > nextGustAt) {
+  if (gustState === 'idle' && gustHasTarget && gnow() > nextGustAt) {
     gustDir = Math.random() < 0.5 ? -1 : 1;
     gustState = 'warning';
-    gustWarnUntil = performance.now() + 450; // 예고 단계 — "곧 붑니다" 신호
+    gustWarnUntil = gnow() + 450; // 예고 단계 — "곧 붑니다" 신호
     playGustWarnSound();
   }
-  if (gustState === 'warning' && performance.now() > gustWarnUntil) {
+  if (gustState === 'warning' && gnow() > gustWarnUntil) {
     gustState = 'blow';
-    gustBlowUntil = performance.now() + 900; // 0.55 → 0.9초, 더 길게 몰아침
+    gustBlowUntil = gnow() + 900; // 0.55 → 0.9초, 더 길게 몰아침
     // [추가] 60층 이후엔 태풍 간격을 조금씩 더 좁혀서(최소 4.5초까지) 후반 압박을 늘림
     // — 반사신경이 아니라 "더 자주 대처해야 하는" 방식으로 어려워지게
     const gustIntervalShrink = Math.min(floorCount * 30, 2500); // 최대 2.5초까지 단축
-    nextGustAt = performance.now() + (7000 - gustIntervalShrink) + Math.random() * 5000;
-    shakeTime = performance.now(); // 기존 화면 흔들림 효과를 돌풍에도 재사용해서 더 세게 느껴지게
-    lightningUntil = performance.now() + 140; // 시작 순간 번쩍
+    nextGustAt = gnow() + (7000 - gustIntervalShrink) + Math.random() * 5000;
+    shakeTime = gnow(); // 기존 화면 흔들림 효과를 돌풍에도 재사용해서 더 세게 느껴지게
+    lightningUntil = gnow() + 140; // 시작 순간 번쩍
     playGustBlowSound();
     playThunderClip();
     playStormScream(); // 블록들이 한꺼번에 "꺅!" 하며 무서워하는 느낌
@@ -2739,10 +2780,10 @@ function loop(now) {
       if (b.isSleeping) Sleeping.set(b, false);
       Body.setVelocity(b, { x: b.velocity.x + gustDir * push * (dt / 1000), y: b.velocity.y });
     }
-    const blowElapsed = performance.now() - (gustBlowUntil - 900);
+    const blowElapsed = gnow() - (gustBlowUntil - 900);
     const blowT = Math.min(blowElapsed / 900, 1);
     gustIntensity = Math.sin(blowT * Math.PI); // 0→1→0로 서서히 세졌다 잦아듦(타워 흔들림/화면 틴트에 사용)
-    if (performance.now() > gustBlowUntil) { gustState = 'idle'; gustIntensity = 0; }
+    if (gnow() > gustBlowUntil) { gustState = 'idle'; gustIntensity = 0; }
   }
 
   // --- 낙하 중인 조각: 중력 받아 한 번이라도 유의미하게 가속했는지만 추적 ---
@@ -2766,11 +2807,11 @@ function loop(now) {
   }
 
   // --- 위태롭게 걸친 블록: 진짜 물리로 버티는지, 넘어가는지 지켜봄 ---
-  if (state === 'wobbling' && activeBody && activeBody.swayUntil && performance.now() < activeBody.swayUntil) {
+  if (state === 'wobbling' && activeBody && activeBody.swayUntil && gnow() < activeBody.swayUntil) {
     // [포세이돈] 착지 후 잠깐 파도처럼 좌우로 출렁 — 점점 잦아듦
-    const left = (activeBody.swayUntil - performance.now()) / 1500;
+    const left = (activeBody.swayUntil - gnow()) / 1500;
     Body.setVelocity(activeBody, {
-      x: activeBody.velocity.x + Math.sin(performance.now() / 85) * 0.22 * left,
+      x: activeBody.velocity.x + Math.sin(gnow() / 85) * 0.22 * left,
       y: activeBody.velocity.y
     });
     wobbleTimer = 0;
@@ -2779,8 +2820,8 @@ function loop(now) {
     const tiltLimit = activeBody.tiltLimitRad || TILT_LIMIT; // 스폰 시점 층수 기준 난이도
     if (Math.abs(activeBody.angle) > tiltLimit) {
       // [재설계 B] 착지 충격으로 순간 기우는 건 봐줌 — 한도 초과가 0.45초 넘게 이어지면 무너진 것
-      if (!activeBody.overSince) activeBody.overSince = performance.now();
-      if (performance.now() - activeBody.overSince > TILT_HOLD_MS) endGame();
+      if (!activeBody.overSince) activeBody.overSince = gnow();
+      if (gnow() - activeBody.overSince > TILT_HOLD_MS) endGame();
       wobbleTimer = 0;
     } else if (activeBody.speed < 0.4 && Math.abs(activeBody.angularVelocity) < 0.03) {
       activeBody.overSince = 0;
@@ -2890,7 +2931,7 @@ const IMPACT_FACE_DURATION = 380; // 착지 후 이 시간(ms) 동안만 찌푸�
 
 function drawPiece(body) {
   if (body.isPedestal) { drawPedestal(body); return; }
-  const useImpact = body.landTime && (performance.now() - body.landTime) < IMPACT_FACE_DURATION;
+  const useImpact = body.landTime && (gnow() - body.landTime) < IMPACT_FACE_DURATION;
   const img = useImpact ? spritesImpact[body.pieceType] : sprites[body.pieceType];
   const pos = body.position, ang = body.angle;
   const { w: sw, h: sh, offsetX, offsetY } = overlapDrawSize(body.pieceType);
@@ -3000,7 +3041,7 @@ function render() {
   // 순수하게 시각적으로 스케일/흔들림을 걸었다 푼다 — 그래서 이 효과 때문에 블록이
   // 미세하게 자리를 옮기는 일은 없음(효과가 끝나면 정확히 원래 자리로 보임).
   const IMPACT_DURATION = 130;
-  const impactElapsed = performance.now() - impactTime;
+  const impactElapsed = gnow() - impactTime;
   let squashY = 1;
   if (impactElapsed >= 0 && impactElapsed < IMPACT_DURATION) {
     const p = impactElapsed / IMPACT_DURATION;
@@ -3008,7 +3049,7 @@ function render() {
   }
 
   const SHAKE_DURATION = 150;
-  const shakeElapsed = performance.now() - shakeTime;
+  const shakeElapsed = gnow() - shakeTime;
   let shakeX = 0, shakeY = 0;
   if (shakeElapsed >= 0 && shakeElapsed < SHAKE_DURATION) {
     const decay = 1 - shakeElapsed / SHAKE_DURATION;
@@ -3056,7 +3097,7 @@ function render() {
   ctx.restore();
 
   // 착지 먼지 파티클 갱신 + 그리기 — 예전보다 크고 진하고 오래 보이게 강화
-  const now2 = performance.now();
+  const now2 = gnow();
   const DUST_LIFE = 550; // 380 → 550
   dustParticles = dustParticles.filter(p => now2 - p.born < DUST_LIFE);
   for (const p of dustParticles) {
@@ -3216,7 +3257,7 @@ function render() {
   // 예고(warning): 화면 가장자리에 노란 경고 테두리가 깜빡임 + "⚠️ 돌풍 경보!"
   // 실제로 붊(blow): 화면 전체에 굵은 바람 줄무늬가 쫙 지나가고 + 큰 "💨 돌풍!!" 문구
   if (gustState === 'warning') {
-    const remain = gustWarnUntil - performance.now();
+    const remain = gustWarnUntil - gnow();
     const blink = Math.sin(remain * 0.04) > 0; // 빠르게 깜빡
     if (blink) {
       ctx.save();
@@ -3235,7 +3276,7 @@ function render() {
       ctx.restore();
     }
   } else if (gustState === 'blow') {
-    const t = 1 - (gustBlowUntil - performance.now()) / 900; // 0→1 (900ms로 늘어남)
+    const t = 1 - (gustBlowUntil - gnow()) / 900; // 0→1 (900ms로 늘어남)
     const alpha = Math.sin(Math.min(Math.max(t, 0), 1) * Math.PI); // 0→1→0
     ctx.save();
     // 폭풍 느낌으로 화면 전체를 어둡게 틴트(예전엔 밝은 하늘색이라 밋밋했음)
@@ -3267,8 +3308,8 @@ function render() {
   }
 
   // 번쩍임(번개) — 태풍이 몰아치기 시작하는 순간 화면이 하얗게 확 번쩍
-  if (performance.now() < lightningUntil) {
-    const lt = 1 - (lightningUntil - performance.now()) / 140;
+  if (gnow() < lightningUntil) {
+    const lt = 1 - (lightningUntil - gnow()) / 140;
     ctx.save();
     ctx.globalAlpha = (1 - lt) * 0.85;
     ctx.fillStyle = '#ffffff';
