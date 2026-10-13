@@ -702,10 +702,11 @@ function showResult(ok, msg) {
   } else if (mode === 'trial') {
     const T = TRIALS[castle.god];
     $('rT').textContent = ok ? T.icon + ' ' + T.name + '의 시험 통과!' : T.icon + ' ' + T.name + '의 시험'; $('rS').textContent = ok ? clock(tt) + ' 만에 옥좌 앞에 섰어요' : msg + ' · 40줄 중 ' + Math.min(40, passed) + '줄';
-    if (FREE && FREE.god === castle.god && !trialOpen(castle.god)) { again.hidden = true; add('<p class="small">공짜 도전은 한 번이에요. 헬로타워에서 ' + T.name + ' 카드를 얻거나, 오늘의 신들의 성 ' + T.zone + '줄까지 가면 언제든 열려요.</p>'); }
+    if (FREE && FREE.god === castle.god && !trialOpen(castle.god) && ls.get('hc_free_' + FREE.id)) { again.hidden = true; add('<p class="small">공짜 도전은 한 번이에요. 헬로타워에서 ' + T.name + ' 카드를 얻거나, 오늘의 신들의 성 ' + T.zone + '줄까지 가면 언제든 열려요.</p>'); }
     if (ok && AUTH.loggedIn) { add('<p id="rGift">선물 받는 중…</p>');
       api(null, { action: 'trial', god: castle.god, ok: true, t: tt, inputs: recIn2, free: FREE && FREE.god === castle.god ? FREE.id : '' }).then(d => { const el = $('rGift'); if (!el) return;
         if (!d.passed) { el.textContent = d.error || '통과 기록을 올리지 못했어요'; return; }
+        if (FREE && FREE.god === castle.god) ls.set('hc_free_' + FREE.id, '1'); // 선물까지 받았으니 공짜 도전 소진
         if (d.card) { try { const c = JSON.parse(localStorage.getItem('ht_cards') || '{}') || {}; if (!c[castle.god]) { c[castle.god] = { at: new Date().toISOString(), floor: castle.god === 'zeus' ? 110 : 140, count: 1 }; localStorage.setItem('ht_cards', JSON.stringify(c)); } } catch (e) {} }
         el.innerHTML = (d.card ? '🎴 <b>' + T.name + ' 카드</b>를 받아 카드첩에 넣었어요! <a href="/cardbook.html" style="color:var(--gold)">카드첩 보러 가기 →</a><br>' : '') + (d.first ? '🏰 내 성에 <b>' + T.name + '의 함정</b>을 놓을 수 있어요<br>🛡 남의 성을 털 때 ' + T.name + '의 함정을 <b>한 번 버티는 가호</b>가 생겼어요' : '이미 통과한 시험이에요. 기록만 새로 남겼어요');
         if (d.unlock && ME) ME.unlock = d.unlock; track('castle_trial_pass', { god: castle.god, first: !!d.first, card: !!d.card }); }); }
@@ -717,13 +718,16 @@ function showResult(ok, msg) {
     $('rS').textContent = ok ? clock(tt) + ' 만에 보물방 도착' : msg + ' · ' + total + '줄 중 ' + passed + '줄 통과';
     again.hidden = true; more.hidden = false; more.textContent = '⚔ 다른 성 털러 가기'; more.onclick = openRaid;
     add('<p id="rFame">결과를 올리는 중…</p>');
-    api(null, { action: 'raid_end', id: raidId, ok: !!ok, row: maxRow, t: tt, inputs: recIn2 }).then(d => { const el = $('rFame'); if (!el) return;
-      if (d.__s !== 200) { el.textContent = d.error || '결과를 올리지 못했어요'; return; }
+    // 결과 전송이 실패하면(통신 문제) "다시 보내기" 버튼으로 같은 결과를 다시 올릴 수 있다(서버 기록은 40분 동안 남아 있음)
+    const raidEndFail = (el, text) => { el.textContent = (text || '결과를 올리지 못했어요') + ' '; const rb = document.createElement('button'); rb.type = 'button'; rb.className = 'btn mini sub'; rb.style.cssText = 'display:inline-block;width:auto;padding:4px 12px;margin:0 0 0 6px;font-size:13px'; rb.textContent = '다시 보내기'; rb.onclick = () => { el.textContent = '결과를 올리는 중…'; sendRaidEnd(); }; el.appendChild(rb); };
+    const sendRaidEnd = () => api(null, { action: 'raid_end', id: raidId, ok: !!ok, row: maxRow, t: tt, inputs: recIn2 }).then(d => { const el = $('rFame'); if (!el) return;
+      if (d.__s !== 200) { raidEndFail(el, d.error); return; }
       el.innerHTML = d.win ? '⚔️ 명성 <b>+' + d.dA + '</b> (' + esc(castle.owner) + ' ' + d.dO + ') · 지금 명성 ' + d.fame + '<br><span class="small">' + esc(castle.owner) + '님 성에 내 깃발이 24시간 꽂혀요 🏴</span>'
         : '🛡️ 명성 <b>' + d.dA + '</b> · ' + esc(castle.owner) + ' +' + d.dO + ' · 🛡철벽 +1' + (d.why ? '<br><span class="small">기록을 확인할 수 없어 실패로 처리했어요</span>' : '');
       if (ME) ME.fame = d.fame; track('castle_raid_end', { win: !!d.win });
       shareBox(sh, d.win ? 'raid' : 'raidfail', () => Promise.resolve({ id: raidId, short: location.origin + '/k/r' + raidId, link: location.origin + PATH + '?raid=' + raidId, dA: d.dA, fame: d.fame, t: tt, row: maxRow, len: total }));
-      addBtn(sh, '▶ 다시보기', 'sub', () => openReplay(raidId)); });
+      addBtn(sh, '▶ 다시보기', 'sub', () => openReplay(raidId)); }).catch(() => { const el = $('rFame'); if (el) raidEndFail(el, '통신이 끊겨 결과를 올리지 못했어요'); });
+    sendRaidEnd();
   } else if (mode === 'visit') {
     $('rT').textContent = ok ? '🏰 ' + castle.owner + '의 성을 깼어요!' : castle.owner + '의 성에 막혔어요';
     $('rS').textContent = ok ? clock(tt) + ' 만에 보물방 도착 (연습이라 명성은 그대로예요)' : msg + ' · ' + total + '줄 중 ' + passed + '줄';
@@ -1457,7 +1461,8 @@ function openTrials() {
 }
 function startTrial(g) {
   const T = TRIALS[g];
-  if (!trialOpen(g)) { if (FREE && FREE.god === g && !ls.get('hc_free_' + FREE.id)) ls.set('hc_free_' + FREE.id, '1'); else { toast(T.name + '의 시험은 아직 닫혀 있어요'); return; } }
+  // 초대장의 공짜 도전은 "선물을 받은 뒤"에 소진된다(시작할 때 소진하면, 로그인하고 돌아온 사람이 다시 못 하는 문제가 있었음)
+  if (!trialOpen(g)) { if (!(FREE && FREE.god === g && !ls.get('hc_free_' + FREE.id))) { toast(T.name + '의 시험은 아직 닫혀 있어요'); return; } }
   startRun('trial', T);
 }
 // ---- 오늘의 순위

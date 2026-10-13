@@ -1337,8 +1337,9 @@ document.getElementById('retryBtn').addEventListener('click', (e)=>{
 // 다른 게임에서도 다시 안 쳐도 되게 했다.
 (function initRankPanel(){
   try{
-    const savedNick = localStorage.getItem('hr_nickname');
-    const savedContact = localStorage.getItem('hr_contact');
+    // 다른 게임에서 입력해 둔 닉네임·연락처도 가져온다(게임마다 다시 입력하지 않게)
+    const savedNick = ['hr_nickname','ht_nickname','hm_nickname','hsw_nickname'].map(k=>localStorage.getItem(k)).find(Boolean) || null;
+    const savedContact = ['hr_contact','ht_contact','hm_contact','hsw_contact'].map(k=>localStorage.getItem(k)).find(Boolean) || null;
     if(savedNick) document.getElementById('rankNickname').value = savedNick;
     if(savedContact) document.getElementById('rankContact').value = savedContact;
   }catch(e){}
@@ -1350,7 +1351,8 @@ document.getElementById('retryBtn').addEventListener('click', (e)=>{
     const nick = document.getElementById('rankNickname').value.trim();
     const contact = document.getElementById('rankContact').value.trim();
     const msg = document.getElementById('rankMsg');
-    if(!nick || !contact){ msg.textContent = '닉네임과 연락처를 모두 입력해주세요.'; return; }
+    const skipContact = !!(window.HelloMember && HelloMember.canSkipContact && HelloMember.canSkipContact()); // 로그인 회원은 연락처 생략 가능
+    if(!nick || (!contact && !skipContact)){ msg.textContent = skipContact ? '닉네임을 입력해주세요.' : '닉네임과 연락처를 모두 입력해주세요.'; return; }
     if(score <= 0 || score > 5000){ msg.textContent = '기록을 확인할 수 없습니다.'; return; }
     try{ localStorage.setItem('hr_nickname', nick); localStorage.setItem('hr_contact', contact); }catch(e){}
     msg.textContent = '등록 중...';

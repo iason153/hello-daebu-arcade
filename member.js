@@ -24,14 +24,19 @@
     panel.insertBefore(box, panel.firstChild);
     stop(box);
     var member = null;
+    var contactRequired = true; // 서버가 알려 준다(이벤트 때만 회원에게도 연락처를 받음)
+    function canSkipContact() { return !!(member && !contactRequired); }
+    var CONTACT_OPT = '카카오톡 ID (선택 · 이벤트 연락용)';
 
     function render() {
       box.textContent = '';
       if (member) {
         box.appendChild(h('div', 'font-weight:bold;', '✅ ' + member.nick + '님으로 로그인됨'));
-        box.appendChild(h('div', 'opacity:.85;', '등록하면 랭킹에서 이름 옆에 🎴가 붙고 내 카드첩으로 연결돼요.'));
+        box.appendChild(h('div', 'opacity:.85;', canSkipContact() ? '연락처 없이 바로 등록돼요. 랭킹에서 이름 옆에 🎴가 붙고 내 카드첩으로 연결돼요.' : '등록하면 랭킹에서 이름 옆에 🎴가 붙고 내 카드첩으로 연결돼요.'));
         var n = document.getElementById('rankNickname');
-        if (n && !n.value) n.value = member.nick;
+        if (n) n.value = member.nick; // 회원 닉네임을 우선(고쳐 쓰는 건 자유)
+        var c = document.getElementById('rankContact');
+        if (c && canSkipContact()) c.placeholder = CONTACT_OPT;
         return;
       }
       box.appendChild(h('div', 'font-weight:bold;color:#ffe9a8;', '오락실 회원 혜택'));
@@ -55,15 +60,15 @@
       card.appendChild(h('div', 'font-size:34px;font-weight:900;color:#ffd76a;margin:4px 0 10px;', p.score + cfg.unit));
       var inCss = 'width:100%;box-sizing:border-box;margin-top:6px;padding:10px;border-radius:10px;border:0;font-size:15px;';
       var nick = h('input', inCss); nick.placeholder = '닉네임'; nick.maxLength = 12;
-      var cont = h('input', inCss); cont.placeholder = '카카오톡 ID (당첨 연락용)'; cont.maxLength = 30;
-      try { nick.value = localStorage.getItem(cfg.keys[0]) || member.nick; cont.value = localStorage.getItem(cfg.keys[1]) || ''; } catch (e) { nick.value = member.nick; }
+      var cont = h('input', inCss); cont.placeholder = canSkipContact() ? CONTACT_OPT : '카카오톡 ID (당첨 연락용)'; cont.maxLength = 30;
+      try { nick.value = member.nick || localStorage.getItem(cfg.keys[0]) || ''; cont.value = localStorage.getItem(cfg.keys[1]) || ''; } catch (e) { nick.value = member.nick; }
       var go = h('button', 'margin-top:10px;padding:11px 18px;border-radius:999px;border:0;font-weight:800;font-size:15px;background:#ffd76a;color:#3a2a10;cursor:pointer;', '기록 등록하기'); go.type = 'button';
       var msg = h('div', 'margin-top:8px;font-size:13px;min-height:18px;');
       var close = h('button', 'margin-top:6px;background:transparent;border:0;color:#9aa3c7;font-size:13px;cursor:pointer;', '닫고 새 게임 하기'); close.type = 'button';
       close.addEventListener('click', function () { wrap.remove(); });
       go.addEventListener('click', async function () {
         var n = nick.value.trim(), c = cont.value.trim();
-        if (!n || !c) { msg.textContent = '닉네임과 연락처를 모두 입력해주세요.'; return; }
+        if (!n || (!c && !canSkipContact())) { msg.textContent = canSkipContact() ? '닉네임을 입력해주세요.' : '닉네임과 연락처를 모두 입력해주세요.'; return; }
         try { localStorage.setItem(cfg.keys[0], n); localStorage.setItem(cfg.keys[1], c); } catch (e) {}
         msg.textContent = '등록 중...';
         try {
@@ -80,9 +85,11 @@
     }
 
     render();
+    lastCanSkip = canSkipContact; // 게임 쪽 등록 버튼이 "회원은 연락처 생략" 여부를 물어볼 수 있게
     var back = false;
     try { var q = new URLSearchParams(location.search); if (q.has('login')) { back = q.get('login') === 'ok'; q.delete('login'); history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q.toString() : '')); } } catch (e) {}
     fetch('/api/auth', { credentials: 'same-origin', cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (d) {
+      if (d) contactRequired = d.contactRequired !== false;
       if (d && d.loggedIn) { member = { nick: d.nick, wid: d.wid }; render(); }
       else if (d && d.ready === false) { box.style.display = 'none'; } // 로그인 기능이 꺼져 있으면 안내도 숨김
       if (back && member) {
@@ -92,7 +99,8 @@
       }
     }).catch(function () { box.style.display = 'none'; });
   }
-  window.HelloMember = { init: init };
+  var lastCanSkip = function () { return false; };
+  window.HelloMember = { init: init, canSkipContact: function () { return lastCanSkip(); } };
 
   // =====================================================================
   // HelloCards — 헬로타워 밖의 게임에서 쓰는 "카드 획득" 공용 부품
