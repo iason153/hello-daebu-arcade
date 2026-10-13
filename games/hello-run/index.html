@@ -52,6 +52,7 @@
 </div>
 <button id="devBtn">⚙</button>
 <a id="rankLinkBtn" href="./ranking.html" style="position:fixed; top:10px; left:10px; z-index:70; display:flex; align-items:center; gap:5px; padding:7px 14px 7px 10px; border-radius:999px; background:rgba(0,0,0,0.45); border:1.5px solid rgba(255,200,87,0.55); color:#ffe9b8; font-family:sans-serif; font-weight:bold; font-size:13px; text-decoration:none; white-space:nowrap;">🏆 랭킹 확인</a>
+<button id="muteBtn" type="button" aria-label="소리 켜고 끄기" style="position:fixed; top:10px; right:10px; z-index:70; width:38px; height:38px; border-radius:50%; background:rgba(0,0,0,0.45); border:1.5px solid rgba(255,200,87,0.55); color:#ffe9b8; font-size:17px; line-height:1; padding:0;">🔊</button>
 <div id="devPanel"></div>
 <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.8.1/kakao.min.js" crossorigin="anonymous"></script>
 <script src="/fair.js" data-game="hello_run"></script>
@@ -78,6 +79,22 @@ const AUDIO_B64 = {"run": "data:audio/mpeg;base64,SUQzAwAAAAAHdlRDT04AAAAPAAAB//
 const sndRun = new Audio(AUDIO_B64.run);
 sndRun.loop = true;
 const sndJump = new Audio(AUDIO_B64.jump);
+// 소리 켜기/끄기 — 이 폰에 기억(hr_mute). 끄면 배경음·달리기·점프·효과음 모두 조용히
+let muted = false;
+try{ muted = localStorage.getItem('hr_mute') === '1'; }catch(e){}
+function applyMute(){
+  [sndRun, sndJump].forEach(a=>{ a.muted = muted; });
+  if(typeof bgmPlayer !== 'undefined') bgmPlayer.muted = muted;
+  if(typeof milestoneSfxPool !== 'undefined') milestoneSfxPool.forEach(a=>{ a.muted = muted; });
+  const b = document.getElementById('muteBtn');
+  if(b){ b.textContent = muted ? '🔇' : '🔊'; b.setAttribute('aria-label', muted ? '소리 켜기' : '소리 끄기'); }
+}
+document.getElementById('muteBtn').addEventListener('click', (e)=>{
+  e.stopPropagation();
+  muted = !muted;
+  try{ localStorage.setItem('hr_mute', muted ? '1' : '0'); }catch(err){}
+  applyMute();
+});
 function startRunSound(){ if(sndRun.paused) sndRun.play().catch(()=>{}); }
 function stopRunSound(){ if(!sndRun.paused) sndRun.pause(); }
 function playJumpSound(){ sndJump.currentTime = 0; sndJump.play().catch(()=>{}); }
@@ -469,7 +486,7 @@ function ensureAudio(){
   if(state==='start') playStationBgm(station.key);
 }
 function playTone(freqStart, freqEnd, duration, type, volume){
-  if(!audioCtx) return;
+  if(!audioCtx || muted) return;
   const osc = audioCtx.createOscillator();
   const gain = audioCtx.createGain();
   osc.type = type;
@@ -481,7 +498,7 @@ function playTone(freqStart, freqEnd, duration, type, volume){
   osc.start(); osc.stop(audioCtx.currentTime+duration);
 }
 function playNoise(duration, volume){
-  if(!audioCtx) return;
+  if(!audioCtx || muted) return;
   const bufferSize = Math.floor(audioCtx.sampleRate*duration);
   const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
   const data = buffer.getChannelData(0);
@@ -518,6 +535,7 @@ const bgmPlayer = new Audio();
 bgmPlayer.loop = true;
 bgmPlayer.volume = 0.16; // 달리기/점프/효과음보다 한참 낮게 — 배경에 은은히 깔리는 정도.
                           // 처음엔 0.35로 뒀다가 실제 테스트에서 너무 크다는 피드백을 받고 낮춤.
+applyMute(); // 소리 요소가 다 만들어진 뒤 저장된 켜짐/꺼짐 상태 적용
 let bgmStationKey = null;
 function playStationBgm(stationKey){
   const file = STATION_BGM_FILES[stationKey];
@@ -718,6 +736,7 @@ document.getElementById('retryBtn').addEventListener('click', (e)=>{
   try { if (window.HelloMember) HelloMember.init({ game: 'hello_run', unit: 'm', path: '/games/hello-run/', getScore: () => displayM, keys: ['hr_nickname', 'hr_contact'] }); } catch (e) { /* 회원 안내가 실패해도 게임은 그대로 */ }
   document.getElementById('rankSubmitBtn').addEventListener('click', async (e)=>{
     e.stopPropagation();
+    const sbtn = e.currentTarget; if(sbtn.disabled) return; sbtn.disabled = true; setTimeout(()=>{ sbtn.disabled = false; }, 3000); // 연타로 같은 기록이 두 번 저장되지 않게
     const nick = document.getElementById('rankNickname').value.trim();
     const contact = document.getElementById('rankContact').value.trim();
     const msg = document.getElementById('rankMsg');
@@ -1194,7 +1213,15 @@ function drawObstacles(){
   }
 }
 
+let rankLinkShown = null;
+function syncRankLink(){ // 플레이 중에는 "랭킹 확인" 링크를 숨긴다(실수로 눌러 판이 날아가지 않게)
+  const show = state !== 'playing';
+  if(show === rankLinkShown) return;
+  rankLinkShown = show;
+  const el = document.getElementById('rankLinkBtn'); if(el) el.style.display = show ? 'flex' : 'none';
+}
 function drawUI(){
+  syncRankLink();
   // small always-on label at the ground line — the ground texture itself already reads as
   // a visually distinct zone, so this is just a one-line explanation of what it does,
   // not a highlight overlay

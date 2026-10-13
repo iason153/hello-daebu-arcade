@@ -29,7 +29,7 @@
   body { background: var(--night); color: var(--ink); font-family: var(--body); overflow: hidden; touch-action: manipulation; -webkit-user-select: none; user-select: none; }
   #stage { position: relative; height: 100%; display: flex; align-items: center; justify-content: center; }
   canvas { display: block; width: 100%; height: 100%; object-fit: contain; touch-action: none; background: var(--night); }
-  #snd { position: absolute; bottom: 10px; right: 10px; width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line); background: rgba(22,33,63,.8); color: var(--ink); font-size: 17px; cursor: pointer; z-index: 5; }
+  #snd { position: absolute; top: 110px; right: 10px; /* 오른손 엄지가 닿는 아래쪽에서 위쪽으로 옮김 */ width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line); background: rgba(22,33,63,.8); color: var(--ink); font-size: 17px; cursor: pointer; z-index: 5; }
   #snd:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
   #overlay { position: fixed; inset: 0; z-index: 20; background: rgba(6,10,26,.74); display: flex; align-items: center; justify-content: center; overflow-y: auto; padding: 20px 0; box-sizing: border-box; }
   #overlay .card { width: min(300px, 86vw); text-align: center; margin: auto; }
@@ -133,7 +133,7 @@ const AC=window.AudioContext||window.webkitAudioContext;let ac=null,BUF={},maste
 function b64buf(d){const b=atob(d.split(',')[1]),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u.buffer;}
 function loopStart(k,vol){const src=ac.createBufferSource(),gn=ac.createGain();src.buffer=BUF[k];src.loop=true;gn.gain.value=vol;src.connect(gn);gn.connect(master);src.start();return gn;}
 function audioInit(){ // 첫 터치 때 시작(브라우저 규칙)
-  if(ac){if(ac.state==='suspended')ac.resume();return;} if(!AC)return; try{ac=new AC();}catch(e){ac=null;return;}
+  if(ac){if(ac.state!=='running')ac.resume();return;} if(!AC)return; try{ac=new AC();}catch(e){ac=null;return;}
   master=ac.createGain();master.gain.value=sndOn?1:0;master.connect(ac.destination);monG=ac.createGain();monG.gain.value=0;monG.connect(master);
   for(const k in SND){fetch(SND[k]).then(r=>r.arrayBuffer()).then(buf=>ac.decodeAudioData(buf,b=>{BUF[k]=b;if(k==='bgm')loopStart('bgm',0.3);if(k==='sea')seaG=loopStart('sea',0.12);},()=>{})).catch(()=>{});} }
 function sfx(k,vol){if(!ac)return;if(k==='beep'||k==='beep2'||k==='skip'){const n=ac.currentTime,o=ac.createOscillator(),gn=ac.createGain();
@@ -149,11 +149,15 @@ function audioTick(){ if(!ac||!master)return; // 괴물이 화면에 보이는 �
   if(seaG)seaG.gain.value+=((state==='play'&&gap<420?0.3:0.12)-seaG.gain.value)*0.05; }
 // 화면이 가려지거나 탭이 바뀌거나 꺼지면 소리를 멈추고, 돌아오면 다시 켠다
 function audioPause(){if(ac&&ac.state==='running')ac.suspend();}
-function audioBack(){if(ac&&ac.state==='suspended'&&!document.hidden&&!hiddenPause)ac.resume();}
+function audioBack(){if(ac&&ac.state!=='running'&&!document.hidden&&!hiddenPause)ac.resume();} // 전화 등으로 끊긴(interrupted) 상태도 다시 켠다
 // 화면이 숨겨지면(다른 앱·탭, 화면 꺼짐) 게임을 멈추고, 돌아오면 "탭해서 계속"을 기다린다
 let hiddenPause=false;
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(state==='play')hiddenPause=true;holding=false;audioPause();}else audioBack();});addEventListener('pagehide',audioPause);addEventListener('blur',audioPause);addEventListener('focus',audioBack);addEventListener('pageshow',audioBack);
-cv.addEventListener('pointerdown',e=>{e.preventDefault();down();});addEventListener('pointerup',up);addEventListener('pointercancel',up);
+// 처음 누른 손가락만 따라간다 — 다른 손가락(소리 버튼·손바닥)을 떼도 줄이 풀리지 않게
+let actPtr=null;
+cv.addEventListener('pointerdown',e=>{e.preventDefault();if(actPtr!==null&&holding)return;actPtr=e.pointerId;down();});
+const upIf=e=>{if(actPtr!==null&&e.pointerId!==actPtr)return;actPtr=null;up();};
+addEventListener('pointerup',upIf);addEventListener('pointercancel',upIf);
 addEventListener('keydown',e=>{if(e.code==='Space'&&!e.repeat&&document.getElementById('overlay').hidden)down();});addEventListener('keyup',e=>{if(e.code==='Space')up();});
 const seaY=(x)=>SEA+Math.sin(x*0.012+t*0.05)*10+Math.sin(x*0.031-t*0.08)*5;
 function splash(n){for(let i=0;i<n;i++)drops.push({x:p.x,y:Math.min(p.y,SEA),vx:(Math.random()-.5)*9,vy:-Math.random()*11-3,l:50});}
@@ -496,7 +500,8 @@ $id('snd').addEventListener('click', () => { sndOn = !sndOn; audioInit(); if (ma
   } catch (e) {}
   let sentFor = -1;
   try { if (window.HelloMember) HelloMember.init({ game: 'hello_swing', unit: 'm', path: '/games/hello-swing/', getScore: () => finalScore, keys: ['hsw_nickname', 'hsw_contact'] }); } catch (e) { /* 회원 안내가 실패해도 게임은 그대로 */ }
-  $id('rankSubmitBtn').addEventListener('click', async () => {
+  $id('rankSubmitBtn').addEventListener('click', async (e) => {
+    { const sbtn = e.currentTarget; if (sbtn.disabled) return; sbtn.disabled = true; setTimeout(() => { sbtn.disabled = false; }, 3000); } // 연타로 같은 기록이 두 번 저장되지 않게
     const nick = $id('rankNickname').value.trim(), contact = $id('rankContact').value.trim(), msg = $id('rankMsg');
     if (!nick || !contact) { msg.textContent = '닉네임과 연락처를 모두 입력해주세요.'; return; }
     if (finalScore <= 0) { msg.textContent = '1m 이상 날아가야 등록할 수 있어요.'; return; }

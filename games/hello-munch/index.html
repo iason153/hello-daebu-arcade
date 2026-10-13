@@ -356,7 +356,7 @@ function audio() {
       fetch(SND_SRC[k]).then(r => r.arrayBuffer()).then(ab => new Promise((ok, no) => ac.decodeAudioData(ab, ok, no))).then((b) => { BUF[k] = b; if (k === 'quake') startQuake(); if (k === 'bgm' && state === 'play') startBgm(); }).catch(() => {});
     }
   }
-  if (ac.state === 'suspended') ac.resume();
+  if (ac.state !== 'running') ac.resume(); // 전화 등으로 끊긴(interrupted) 상태도 다시 켠다
 }
 // 한 번 재생(offset/dur로 긴 파일의 일부만 쓸 수 있음)
 function play(k, vol = 1, offset = 0, dur, rate = 1) {
@@ -497,6 +497,7 @@ canvas_input: {
   const cv = document.getElementById('c');
   cv.addEventListener('pointerdown', (e) => {
     e.preventDefault();
+    if (e.isPrimary === false) return;   // 두 손가락이 거의 동시에 닿으면 첫 손가락만 (둘째 손가락이 "예약 점프"로 들어가지 않게)
     if (state === 'over') return;
     const r = cv.getBoundingClientRect();
     press((e.clientX - r.left) < r.width / 2 ? 'L' : 'R');
@@ -1559,7 +1560,8 @@ document.getElementById('retryBtn').addEventListener('click', () => { reset(); }
   } catch (e) {}
   let sentFor = -1;
   try { if (window.HelloMember) HelloMember.init({ game: 'hello_munch', unit: 'm', path: '/games/hello-munch/', getScore: () => score, keys: ['hm_nickname', 'hm_contact'] }); } catch (e) { /* 회원 안내가 실패해도 게임은 그대로 */ }
-  document.getElementById('rankSubmitBtn').addEventListener('click', async () => {
+  document.getElementById('rankSubmitBtn').addEventListener('click', async (e) => {
+    { const sbtn = e.currentTarget; if (sbtn.disabled) return; sbtn.disabled = true; setTimeout(() => { sbtn.disabled = false; }, 3000); } // 연타로 같은 기록이 두 번 저장되지 않게
     const nick = document.getElementById('rankNickname').value.trim();
     const contact = document.getElementById('rankContact').value.trim();
     const msg = document.getElementById('rankMsg');

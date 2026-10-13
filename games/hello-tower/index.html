@@ -145,7 +145,7 @@
 
   #rankLinkBtn {
     position: fixed; top: env(safe-area-inset-top, 0px); left: 0; margin: 62px 0 0 14px;
-    z-index: 25; display: flex; align-items: center; gap: 5px;
+    z-index: 25; display: none; align-items: center; gap: 5px; /* 플레이 중엔 숨기고 게임오버 때만 보인다 */
     padding: 7px 14px 7px 10px; border-radius: 999px;
     background: rgba(0,0,0,0.45); border: 1.5px solid rgba(255,200,87,0.55);
     color: #ffe9b8; font-weight: 800; font-size: 13px; text-decoration: none;
@@ -1432,6 +1432,8 @@ function updateBgmForFloor(floor) {
 // 한 번 더 시도해서 확실히 살아나게 한다.
 function unlockAudioOnFirstInput() {
   if (currentBgmIndex >= 0) bgmAudios[currentBgmIndex].play().catch(() => {});
+  // 합성 효과음(퍼펙트·태풍 경고·팡파르)용 오디오도 첫 터치 때 깨워 둔다 — 아이폰은 사람이 누르기 전엔 소리를 막는다
+  try { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); if (audioCtx.state !== 'running') audioCtx.resume(); } catch (e) { /* 무시 */ }
   window.removeEventListener('pointerdown', unlockAudioOnFirstInput);
 }
 window.addEventListener('pointerdown', unlockAudioOnFirstInput);
@@ -1462,6 +1464,7 @@ function resumeFromPause() {
   hiddenPause = false;
   document.getElementById('pauseHint').hidden = true;
   lastTime = gnow();
+  try { if (audioCtx && audioCtx.state !== 'running') audioCtx.resume(); } catch (e) { /* 무시 */ }
   if (currentBgmIndex >= 0 && SOUND_ENABLED) bgmAudios[currentBgmIndex].play().catch(() => {});
   if (state === 'pendulum') startPendulumSound(currentType);
 }
@@ -1557,7 +1560,8 @@ document.getElementById('retryBtn').addEventListener('click', () => {
     if (savedContact) document.getElementById('rankContact').value = savedContact;
   } catch (e) { /* 무시 */ }
 
-  document.getElementById('rankSubmitBtn').addEventListener('click', async () => {
+  document.getElementById('rankSubmitBtn').addEventListener('click', async (e) => {
+    { const sbtn = e.currentTarget; if (sbtn.disabled) return; sbtn.disabled = true; setTimeout(() => { sbtn.disabled = false; }, 3000); } // 연타로 같은 기록이 두 번 저장되지 않게
     const nick = document.getElementById('rankNickname').value.trim();
     const contact = document.getElementById('rankContact').value.trim();
     const msg = document.getElementById('rankMsg');
@@ -1861,6 +1865,7 @@ function showMilestone(floor) {
 
 function endGame() {
   state = 'gameover';
+  document.getElementById('rankLinkBtn').style.display = 'flex'; // 플레이 중엔 숨겨 둔 랭킹 링크를 이제 보여 준다
   stopPendulumSound();
   playGameOverSound();
   track('game_over', { score: floorCount, ending: false });
@@ -2250,7 +2255,8 @@ function showPendingScore() {
   box.classList.add('show');
   ['pointerdown', 'click', 'touchstart'].forEach((ev) => box.addEventListener(ev, (e) => e.stopPropagation()));
   document.getElementById('pendingClose').addEventListener('click', () => box.classList.remove('show'));
-  document.getElementById('pendingSubmit').addEventListener('click', async () => {
+  document.getElementById('pendingSubmit').addEventListener('click', async (e) => {
+    { const sbtn = e.currentTarget; if (sbtn.disabled) return; sbtn.disabled = true; setTimeout(() => { sbtn.disabled = false; }, 3000); } // 연타 방지
     const nick = document.getElementById('pendingNick').value.trim(), contact = document.getElementById('pendingContact').value.trim();
     const msg = document.getElementById('pendingMsg');
     if (!nick || !contact) { msg.textContent = '닉네임과 연락처를 모두 입력해주세요.'; return; }
