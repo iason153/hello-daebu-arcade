@@ -206,7 +206,9 @@ const DEFAULTS = {
 };
 let T;
 try {
-  const saved = JSON.parse(localStorage.getItem('hb_tune_merged') || 'null');
+  // 조정 패널에서 저장한 값은 ?dev=1 로 열었을 때만 적용 — 평소 접속에서는 늘 기본값
+  const devOn = new URLSearchParams(location.search).get('dev') === '1';
+  const saved = devOn ? JSON.parse(localStorage.getItem('hb_tune_merged') || 'null') : null;
   T = Object.assign({}, DEFAULTS, saved || {});
 } catch(e){ T = Object.assign({}, DEFAULTS); }
 function saveTune(){

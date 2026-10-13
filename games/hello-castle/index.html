@@ -212,7 +212,7 @@
   <p class="small">아래 화살표 버튼으로도 움직일 수 있어요</p>
   <button class="btn" id="tutOk" type="button">알겠어요!</button>
 </div></div>
-<div id="nogl" hidden><p>이 기기에서는 입체 화면을 그릴 수 없어요.</p></div>
+<div id="nogl" hidden><div><p>이 기기에서는 입체 화면을 그릴 수 없어요.</p><p class="small">크롬이나 사파리로 열어 보거나, 다른 게임을 즐겨 주세요.</p><a class="btn sub" href="/" style="text-decoration:none;display:block">🏠 오락실로 돌아가기</a></div></div>
 
 <div class="scr" id="home">
   <div class="card">
@@ -234,6 +234,8 @@
       <p><b>🏰 내 성</b> — 명성 10점 = ★1 = 성 1줄. 내가 직접 깨야 공개돼요.</p>
       <p><b>🏛 신의 시험</b> — 통과하면 그 신의 카드·신의 함정·가호를 받아요.</p>
     </details>
+    <div class="row2" style="margin-top:12px"><a class="btn sub" href="/" style="text-decoration:none">🏠 오락실</a><a class="btn sub" href="/games/hello-munch/ranking.html?g=hello_castle" style="text-decoration:none">🏆 랭킹</a><a class="btn sub" href="/hall-of-fame.html?g=hello_castle" style="text-decoration:none">🏛 신전</a></div>
+    <div class="row2"><a class="btn sub" href="/cardbook.html" style="text-decoration:none">🎴 카드첩</a><a class="btn sub" href="/arena.html" style="text-decoration:none">⚔ 결투장</a></div>
   </div>
 </div>
 
@@ -705,7 +707,7 @@ function showResult(ok, msg) {
       api(null, { action: 'trial', god: castle.god, ok: true, t: tt, inputs: recIn2, free: FREE && FREE.god === castle.god ? FREE.id : '' }).then(d => { const el = $('rGift'); if (!el) return;
         if (!d.passed) { el.textContent = d.error || '통과 기록을 올리지 못했어요'; return; }
         if (d.card) { try { const c = JSON.parse(localStorage.getItem('ht_cards') || '{}') || {}; if (!c[castle.god]) { c[castle.god] = { at: new Date().toISOString(), floor: castle.god === 'zeus' ? 110 : 140, count: 1 }; localStorage.setItem('ht_cards', JSON.stringify(c)); } } catch (e) {} }
-        el.innerHTML = (d.card ? '🎴 <b>' + T.name + ' 카드</b>를 받아 카드첩에 넣었어요!<br>' : '') + (d.first ? '🏰 내 성에 <b>' + T.name + '의 함정</b>을 놓을 수 있어요<br>🛡 남의 성을 털 때 ' + T.name + '의 함정을 <b>한 번 버티는 가호</b>가 생겼어요' : '이미 통과한 시험이에요. 기록만 새로 남겼어요');
+        el.innerHTML = (d.card ? '🎴 <b>' + T.name + ' 카드</b>를 받아 카드첩에 넣었어요! <a href="/cardbook.html" style="color:var(--gold)">카드첩 보러 가기 →</a><br>' : '') + (d.first ? '🏰 내 성에 <b>' + T.name + '의 함정</b>을 놓을 수 있어요<br>🛡 남의 성을 털 때 ' + T.name + '의 함정을 <b>한 번 버티는 가호</b>가 생겼어요' : '이미 통과한 시험이에요. 기록만 새로 남겼어요');
         if (d.unlock && ME) ME.unlock = d.unlock; track('castle_trial_pass', { god: castle.god, first: !!d.first, card: !!d.card }); }); }
     else if (ok) { add('<p>🎴 로그인하면 통과 선물(' + T.name + ' 카드·신의 함정·가호)을 받아요. 로그인한 뒤 한 번 더 통과해 주세요.</p>'); if (AUTH.ready !== false) addBtn(box, '💬 카카오 로그인', 'kakao', () => login()); }
     if (ok) shareBox(sh, 'trial', () => makeTShare(castle.god, tt));
@@ -938,7 +940,9 @@ window.addEventListener('keydown', (e) => { if (e.key === 'w' || e.key === 'W') 
 
 // ================================================================ 입체 화면(three.js) — 바닥은 손그림 느낌 무늬, 인물·괴물은 오락실 그림을 세워서
 const W = 420, H = 760;
-const renderer = new THREE.WebGLRenderer({ canvas: glc, antialias: true });
+let renderer;
+try { renderer = new THREE.WebGLRenderer({ canvas: glc, antialias: true }); }
+catch (e) { $('nogl').hidden = false; $('home').hidden = true; return; } // 입체 화면을 못 만드는 기기: 안내만 보여 주고 멈춘다(버튼이 먹통인 채로 남지 않게)
 renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 const hud = $('hud'), hx = hud.getContext('2d');
 let scale = 1;
@@ -1330,7 +1334,7 @@ function drawHud() {
     hx.fillStyle = 'rgba(255,255,255,.16)'; rr(-bw / 2, -bh / 2, bw, bh, 4); hx.fill();
     if (v > .01) { hx.fillStyle = col; rr(-bw / 2, -bh / 2, Math.max(6, bw * v), bh, 4); hx.fill(); }
     hx.font = '800 10.5px sans-serif'; hx.textAlign = 'left'; hx.textBaseline = 'middle'; hx.fillStyle = v > .7 ? '#ffd0d0' : '#fff'; hx.fillText(v > .7 ? '들킨다!' : '의심', bw / 2 + 5, 1); hx.restore(); }
-  hx.font = '700 10.5px sans-serif'; hx.fillStyle = 'rgba(255,255,255,.5)'; hx.textAlign = 'right'; hx.fillText('화면 ' + fpsShow + '번/초 · 게임 60칸/초', W - 12, 50);
+  if (ADMIN_ON) { hx.font = '700 10.5px sans-serif'; hx.fillStyle = 'rgba(255,255,255,.5)'; hx.textAlign = 'right'; hx.fillText('화면 ' + fpsShow + '번/초 · 게임 60칸/초', W - 12, 50); } // 개발용 숫자는 관리자만
   if (v > .7 && state === 'play') { const a = (v - .7) / .3, g = hx.createRadialGradient(W / 2, H / 2, H * .3, W / 2, H / 2, H * .7); g.addColorStop(0, 'rgba(255,0,0,0)'); g.addColorStop(1, 'rgba(255,0,0,' + (.35 * a) + ')'); hx.fillStyle = g; hx.fillRect(0, 0, W, H); }
   if (zoneBanner && t - zoneBanner.t0 < 2.2) { const a = Math.min(1, (2.2 - (t - zoneBanner.t0)) / .5); hx.save(); hx.globalAlpha = a; hx.fillStyle = 'rgba(10,20,50,.75)'; rr(40, 150, W - 80, 64, 16); hx.fill(); hx.font = '900 22px sans-serif'; hx.textAlign = 'center'; hx.fillStyle = '#ffd23c'; hx.fillText((zoneBanner.sub ? '' : '⛅ ') + zoneBanner.text, W / 2, 182); hx.font = '700 13px sans-serif'; hx.fillStyle = '#ffe0ef'; hx.fillText(zoneBanner.sub || '📣 헬로~! 한 번 더 생겼어요', W / 2, 203); hx.restore(); }
   if (state === 'play' && !hero.moved) tag('누르면 앞으로 · 옆으로 밀면 옆으로 · 📣 인사로 괴물 멈추기', W / 2, H - 100, '#fff', 13.5);
