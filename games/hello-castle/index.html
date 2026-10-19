@@ -359,6 +359,8 @@ const PIECES = {
   wave:    { name: '🔱 포세이돈의 파도',       cost: 3, card: 'poseidon' },
   bolt:    { name: '⚡ 제우스의 번개',         cost: 3, card: 'zeus' },
   guard:   { name: '👾 우주괴물 수문장',       cost: 3, card: 'munch' },
+  gale:    { name: '🪽 헤르메스의 돌풍',       cost: 3, card: 'hermes' },
+  owl:     { name: '🦉 아테나의 부엉이',       cost: 3, card: 'athena' },
   octo:    { name: '🐙 문어 촉수',            cost: 2 },
   jelly:   { name: '🪼 해파리 점프 (두 줄)',    cost: 2, speed: true, two: true },
   bomb:    { name: '🐦 큰 갈매기 폭격',        cost: 2, speed: true },
@@ -376,7 +378,7 @@ const CT = [{ run: 2, spd: 0, capt: false }, { run: 2, spd: 1, capt: false }, { 
 const maxLen = (fame) => Math.max(MIN_LEN, Math.floor((fame - 700) / 10));
 const iga = (w) => w + ((w.charCodeAt(w.length - 1) - 0xac00) % 28 ? '이' : '가');
 const eun = (w) => w + ((w.charCodeAt(w.length - 1) - 0xac00) % 28 ? '은' : '는');
-const GODP = { wave: 'poseidon', bolt: 'zeus', guard: 'munch' }; // 신 함정: 성마다 신별 1줄까지
+const GODP = { wave: 'poseidon', bolt: 'zeus', guard: 'munch', gale: 'hermes', owl: 'athena' }; // 신 함정: 성마다 신별 1줄까지
 function costOf(lanes, capt) { let u = capt ? CAPT_COST : 0; lanes.forEach((l, i) => { if (i > 0 && TWO[lanes[i - 1].t]) return; const p = PIECES[l.t]; u += p.cost + (p.speed && l.s === 2 ? 1 : 0); }); return u; }
 function pathOk(lanes) { const RN = lanes.length + 2, bl = (r, c) => r >= 1 && r <= lanes.length && (lanes[r - 1].b || []).includes(c), seen = new Set(['0:3']), q = [[0, 3]];
   while (q.length) { const [r, c] = q.shift(); if (r === RN - 1) return true; for (const [dr, dc] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nr = r + dr, nc = c + dc, k = nr + ':' + nc; if (nr < 0 || nr >= RN || nc < 0 || nc >= COLS || bl(nr, nc) || seen.has(k)) continue; seen.add(k); q.push([nr, nc]); } }
@@ -401,14 +403,19 @@ function checkCastle(L, capt, R, U) {
   if (!pathOk(L)) return { i: -1, code: 'path', why: '나무·바위로 길이 막혔어요. 보물방까지 갈 길을 남겨 주세요' };
   return null;
 }
-// 신의 시험: 신마다 40줄 고정, 끝에서 신이 기다린다(대표 결정 10/12). 업데이트 때마다 2명씩(다음: 헤르메스·아테나)
+// 신의 시험: 신마다 40줄 고정, 끝에서 신이 기다린다(대표 결정 10/12). 업데이트 때마다 2명씩 — 10/19 헤르메스·아테나 추가
 const LN = (q) => q.split(' ').map(x => { const [t2, sp] = x.split(':'); return sp ? { t: t2, s: +sp } : { t: t2 }; });
 const TRIALS = {
-  poseidon: { god: 'poseidon', name: '포세이돈', icon: '🔱', zone: 50, owner: '포세이돈', fame: 0, capt: false,
+  hermes: { god: 'hermes', name: '헤르메스', icon: '🪽', zone: 25, owner: '헤르메스', fame: 0, capt: false, color: 0xbfe8ff, txt: '#cfeeff', throne: '🪽 헤르메스의 옥좌 — 나보다 빨리 와 봐!', floor: 130,
+    lanes: LN('grass log:0 grass gale grass cart:0 grass whirl:0 grass gale log:1 grass star:0 grass grass gale grass whirl:1 cart:1 grass gale grass soldier:0 grass log:1 whirl:1 grass gale grass star:1 grass grass gale grass cart:1 log:1 grass whirl:1 grass gale') },
+  athena: { god: 'athena', name: '아테나', icon: '🦉', zone: 40, owner: '아테나', fame: 0, capt: false, color: 0xffe08a, txt: '#ffe9a8', throne: '🦉 아테나의 옥좌 — 지혜롭게 와 보렴!', floor: 120,
+    lanes: LN('soldier:0 grass owl grass log:0 grass cannon:0 grass owl grass patrol:0 grass grass octo grass owl tide:1 grass bomb:0 grass soldier:1 owl grass cannon:1 grass jelly:0 grass grass owl grass log:1 cart:1 grass octo grass owl grass soldier:1 grass owl') },
+  poseidon: { god: 'poseidon', name: '포세이돈', icon: '🔱', zone: 50, owner: '포세이돈', fame: 0, capt: false, color: 0x7fd8ff, txt: '#a9e6ff', throne: '🔱 포세이돈의 옥좌 — 여기까지 와 보거라!', floor: 140,
     lanes: LN('log:0 grass tide:0 grass water:0 water:0 grass octo grass wave grass cart:1 tide:1 grass jelly:0 grass grass water:1 water:1 grass octo wave grass log:1 tide:1 grass water:1 water:1 grass jelly:1 grass grass wave grass octo tide:2 grass water:1 grass wave') },
-  zeus: { god: 'zeus', name: '제우스', icon: '⚡', zone: 75, owner: '제우스', fame: 0, capt: false,
+  zeus: { god: 'zeus', name: '제우스', icon: '⚡', zone: 75, owner: '제우스', fame: 0, capt: false, color: 0xfff07a, txt: '#fff27a', throne: '⚡ 제우스의 옥좌 — 여기까지 와 봐라!', floor: 110,
     lanes: LN('soldier:0 grass star:0 grass bolt grass whirl:0 grass cannon:0 grass bolt log:1 grass bomb:0 grass rock:0 grass grass bolt whirl:1 grass cannon:1 star:1 grass bolt grass bomb:1 soldier:1 grass rock:1 grass grass bolt whirl:1 grass cannon:1 grass bolt grass bolt') },
 };
+const TRIAL_ORDER = ['hermes', 'athena', 'poseidon', 'zeus']; // 시험 목록 순서(열리는 줄 순)
 // ================================================================ 신들의 성(끝없음)
 const ZONES = [
   { at: 0,   name: '헤르메스의 뜰',   g1: 0x7cc25f, g2: 0x71b555 },
@@ -503,6 +510,16 @@ function patrol(r, i) { // 순찰 기사: 아래 줄을 가로로 → 꺾어 위
 function cannon(r) { const T = [3.0, 2.4, 1.9][r.s || 0], u = wrap(t + r.ph, T), sp = 9, from = r.dir > 0 ? -0.8 : COLS - 0.2; return { warn: u > T - .7, ball: u < .95 ? from + r.dir * sp * u : null }; }
 function waveS(r) { const T = 3.4, u = wrap(t + r.ph, T); if (u < 2.0) return { p: 'calm' }; if (u < 2.6) return { p: 'warn', k: (u - 2) / .6 }; const k = (u - 2.6) / .6; return { p: 'hit', cx: r.dir > 0 ? -1 + k * (COLS + 1) : COLS - k * (COLS + 1) }; }
 function boltS(r) { const T = 1.8, u = wrap(t + r.ph, T), k = Math.floor(wrap(t + r.ph, T * 3) / T); return { p: u >= 1.25 ? 'hit' : u >= .65 ? 'warn' : 'calm', on: (c) => (c + k) % 3 === 0 }; }
+// 헤르메스의 돌풍(신, 10/19): 바람 띠로 예고 → 거대 돌풍이 줄을 순식간에 휩쓴다(닿으면 날아감).
+// 바로 앞·뒤 줄에 서 있어도 돌풍이 지나갈 때 한 칸 밀린다(성 밖이면 끝, 나무·바위가 있으면 안 밀림)
+const GALE_T = 4.2;
+function galeS(r) { const u = wrap(t + r.ph, GALE_T); if (u < 2.2) return { p: 'calm' }; if (u < 3.35) return { p: 'warn', k: (u - 2.2) / 1.15 };
+  if (u < 4.0) { const k = (u - 3.35) / .65; return { p: 'hit', k, cx: r.dir > 0 ? -2.5 + k * (COLS + 4) : COLS + 1.5 - k * (COLS + 4) }; } return { p: 'calm' }; }
+// 아테나의 부엉이(신, 10/19): 잠(지금이야!) → 고개를 돌림(예고) → 눈을 번쩍 뜨고 감시.
+// 감시하는 동안 그 줄로 들어오거나, 그 줄 안에서 옆으로 가거나, 그 줄에서 나가면 덮친다. 가만히 있으면 안 들킨다
+const OWL_T = 4.4;
+function owlS(r) { const u = wrap(t + r.ph, OWL_T); return u < 1.9 ? 'calm' : u < 2.5 ? 'warn' : u < OWL_T - .25 ? 'hit' : 'calm'; }
+const owlWatch = (i) => { const q = rows[i]; return !!q && q.t === 'owl' && owlS(q) === 'hit'; };
 function guardS(r) { const T = 3.2, u = wrap(ct(r) + r.ph, T); return u >= 1.8 ? 'hit' : u >= 1.3 ? 'warn' : 'calm'; }
 // 문어 촉수(생물): 거품으로 예고 → 3칸에서 쑥 → 쉼. 칸은 매번 바뀐다
 function octoPick(r, k, salt) { const rn = mulberry((cseed * 977 + r.seed * 131 + k * 7919 + salt * 104729) | 0), out = []; while (out.length < 3) { const c = Math.floor(rn() * COLS); if (!out.includes(c)) out.push(c); } return out.sort((a, b) => a - b); }
@@ -582,6 +599,7 @@ function hazardAt(i, x) {
   if (r.t === 'wave') { const w = waveS(r); if (w.p === 'hit' && Math.abs(w.cx - x) < .9) return ['포세이돈의 파도에 휩쓸렸어요!', 'splash', 'poseidon']; }
   if (r.t === 'bolt') { const b = boltS(r); if (b.p === 'hit' && b.on(Math.round(x))) return ['제우스의 번개! 찌릿!', 'zap', 'zeus']; }
   if (r.t === 'guard' && guardS(r) === 'hit') return ['우주괴물 수문장이 덥석!', 'hit', 'munch'];
+  if (r.t === 'gale') { const g2 = galeS(r); if (g2.p === 'hit' && Math.abs(g2.cx - x) < 1.6) return ['헤르메스의 돌풍에 휩쓸려 날아갔어요!', 'hit', 'hermes']; }
   return null;
 }
 
@@ -604,11 +622,12 @@ function update(dt) {
   }
   if (r.t === 'tide' && hero.hopT >= 1) { hero.x += tidePush(r) * dt; if (hero.x < -.45 || hero.x > COLS - .55) return die('밀물에 휩쓸려 성 밖으로!', 'splash'); }
   if (r.t === 'whirl' && hero.hopT >= 1 && t - (hero.pushT || -9) > .45 && !offNow(kWhirl(r, hero.row))) { const w = whirlS(r); if (Math.abs(w.x - hero.x) < .5) { const nx = Math.round(hero.x) + w.dir; hero.pushT = t; shake = .5; SFX.whoosh(); if (nx < 0 || nx > COLS - 1) return die('회오리에 휘말려 성 밖으로 날아갔어요!', 'hit'); hero.fromX = hero.x; hero.fromRow = hero.row; hero.x = nx; hero.hopT = 0; popup('휘이익!', nx, hero.row, '#bfe8ff'); } }
-  if (hero.hopT >= HOP * .5) { const h = hazardAt(hero.row, heroX()); if (h) {
-    // 신의 가호: 남의 성을 공략할 때, 그 신의 카드가 있으면 그 신의 함정에 딱 한 번 버틴다
-    const g = h[2]; if (g && guarded[g] && t - guarded[g] < 1.6) { /* 가호 중 */ }
-    else if (g && (mode === 'attack' || mode === 'replay' || mode === 'visit') && castle && castle.guard && castle.guard[g] && !guarded[g]) { guarded[g] = t; flash = .6; shake = Math.max(shake, .5); SFX.zone(); popup({ poseidon: '🔱 포세이돈의 가호!', zeus: '⚡ 제우스의 가호!', munch: '👾 먼치 카드의 가호!' }[g], heroX(), hero.row, '#fff2a8'); burst(heroX(), hero.row, 16, 0xfff2a8); }
-    else return die(h[0], h[1]); } }
+  // 헤르메스의 돌풍: 바로 앞·뒤 줄에 서 있어도 지나갈 때 한 칸 밀린다(돌풍 한 번에 한 번)
+  if (hero.hopT >= 1) for (const k of [hero.row - 1, hero.row + 1]) { const q = rows[k]; if (!q || q.t !== 'gale') continue; const g2 = galeS(q); if (g2.p !== 'hit' || Math.abs(g2.cx - hero.x) > 1.6) continue;
+    const id = k + ':' + Math.floor((t + q.ph) / GALE_T); if (hero.galeId === id) continue; hero.galeId = id; shake = Math.max(shake, .6); SFX.whoosh();
+    const nx = Math.round(hero.x) + q.dir; if (nx < 0 || nx > COLS - 1) return die('헤르메스의 돌풍에 밀려 성 밖으로 날아갔어요!', 'hit');
+    if (!blocked(hero.row, nx)) { hero.fromX = hero.x; hero.fromRow = hero.row; hero.x = nx; hero.hopT = 0; popup('휘이잉!', nx, hero.row, '#bfe8ff'); } break; }
+  if (hero.hopT >= HOP * .5) { const h = hazardAt(hero.row, heroX()); if (h && hitBy(h)) return; }
   // 아슬아슬: 아주 가까이 스쳐 갔지만 안 맞음
   if (hero.hopT >= 1 && t - nearAt > .9) { MG = .38; const n = hazardAt(hero.row, hero.x); MG = 0; if (n) { nearAt = t; nearN++; popup('아슬아슬!', heroX(), hero.row, '#9dffb0'); SFX.near(); shake = Math.max(shake, .22); } }
   if (combo && t - lastHop > .9) combo = 0;
@@ -621,6 +640,14 @@ function update(dt) {
   if (hero.moved && !ADM.noSusp) susp += dt / SUSP_SEC * (captOn() ? 1.6 : 1);
   if (susp > .7 && t - lastWarn > .45) { lastWarn = t; SFX.warn(); }
   if (susp >= 1) return die('너무 머뭇거렸어요! 경비에게 들켰어요', 'caught');
+}
+// 함정에 닿음 → 신의 가호가 있으면 한 번 버티고, 없으면 끝. 끝났으면 true
+const GUARD_POP = { poseidon: '🔱 포세이돈의 가호!', zeus: '⚡ 제우스의 가호!', munch: '👾 먼치 카드의 가호!', hermes: '🪽 헤르메스의 가호!', athena: '🦉 아테나의 가호!' };
+function hitBy(h) {
+  // 신의 가호: 남의 성을 공략할 때, 그 신의 시험을 통과했으면 그 신의 함정에 딱 한 번 버틴다
+  const g = h[2]; if (g && guarded[g] && t - guarded[g] < 1.6) return false; // 가호 중
+  if (g && (mode === 'attack' || mode === 'replay' || mode === 'visit') && castle && castle.guard && castle.guard[g] && !guarded[g]) { guarded[g] = t; flash = .6; shake = Math.max(shake, .5); SFX.zone(); popup(GUARD_POP[g], heroX(), hero.row, '#fff2a8'); burst(heroX(), hero.row, 16, 0xfff2a8); return false; }
+  die(h[0], h[1]); return true;
 }
 function popup(text, x, row, color) { popups.push({ text, x, row, t0: t, color }); }
 function phaseOf(r) { if (r.t === 'rock') return rockBalls(r, 0).warn ? 'warn' : 'calm'; if (r.t === 'cannon') return cannon(r).warn ? 'warn' : 'calm'; if (r.t === 'wave') return waveS(r).p; if (r.t === 'bolt') return boltS(r).p; if (r.t === 'octo') return octoS(r).p; if (r.t === 'bomb') return bombS(r).p; if (r.t === 'guard') return guardS(r); return ''; }
@@ -651,8 +678,10 @@ function move(d) {
   if (d === 'U') { nr++; hero.face = 0; } else if (d === 'D') { nr--; hero.face = Math.PI; } else if (d === 'L') { nc--; hero.face = Math.PI / 2; } else if (d === 'R') { nc++; hero.face = -Math.PI / 2; }
   if (nc < 0 || nc >= COLS || nr < 0 || nr >= rows.length) return;
   if (blocked(nr, nc)) { hero.bumpT = t; hero.bumpD = d; hero.moved = true; shake = Math.max(shake, .18); SFX.bump(); return; }
+  const owl = owlWatch(hero.row) || owlWatch(nr); // 부엉이가 감시하는 줄에서 움직임
   hero.fromX = hero.x; hero.fromRow = hero.row; hero.x = nc; hero.row = nr; hero.hopT = 0; hero.moved = true;
   if (d === 'U') { if (!au('hop', null)) SFX.hop(Math.min(combo, 8)); } else SFX.side();
+  if (owl) { hero.owlRow = owlWatch(nr) ? nr : hero.fromRow; hitBy(['아테나의 부엉이에게 들켰어요! 덥석!', 'owl', 'athena']); }
 }
 const SHOUT_DUR = 1.8, CREATURE = { soldier: 1, patrol: 1, guard: 1, octo: 1, jelly: 1, star: 1, whirl: 1 };
 function shout() {
@@ -673,7 +702,7 @@ function die(msg, kind) {
   state = 'dead'; deadMsg = msg; shake = 1.6; flash = 1; deathKind = kind; deadT = performance.now() / 1000; $('pad').hidden = true;
   const x = heroX(), row = hero.row;
   if (kind === 'splash') { burst(x, row, 24, 0xbfe8ff); SFX.splash(); } else if (kind === 'lava') { burst(x, row, 26, 0xff7a1f); burst(x, row, 10, 0xffe0c0); SFX.splash(); } else if (kind === 'zap') { burst(x, row, 24, 0xfff36a); SFX.zap(); }
-  else if (kind === 'caught') { burst(x, row, 14, 0xff8a8a); SFX.hit(); } else if (kind === 'grape') { burst(x, row, 26, 0x7b3fb5); SFX.hit(); } else if (kind === 'splat') { burst(x, row, 22, 0xffffff); SFX.splat(); } else { burst(x, row, 20, 0xffd23c); SFX.hit(); }
+  else if (kind === 'caught') { burst(x, row, 14, 0xff8a8a); SFX.hit(); } else if (kind === 'grape') { burst(x, row, 26, 0x7b3fb5); SFX.hit(); } else if (kind === 'splat') { burst(x, row, 22, 0xffffff); SFX.splat(); } else if (kind === 'owl') { burst(x, row, 18, 0xffd23c); burst(x, row, 10, 0xfff6dc); SFX.hit(); au('owl_atk', null); } else { burst(x, row, 20, 0xffd23c); SFX.hit(); }
   setTimeout(() => showResult(false, msg), 1100);
 }
 function win() { bgm(bgmScene, .55); state = 'won'; $('pad').hidden = true; SFX.win(); [0xffd23c, 0x9de3ff, 0xff9ad5, 0x9dffb0].forEach(c => burst(heroX(), hero.row, 12, c)); setTimeout(() => showResult(true), 1300); }
@@ -707,7 +736,7 @@ function showResult(ok, msg) {
       api(null, { action: 'trial', god: castle.god, ok: true, t: tt, inputs: recIn2, free: FREE && FREE.god === castle.god ? FREE.id : '' }).then(d => { const el = $('rGift'); if (!el) return;
         if (!d.passed) { el.textContent = d.error || '통과 기록을 올리지 못했어요'; return; }
         if (FREE && FREE.god === castle.god) ls.set('hc_free_' + FREE.id, '1'); // 선물까지 받았으니 공짜 도전 소진
-        if (d.card) { try { const c = JSON.parse(localStorage.getItem('ht_cards') || '{}') || {}; if (!c[castle.god]) { c[castle.god] = { at: new Date().toISOString(), floor: castle.god === 'zeus' ? 110 : 140, count: 1 }; localStorage.setItem('ht_cards', JSON.stringify(c)); } } catch (e) {} }
+        if (d.card) { try { const c = JSON.parse(localStorage.getItem('ht_cards') || '{}') || {}; if (!c[castle.god]) { c[castle.god] = { at: new Date().toISOString(), floor: TRIALS[castle.god].floor, count: 1 }; localStorage.setItem('ht_cards', JSON.stringify(c)); } } catch (e) {} }
         el.innerHTML = (d.card ? '🎴 <b>' + T.name + ' 카드</b>를 받아 카드첩에 넣었어요! <a href="/cardbook.html" style="color:var(--gold)">카드첩 보러 가기 →</a><br>' : '') + (d.first ? '🏰 내 성에 <b>' + T.name + '의 함정</b>을 놓을 수 있어요<br>🛡 남의 성을 털 때 ' + T.name + '의 함정을 <b>한 번 버티는 가호</b>가 생겼어요' : '이미 통과한 시험이에요. 기록만 새로 남겼어요');
         if (d.unlock && ME) ME.unlock = d.unlock; track('castle_trial_pass', { god: castle.god, first: !!d.first, card: !!d.card }); }); }
     else if (ok) { add('<p>🎴 로그인하면 통과 선물(' + T.name + ' 카드·신의 함정·가호)을 받아요. 로그인한 뒤 한 번 더 통과해 주세요.</p>'); if (AUTH.ready !== false) addBtn(box, '💬 카카오 로그인', 'kakao', () => login()); }
@@ -768,6 +797,9 @@ const SND_EV = [ // 기본값은 소리 모양(주파수 그림)을 보고 짐�
   { k: 'zeus_intro', name: '⚡ 제우스 자기소개 (가끔)', file: 'ke853a5da', vol: 0.95, gap: 20.5 },
   { k: 'poseidon_intro', name: '🔱 포세이돈 자기소개 (가끔)', file: 'k96d2304e', vol: 1, gap: 20.5 },
   { k: 'bolt', name: '⚡ 번개 내리칠 때', file: 'k1b119be4', vol: 0.9 },
+  { k: 'gale', name: '🪽 헤르메스 돌풍 칠 때', file: 'ke5129431', vol: 1 },
+  { k: 'owl', name: '🦉 부엉이가 깰 때', file: '', vol: 0.9 },
+  { k: 'owl_atk', name: '🦉 부엉이가 덮칠 때', file: '', vol: 1 },
   { k: 'wave', name: '🔱 파도 칠 때', file: 'k0ceea558', vol: 0.9 },
   { k: 'egg_fall', name: '🥚 계란 떨어지는 동안', file: 'k8877f9ff', vol: 0.7 },
   { k: 'egg_crack', name: '🥚 계란 깨질 때', file: 'k42bcff65', vol: 1 },
@@ -834,6 +866,9 @@ const SYN = {
   rock_break: (g) => { noise(.45, .22 * g, 900); snd(80, .3, 'square', .08 * g, 40); }, // 와장창
   // 헬로 뛰기(10/12): 낮은 '통' + 짧은 '뿅' — 예전보다 2.5배쯤 크게
   hop: (g) => { snd(150, .09, 'sine', .15 * g, 75); setTimeout(() => snd(640, .07, 'square', .045 * g, 1180), 35); },
+  owl: (g) => { snd(430, .2, 'sine', .1 * g, 400); setTimeout(() => snd(350, .38, 'sine', .1 * g, 320), 260); }, // 부-엉
+  owl_atk: (g) => { snd(900, .12, 'sawtooth', .06 * g, 300); setTimeout(() => snd(330, .3, 'sine', .1 * g, 200), 90); }, // 휙-부엉!
+  gale: (g) => { noise(.6, .25 * g, 700); }, // 쏴아
   death: (g) => { snd(880, .45, 'square', .07 * g, 160); setTimeout(() => snd(220, .25, 'triangle', .06 * g, 90), 380); }, // 뿅~
 };
 function au(k, i, x, minG, src) { const e = SCFG.ev[k]; if (!e || !e.on) return false; const g = Math.max(minG || 0, i == null ? 1 : distGain(i, x) * focusMul(src == null ? Math.round(i) : src)) * e.vol * SCFG.master; if (g < .02) return false;
@@ -873,6 +908,8 @@ function soundRow(i, r) {
     case 'bomb': { const b = bombS(r); if (sEdge(r, 'f', b.fly != null) && b.fly != null) au('gull', i, 3);
       if (sEdge(r, 'p', b.p)) { if (b.p === 'warn') r._fall = au('egg_fall', i, b.tg[0]); if (b.p === 'hit') { try { if (r._fall && r._fall.stop) r._fall.stop(); } catch (e) {} r._fall = null; au('egg_crack', i, b.tg[0]); } } break; }
     case 'guard': { const g = guardS(r); if (sEdge(r, 'g', g) && g === 'hit') au('guard', i, 3); break; }
+    case 'gale': { const w = galeS(r); if (sEdge(r, 'w', w.p) && w.p === 'hit') au('gale', i, r.dir > 0 ? 0 : COLS - 1, .35); break; }
+    case 'owl': { const w = owlS(r); if (sEdge(r, 'o', w) && w === 'warn' && ahead >= -1 && ahead <= 3) au('owl', i, 0, .3); break; }
     case 'octo': { const o = octoS(r); if (sEdge(r, 'o', o.p) && o.p === 'hit') au('octo', i, o.set[0]); break; }
     case 'rock': for (const bl of rockBalls(r, i).balls) { if (bl.p === 'drop' && sEdge(r, 'r', bl.kk)) au('rock', i + 1.3, bl.col, .45, i); // 쿵! (멀어도 경고로 들리게)
       if (bl.p === 'roll' && bl.rowf - heroRowF() < 2.2 && bl.rowf - heroRowF() > -1 && r._rpk !== bl.kk && (r._rpk = bl.kk, true)) au('rock', heroRowF(), bl.col, .7, hero.row); } break; // 헬로 곁을 지나갈 때 크게
@@ -1013,7 +1050,7 @@ const TL = new THREE.TextureLoader(), ART = {};
 ['hello', 'munch_open', 'munch_shut', 'log', 'shell', 'poseidon', 'zeus',
  'hello_back', 'hello_back_jump', 'hello_back_land', 'hello_front', 'hello_side_left', 'hello_side_right', 'hello_shout', 'hello_hit',
  'crab_walk1', 'crab_walk2', 'crab_hi', 'gullknight_side1', 'gullknight_side2', 'gullknight_front', 'gullknight_hi',
- 'jelly_up', 'jelly_down', 'jelly_hi', 'octo_tentacle', 'octo_hole', 'guard_tentacle', 'biggull', 'egg', 'egg_splat', 'grape_cart', 'raft', 'cannonball', 'cannon', 'starfish', 'tiller', 'smoke', 'whirl1', 'whirl2', 'whirl3', 'boulder', 'bolt_cloud1', 'bolt_cloud2', 'bolt_cloud3', 'bolt1', 'bolt2', 'bolt3', 'bolt_mark', 'wave1', 'wave2'].forEach(k => { ART[k] = TL.load('art/' + k + '.webp'); });
+ 'jelly_up', 'jelly_down', 'jelly_hi', 'octo_tentacle', 'octo_hole', 'guard_tentacle', 'biggull', 'egg', 'egg_splat', 'grape_cart', 'raft', 'cannonball', 'cannon', 'starfish', 'tiller', 'smoke', 'whirl1', 'whirl2', 'whirl3', 'boulder', 'bolt_cloud1', 'bolt_cloud2', 'bolt_cloud3', 'bolt1', 'bolt2', 'bolt3', 'bolt_mark', 'wave1', 'wave2', 'hermes', 'athena', 'gale1', 'gale2', 'gale3', 'gale_warn', 'owl_sleep', 'owl_watch', 'owl_look', 'owl_attack'].forEach(k => { ART[k] = TL.load('art/' + k + '.webp'); });
 const FLIP = {}, FLIP_OK = {};
 function texF(k) { if (!FLIP[k]) { const tx = ART[k].clone(); tx.wrapS = THREE.RepeatWrapping; tx.repeat.x = -1; tx.offset.x = 1; FLIP[k] = tx; } const tx = FLIP[k]; if (!tx.image && ART[k].image) tx.image = ART[k].image; if (tx.image && !FLIP_OK[k]) { tx.needsUpdate = true; FLIP_OK[k] = 1; } return tx; }
 function skin(sp, key, h, flip) { // 같은 캐릭터의 다른 그림으로 바꿔 끼우기(그림마다 가로세로 비율이 달라서 크기도 다시)
@@ -1077,7 +1114,7 @@ const ROWK = {
   log: ['slate', '#4a4f5b'], soldier: ['slate', '#4d4a55'], patrol: ['slate', '#4a4d58'], cannon: ['slate', '#474c57'], octo: ['slate', '#4f4a4f'],
   jelly: ['slate', '#45505a'], bomb: ['slate', '#4b5056'], mill: ['slate', '#4a4f5b'], cart: ['slate', '#4f4c52'], star: ['slate', '#4d4b56'],
   tiller: ['slate', '#4b4a50'], whirl: ['slate', '#46505b'], rock: ['slate', '#504e52'], grass2: ['slate', '#4a4e5a'],
-  water:    ['lava', '#ff6a1f'], wave: ['water', '#2f86c8'], tide: ['water', '#7cc4ea'], bolt: ['dark', '#3f4466'], guard: ['dark', '#3a2d55'],
+  water:    ['lava', '#ff6a1f'], wave: ['water', '#2f86c8'], tide: ['water', '#7cc4ea'], bolt: ['dark', '#3f4466'], guard: ['dark', '#3a2d55'], gale: ['dark', '#3c5a7a'], owl: ['dark', '#5a4b33'],
 };
 const world = new Map();
 function clearWorld() { for (const [, o] of world) scene.remove(o.g); world.clear(); }
@@ -1134,7 +1171,7 @@ function buildRow(i) {
   if (safe) for (let q = decoFrom; q < g.children.length; q++) g.children[q].position.y += SAFE_H; // 장식·나무·조개를 한 단 위로
   dyn.pickBase = safe ? SAFE_H : 0;
   if (r.t === 'yard') { for (const sgn of [-1, 1]) { box(g, painted('wall', '#9aa1ae', 1), .7, 1.5, .8, sgn * 3.1, .5, z + .45); box(g, painted('wall', '#b0b7c3', 2), .9, .35, .9, sgn * 3.1, 1.4, z + .45); } }
-  if (r.t === 'treasure' && mode === 'trial') { const gf = godFig(g, castle.god, 1, z, castle.god === 'zeus' ? 0xfff07a : 0x7fd8ff); gf.s.position.x = 0; gf.aura.position.x = 0; gf.s.userData.bx = 0; dyn.gf = gf; dyn.throne = 1; }
+  if (r.t === 'treasure' && mode === 'trial') { const gf = godFig(g, castle.god, 1, z, TRIALS[castle.god].color); gf.s.position.x = 0; gf.aura.position.x = 0; gf.s.userData.bx = 0; dyn.gf = gf; dyn.throne = 1; }
   else if (r.t === 'treasure') { dyn.shell = sprite('shell', 1.3); dyn.shell.position.set(0, .05 + SAFE_H, z); g.add(dyn.shell); blobShadow(g, 1.2).position.set(0, .03 + SAFE_H, z); }
   // 움직이는 것
   if (r.t === 'log') dyn.logs = logs(r).map(() => { const s = sprite('log', .62); s.center.set(.5, .1); g.add(s); const sh = blobShadow(g, 1); return { s, sh }; });
@@ -1158,6 +1195,14 @@ function buildRow(i) {
   if (r.t === 'tide') { dyn.foam = []; for (let k = 0; k < 6; k++) { const f = new THREE.Mesh(BOX, new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .7 })); f.scale.set(.35, .03, .06); g.add(f); dyn.foam.push(f); } }
   if (r.t === 'star') dyn.stars = [0, 1].map(() => { const s2 = sprite('starfish', .9); s2.center.set(.5, .5); g.add(s2); const sh = blobShadow(g, .8); return { s: s2, sh }; });
   if (r.t === 'tiller') dyn.tills = tillers(r).map(() => { const s2 = sprite('tiller', 1.15); g.add(s2); const sh = blobShadow(g, 2.4); const puffs = [0, 1, 2].map(() => { const p2 = sprite('smoke', .3); p2.center.set(.5, .5); p2.material = p2.material.clone(); g.add(p2); return p2; }); return { s: s2, sh, puffs }; });
+  if (r.t === 'gale') { const side = r.dir > 0 ? -1 : 1; dyn.gf = godFig(g, 'hermes', side, z, 0xbfe8ff);
+    dyn.gw = [0, 1].map(() => { const s2 = sprite('gale_warn', .8); s2.center.set(.5, .15); s2.renderOrder = 3; s2.visible = false; g.add(s2); return s2; });
+    dyn.gl = sprite('gale1', 2.3); dyn.gl.center.set(.5, .06); dyn.gl.renderOrder = 4; dyn.gl.visible = false; g.add(dyn.gl); dyn.glSh = blobShadow(g, 3.2); dyn.glSh.visible = false; }
+  if (r.t === 'owl') { const side = -1, ox = -(COLS / 2 - .05); // 제우스처럼 늘 왼쪽 성벽 위(오른쪽은 화면 밖으로 잘림) dyn.owlSide = side; dyn.owlX = ox;
+    dyn.oaura = new THREE.Sprite(new THREE.SpriteMaterial({ map: GLOW_TX, color: 0xffe08a, transparent: true, opacity: 0, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending })); dyn.oaura.scale.set(2.4, 2.4, 1); dyn.oaura.position.set(ox, 1.3, z - .15); dyn.oaura.renderOrder = 4; g.add(dyn.oaura);
+    dyn.owl = sprite('owl_sleep', 1.95); dyn.owl.material.depthTest = false; dyn.owl.renderOrder = 5; dyn.owl.position.set(ox, 0, z - .15); g.add(dyn.owl);
+    dyn.otiles = []; for (let c = 0; c < COLS; c++) { const tl = new THREE.Mesh(PLANE, new THREE.MeshBasicMaterial({ color: 0xffd23c, transparent: true, opacity: 0, depthWrite: false })); tl.rotation.x = -Math.PI / 2; tl.scale.set(.9, .9, 1); tl.position.set(wx(c), .013, z); g.add(tl); dyn.otiles.push(tl); }
+    dyn.atk = sprite('owl_attack', 1.3); dyn.atk.center.set(.5, .5); dyn.atk.material.depthTest = false; dyn.atk.renderOrder = 6; dyn.atk.visible = false; g.add(dyn.atk); }
   if (r.t === 'whirl') { dyn.wh = sprite('whirl1', 1.05); g.add(dyn.wh); dyn.whs = blobShadow(g, .9); }
   if (r.t === 'rock') { dyn.rb = [0, 1].map(() => { const s2 = sprite('boulder', .85); s2.center.set(.5, .1); s2.visible = false; g.add(s2); const sh = blobShadow(g, .9); sh.visible = false; return { s: s2, sh }; }); dyn.rkw = [0, 1].map(dz => { const m = new THREE.Mesh(PLANE, new THREE.MeshBasicMaterial({ color: 0xff4d4d, transparent: true, opacity: 0, depthWrite: false })); m.rotation.x = -Math.PI / 2; m.scale.set(.9, .95, 1); m.position.set(0, .014, z - dz); g.add(m); return m; });
     dyn.lane = new THREE.Mesh(PLANE, new THREE.MeshBasicMaterial({ color: 0xff4d4d, transparent: true, opacity: 0, depthWrite: false })); dyn.lane.rotation.x = -Math.PI / 2; dyn.lane.scale.set(.5, ROCK_LEN, 1); dyn.lane.position.set(0, .013, wz(i + 1.3 - ROCK_LEN / 2)); g.add(dyn.lane); dyn.rshadow = blobShadow(g, .9); dyn.rshadow.visible = false; }
@@ -1199,6 +1244,18 @@ function animRow(i, o) {
   if (d.ball) { const c = cannon(r); d.ball.visible = c.ball != null && c.ball > -.5 && c.ball < COLS - .5; if (d.ball.visible) { d.ball.position.set(wx(c.ball), .3, z); d.ball.material.rotation = -r.dir * t * 12; } d.warn.material.opacity = c.warn ? .2 + .1 * Math.sin(t * 25) : 0; skin(d.cannon, 'cannon', .7, r.dir < 0); { const T = [3.0, 2.4, 1.9][r.s || 0], u = wrap(t + r.ph, T), kick = u < .18 ? Math.sin(u / .18 * Math.PI) : 0, sw = c.warn ? 1 + Math.sin(t * 40) * .04 : 1; d.cannon.scale.set(d.cannon.userData.h * d.cannon.userData.a * sw * (1 - kick * .12), d.cannon.userData.h * sw * (1 + kick * .08), 1); d.cannon.position.x = (r.dir > 0 ? -(COLS / 2 + .5) : COLS / 2 + .5) + r.dir * (.2 - kick * .18); d.cannon.material.rotation = (c.warn ? Math.sin(t * 40) * .04 : 0) + r.dir * kick * .1 + LT; if (u < .06 && Math.abs(i - hero.row) < 3) shake = Math.max(shake, .3); } }
   if (d.wv) godAnim(d.gf, waveS(r).p);
   if (d.throne) godAnim(d.gf, 'calm');
+  if (d.gl) { const w = galeS(r), fl = r.dir < 0; godAnim(d.gf, w.p);
+    d.gw.forEach((s2, k) => { s2.visible = w.p === 'warn'; if (!s2.visible) return; const P = COLS + 5, x = wrap(t * 7 + k * P / 2, P) - 2.5; skin(s2, 'gale_warn', .8, fl); s2.position.set(wx(r.dir > 0 ? x : COLS - 1 - x), .04 + Math.sin(t * 9 + k) * .04, z + .15); s2.material.opacity = Math.min(1, w.k * 1.8) * .95; });
+    d.gl.visible = d.glSh.visible = w.p === 'hit';
+    if (w.p === 'hit') { skin(d.gl, 'gale' + (1 + Math.floor(t * 16) % 3), 2.3, fl); d.gl.position.set(wx(w.cx), -.05 + Math.abs(Math.sin(t * 11)) * .06, z + .35); d.gl.material.rotation = Math.sin(t * 20) * .03; d.glSh.position.set(wx(w.cx), .02, z); d.glSh.scale.set(3.4, .8, 1); if (Math.abs(i - hero.row) < 3) shake = Math.max(shake, .3); } }
+  if (d.owl) { const w = owlS(r), key = w === 'calm' ? 'owl_sleep' : w === 'warn' ? 'owl_look' : 'owl_watch';
+    skin(d.owl, key, 1.95, w === 'warn'); // 고개 돌린 그림은 왼쪽을 본다 → 왼쪽 성벽에 앉아 있으니 뒤집어서 줄 쪽을 보게
+    const pul = w === 'hit' ? 1 + Math.abs(Math.sin(t * 7)) * .05 : 1; d.owl.scale.set(d.owl.userData.h * (d.owl.userData.a || .83) * pul, d.owl.userData.h * pul, 1);
+    d.owl.position.y = w === 'calm' ? Math.sin(t * 1.6 + i) * .03 : w === 'warn' ? Math.sin(t * 30) * .02 : 0; d.owl.material.rotation = w === 'calm' ? Math.sin(t * 1.3 + i) * .05 : 0;
+    d.oaura.material.opacity = w === 'hit' ? .65 + Math.sin(t * 12) * .15 : w === 'warn' ? .3 : 0;
+    d.otiles.forEach(tl => { tl.material.opacity = w === 'hit' ? .38 + .1 * Math.sin(t * 8) : w === 'warn' ? .12 + .1 * Math.sin(t * 25) : 0; });
+    const got = state === 'dead' && deathKind === 'owl' && hero.owlRow === i; d.atk.visible = got; d.owl.visible = !got;
+    if (got) { const a = Math.min(1, (performance.now() / 1000 - deadT) / .35), tx2 = wx(heroX()), tz = wz(heroRowF()); d.atk.position.set(d.owlX + (tx2 - d.owlX) * a, 1.5 - a * .95, z - .15 + (tz - z + .15) * a); skin(d.atk, 'owl_attack', 1.3, false); } }
   if (d.wv) { const w = waveS(r), fl = r.dir < 0, f = Math.floor(t * 8) % 2 ? 'wave2' : 'wave1'; d.wv.visible = d.wvSh.visible = w.p !== 'calm';
     if (w.p === 'warn') { const st = r.dir > 0 ? -.6 : COLS - .4, k = .35 + w.k * .4; skin(d.wv, f, 1.6 * k, fl); d.wv.position.set(wx(st), -.2, z + .45); d.wvSh.position.set(wx(st), .02, z); d.wvSh.scale.set(1.2 * k, .5 * k, 1); }
     if (w.p === 'hit') { skin(d.wv, f, 1.6, fl); d.wv.position.set(wx(w.cx), -.2 + Math.abs(Math.sin(t * 9)) * .05, z + .45); d.wv.material.rotation = LT + (fl ? 2 * LT : 0) * 0; d.wvSh.position.set(wx(w.cx), .02, z); d.wvSh.scale.set(2, .7, 1); if (Math.abs(i - hero.row) < 3) shake = Math.max(shake, .15); } }
@@ -1298,6 +1355,8 @@ function drawHud() {
     if (r.t === 'wave') { const w = waveS(r); if (w.p === 'warn') { const p = proj(r.dir > 0 ? X0 - .35 : -X0 + .35, 3.1, o.z); bubble('파도 간다~!', Math.max(60, Math.min(W - 60, p.x)), p.y, '#cfefff'); } }
     if (r.t === 'bolt') { const b = boltS(r); if (b.p === 'warn') { const p = proj(X0 - .35, 3.1, o.z); bubble('번쩍!', Math.max(40, p.x), p.y, '#fff6b0'); } }
     if (r.t === 'wave' || r.t === 'bolt') { const gx2 = r.t === 'bolt' ? X0 - .35 : r.dir > 0 ? X0 - .35 : -X0 + .35, p = proj(gx2, .35, o.z - .2); tag(r.t === 'bolt' ? '⚡ 제우스' : '🔱 포세이돈', Math.max(44, Math.min(W - 44, p.x)), p.y + 14, r.t === 'bolt' ? '#fff27a' : '#a9e6ff', 13); }
+    if (r.t === 'gale') { const w = galeS(r), sx = r.dir > 0 ? X0 - .35 : -X0 + .35; if (w.p === 'warn') { const p = proj(sx, 3.1, o.z); bubble('돌풍 간다~!', Math.max(64, Math.min(W - 64, p.x)), p.y, '#dff4ff'); } const p2 = proj(sx, .35, o.z - .2); tag('🪽 헤르메스', Math.max(48, Math.min(W - 48, p2.x)), p2.y + 14, '#cfeeff', 13); }
+    if (r.t === 'owl') { const w = owlS(r), ox = X0 + .05, p = proj(ox, 2.25, o.z - .15), cx2 = Math.max(70, Math.min(W - 70, p.x)); if (!(state === 'dead' && deathKind === 'owl' && hero.owlRow === i)) tag(w === 'calm' ? 'Zzz… 지금이야!' : w === 'warn' ? '부엉?! 깬다…' : '👁 움직이면 들켜요!', cx2, p.y, w === 'calm' ? '#9dffb0' : w === 'warn' ? '#ffe27a' : '#ffb3b3', 14); }
     if (r.t === 'guard') { const s = guardS(r), p = proj(0, 2.2, o.z); if (!frozen(r)) tag(s === 'calm' ? 'Zzz… 지금이야!' : s === 'warn' ? '👾 깨어난다…' : '덥석!', p.x, p.y, s === 'calm' ? '#9dffb0' : '#ffb3b3'); }
     if (frozen(r)) { // 인사를 들은 생물: "어? 안녕?"
       let pts = [];
@@ -1309,8 +1368,8 @@ function drawHud() {
     if (r.t === 'bomb') { const b = bombS(r); if (b.fly != null && b.fly < .45) { const p = proj(0, 3.9, o.z); tag('끼룩! 🐦', p.x, p.y, '#fff'); } }
     if (r.t === 'cart' && i === hero.row + 1) { }
     if (r.rest) { const p = proj(0, .1, o.z); tag('— ' + zoneAt(i).name + ' —', p.x, p.y + 4, 'rgba(255,255,255,.95)', 12); }
-    if (r.t === 'yard' && i === 0 && !hero.moved) { const p = proj(0, 2.2, o.z + .3); tag('🚪 ' + (mode === 'gods' ? '신들의 성' : mode === 'practice' || mode === 'trial' ? (mode === 'trial' ? (castle.god === 'zeus' ? '제우스의 시험' : '포세이돈의 시험') : castle.owner) : castle.owner + '의 성') + ' 성문', p.x, p.y, '#ffd23c'); }
-    if (r.t === 'treasure') { const p = proj(0, mode === 'trial' ? 2.9 : 1.7, o.z); tag(mode === 'trial' ? (castle.god === 'zeus' ? '⚡ 제우스의 옥좌 — 여기까지 와 봐라!' : '🔱 포세이돈의 옥좌 — 여기까지 와 보거라!') : '💎 보물방 — 황금 조개', p.x, p.y, '#ffd23c'); }
+    if (r.t === 'yard' && i === 0 && !hero.moved) { const p = proj(0, 2.2, o.z + .3); tag('🚪 ' + (mode === 'gods' ? '신들의 성' : mode === 'practice' || mode === 'trial' ? (mode === 'trial' ? castle.name + '의 시험' : castle.owner) : castle.owner + '의 성') + ' 성문', p.x, p.y, '#ffd23c'); }
+    if (r.t === 'treasure') { const p = proj(0, mode === 'trial' ? 2.9 : 1.7, o.z); tag(mode === 'trial' ? castle.throne : '💎 보물방 — 황금 조개', p.x, p.y, '#ffd23c'); }
   }
   { const gp = ghostAt(); if (gp) { const p = proj(wx(gp.x), 1.25, wz(gp.row)); tag('👻 ' + GHO.nick + (gp.done ? ' · ' + GHO.row + '줄에서 멈춤' : ''), p.x, p.y, '#bfe8ff', 12.5); } }
   for (const q of popups) { const k = (t - q.t0), p = proj(wx(q.x), 1.4 + k * .8, wz(q.row)); hx.save(); hx.globalAlpha = Math.max(0, 1 - k); tag(q.text, p.x, p.y, q.color, 17); hx.restore(); }
@@ -1319,7 +1378,7 @@ function drawHud() {
   if (state === 'play' && t - shoutT < 1.1) { const p = proj(wx(heroX()), 1.35, wz(heroRowF())); bubble('헬로~!', p.x, p.y, '#fff'); }
   hx.fillStyle = 'rgba(8,16,36,.86)'; hx.fillRect(0, 0, W, 62);
   hx.textAlign = 'left'; hx.fillStyle = '#fff'; hx.font = '900 18px sans-serif';
-  hx.fillText(mode === 'gods' ? '⛅ ' + kstDay().label + ' 오늘의 성 · ' + zoneAt(hero.row).name : mode === 'attack' ? '⚔ ' + castle.owner + '의 성' : mode === 'visit' ? '🏰 ' + castle.owner + '의 성 (연습)' : mode === 'replay' ? '▶ 다시보기 · ' + castle.by + ' → ' + castle.owner + '의 성' : mode === 'trial' ? (castle.god === 'zeus' ? '⚡ 제우스의 시험' : '🔱 포세이돈의 시험') : mode === 'practice' ? '🧪 ' + castle.owner : '🏰 내 성 시험', 12, 26);
+  hx.fillText(mode === 'gods' ? '⛅ ' + kstDay().label + ' 오늘의 성 · ' + zoneAt(hero.row).name : mode === 'attack' ? '⚔ ' + castle.owner + '의 성' : mode === 'visit' ? '🏰 ' + castle.owner + '의 성 (연습)' : mode === 'replay' ? '▶ 다시보기 · ' + castle.by + ' → ' + castle.owner + '의 성' : mode === 'trial' ? castle.icon + ' ' + castle.name + '의 시험' : mode === 'practice' ? '🧪 ' + castle.owner : '🏰 내 성 시험', 12, 26);
   hx.font = '700 12.5px sans-serif'; hx.globalAlpha = .85;
   hx.fillText(mode === 'gods' ? maxRow + '줄 · 최고 ' + Math.max(maxRow, Number(ls.get('hc_best') || 0)) + '줄' : (rows.length - 2) + '줄 중 ' + Math.min(rows.length - 2, maxRow) + '줄' + (castle.fame ? ' · 성주 명성 ' + castle.fame : '') + (castle.capt ? ' · 👁 경비대장' : ''), 12, 47);
   hx.globalAlpha = 1;
@@ -1399,7 +1458,7 @@ function renderHome() {
   if (ME && ME.inbox.length) { const seen = Number(ls.get('hc_inbox_seen') || 0); ME.inbox.slice(0, 4).forEach(x => nb.appendChild(newsEl(x, x.at > seen))); ls.set('hc_inbox_seen', String(Date.now())); }
   if (ME && window.HelloMail) HelloMail.load().then(m => { if (!m.ok || !m.items.length) return; m.items.slice(0, 3).reverse().forEach(x => nb.insertBefore(HelloMail.cardEl(x, x.at > m.seen), nb.firstChild)); if (m.unread) HelloMail.markSeen(); });
   const ps = $('pushSlot'); ps.innerHTML = ''; if (ME && window.HelloPush && HelloPush.state() === 'off') { const b2 = HelloPush.box(); const hb = b2.querySelector('b'); if (hb) hb.textContent = '🔔 내 성이 털리면 휴대폰으로 알림 받기'; const tx = b2.querySelector('.hp-t'); if (tx) tx.textContent = '누가 내 성을 털거나 막히면 바로 알려 드려요.'; ps.appendChild(b2); }
-  $('bTrial').textContent = '🏛 신의 시험' + (['poseidon', 'zeus'].some(g => trialOpen(g) && !(ME && ME.unlock.trials[g])) ? ' · 열린 시험 있음!' : '');
+  $('bTrial').textContent = '🏛 신의 시험' + (TRIAL_ORDER.some(g => trialOpen(g) && !(ME && ME.unlock.trials[g])) ? ' · 열린 시험 있음!' : '');
   showBest();
 }
 // 내 성 소식 한 줄: 함락당함(다시보기·복수) / 막아 냄(다시보기)
@@ -1452,11 +1511,11 @@ function openReplay(id) {
 function openTrials() {
   showList('🏛 신의 시험', b => {
     b.innerHTML = '<p class="small">신마다 40줄짜리 시험 성. 끝에서 신이 기다려요. 통과하면 ① 그 신의 <b>올림포스 카드</b>(없으면) ② 내 성에 놓을 <b>신의 함정</b> ③ 남의 성을 털 때 그 신의 함정을 한 번 버티는 <b>가호</b>를 받아요.</p>';
-    ['poseidon', 'zeus'].forEach(g => { const T = TRIALS[g], open = trialOpen(g), free = FREE && FREE.god === g && !ls.get('hc_free_' + FREE.id), done = ME && ME.unlock.trials[g];
+    TRIAL_ORDER.forEach(g => { const T = TRIALS[g], open = trialOpen(g), free = FREE && FREE.god === g && !ls.get('hc_free_' + FREE.id), done = ME && ME.unlock.trials[g];
       const row = el('div', 'tgt' + (open || free ? '' : ' done'));
       row.innerHTML = '<div><b>' + T.icon + ' ' + T.name + '의 시험' + (done ? ' ✓ 통과' : '') + '</b><small>' + (open ? (done ? '카드·함정·가호를 받았어요. 몇 번이든 다시 할 수 있어요' : '열렸어요! 40줄 · 끝에서 ' + iga(T.name) + ' 기다려요') : free ? '친구가 보내 준 공짜 도전 한 번!' : '🔒 헬로타워에서 ' + T.name + ' 카드를 얻거나, 오늘의 신들의 성 ' + T.zone + '줄(' + zoneAt(T.zone).name + ')까지 가면 열려요') + '</small></div>';
       const bt = addBtn(row, open || free ? '도전' : '잠김', 'mini', () => startTrial(g)); bt.disabled = !(open || free); b.appendChild(row); });
-    b.insertAdjacentHTML('beforeend', '<p class="small">다음 업데이트: 헤르메스 · 아테나의 시험 (업데이트마다 두 신씩, 열 신까지)</p>');
+    b.insertAdjacentHTML('beforeend', '<p class="small">다음 업데이트: 새 신 두 명의 시험 (업데이트마다 두 신씩, 열 신까지)</p>');
   });
 }
 function startTrial(g) {
@@ -1479,10 +1538,10 @@ function openBoard() {
 
 // ================================================================ 성 꾸미기(새 규칙) — v17 새 화면(대표 결정 10/12)
 // 성 그림을 누르면 함정 카드 판이 올라온다. 규칙에 안 맞는 카드는 회색 + 이유. 나무·바위는 따로 하는 단계. 🪄 자동으로 지어 주기
-const ED_ICON = { grass: '🌿', log: '🪵', soldier: '🦀', patrol: '🛡', water: '🌋', cannon: '💣', wave: '🔱', bolt: '⚡', guard: '👾', octo: '🐙', jelly: '🪼', bomb: '🐦', tide: '🌊', cart: '🍇', star: '⭐', tiller: '🚜', whirl: '🌪', rock: '🪨' };
-const ED_NAME = { grass: '풀밭(비우기)', log: '통나무', soldier: '꽃게 병사', patrol: '순찰 기사', water: '용암+뗏목', cannon: '성벽 대포', wave: '포세이돈의 파도', bolt: '제우스의 번개', guard: '우주괴물 수문장', octo: '문어 촉수', jelly: '해파리 점프', bomb: '큰 갈매기 폭격', tide: '밀물', cart: '포도 수레', star: '불가사리 바퀴', tiller: '경운기', whirl: '회오리', rock: '시시포스의 바위' };
-const ED_DESC = { grass: '안전한 쉬는 줄', log: '굴러오는 통나무', soldier: '좌우로 순찰하는 꽃게', patrol: '두 줄을 네모로 도는 기사', water: '뗏목을 타야 건너요', cannon: '대포알이 가로질러요', wave: '파도가 휩쓸어요', bolt: '번개가 칸을 내리쳐요', guard: '깨어나면 덥석!', octo: '촉수가 3칸에서 솟아요', jelly: '두 줄을 통통 튀어요', bomb: '알을 떨궈요', tide: '옆으로 밀려나요', cart: '덜컹덜컹 수레', star: '굴러다니는 바퀴', tiller: '길고 빠른 경운기', whirl: '닿으면 옆으로 휙', rock: '위에서 바위가 굴러와요(두 줄)' };
-const ED_COLOR = { water: 'lava', tide: 'sea', wave: 'god', bolt: 'god', guard: 'god' };
+const ED_ICON = { grass: '🌿', log: '🪵', soldier: '🦀', patrol: '🛡', water: '🌋', cannon: '💣', wave: '🔱', bolt: '⚡', guard: '👾', gale: '🪽', owl: '🦉', octo: '🐙', jelly: '🪼', bomb: '🐦', tide: '🌊', cart: '🍇', star: '⭐', tiller: '🚜', whirl: '🌪', rock: '🪨' };
+const ED_NAME = { grass: '풀밭(비우기)', log: '통나무', soldier: '꽃게 병사', patrol: '순찰 기사', water: '용암+뗏목', cannon: '성벽 대포', wave: '포세이돈의 파도', bolt: '제우스의 번개', guard: '우주괴물 수문장', gale: '헤르메스의 돌풍', owl: '아테나의 부엉이', octo: '문어 촉수', jelly: '해파리 점프', bomb: '큰 갈매기 폭격', tide: '밀물', cart: '포도 수레', star: '불가사리 바퀴', tiller: '경운기', whirl: '회오리', rock: '시시포스의 바위' };
+const ED_DESC = { grass: '안전한 쉬는 줄', log: '굴러오는 통나무', soldier: '좌우로 순찰하는 꽃게', patrol: '두 줄을 네모로 도는 기사', water: '뗏목을 타야 건너요', cannon: '대포알이 가로질러요', wave: '파도가 휩쓸어요', bolt: '번개가 칸을 내리쳐요', guard: '깨어나면 덥석!', gale: '줄 전체를 휩쓸고 옆줄도 밀어요', owl: '눈 뜨면 움직이지 마요', octo: '촉수가 3칸에서 솟아요', jelly: '두 줄을 통통 튀어요', bomb: '알을 떨궈요', tide: '옆으로 밀려나요', cart: '덜컹덜컹 수레', star: '굴러다니는 바퀴', tiller: '길고 빠른 경운기', whirl: '닿으면 옆으로 휙', rock: '위에서 바위가 굴러와요(두 줄)' };
+const ED_COLOR = { water: 'lava', tide: 'sea', wave: 'god', bolt: 'god', guard: 'god', gale: 'god', owl: 'god' };
 const DEMO_TIERS = [['견습생', 1000, 0], ['전사', 1000, 3], ['용사', 1100, 3], ['영웅', 1200, 10], ['반신', 1350, 20]];
 const TIER_MIN = { '견습생': [0, 0], '전사': [980, 3], '용사': [1080, 3], '영웅': [1180, 10], '반신': [1300, 20] };
 let ED = null, EM = null, EDEMO = false, edTool = 'trap', edSel = -1;
@@ -1490,7 +1549,7 @@ const cloneL = (L) => JSON.parse(JSON.stringify(L));
 // 체험판(서버가 없는 곳 — 아티팩트 시험판)에서만 쓰는 가짜 회원 정보. 실제 오락실에서는 쓰지 않는다
 function demoMe(k) { const [tier, fame, games] = DEMO_TIERS[k], ti = k, c = CT[ti], len = maxLen(fame);
   return { demo: true, demoK: k, nick: '체험', wid: 'demo', fame, games, rules: { tier, ti, len, bud: len, run: c.run, spd: c.spd, capt: c.capt, minLen: MIN_LEN },
-    tiers: Object.entries(TIER_MIN).map(([name, [min, g]]) => ({ name, min, games: g })), unlock: { poseidon: true, zeus: false, munch: true, cards: {}, trials: { poseidon: 1 } }, castle: { pub: null, draft: null } }; }
+    tiers: Object.entries(TIER_MIN).map(([name, [min, g]]) => ({ name, min, games: g })), unlock: { poseidon: true, zeus: false, munch: true, hermes: true, athena: false, cards: {}, trials: { poseidon: 1, hermes: 1 } }, castle: { pub: null, draft: null } }; }
 function openEdit() {
   EDEMO = !ME && AUTH.down && !/daebugame\.com$/.test(location.hostname);
   if (!ME && !EDEMO) return needLogin('내 성을 지으려면 로그인이 필요해요.');
@@ -1515,7 +1574,7 @@ const sameBad = (a, b) => a && b && a.code === b.code && a.i === b.i;
 // i줄에 k를 놓으면? → 못 놓는 이유(짧게) 또는 null
 function placeWhy(i, k, sp) {
   const R = EM.rules, U = EM.unlock, L = cloneL(ED.lanes), n = L.length, base = checkCastle(ED.lanes, ED.capt, R, U);
-  if (GODP[k] && !U[GODP[k]]) return GODP[k] === 'munch' ? '헬로먼치 카드가 있으면 열려요' : (GODP[k] === 'zeus' ? '제우스' : '포세이돈') + '의 시험을 통과하면 열려요';
+  if (GODP[k] && !U[GODP[k]]) return GODP[k] === 'munch' ? '헬로먼치 카드가 있으면 열려요' : TRIALS[GODP[k]].name + '의 시험을 통과하면 열려요';
   if (GODP[k] && L.some((x, j) => j !== i && x.t === k)) return '이 신의 함정은 이미 놓았어요';
   if (TWO[k] && i === n - 1) return '맨 위 줄에는 못 놓아요';
   if (TWO[k] && L[i + 1].t !== 'grass') return '바로 위 줄이 비어 있어야 해요';
@@ -1740,7 +1799,7 @@ function openVisit(wid) {
     const mine = ME && ME.wid === c.wid;
     b.innerHTML = '<p><b>' + esc(c.nick) + '</b>님의 성 · ' + c.tier + ' · 명성 ' + c.fame + ' · <b>' + c.len + '줄</b>' + (c.capt ? ' · 👁 경비대장' : '') + '</p><p class="small">' + (mine ? '내 성이에요. 친구들이 이 주소로 도전해요.' : '연습 도전이라 명성은 바뀌지 않아요. 로그인하면 진짜로 털어서 명성을 얻을 수도 있어요.') + '</p>';
     track('castle_visit_open', {});
-    const guard = ME ? { poseidon: ME.unlock.poseidon, zeus: ME.unlock.zeus, munch: ME.unlock.munch } : {};
+    const guard = ME ? { poseidon: ME.unlock.poseidon, zeus: ME.unlock.zeus, munch: ME.unlock.munch, hermes: ME.unlock.hermes, athena: ME.unlock.athena } : {};
     addBtn(b, '🏰 연습으로 도전하기', '', () => startRun('visit', { owner: c.nick, fame: c.fame, wid: c.wid, capt: c.capt, lanes: c.lanes, guard }));
     if (ME && !mine) addBtn(b, '⚔ 진짜로 털기 (명성 걸기)', 'sub', () => startRaid(c.wid, false));
   }));
@@ -1800,7 +1859,7 @@ function openVisit(wid) {
   $('aGo').onclick = () => { const k = sel.value, lanes = []; for (let n = 0; n < 6; n++) { lanes.push({ t: k, s: n < 2 ? 0 : n < 4 ? 1 : 2 }); lanes.push({ t: 'grass' }); if (n % 2) lanes.push({ t: 'grass' }); } $('adm').hidden = true; startRun('practice', { owner: PIECES[k].name + ' 연습', fame: 0, capt: false, lanes }); };
 })();
 
-window.__castle = { ed: { autoBuild, placeWhy, openSheet, get ED() { return ED; }, setTier: (k) => { EM = demoMe(k); }, check: () => checkCastle(ED.lanes, ED.capt, EM.rules, EM.unlock), cost: () => costOf(ED.lanes, ED.capt), get EM() { return EM; } }, buildCard, get REC() { return REC; }, get stepN() { return stepN; }, startRun, TRIALS, checkCastle, get ME() { return ME; }, get RP() { return RP; }, get mode() { return mode; }, get summitT() { return summitT; }, octoS, rowsRef: () => rows, get deadMsg() { return deadMsg; }, calls: () => renderer.info.render.calls, sndDbg: () => [Object.keys(LOADING).length, Object.keys(SCFG.ev).length, !!AC, AC && AC.state], runLanes: (lanes) => startRun('practice', { owner: '시험', fame: 0, capt: false, lanes }), loops: () => Object.fromEntries(Object.entries(LOOPS).map(([k, L]) => [k, L.g ? +L.g.gain.value.toFixed(2) : null])), sndDef: () => [SCFG.range, SCFG.master, SCFG.bgm, SCFG.focus, JSON.stringify(SCFG.bgmMap)], bgmInfo: () => [bgmCur, bgmEl ? !bgmEl.paused : null, bgmEl ? +bgmEl.currentTime.toFixed(1) : 0, bgmScene], get focusRow() { return focusRow; }, sndBufs: () => Object.keys(BUF), sndPlayed: () => Object.keys(lastSnd).filter(k => !k.endsWith("~")), get guarded() { return guarded; }, get popups() { return popups; }, blocked, get shellN() { return shellN; },
+window.__castle = { ed: { autoBuild, placeWhy, openSheet, get ED() { return ED; }, setTier: (k) => { EM = demoMe(k); }, check: () => checkCastle(ED.lanes, ED.capt, EM.rules, EM.unlock), cost: () => costOf(ED.lanes, ED.capt), get EM() { return EM; } }, buildCard, get REC() { return REC; }, get stepN() { return stepN; }, startRun, TRIALS, checkCastle, startTrial, trialOpen, galeS, owlS, ADM, get deadMsg() { return deadMsg; }, get ME() { return ME; }, get RP() { return RP; }, get mode() { return mode; }, get summitT() { return summitT; }, octoS, rowsRef: () => rows, get deadMsg() { return deadMsg; }, calls: () => renderer.info.render.calls, sndDbg: () => [Object.keys(LOADING).length, Object.keys(SCFG.ev).length, !!AC, AC && AC.state], runLanes: (lanes) => startRun('practice', { owner: '시험', fame: 0, capt: false, lanes }), loops: () => Object.fromEntries(Object.entries(LOOPS).map(([k, L]) => [k, L.g ? +L.g.gain.value.toFixed(2) : null])), sndDef: () => [SCFG.range, SCFG.master, SCFG.bgm, SCFG.focus, JSON.stringify(SCFG.bgmMap)], bgmInfo: () => [bgmCur, bgmEl ? !bgmEl.paused : null, bgmEl ? +bgmEl.currentTime.toFixed(1) : 0, bgmScene], get focusRow() { return focusRow; }, sndBufs: () => Object.keys(BUF), sndPlayed: () => Object.keys(lastSnd).filter(k => !k.endsWith("~")), get guarded() { return guarded; }, get popups() { return popups; }, blocked, get shellN() { return shellN; },
   get t() { return t; }, shout, get shouts() { return shouts; }, get state() { return state; }, get hero() { return hero; }, get susp() { return susp; }, get maxRow() { return maxRow; }, move, rows: () => rows,
   hazard: (i, x) => hazardAt(i, x), raft: (i, x) => rows[i].t !== 'water' || rafts(rows[i]).some(f => x + .5 > f.x + .25 && x + .5 < f.x + f.w - .25),
   safeFor: (i, x, d) => { MG = 0; const t0 = t; let ok = true; for (let k = 0; k <= d; k += .05) { t = t0 + k; if (hazardAt(i, x)) { ok = false; break; } } t = t0; return ok; },

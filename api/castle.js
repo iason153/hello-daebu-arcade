@@ -55,10 +55,11 @@ const START = 1000;
 export const PIECES = {
   grass: 0, log: 1, soldier: 1, patrol: 2, water: 1, cannon: 2, wave: 3, bolt: 3, guard: 3,
   octo: 2, jelly: 2, bomb: 2, tide: 1, cart: 1, star: 1, tiller: 2, whirl: 2, rock: 2,
+  gale: 3, owl: 3, // 10/19 헤르메스의 돌풍 · 아테나의 부엉이(신의 시험을 통과해야 열림)
 };
 const SPEEDY = new Set(['log', 'soldier', 'patrol', 'water', 'cannon', 'jelly', 'bomb', 'tide', 'cart', 'star', 'tiller', 'whirl', 'rock']);
 const TWO = new Set(['patrol', 'jelly', 'rock']);
-const GODP = { wave: 'poseidon', bolt: 'zeus', guard: 'munch' };
+const GODP = { wave: 'poseidon', bolt: 'zeus', guard: 'munch', gale: 'hermes', owl: 'athena' };
 const CAPT_COST = 3, MIN_LEN = 20, COLS = 7;
 // 등급별(결투장 칭호 그대로): 뒤쪽 절반에서 함정을 몇 줄까지 연달아 · 가장 빠른 속도(0 느림 1 보통 2 빠름) · 경비대장
 export const CT = [
@@ -167,8 +168,8 @@ async function unlocks(wid) {
   const trials = tr || {};
   return {
     // 신 함정과 가호는 신의 시험을 통과해야 열린다. 우주괴물 수문장은 헬로먼치 카드가 한 장이라도 있으면
-    poseidon: !!trials.poseidon, zeus: !!trials.zeus, munch: Object.keys(cards).some((k) => k.startsWith('m_')),
-    cards: { poseidon: !!cards.poseidon, zeus: !!cards.zeus }, trials,
+    poseidon: !!trials.poseidon, zeus: !!trials.zeus, hermes: !!trials.hermes, athena: !!trials.athena, munch: Object.keys(cards).some((k) => k.startsWith('m_')),
+    cards: { poseidon: !!cards.poseidon, zeus: !!cards.zeus, hermes: !!cards.hermes, athena: !!cards.athena }, trials,
   };
 }
 async function dayGet(wid) { return (await kv.hgetall(`cday:${wid}:${kstDay()}`)) || {}; }
@@ -315,7 +316,7 @@ async function raidStart(req, res, b) {
   const [aA, aO, U] = await Promise.all([arenaGet(me.wid), arenaGet(target), unlocks(me.wid)]);
   const id = newId();
   const snap = { id, a: me.wid, an: me.nick, af: aA.r, o: target, on: c.nick, of: aO.r, lanes: c.pub.lanes, capt: !!c.pub.capt, len: c.pub.len, rev, at: Date.now(),
-    guard: { poseidon: U.poseidon, zeus: U.zeus, munch: U.munch } };
+    guard: { poseidon: U.poseidon, zeus: U.zeus, munch: U.munch, hermes: U.hermes, athena: U.athena } };
   await kv.set(`craidp:${id}`, snap, { ex: 40 * 60 });
   await kv.set(`craidopen:${me.wid}`, id, { ex: 40 * 60 }); // 지금 진행 중인 공략(끝내지 않고 나가면 다음에 실패로 정산)
   return res.status(200).json({ id, castle: { wid: target, nick: c.nick, fame: aO.r, lanes: snap.lanes, capt: snap.capt, len: snap.len }, guard: snap.guard, rev });
@@ -444,7 +445,8 @@ async function ghost(req, res, b) {
   return res.status(200).json({ id, exp, nick, link: `${SITE_ORIGIN}${PATH}?ghost=${id}`, short: `${SITE_ORIGIN}/k/g${id}` });
 }
 
-const TRIAL_GODS = { poseidon: { zone: 50, name: '포세이돈' }, zeus: { zone: 75, name: '제우스' } };
+// zone = 오늘의 신들의 성에서 이 줄까지 가 본 적이 있으면 시험이 열린다(게임 화면 TRIALS 와 같아야 함)
+const TRIAL_GODS = { hermes: { zone: 25, name: '헤르메스', icon: '🪽' }, athena: { zone: 40, name: '아테나', icon: '🦉' }, poseidon: { zone: 50, name: '포세이돈', icon: '🔱' }, zeus: { zone: 75, name: '제우스', icon: '⚡' } };
 async function trial(req, res, b) {
   const me = await sessionUser(req).catch(() => null);
   if (!me) return res.status(401).json({ error: 'login required' });
@@ -492,7 +494,7 @@ async function sharePage(res, key) {
     if (g) { title = g.summit ? `🏛 ${g.nick}님이 올림포스 정상에 올랐어요! · ${g.row}줄` : `⛅ ${g.nick}님의 신들의 성 도전장 · ${g.row}줄`; desc = '오늘 자정까지 · 유령을 넘으면 승리 · 로그인 없이 바로'; img = `${SITE_ORIGIN}${PATH}share/${g.summit ? 'card_summit' : 'card_gods'}.jpg`; dest = `${SITE_ORIGIN}${PATH}?ghost=${id}`; }
     else desc = '기한이 지난 도전장이에요. 오늘의 신들의 성에 도전해 보세요!'; }
   if (kind === 't' && ID_RE.test(id)) { const g = parse(await kv.get(`ctshare:${id}`));
-    if (g) { const nm = (TRIAL_GODS[g.god] || {}).name || ''; title = `${g.god === 'zeus' ? '⚡' : '🔱'} ${g.nick}님이 ${nm}의 시험을 통과했어요!`; desc = '이 주소로 들어오면 시험을 한 번 공짜로 받아 볼 수 있어요'; img = `${SITE_ORIGIN}${PATH}share/card_trial.jpg`; dest = `${SITE_ORIGIN}${PATH}?trial=${id}`; } }
+    if (g) { const nm = (TRIAL_GODS[g.god] || {}).name || ''; title = `${(TRIAL_GODS[g.god] || {}).icon || '🏛'} ${g.nick}님이 ${nm}의 시험을 통과했어요!`; desc = '이 주소로 들어오면 시험을 한 번 공짜로 받아 볼 수 있어요'; img = `${SITE_ORIGIN}${PATH}share/card_trial.jpg`; dest = `${SITE_ORIGIN}${PATH}?trial=${id}`; } }
   if (kind === 'r' && ID_RE.test(id)) { const r = parse(await kv.get(`craid:${id}`));
     if (r) { title = r.ok ? `🏴 ${r.an}님이 ${r.on}님의 성을 털었어요!` : `🛡️ ${r.on}님의 성이 ${r.an}님을 막아 냈어요`; desc = '공략 다시보기 · 로그인 없이 바로 보기'; img = `${SITE_ORIGIN}${PATH}share/card_raid.jpg`; dest = `${SITE_ORIGIN}${PATH}?raid=${id}`; } }
   if (kind === 'c' && WID_RE.test(id)) { const c = parse(await kv.get(`castle:${id}`));
