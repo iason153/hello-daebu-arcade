@@ -57,6 +57,7 @@
 <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.8.1/kakao.min.js" crossorigin="anonymous"></script>
 <script src="/fair.js" data-game="hello_run"></script>
 <script src="/member.js"></script>
+<script src="/admin-gate.js"></script>
 <script>
 // 카카오톡 공유 고도화(B안)용 초기화. 카카오 디벨로퍼스(developers.kakao.com)에서
 // 발급받은 JavaScript 키로 아래 값을 교체하고, daebugame.com을 플랫폼 도메인으로 등록해야 함.
@@ -100,7 +101,8 @@ function stopRunSound(){ if(!sndRun.paused) sndRun.pause(); }
 function playJumpSound(){ sndJump.currentTime = 0; sndJump.play().catch(()=>{}); }
 // 대중 배포 단계로 넘어가면서, 평소엔 안 보이고 ?dev=1로 접속했을 때만 설정 버튼이
 // 뜨게 바꿈(헬로버드랑 같은 방식) — 예전엔 손맛 테스트 기간이라 항상 켜뒀었음
-const IS_DEV = new URLSearchParams(location.search).get('dev') === '1';
+// [10/19] ?dev=1만으로는 안 열린다 — 관리자 비밀번호를 서버가 확인해야 패널이 뜬다(admin-gate.js)
+let IS_DEV = false;
                       // (the ?dev=1 query trick doesn't reliably pass through the artifact host)
 
 const canvas = document.getElementById('c');
@@ -175,10 +177,13 @@ const DEFAULTS = {
 // 예전에 패널을 한 번이라도 연 기기에서는 옛 수치가 그대로 고정돼 새 난이도가 적용되지 않았음.
 let T = Object.assign({}, DEFAULTS);
 try{
-  // 설정 패널에서 저장한 값은 ?dev=1 로 열었을 때만 적용 — 평소 접속에서는 늘 기본값
-  const saved = IS_DEV ? JSON.parse(localStorage.getItem('hr_tune_v2')||'{}') : {};
-  T = Object.assign({}, DEFAULTS, saved);
+  // [10/19] 설정 패널에서 저장한 값은 관리자 확인이 끝난 뒤에만 불러온다(loadSavedTune) —
+  // 평소 접속에서는 늘 기본값. 예전에 값이 남은 폰도 자동으로 정상 게임이 된다
+  T = Object.assign({}, DEFAULTS);
 }catch(e){}
+function loadSavedTune(){
+  try{ T = Object.assign({}, DEFAULTS, JSON.parse(localStorage.getItem('hr_tune_v2')||'{}')); }catch(e){}
+}
 function saveTune(){ localStorage.setItem('hr_tune_v2', JSON.stringify(T)); }
 // derived each time from JUMP_HEIGHT + JUMP_HANGTIME — the closed-form solution for
 // "what gravity/launch-velocity gives exactly this apex height over exactly this hangtime"
@@ -266,6 +271,16 @@ let weatherAnnounceTimer = 0;
 let jumpsUsed = 0; // 0 = grounded, 1 = used first jump, 2 = used double jump
 let obstacles = [];
 let nextObstacleX = 700;
+// [10/19 입구 벽 완화] 기록의 절반이 10m 전에, "2m"(=첫 장애물)에서만 73판이 끝났다.
+// 첫 장애물을 더 멀리(약 2.5초 뒤) 두고, 처음 세 개는 고정 순서(낮은 것 → 낮은 것 → 숙이기)로
+// 낸다. 그 사이 간격도 넉넉히. 그다음부터는 원래대로 무작위.
+const FIRST_OBSTACLE_X = 1150;
+const OPENING_SEQ = ['low','low','air'];
+const OPENING_GAP_MULT = 1.5;
+let openingIndex = 0;
+// 처음 몇 판은 장애물이 다가올 때 "톡! 점프" / "바닥 꾹! 숙이기"를 띄운다. 30m를 한 번 넘기면 끈다.
+let tutorialOn = true;
+try{ tutorialOn = !localStorage.getItem('hr_tut_done'); }catch(e){}
 
 const GA_GAME = 'hello_run';
 // ---------- GA4 이벤트 ----------
@@ -291,7 +306,8 @@ function resetGame(){
   milestoneTimer = 0;
   particles = [];
   obstacles = [];
-  nextObstacleX = 700;
+  nextObstacleX = FIRST_OBSTACLE_X;
+  openingIndex = 0;
   state = 'playing';
   track('game_start');
   startRunSound();
@@ -328,6 +344,8 @@ function spawnObstacle(x){
     acc += weights[t];
     if(r < acc){ type = t; break; }
   }
+  let opening = false;
+  if(openingIndex < OPENING_SEQ.length){ type = OPENING_SEQ[openingIndex]; openingIndex++; opening = true; }
 
   if(type==='air'){
     const key = AIR_OBS[Math.floor(Math.random()*AIR_OBS.length)];
@@ -347,6 +365,7 @@ function spawnObstacle(x){
     const key = LONG_OBS[Math.floor(Math.random()*LONG_OBS.length)];
     obstacles.push({ x, type, img:key, w: T.LONG_OBSTACLE_W, h: T.LONG_OBSTACLE_H, passed:false });
   }
+  obstacles[obstacles.length-1].opening = opening;
 }
 
 // gap needed after an obstacle of this type, before the next one is safe to place —
@@ -679,8 +698,9 @@ function update(dt){
   while(nextObstacleX < scrollX + W + 300){
     spawnObstacle(nextObstacleX);
     const justSpawned = obstacles[obstacles.length-1];
-    nextObstacleX += requiredGapAfter(justSpawned.type, speed);
+    nextObstacleX += requiredGapAfter(justSpawned.type, speed) * (justSpawned.opening ? OPENING_GAP_MULT : 1);
   }
+  if(tutorialOn && displayM >= 30){ tutorialOn = false; try{ localStorage.setItem('hr_tut_done','1'); }catch(e){} }
 
   // collision
   const hx = HELLO_X;
@@ -1227,14 +1247,23 @@ function drawUI(){
   // small always-on label at the ground line — the ground texture itself already reads as
   // a visually distinct zone, so this is just a one-line explanation of what it does,
   // not a highlight overlay
-  if(state==='playing' && showCrouchHint){
+  // [10/19] 처음 몇 판(30m 전)은 장애물이 다가올 때만 그 장애물에 맞는 안내를 띄운다
+  let hintText = '아래 바닥 터치 = 숙이기', hintArrow = '▼', hintOn = state==='playing' && showCrouchHint && !tutorialOn;
+  if(state==='playing' && tutorialOn){
+    const near = obstacles.find(o => !o.passed && (o.x - scrollX) > HELLO_X - 20 && (o.x - scrollX) - HELLO_X < 330);
+    if(near){
+      hintOn = true;
+      if(near.type==='air'){ hintText = '바닥 꾹! 숙이기'; hintArrow = '▼'; }
+      else { hintText = (near.type==='tall'||near.type==='long') ? '톡 톡! 두 번 점프' : '톡! 점프'; hintArrow = ''; }
+    }
+  }
+  if(hintOn){
     ctx.save();
     const bounce = Math.sin(performance.now()/260) * 6;
     // 캐릭터가 서 있을 때(978 근처)는 물론, 점프 정점(대략 717 근처)까지도 절대 안 겹치게
     // 훨씬 위쪽(하늘 영역)에 띄운다 — 예전엔 바닥 바로 위라 캐릭터/장애물을 가려서 플레이가
     // 안 될 정도였음
     const hintY = 560;
-    const hintText = '아래 바닥 터치 = 숙이기';
     ctx.textAlign = 'center';
     ctx.font = '900 27px sans-serif';
     const tw = ctx.measureText(hintText).width;
@@ -1248,8 +1277,10 @@ function drawUI(){
     ctx.font = '900 30px sans-serif';
     ctx.fillStyle = 'rgba(255,200,87,0.95)';
     ctx.strokeStyle = 'rgba(0,0,0,0.45)'; ctx.lineWidth = 3;
-    ctx.strokeText('▼', W/2, hintY+40+bounce);
-    ctx.fillText('▼', W/2, hintY+40+bounce);
+    if(hintArrow){
+      ctx.strokeText(hintArrow, W/2, hintY+40+bounce);
+      ctx.fillText(hintArrow, W/2, hintY+40+bounce);
+    }
     ctx.restore();
   }
   ctx.textAlign='left';
@@ -1424,6 +1455,22 @@ function draw(){
   }
 }
 
+// ?fps=1 — 화면이 1초에 몇 번 그려지는지 + 게임 시간이 실제 시간과 같은 빠르기로 가는지(100%) 표시
+const SHOW_FPS = /[?&]fps=1(&|$)/.test(location.search);
+let fpsN = 0, fpsDt = 0, fpsT = 0, fpsShow = 0, fpsGame = 100;
+function drawFps(ts){
+  fpsN++;
+  if(ts - fpsT >= 1000){
+    fpsShow = Math.round(fpsN*1000/(ts-fpsT));
+    fpsGame = Math.round(fpsDt*(1000/60)/(ts-fpsT)*100);
+    fpsN = 0; fpsDt = 0; fpsT = ts;
+  }
+  ctx.save();
+  ctx.fillStyle='rgba(0,0,0,.6)'; ctx.fillRect(0,H-26,250,26);
+  ctx.fillStyle='#7CFC9A'; ctx.font='700 15px monospace'; ctx.textAlign='left';
+  ctx.fillText('화면 '+fpsShow+'/초 · 게임 '+fpsGame+'%', 8, H-8);
+  ctx.restore();
+}
 function loop(ts){
   let dt = 1;
   if(lastTs !== null){
@@ -1433,6 +1480,7 @@ function loop(ts){
   lastTs = ts;
   if(!hiddenPause) update(dt);
   draw();
+  if(SHOW_FPS){ fpsDt += dt; drawFps(ts); }
   requestAnimationFrame(loop);
 }
 
@@ -1469,7 +1517,7 @@ function onAllLoaded(){
   applyLiveConditions().finally(()=>{
     requestAnimationFrame(loop);
   });
-  if(IS_DEV) initDevPanel();
+  if(window.ArcadeAdmin) ArcadeAdmin.verify().then(ok=>{ if(ok){ IS_DEV = true; loadSavedTune(); initDevPanel(); } });
 }
 
 // ---------- dev panel ----------

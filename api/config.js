@@ -7,6 +7,7 @@
 //
 //   GET  /api/config?game=hello_tower          → { game, config }   (누구나, 게임이 호출)
 //   POST /api/config  {game, config}           → 저장                (관리자만, 헤더 x-admin-secret)
+//   POST /api/config  {action:'admin_check'}   → { ok }              (비밀번호 확인만, 헤더 x-admin-secret)
 //
 // 저장 구조: Redis 문자열 키 "config:{game}" 에 JSON 한 덩어리.
 //
@@ -63,6 +64,10 @@ export default async function handler(req, res) {
     }
 
     if (req.method === 'POST') {
+      // 게임 설정 패널(헬로런·헬로버드 ?dev=1) 열기 전 비밀번호 확인용 — 로그인 없이 맞는지만 알려 준다
+      if (req.body && req.body.action === 'admin_check') {
+        return res.status(200).json({ ok: isAdminRequest(req) });
+      }
       if (!isAdminRequest(req)) return res.status(403).json({ error: 'forbidden' });
       const { game, config } = req.body || {};
       const schema = SCHEMAS[game];
