@@ -171,6 +171,7 @@
 </head>
 <body>
 <div id="wrap"><div id="stage"><canvas id="gl"></canvas><canvas id="hud"></canvas></div></div>
+<div id="glLost" hidden style="position:fixed;inset:0;z-index:99;background:rgba(8,16,36,.88);color:#fff;font:800 18px sans-serif;text-align:center;padding:42vh 24px 0" onclick="location.reload()">화면이 잠깐 멈췄어요<br><small style="font-weight:600;opacity:.8">눌러서 다시 불러오기</small></div>
 <div id="pad" hidden><button type="button" data-d="L" aria-label="왼쪽">◀</button><button type="button" class="up" data-d="U" aria-label="앞으로">▲</button><button type="button" data-d="R" aria-label="오른쪽">▶</button><button type="button" id="bShout" class="hello">📣<small id="shN">3</small></button></div>
 <button type="button" id="bWing" hidden>🪽<small id="wgN">0</small></button>
 <button id="mute" type="button" hidden aria-label="소리">🔊</button>
@@ -480,7 +481,8 @@ function dress(i) {
   if (okRow && rnd() < .32) { for (let k = 0; k < 6; k++) { const c = Math.floor(rnd() * COLS); if (!r.block.includes(c)) { r.shell = c; break; } } }
 }
 function hashStr(s) { let h = 7; for (const ch of String(s)) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return h % 2147483647; }
-const blocked = (i, c) => !!(rows[i] && rows[i].block && rows[i].block.includes(c));
+// 부엉이 줄의 맨 왼쪽 칸은 부엉이가 앉은 돌기둥이라 못 지나간다(10/20)
+const blocked = (i, c) => !!(rows[i] && ((rows[i].block && rows[i].block.includes(c)) || (rows[i].t === 'owl' && c === 0)));
 function startRun(m, c, opt) {
   opt = opt || {}; mode = m; castle = c || null; REC = []; stepN = 0; RP = opt.replay ? { inp: opt.replay, i: 0, on: 0 } : null; GH = { r: [], x: [] }; GHO = opt.ghost || null; summitT = -1;
   cseed = m === 'gods' ? kstDay().n : hashStr(c && (c.wid || c.god || c.owner) || 'castle');
@@ -997,6 +999,17 @@ function fit() {
   hx.setTransform(scale * dpr, 0, 0, scale * dpr, 0, 0);
 }
 window.addEventListener('resize', fit);
+// (10/20) 폰에서 가끔 화면 일부가 검게·어긋나게 남는 문제: 화면 크기가 잠깐 바뀌었다 돌아올 때(알림창·화면 캡처·앱 전환)
+// 캔버스 크기가 어긋난 채 남는 경우를 막으려고, 돌아올 때·방향이 바뀔 때·매초 한 번 크기를 다시 맞춘다
+let fitKey = '';
+function refit() { const k = window.innerWidth + 'x' + window.innerHeight + '@' + (window.devicePixelRatio || 1); if (k !== fitKey) { fitKey = k; fit(); } }
+window.addEventListener('orientationchange', () => setTimeout(fit, 300));
+if (window.visualViewport) window.visualViewport.addEventListener('resize', () => setTimeout(refit, 120));
+document.addEventListener('visibilitychange', () => { if (!document.hidden) { fitKey = ''; setTimeout(refit, 200); } });
+setInterval(refit, 1000);
+// 그래픽이 끊기면(폰이 그래픽 메모리를 회수) 안내를 띄우고, 누르면 다시 불러온다
+glc.addEventListener('webglcontextlost', (e) => { e.preventDefault(); const n = $('glLost'); if (n) n.hidden = false; }, false);
+glc.addEventListener('webglcontextrestored', () => { fitKey = ''; refit(); }, false);
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x8fd3f0);
 scene.fog = new THREE.Fog(0x8fd3f0, 22, 34);
@@ -1117,7 +1130,13 @@ const ROWK = {
   water:    ['lava', '#ff6a1f'], wave: ['water', '#2f86c8'], tide: ['water', '#7cc4ea'], bolt: ['dark', '#3f4466'], guard: ['dark', '#3a2d55'], gale: ['dark', '#3c5a7a'], owl: ['dark', '#5a4b33'],
 };
 const world = new Map();
-function clearWorld() { for (const [, o] of world) scene.remove(o.g); world.clear(); }
+// (10/20) 지나간 줄을 지울 때 그 줄이 만든 모양·재질도 그래픽 메모리에서 비운다. 전에는 쌓이기만 해서
+// 여러 판·긴 판을 하면 폰 그래픽 메모리가 차서 바닥·하늘이 검게 나오는 원인으로 추정(대표 폰 화면, 10/20)
+// 같이 쓰는 것(BOX·SPH·PLANE 모양, mat() 재질, 그림)은 남긴다. 그림(Sprite)의 모양은 three.js가 모두 같이 쓰므로 건드리지 않는다
+function disposeGroup(g) { const keep = new Set(Object.values(MATS)), geo = new Set([BOX, SPH, PLANE]);
+  g.traverse(o => { const ms = o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : []; ms.forEach(m => { if (!keep.has(m)) m.dispose(); }); if (!o.isSprite && o.geometry && !geo.has(o.geometry)) o.geometry.dispose(); }); }
+function dropRow(o) { scene.remove(o.g); try { disposeGroup(o.g); } catch (e) {} }
+function clearWorld() { for (const [, o] of world) dropRow(o); world.clear(); }
 // 안전지대(풀밭·성문·보물방)는 한 단 높고, 위험지대는 낮다. 두 줄짜리 함정의 위 줄은 위험지대
 const SAFE_H = .14;
 const isSafe = (i) => { const r = rows[i]; return !!r && (r.t === 'grass' || r.t === 'yard' || r.t === 'treasure') && !(rows[i - 1] && TWO[rows[i - 1].t]); };
@@ -1198,9 +1217,9 @@ function buildRow(i) {
   if (r.t === 'gale') { const side = r.dir > 0 ? -1 : 1; dyn.gf = godFig(g, 'hermes', side, z, 0xbfe8ff);
     dyn.gw = [0, 1].map(() => { const s2 = sprite('gale_warn', .8); s2.center.set(.5, .15); s2.renderOrder = 3; s2.visible = false; g.add(s2); return s2; });
     dyn.gl = sprite('gale1', 2.3); dyn.gl.center.set(.5, .06); dyn.gl.renderOrder = 4; dyn.gl.visible = false; g.add(dyn.gl); dyn.glSh = blobShadow(g, 3.2); dyn.glSh.visible = false; }
-  if (r.t === 'owl') { const side = -1, ox = -(COLS / 2 - .05); // 제우스처럼 늘 왼쪽 성벽 위(오른쪽은 화면 밖으로 잘림) dyn.owlSide = side; dyn.owlX = ox;
-    dyn.oaura = new THREE.Sprite(new THREE.SpriteMaterial({ map: GLOW_TX, color: 0xffe08a, transparent: true, opacity: 0, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending })); dyn.oaura.scale.set(2.4, 2.4, 1); dyn.oaura.position.set(ox, 1.3, z - .15); dyn.oaura.renderOrder = 4; g.add(dyn.oaura);
-    dyn.owl = sprite('owl_sleep', 1.95); dyn.owl.material.depthTest = false; dyn.owl.renderOrder = 5; dyn.owl.position.set(ox, 0, z - .15); g.add(dyn.owl);
+  if (r.t === 'owl') { const side = -1, ox = wx(0); /* (10/20) 맨 왼쪽 칸 위 돌기둥 — 성벽 밖이면 가까운 줄에서 화면 밖으로 잘려 안 보였다 */ dyn.owlSide = side; dyn.owlX = ox; dyn.gf = godFig(g, 'athena', 1, z, 0xffe08a); /* (10/20) 아테나도 오른쪽 성벽 위에 */
+    dyn.oaura = new THREE.Sprite(new THREE.SpriteMaterial({ map: GLOW_TX, color: 0xffe08a, transparent: true, opacity: 0, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending })); dyn.oaura.scale.set(2.8, 2.8, 1); dyn.oaura.position.set(ox, 1.4, z - .1); dyn.oaura.renderOrder = 4; g.add(dyn.oaura);
+    dyn.owl = sprite('owl_sleep', 2.2); dyn.owl.renderOrder = 5; dyn.owl.position.set(ox, 0, z - .1); blobShadow(g, 1.1).position.set(ox, .02, z); g.add(dyn.owl);
     dyn.otiles = []; for (let c = 0; c < COLS; c++) { const tl = new THREE.Mesh(PLANE, new THREE.MeshBasicMaterial({ color: 0xffd23c, transparent: true, opacity: 0, depthWrite: false })); tl.rotation.x = -Math.PI / 2; tl.scale.set(.9, .9, 1); tl.position.set(wx(c), .013, z); g.add(tl); dyn.otiles.push(tl); }
     dyn.atk = sprite('owl_attack', 1.3); dyn.atk.center.set(.5, .5); dyn.atk.material.depthTest = false; dyn.atk.renderOrder = 6; dyn.atk.visible = false; g.add(dyn.atk); }
   if (r.t === 'whirl') { dyn.wh = sprite('whirl1', 1.05); g.add(dyn.wh); dyn.whs = blobShadow(g, .9); }
@@ -1215,7 +1234,7 @@ function buildRow(i) {
 }
 function syncWorld(lo, hi) { // 바위 줄은 멀리(30줄 앞)까지 미리 만들어 둔다: 굴러 내려오는 바위가 중간에 갑자기 나타나지 않게
   const far = (i) => i > hi && i <= hi + 12 && rows[i] && rows[i].t === 'rock';
-  for (const [i, o] of world) if (i < lo || (i > hi && !far(i))) { scene.remove(o.g); world.delete(i); }
+  for (const [i, o] of world) if (i < lo || (i > hi && !far(i))) { dropRow(o); world.delete(i); }
   for (let i = lo; i <= hi + 12; i++) if (rows[i] && !world.has(i) && (i <= hi || far(i))) world.set(i, buildRow(i));
 }
 const clipX = (x, w) => [Math.max(0, x), Math.min(COLS, x + w)];
@@ -1248,14 +1267,15 @@ function animRow(i, o) {
     d.gw.forEach((s2, k) => { s2.visible = w.p === 'warn'; if (!s2.visible) return; const P = COLS + 5, x = wrap(t * 7 + k * P / 2, P) - 2.5; skin(s2, 'gale_warn', .8, fl); s2.position.set(wx(r.dir > 0 ? x : COLS - 1 - x), .04 + Math.sin(t * 9 + k) * .04, z + .15); s2.material.opacity = Math.min(1, w.k * 1.8) * .95; });
     d.gl.visible = d.glSh.visible = w.p === 'hit';
     if (w.p === 'hit') { skin(d.gl, 'gale' + (1 + Math.floor(t * 16) % 3), 2.3, fl); d.gl.position.set(wx(w.cx), -.05 + Math.abs(Math.sin(t * 11)) * .06, z + .35); d.gl.material.rotation = Math.sin(t * 20) * .03; d.glSh.position.set(wx(w.cx), .02, z); d.glSh.scale.set(3.4, .8, 1); if (Math.abs(i - hero.row) < 3) shake = Math.max(shake, .3); } }
+  if (d.owl) godAnim(d.gf, owlS(r));
   if (d.owl) { const w = owlS(r), key = w === 'calm' ? 'owl_sleep' : w === 'warn' ? 'owl_look' : 'owl_watch';
-    skin(d.owl, key, 1.95, w === 'warn'); // 고개 돌린 그림은 왼쪽을 본다 → 왼쪽 성벽에 앉아 있으니 뒤집어서 줄 쪽을 보게
+    skin(d.owl, key, 2.2, w === 'warn'); // 고개 돌린 그림은 왼쪽을 본다 → 왼쪽 성벽에 앉아 있으니 뒤집어서 줄 쪽을 보게
     const pul = w === 'hit' ? 1 + Math.abs(Math.sin(t * 7)) * .05 : 1; d.owl.scale.set(d.owl.userData.h * (d.owl.userData.a || .83) * pul, d.owl.userData.h * pul, 1);
     d.owl.position.y = w === 'calm' ? Math.sin(t * 1.6 + i) * .03 : w === 'warn' ? Math.sin(t * 30) * .02 : 0; d.owl.material.rotation = w === 'calm' ? Math.sin(t * 1.3 + i) * .05 : 0;
     d.oaura.material.opacity = w === 'hit' ? .65 + Math.sin(t * 12) * .15 : w === 'warn' ? .3 : 0;
-    d.otiles.forEach(tl => { tl.material.opacity = w === 'hit' ? .38 + .1 * Math.sin(t * 8) : w === 'warn' ? .12 + .1 * Math.sin(t * 25) : 0; });
+    d.otiles.forEach(tl => { tl.material.opacity = w === 'hit' ? .45 + .08 * Math.sin(t * 8) : 0; /* 노란 바닥 = 감시 중(움직이면 들킴). 예고 때는 안 칠한다 */ });
     const got = state === 'dead' && deathKind === 'owl' && hero.owlRow === i; d.atk.visible = got; d.owl.visible = !got;
-    if (got) { const a = Math.min(1, (performance.now() / 1000 - deadT) / .35), tx2 = wx(heroX()), tz = wz(heroRowF()); d.atk.position.set(d.owlX + (tx2 - d.owlX) * a, 1.5 - a * .95, z - .15 + (tz - z + .15) * a); skin(d.atk, 'owl_attack', 1.3, false); } }
+    if (got) { const a = Math.min(1, (performance.now() / 1000 - deadT) / .35), tx2 = wx(heroX()), tz = wz(heroRowF()); d.atk.position.set(d.owlX + (tx2 - d.owlX) * a, 1.6 - a * 1.05, z - .1 + (tz - z + .1) * a); skin(d.atk, 'owl_attack', 1.3, false); } }
   if (d.wv) { const w = waveS(r), fl = r.dir < 0, f = Math.floor(t * 8) % 2 ? 'wave2' : 'wave1'; d.wv.visible = d.wvSh.visible = w.p !== 'calm';
     if (w.p === 'warn') { const st = r.dir > 0 ? -.6 : COLS - .4, k = .35 + w.k * .4; skin(d.wv, f, 1.6 * k, fl); d.wv.position.set(wx(st), -.2, z + .45); d.wvSh.position.set(wx(st), .02, z); d.wvSh.scale.set(1.2 * k, .5 * k, 1); }
     if (w.p === 'hit') { skin(d.wv, f, 1.6, fl); d.wv.position.set(wx(w.cx), -.2 + Math.abs(Math.sin(t * 9)) * .05, z + .45); d.wv.material.rotation = LT + (fl ? 2 * LT : 0) * 0; d.wvSh.position.set(wx(w.cx), .02, z); d.wvSh.scale.set(2, .7, 1); if (Math.abs(i - hero.row) < 3) shake = Math.max(shake, .15); } }
@@ -1356,7 +1376,7 @@ function drawHud() {
     if (r.t === 'bolt') { const b = boltS(r); if (b.p === 'warn') { const p = proj(X0 - .35, 3.1, o.z); bubble('번쩍!', Math.max(40, p.x), p.y, '#fff6b0'); } }
     if (r.t === 'wave' || r.t === 'bolt') { const gx2 = r.t === 'bolt' ? X0 - .35 : r.dir > 0 ? X0 - .35 : -X0 + .35, p = proj(gx2, .35, o.z - .2); tag(r.t === 'bolt' ? '⚡ 제우스' : '🔱 포세이돈', Math.max(44, Math.min(W - 44, p.x)), p.y + 14, r.t === 'bolt' ? '#fff27a' : '#a9e6ff', 13); }
     if (r.t === 'gale') { const w = galeS(r), sx = r.dir > 0 ? X0 - .35 : -X0 + .35; if (w.p === 'warn') { const p = proj(sx, 3.1, o.z); bubble('돌풍 간다~!', Math.max(64, Math.min(W - 64, p.x)), p.y, '#dff4ff'); } const p2 = proj(sx, .35, o.z - .2); tag('🪽 헤르메스', Math.max(48, Math.min(W - 48, p2.x)), p2.y + 14, '#cfeeff', 13); }
-    if (r.t === 'owl') { const w = owlS(r), ox = X0 + .05, p = proj(ox, 2.25, o.z - .15), cx2 = Math.max(70, Math.min(W - 70, p.x)); if (!(state === 'dead' && deathKind === 'owl' && hero.owlRow === i)) tag(w === 'calm' ? 'Zzz… 지금이야!' : w === 'warn' ? '부엉?! 깬다…' : '👁 움직이면 들켜요!', cx2, p.y, w === 'calm' ? '#9dffb0' : w === 'warn' ? '#ffe27a' : '#ffb3b3', 14); }
+    if (r.t === 'owl') { const w = owlS(r), ox = wx(0), p = proj(ox, 2.5, o.z - .1), cx2 = Math.max(70, Math.min(W - 70, p.x)); if (!(state === 'dead' && deathKind === 'owl' && hero.owlRow === i)) tag(w === 'calm' ? 'Zzz… 지금이야!' : w === 'warn' ? '부엉?! 깬다…' : '👁 움직이면 들켜요!', cx2, p.y, w === 'calm' ? '#9dffb0' : w === 'warn' ? '#ffe27a' : '#ffb3b3', 14); }
     if (r.t === 'guard') { const s = guardS(r), p = proj(0, 2.2, o.z); if (!frozen(r)) tag(s === 'calm' ? 'Zzz… 지금이야!' : s === 'warn' ? '👾 깨어난다…' : '덥석!', p.x, p.y, s === 'calm' ? '#9dffb0' : '#ffb3b3'); }
     if (frozen(r)) { // 인사를 들은 생물: "어? 안녕?"
       let pts = [];
