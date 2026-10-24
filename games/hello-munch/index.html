@@ -315,10 +315,19 @@ function ensureFloors(upTo) {
 }
 function ledgeUsable(l) {
   if (!l || l.broken) return false;
-  if (l.type === 'move') return moveExtent(l) > .45;
+  if (l.type === 'move') return moveExtent(l) > MOVE_ON;
   return true;
 }
-function moveExtent(l) { return .5 + .5 * Math.sin(now / 520 + l.phase); }
+// [10/24 대표 제보: 360m쯤 움직이는 발판이 너무 늦게 나와 기다리다 잡힘]
+// 봇 40판 시험에서 19판이 "닫힌 움직이는 발판 앞에서 기다리다" 잡혔다(최대 약 1.5초 대기).
+// 주기를 3.3초 → 2.8초로 조금 빠르게, 밟을 수 있는 폭을 45% → 35%로 넓혀 닫혀 있는 시간을 약 1.5초 → 1.1초로 줄였다.
+// 밟고 있다가 떨어지는 폭도 35% → 20%로 같이 낮췄다(떨어지기 전 버틸 수 있는 시간은 전과 비슷).
+// 봇 120판 비교: 중간 기록 389 → 449m, 330m 전에 끝난 판 25 → 9, 500m 도달 9 → 42
+const MOVE_ON = .35, MOVE_FALL = .2;
+function moveExtent(l) { return .5 + .5 * Math.sin(now / 450 + l.phase); }
+// 바로 윗층이 "닫힌 움직이는 발판"뿐이라 기다릴 수밖에 없는 순간인지
+function waitingMove() { if (!hero || hero.anim) return false; const nf = floors[hero.floor + 1]; if (!nf) return false;
+  return !['L', 'R'].some(s => ledgeUsable(nf[s])) && ['L', 'R'].some(s => nf[s] && nf[s].type === 'move' && !nf[s].broken); }
 
 // ---------------------------------------------------------------- 상태
 let crumbleAcc = 0;
@@ -673,7 +682,7 @@ function update(dt) {
     } else if (l.gullKick && now >= l.gullKick) {
       gullHits++; if (gullHits >= 2) earnCard('m_gull'); // [비밀 카드] 한 판에 갈매기에게 2번 맞기
       l.gullKick = 0; l.gullFly = now; l.type = 'rock'; popups.push({ text: '끼악!', x: ledgeX(hero.side), y: screenY(hero.floor) - 50, t0: now }); fallFrom(hero.floor, hero.side);
-    } else if (l.type === 'move' && moveExtent(l) < .35) {
+    } else if (l.type === 'move' && moveExtent(l) < MOVE_FALL) {
       popups.push({ text: '으악!', x: ledgeX(hero.side), y: screenY(hero.floor) - 40, t0: now }); fallFrom(hero.floor, hero.side);
     }
   }
@@ -687,6 +696,7 @@ function update(dt) {
     // 많이 뒤처지면 포효하며 몰아쳐 올라옴(1.4초간 2배)
     const resting = floors[hero.floor] && floors[hero.floor].rest;
     if (resting) v *= .35;
+    if (waitingMove()) v *= .7;   // [10/24] 닫힌 움직이는 발판을 기다리는 동안은 괴물이 조금 느려진다(억울하게 잡히지 않게)
     if (d > 5.5 && now > shark.roarCool && !resting) { shark.roarUntil = now + 1400; shark.roarCool = now + 6000; shake = Math.max(shake, 6); sfx.roar(); popups.push({ text: '크아아앙!', x: W / 2, y: H - 120, t0: now, big: true }); }
     if (now < shark.roarUntil) v *= 2.1;
     // 거리감: 가까울 땐 기본 속도만 → 헬로가 팍팍 오르면 점점 벌어짐.
