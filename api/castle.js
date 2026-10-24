@@ -2,6 +2,7 @@
 //
 //   GET  ?me=1                 → 내 성·명성·등급·성 규칙·신 함정 열림·오늘 남은 공략·소식함·복수 명단 (로그인)
 //   GET  ?targets=1            → 공략할 성 4~5곳(내 명성 ±100) + 복수 칸 (로그인)
+//   GET  ?browse=1             → 공개된 모든 성(명성 높은 순, 최대 200곳) — 급이 다른 성도 골라서 털기 (로그인, 10/24)
 //   GET  ?castle={wid}         → 그 사람의 공개된 성(누구나 — "내 성 도전장"으로 받은 사람이 연습으로 해 본다, 명성 없음)
 //   GET  ?raid={id}            → 공략 다시보기(누구나, 로그인 없이)
 //   GET  ?gods=1               → 오늘의 신들의 성 순위·정상 명단·왕좌 + 내 기록
@@ -208,6 +209,7 @@ export default async function handler(req, res) {
     const me = await sessionUser(req).catch(() => null);
     if (q.me) { await settleAbandoned(me); return await mine(res, me); }
     if (q.targets) return await targets(res, me);
+    if (q.browse) return await browse(res, me);
     return res.status(400).json({ error: 'bad request' });
   } catch (e) {
     console.error('[castle]', e && e.message);
@@ -266,6 +268,25 @@ async function publicCastle(res, wid) {
 }
 
 // 공략 상대: 내 명성 ±100 안에서 4~5곳(오늘 이미 간 성은 빼고). 모자라면 가까운 명성 순으로 채운다
+// 이기면 얻는 명성 / 막히면 잃는 명성(raid_end 와 같은 계산 — 주인의 하루 상한은 주인 쪽에만 걸린다)
+function stakeOf(aR, oR) { const ea = 1 / (1 + Math.pow(10, (oR - aR) / 400));
+  return { win: clamp(Math.round(RK * (1 - ea)), 5, 30), lose: Math.max(2, Math.round(clamp(Math.round(RK * ea), 5, 30) / 2)) }; }
+// 급이 다른 성도 털 수 있게(10/24 대표): 공개된 성 전체를 명성 높은 순으로. 실제 공략은 raid_start 가 원래부터 어느 성이든 받는다
+async function browse(res, me) {
+  if (!me) return res.status(401).json({ error: 'login required' });
+  const [a, day] = await Promise.all([arenaGet(me.wid), dayGet(me.wid)]);
+  const raw = (await kv.zrange('castle:pool', 0, 1999, { withScores: true })) || [];
+  const wids = []; for (let i = 0; i < raw.length; i += 2) if (String(raw[i]) !== me.wid) wids.push(String(raw[i]));
+  const done = new Set(Object.keys(day).filter((k) => k.startsWith('r:')).map((k) => k.slice(2)));
+  const [cs, as] = await Promise.all([Promise.all(wids.map((w) => kv.get(`castle:${w}`).then(parse))), Promise.all(wids.map((w) => arenaGet(w)))]);
+  const now = Date.now(), list = [];
+  wids.forEach((w, i) => { const c = cs[i], aa = as[i]; if (!c || !c.pub) return;
+    list.push({ wid: w, nick: c.nick, fame: aa.r, tier: TIERS[tierIdx(aa.r, games(aa))].name, len: c.pub.len, capt: !!c.pub.capt, wall: c.wall || 0,
+      flag: c.flag && c.flag.until > now ? { by: c.flag.by } : null, done: done.has(w), stake: stakeOf(a.r, aa.r) }); });
+  list.sort((x, y) => y.fame - x.fame);
+  return res.status(200).json({ fame: a.r, tier: TIERS[tierIdx(a.r, games(a))].name, list: list.slice(0, 200) });
+}
+
 async function targets(res, me) {
   if (!me) return res.status(401).json({ error: 'login required' });
   const [a, day, rev] = await Promise.all([arenaGet(me.wid), dayGet(me.wid), kv.hgetall(`crev:${me.wid}`)]);
@@ -287,7 +308,7 @@ async function targets(res, me) {
   const as = await Promise.all(want.map((w) => arenaGet(w)));
   const row = (w, i, extra) => { const c = cs[i], aa = as[i]; if (!c || !c.pub) return null;
     return Object.assign({ wid: w, nick: c.nick, fame: aa.r, tier: TIERS[tierIdx(aa.r, games(aa))].name, len: c.pub.len, capt: !!c.pub.capt, wall: c.wall || 0,
-      flag: c.flag && c.flag.until > now ? { by: c.flag.by } : null, done: done.has(w) }, extra); };
+      flag: c.flag && c.flag.until > now ? { by: c.flag.by } : null, done: done.has(w), stake: stakeOf(a.r, aa.r) }, extra); };
   const list = pick.map((p, i) => row(p.wid, i)).filter(Boolean);
   const revList = revs.map((r, j) => row(r.wid, pick.length + j, { rev: true, until: r.until })).filter(Boolean);
   return res.status(200).json({ fame: a.r, list, revenge: revList });

@@ -1500,17 +1500,34 @@ $('lBack').onclick = goHome;
 function openRaid() {
   if (!ME) return needLogin('남의 성을 털려면 로그인이 필요해요. 내 성도 같이 생겨요!');
   showList('⚔ 남의 성 공략', b => api('targets=1').then(d => {
-    b.innerHTML = '<p class="small">내 명성 <b>' + (d.fame || ME.fame) + '</b> 근처(±100)의 성이에요. 같은 성은 하루 한 번 · 털면 명성 ↑, 막히면 걸린 명성의 절반을 잃어요.</p>';
+    b.innerHTML = '<p class="small">내 명성 <b>' + (d.fame || ME.fame) + '</b> 근처(±100)의 추천 성이에요. 같은 성은 하루 한 번 · 털면 명성 ↑, 막히면 걸린 명성의 절반을 잃어요.</p>';
     if (d.error) { b.insertAdjacentHTML('beforeend', '<p class="msg bad">' + esc(d.error) + '</p>'); return; }
     (d.revenge || []).forEach(x => b.appendChild(targetEl(x, true)));
     (d.list || []).forEach(x => b.appendChild(targetEl(x, false)));
     if (!(d.list || []).length && !(d.revenge || []).length) b.insertAdjacentHTML('beforeend', '<p>아직 털 성이 없어요. 친구에게 내 성 도전장을 보내 보세요!</p>');
+    addBtn(b, '🗺 급이 다른 성도 보기 (모든 성)', 'sub', openBrowse);
   }));
 }
 function targetEl(x, rev) {
   const done = x.done && !rev, row = el('div', 'tgt' + (done ? ' done' : '') + (rev ? ' rev' : ''));
-  row.innerHTML = '<div><b>' + (rev ? '🔥 복수 · ' : '') + esc(x.nick) + '의 성</b><small>' + x.tier + ' · 명성 ' + x.fame + ' · ' + x.len + '줄' + (x.capt ? ' · 👁 경비대장' : '') + (x.wall ? ' · 🛡철벽 ' + x.wall : '') + (x.flag ? '<br>🏴 ' + esc(x.flag.by) + '님 깃발' : '') + '</small></div>';
+  row.innerHTML = '<div><b>' + (rev ? '🔥 복수 · ' : '') + esc(x.nick) + '의 성</b><small>' + x.tier + ' · 명성 ' + x.fame + ' · ' + x.len + '줄' + (x.capt ? ' · 👁 경비대장' : '') + (x.wall ? ' · 🛡철벽 ' + x.wall : '') + (x.flag ? '<br>🏴 ' + esc(x.flag.by) + '님 깃발' : '') + (x.stake ? '<br>털면 <span style="color:#9dffb0;font-weight:800">+' + x.stake.win + '</span> · 막히면 <span style="color:#ffb3b3;font-weight:800">−' + x.stake.lose + '</span>' : '') + '</small></div>';
   const b = addBtn(row, done ? '오늘 끝' : rev ? '복수하기' : '털러 가기', 'mini', () => startRaid(x.wid, rev)); b.disabled = done; return row;
+}
+// 급이 다른 성도 골라서 털기(10/24): 공개된 모든 성을 등급별로. 닉네임으로 찾기
+function openBrowse() {
+  if (!ME) return needLogin('남의 성을 털려면 로그인이 필요해요.');
+  showList('🗺 모든 성', b => api('browse=1').then(d => {
+    if (d.error || !d.list) { b.innerHTML = '<p class="msg bad">' + esc(d.error || '목록을 불러오지 못했어요') + '</p>'; return; }
+    b.innerHTML = '<p class="small">내 등급 <b>' + esc(d.tier || '') + '</b> · 명성 <b>' + d.fame + '</b>. 높은 급의 성은 털면 명성을 많이 얻고 막혀도 조금 잃어요. 낮은 급은 그 반대예요. 같은 성은 하루 한 번.</p>';
+    const q = document.createElement('input'); q.type = 'search'; q.id = 'browseQ'; q.placeholder = '닉네임으로 찾기'; q.style.cssText = 'width:100%;box-sizing:border-box;padding:10px 12px;border-radius:10px;border:1px solid #3a4a6a;background:#0e1830;color:#fff;font-size:15px;margin:4px 0 8px'; b.appendChild(q);
+    const box = el('div', ''); b.appendChild(box);
+    const draw = () => { box.innerHTML = ''; const w = q.value.trim().toLowerCase(); let last = null, n = 0;
+      d.list.forEach(x => { if (w && String(x.nick || '').toLowerCase().indexOf(w) < 0) return;
+        if (x.tier !== last) { last = x.tier; box.insertAdjacentHTML('beforeend', '<p class="small" style="margin:12px 0 4px;color:var(--gold)"><b>' + esc(x.tier) + (x.tier === d.tier ? ' · 내 등급' : '') + '</b></p>'); }
+        box.appendChild(targetEl(x, false)); n++; });
+      if (!n) box.insertAdjacentHTML('beforeend', '<p>' + (w ? '찾는 성이 없어요.' : '아직 공개된 다른 성이 없어요.') + '</p>'); };
+    q.addEventListener('input', draw); draw(); track('castle_browse_open', { n: d.list.length });
+  }));
 }
 function startRaid(wid, rev) {
   if (!ME) return needLogin('남의 성을 털려면 로그인이 필요해요.');
