@@ -1,0 +1,953 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="지금 방아머리 바다는 이래요. 실제 물때·날씨·해와 달을 따라 움직이는 대부도 방아머리 해변에 앉아 바다를 봐요.">
+<meta property="og:title" content="방아머리 바닷가">
+<meta property="og:description" content="지금 방아머리 바다는 이래요. 같이 볼래요?">
+<meta name="theme-color" content="#0e131b">
+<link rel="icon" href="/icons/favicon-64.png">
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5YPGVVP49T"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag("js",new Date());gtag("config","G-5YPGVVP49T",{page_title:"방아머리 바닷가"});</script>
+<title>방아머리 바닷가</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Nanum+Myeongjo:wght@400;700&display=swap">
+<style>
+*{box-sizing:border-box}
+body{margin:0}
+
+/* layout: 방아머리 벤치에서 북서(310°)를 보는 파노라마 캔버스. 좌우로 밀어 고개를 돌린다. 정보는 접어 두고 6초 뒤 사라진다 */
+:root{
+  --night:#0e131b;
+  --ink:#fbf6ec;
+  --glass:rgba(16,13,18,.40);
+  --paper:#fbf6ec;
+  --paper-ink:#3a302a;
+  --paper-sub:#8a7560;
+  --paper-line:#e4d7bf;
+  --ember:#e76f51;
+  --wood:#ead6ae;
+  --wood-ink:#4a3a2c;
+  --f-ui:'Gowun Dodum',system-ui,-apple-system,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+  --f-serif:'Nanum Myeongjo','AppleMyungjo','Batang',serif;
+  color-scheme:dark;
+}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{background:var(--night);color:var(--ink);font-family:var(--f-ui);overflow:hidden;-webkit-tap-highlight-color:transparent}
+#stage{position:relative;height:100%;max-width:480px;margin:0 auto;overflow:hidden;background:var(--night)}
+body.land #stage{max-width:none}
+#cv{position:absolute;inset:0;width:100%;height:100%;touch-action:none;display:block;cursor:grab}
+button{font-family:var(--f-ui);cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--wood);outline-offset:2px}
+
+.fade{transition:opacity .8s ease}
+#stage.calm .fade{opacity:0;pointer-events:none}
+@media (prefers-reduced-motion:reduce){.fade{transition:none}}
+
+.hud{position:absolute;top:max(10px,env(safe-area-inset-top,0px));left:max(12px,env(safe-area-inset-left,0px));right:max(12px,env(safe-area-inset-right,0px));display:flex;gap:8px;align-items:flex-start;pointer-events:none}
+.hud-col{display:flex;flex-direction:column;gap:5px;align-items:flex-start;min-width:0;pointer-events:auto}
+.chip{border:0;background:var(--glass);color:var(--ink);font-size:12px;line-height:1.3;padding:4px 10px;border-radius:999px;font-variant-numeric:tabular-nums;max-width:100%;text-align:left}
+.chip.place{font-family:var(--f-serif);font-weight:700;font-size:12.5px}
+.hud .test{pointer-events:auto;margin-left:auto;flex:none}
+
+.edge{position:absolute;top:38%;border:0;background:var(--glass);color:var(--ink);font-size:12.5px;padding:7px 12px;border-radius:999px}
+#hintL{left:max(10px,env(safe-area-inset-left,0px))}
+#hintR{right:max(10px,env(safe-area-inset-right,0px))}
+#front{position:absolute;top:30%;left:50%;transform:translateX(-50%);border:0;background:var(--glass);color:var(--ink);font-size:12px;padding:6px 12px;border-radius:999px}
+
+.dock{position:absolute;left:0;right:0;bottom:0;padding:0 max(14px,env(safe-area-inset-right,0px)) max(14px,env(safe-area-inset-bottom,0px)) max(14px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:8px}
+body.land .dock{left:auto;width:min(440px,52%)}
+.crowd{align-self:center;background:var(--glass);font-size:12px;padding:4px 11px;border-radius:999px;font-variant-numeric:tabular-nums;text-align:center}
+.row{display:flex;gap:8px;align-items:center}
+.btn{border:0;border-radius:999px;background:rgba(251,246,236,.92);color:var(--paper-ink);font-size:14px;height:42px;padding:0 15px;flex:none}
+.btn.main{flex:1;font-size:15px}
+.btn.on{background:var(--ember);color:#fff}
+.signs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.sign{border:0;background:var(--wood);color:var(--wood-ink);border-radius:6px;height:34px;font-size:13px;box-shadow:0 2px 0 #b89c6c;text-decoration:none;display:flex;align-items:center;justify-content:center}
+.erase{align-self:center;border:0;background:var(--glass);color:var(--ink);font-size:12px;padding:6px 12px;border-radius:999px}
+
+.sheet{position:absolute;left:0;right:0;bottom:0;background:var(--paper);color:var(--paper-ink);border-radius:18px 18px 0 0;padding:14px max(16px,env(safe-area-inset-right,0px)) 18px max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:12px;box-shadow:0 -6px 24px rgba(0,0,0,.25)}
+body.land .sheet{left:auto;width:min(420px,60%);border-radius:18px 0 0 0}
+.sheet h2{font-family:var(--f-serif);font-size:17px;font-weight:700;margin:0}
+.sheet p{margin:0;font-size:13.5px;line-height:1.6;color:var(--paper-sub)}
+.sheet-head{display:flex;justify-content:space-between;align-items:center}
+.x{border:0;background:none;color:var(--paper-ink);font-size:22px;line-height:1;padding:4px 6px}
+.linkbox{display:flex;gap:8px;align-items:center;background:#fff;border:1px solid var(--paper-line);border-radius:12px;padding:8px 8px 8px 12px}
+.linkbox code{flex:1;min-width:0;font-size:13px;color:var(--paper-ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pbtn{border:0;border-radius:10px;background:var(--ember);color:#fff;font-size:13px;padding:8px 12px;flex:none}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{flex:1;border:1px solid var(--paper-line);background:#fff;color:var(--paper-ink);border-radius:10px;padding:8px 0;font-size:13px}
+.seg button[aria-pressed="true"]{background:var(--paper-ink);color:var(--paper);border-color:var(--paper-ink)}
+
+#chat{height:52%}
+body.land #chat{height:78%}
+.msgs{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:7px;padding:2px}
+.m{max-width:76%;font-size:13.5px;line-height:1.5;padding:7px 11px;border-radius:14px;background:#fff;color:var(--paper-ink);align-self:flex-start;word-break:break-word}
+.m b{display:block;font-weight:400;font-size:11.5px;color:var(--paper-sub)}
+.m.me{align-self:flex-end;background:#f6cf98}
+.compose{display:flex;gap:8px}
+.compose input{flex:1;min-width:0;font-family:var(--f-ui);font-size:15px;padding:9px 12px;border-radius:12px;border:1px solid var(--paper-line);background:#fff;color:var(--paper-ink)}
+.err{font-size:12px;color:#b5402a;margin-top:-6px}
+.note{font-size:12px;color:var(--paper-sub);line-height:1.5}
+
+#photo{position:absolute;inset:0;background:rgba(8,6,10,.72);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px}
+#photo img{width:min(78%,340px);max-height:70%;object-fit:contain;transform:rotate(-2.2deg);box-shadow:0 10px 30px rgba(0,0,0,.45)}
+#photo .note{color:#d9ccb4}
+
+#intro{position:absolute;left:0;right:0;bottom:0;padding:22px max(18px,env(safe-area-inset-right,0px)) 24px max(18px,env(safe-area-inset-left,0px));background:linear-gradient(to top,rgba(10,8,12,.82),rgba(10,8,12,.55) 70%,rgba(10,8,12,0));display:flex;flex-direction:column;gap:10px}
+body.land #intro{padding-right:45%}
+#intro h1{font-family:var(--f-serif);font-weight:700;font-size:26px;margin:0;letter-spacing:-.01em;text-wrap:balance}
+#intro p{margin:0;font-size:14.5px;line-height:1.65;color:#e6dcc9;max-width:34ch}
+#intro .btn{align-self:stretch;margin-top:6px;background:var(--ember);color:#fff;font-size:16px;height:48px;max-width:420px}
+
+#dbg{position:absolute;top:48px;right:max(12px,env(safe-area-inset-right,0px));width:min(310px,calc(100% - 24px));max-height:calc(100% - 60px);overflow-y:auto;background:var(--paper);color:var(--paper-ink);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:10px;box-shadow:0 8px 24px rgba(0,0,0,.3);font-size:13px}
+#dbg h3{margin:4px 0 0;font-size:12px;font-weight:400;color:var(--paper-sub);letter-spacing:.04em}
+#dbg label{display:flex;flex-direction:column;gap:4px}
+#dbg .lab{display:flex;justify-content:space-between;color:var(--paper-sub);font-variant-numeric:tabular-nums}
+#dbg input[type=range]{width:100%;accent-color:var(--ember)}
+#dbg select{font-family:var(--f-ui);font-size:13px;padding:6px;border-radius:8px;border:1px solid var(--paper-line);background:#fff;color:var(--paper-ink)}
+#dbg .check{flex-direction:row;align-items:center;gap:6px}
+#dbg .two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+
+#toast{position:absolute;left:50%;top:40%;transform:translateX(-50%);background:var(--glass);color:var(--ink);padding:9px 15px;border-radius:999px;font-size:13px;white-space:nowrap;transition:opacity .3s;pointer-events:none}
+</style>
+
+</head>
+<body>
+<div id="stage">
+  <canvas id="cv" aria-label="방아머리 해변 파노라마. 좌우로 밀어 둘러보고, 앞쪽 모래사장에 손가락으로 글씨를 쓸 수 있어요."></canvas>
+
+  <div class="hud fade">
+    <div class="hud-col">
+      <button class="chip place" id="h1" aria-expanded="false">방아머리 · --:-- · --℃</button>
+      <span class="chip" id="h2" hidden></span>
+      <span class="chip" id="h4" hidden></span>
+      <span class="chip" id="h5" hidden></span>
+      <span class="chip" id="h6" hidden></span>
+    </div>
+    <button class="chip test" id="testBtn" aria-expanded="false">시험</button>
+  </div>
+
+  <button class="edge fade" id="hintL" hidden></button>
+  <button class="edge fade" id="hintR" hidden></button>
+  <button class="fade" id="front" hidden>정면 바다로</button>
+
+  <div class="dock fade" id="dock">
+    <div class="crowd" id="h3">지금 나 혼자</div>
+    <button class="erase" id="eraseBtn" hidden>내 글씨 지우기</button>
+    <div class="row">
+      <button class="btn main" id="sitBtn">같이 앉기</button>
+      <button class="btn" id="chatBtn">대화</button>
+      <button class="btn" id="shotBtn">사진</button>
+      <button class="btn" id="soundBtn" aria-pressed="false">소리</button>
+    </div>
+    <div class="signs">
+      <button class="sign" data-soon="먹거리타운">먹거리타운 ›</button>
+      <button class="sign" data-soon="펜션">펜션 ›</button>
+      <a class="sign" href="https://daebugame.com" target="_blank" rel="noopener">오락실 ›</a>
+    </div>
+  </div>
+
+  <div class="sheet" id="share" hidden>
+    <div class="sheet-head"><h2>같이 앉기</h2><button class="x" data-close aria-label="닫기">×</button></div>
+    <p>이 링크를 받은 사람은 로그인 없이 바로 내 옆자리에 앉아요. 같은 노을, 같은 물때를 같이 봐요.</p>
+    <div class="linkbox"><code id="linkTxt">daebuseatime.com/sea/7KQ2</code><button class="pbtn" id="copyBtn">링크 복사</button></div>
+    <div class="note">시험판이라 실제 링크는 아직 열리지 않아요. 아래로 옆자리 모습을 미리 볼 수 있어요.</div>
+    <div class="seg" role="group" aria-label="내 자리 묶음">
+      <button data-g="solo" aria-pressed="true">혼자</button>
+      <button data-g="couple" aria-pressed="false">둘이</button>
+      <button data-g="family" aria-pressed="false">가족</button>
+    </div>
+  </div>
+
+  <div class="sheet" id="chat" hidden>
+    <div class="sheet-head"><h2 id="chatTitle">우리 방</h2><button class="x" data-close aria-label="닫기">×</button></div>
+    <div class="msgs" id="msgs"></div>
+    <div class="err" id="chatErr" hidden>메시지를 먼저 적어 주세요</div>
+    <form class="compose" id="compose"><input id="msgIn" maxlength="80" placeholder="같은 방 사람에게만 보여요" autocomplete="off"><button class="pbtn" type="submit">보내기</button></form>
+    <div class="note">대화는 방이 끝나면(24시간) 지워져요.</div>
+  </div>
+
+  <div id="photo" hidden>
+    <img id="photoImg" alt="방아머리 폴라로이드">
+    <div class="note">사진을 길게 눌러 저장하세요</div>
+    <button class="btn" id="photoClose">닫기</button>
+  </div>
+
+  <div id="dbg" hidden>
+    <h3>시간과 물때</h3>
+    <label><span class="lab"><span>시각</span><span id="tLab">--:--</span></span><input type="range" id="tIn" min="0" max="1439" step="1"></label>
+    <label><span class="lab"><span>날짜 앞뒤로</span><span id="dLab">오늘</span></span><input type="range" id="dIn" min="-180" max="180" value="0"></label>
+    <div class="seg" role="group" aria-label="시간 흐름">
+      <button id="spd1" aria-pressed="true">실제 속도</button>
+      <button id="spd2" aria-pressed="false">10분 = 1초</button>
+    </div>
+    <label class="check"><input type="checkbox" id="tideAuto" checked> 물때 자동</label>
+    <label><span class="lab"><span>물 높이</span><span id="tideLab">--</span></span><input type="range" id="tideIn" min="0" max="100" disabled></label>
+    <h3>날씨 (기상청 항목 그대로)</h3>
+    <div class="two">
+      <label><span class="lab"><span>하늘</span></span><select id="skyIn"><option>맑음</option><option>구름조금</option><option>구름많음</option><option>흐림</option></select></label>
+      <label><span class="lab"><span>강수</span></span><select id="ptyIn"><option>없음</option><option>비</option><option>소나기</option><option>진눈깨비</option><option>눈</option></select></label>
+    </div>
+    <label><span class="lab"><span>바람</span><span id="wsdLab">3 m/s</span></span><input type="range" id="wsdIn" min="0" max="16" value="3"></label>
+    <div class="two">
+      <label><span class="lab"><span>풍향</span></span><select id="vecIn"></select></label>
+      <label><span class="lab"><span>미세먼지</span></span><select id="pmIn"><option>좋음</option><option>보통</option><option>나쁨</option></select></label>
+    </div>
+    <label><span class="lab"><span>습도</span><span id="rehLab">60%</span></span><input type="range" id="rehIn" min="20" max="100" value="60"></label>
+    <label class="check"><input type="checkbox" id="fogIn"> 해무(안개)</label>
+    <h3>사람</h3>
+    <label><span class="lab"><span>계절 표시</span></span><select id="seasonIn"><option value="auto">자동</option><option>봄</option><option>여름</option><option>가을</option><option>겨울</option></select></label>
+    <label><span class="lab"><span>함께 있는 사람</span><span id="crowdLab">14명</span></span><input type="range" id="crowdIn" min="0" max="150" value="14"></label>
+    <div class="note">해·달 위치와 모양은 실제 천문 계산이에요. 물때는 국립해양조사원, 날씨는 기상청 값이 10분마다 들어와요. 여기서 날씨를 바꾸면 그때부터는 손으로 넣은 값이 우선이에요. 섬·방조제 실루엣은 대략적인 방향이고, 대표님 그림으로 바꿀 자리예요.</div>
+  </div>
+
+  <div id="intro">
+    <h1>방아머리 바닷가</h1>
+    <p>방아머리 해변 돗자리에 앉아 북서쪽 바다를 보고 있어요. 해와 달, 물때, 날씨가 실제와 똑같이 움직여요. 좌우로 밀면 고개를 돌리고, 위로 밀면 하늘을 올려다볼 수 있어요. 앞 모래사장엔 글씨를 남길 수 있어요.</p>
+    <button class="btn" id="enterBtn">바다 앞에 앉기</button>
+  </div>
+
+  <div id="toast" style="opacity:0" aria-live="polite"></div>
+</div>
+
+<script src="/sea/suncalc.js"></script>
+<script>
+(()=>{
+const $=q=>document.querySelector(q);
+const stage=$('#stage'),cv=$('#cv');let ctx=cv.getContext('2d');
+const H=790,HZ=330,WL_LOW=352,WL_HIGH=572,MUD_END=468,SAND_START=514,ZONE_B=570,BENCH=650;
+/* 파노라마: 정면 310°(북서), 왼쪽 끝 210°(남서), 오른쪽 끝 40°(북동, 방조제 너머). 1° = 6.5px */
+const AZ0=310,AZ_MIN=206,AZ_MAX=410,PPD=6.5;
+let VW=390,CX=195,LAND=false,cw=0,ch=0,dpr=1,S=1,OX=0,OY=0,ME_X=195,tilt=0,PHOTO=false;
+const TILT_MIN=-30,TILT_MAX=260;
+let viewAz=AZ0,viewTarget=null;
+const PAN=()=>(viewAz-AZ0)*PPD;
+const unwrap=az=>((az-AZ0+540)%360+360)%360-180+AZ0;
+const wxOfAz=az=>(unwrap(az)-AZ0)*PPD;
+const sx=wx=>CX+wx-PAN();
+/* 원근: 해안선은 남서–북동으로 곧다. 방위 θ에서 땅 위 점은 수평선에서 cos(θ-310°)배만큼 아래에 보인다 */
+const END_L=232,END_R=378;
+const Fx=x=>{const d=viewAz+(x-CX)/PPD-AZ0,lim=d<0?AZ0-END_L:END_R-AZ0,th=Math.min(lim,Math.abs(d));return Math.max(.05,Math.cos(Math.max(0,th-12)/(lim-12)*Math.PI/2))};
+const inBeach=x=>{const az=viewAz+(x-CX)/PPD;return az>END_L&&az<END_R};
+const Y=(y,x)=>HZ+(y-HZ)*Fx(x);
+const Yinv=(y,x)=>HZ+(y-HZ)/Fx(x);
+const relAz=x=>viewAz+(x-CX)/PPD-AZ0;
+function clampView(){const half=VW/2/PPD,lo=AZ_MIN+half,hi=AZ_MAX-half;viewAz=lo>hi?(AZ_MIN+AZ_MAX)/2:Math.max(lo,Math.min(hi,viewAz))}
+
+/* ---------- clock ---------- */
+let simBase=Date.now(),realBase=performance.now(),speed=1,dayShift=0;
+const now=()=>simBase+(performance.now()-realBase)*speed;
+function setSpeed(v){simBase=now();realBase=performance.now();speed=v}
+const pad=n=>String(n).padStart(2,'0');
+const kst=t=>{const d=new Date(t+9*3600e3);return {h:d.getUTCHours(),m:d.getUTCMinutes(),mo:d.getUTCMonth()+1,y:d.getUTCFullYear(),d:d.getUTCDate()}};
+const hhmm=t=>{const k=kst(t);return pad(k.h)+':'+pad(k.m)};
+const kstMin=t=>((Math.floor(t/60000)+540)%1440+1440)%1440;
+
+/* ---------- sun & moon (실제 천문 계산) ---------- */
+const RAD=Math.PI/180,LAT=37.2905,LON=126.5795;
+const SC=window.SunCalc;
+function sunFallback(t){
+  const d=t/86400000-10957.5,g=(357.529+0.98560028*d)*RAD,q=280.459+0.98564736*d;
+  const L=(q+1.915*Math.sin(g)+0.020*Math.sin(2*g))*RAD,e=(23.439-0.00000036*d)*RAD;
+  const ra=Math.atan2(Math.cos(e)*Math.sin(L),Math.cos(L))/RAD,dec=Math.asin(Math.sin(e)*Math.sin(L));
+  const gmst=((18.697374558+24.06570982441908*d)%24+24)%24,ha=((gmst+LON/15)*15-ra)*RAD,lat=LAT*RAD;
+  const alt=Math.asin(Math.sin(lat)*Math.sin(dec)+Math.cos(lat)*Math.cos(dec)*Math.cos(ha))/RAD;
+  const az=(Math.atan2(-Math.sin(ha),Math.tan(dec)*Math.cos(lat)-Math.sin(lat)*Math.cos(ha))/RAD+360)%360;
+  return {alt,az};
+}
+function sunPos(t){if(!SC)return sunFallback(t);const p=SC.getPosition(new Date(t),LAT,LON);return {alt:p.altitude/RAD,az:(p.azimuth/RAD+180+360)%360}}
+function moonPos(t){if(!SC)return null;const d=new Date(t),p=SC.getMoonPosition(d,LAT,LON),il=SC.getMoonIllumination(d);
+  return {alt:p.altitude/RAD,az:(p.azimuth/RAD+180+360)%360,frac:il.fraction,phase:il.phase}}
+function sunTimes(t){
+  if(SC){const k=kst(t);const mid=Date.UTC(k.y,k.mo-1,k.d,3);const x=SC.getTimes(new Date(mid),LAT,LON);return {set:+x.sunset||0,rise:+x.sunrise||0}}
+  return {set:0,rise:0};
+}
+function moonName(ph){return ph<.03||ph>.97?'그믐·삭':ph<.22?'초승달':ph<.28?'상현달':ph<.47?'차오르는 달':ph<.53?'보름달':ph<.72?'기우는 달':ph<.78?'하현달':'그믐달'}
+const DIR16=['북','북북동','북동','동북동','동','동남동','남동','남남동','남','남남서','남서','서남서','서','서북서','북서','북북서'];
+const dirName=az=>DIR16[Math.round(((az%360)+360)%360/22.5)%16];
+
+/* ---------- tide: 국립해양조사원 TideBED 방아머리 예측 물높이(10분 간격). 자료가 없을 때만 근사식 ---------- */
+const TEST=/[?&]test/.test(location.search);
+/* 물높이(cm) → 화면 물 높이(0=갯벌 다 드러남, 1=모래사장까지 참). 현장 확인 전 임시값 */
+const TIDE_LOW_CM=150,TIDE_HIGH_CM=700;
+const T0=Date.UTC(2026,10,6,12,10),PER=12.42*3600e3;
+let tideManual=null,TIDE=null,TIDE_EXT=[];
+function tideCm(t){if(!TIDE)return null;const m=t/60000,p=TIDE;if(m<=p[0][0]||m>=p[p.length-1][0])return null;
+  let lo=0,hi=p.length-1;while(hi-lo>1){const md=(lo+hi)>>1;if(p[md][0]<=m)lo=md;else hi=md}const a=p[lo],b=p[hi];return a[1]+(b[1]-a[1])*(m-a[0])/(b[0]-a[0])}
+const tideAt=t=>{const c=tideCm(t);return c==null?.5+.5*Math.cos(2*Math.PI*(t-T0)/PER):cl((c-TIDE_LOW_CM)/(TIDE_HIGH_CM-TIDE_LOW_CM),0,1)};
+const tideNow=t=>tideManual!=null?tideManual:tideAt(t);
+function tideRising(t){if(tideManual!=null)return false;const a=tideCm(t),b=tideCm(t+600000);if(a!=null&&b!=null)return b>a;return .5+.5*Math.cos(2*Math.PI*(t+60000-T0)/PER)>.5+.5*Math.cos(2*Math.PI*(t-T0)/PER)}
+function buildExtrema(){TIDE_EXT=[];const p=TIDE;for(let i=1;i<p.length-1;i++){const a=p[i-1][1],b=p[i][1],c=p[i+1][1];if(b>=a&&b>c)TIDE_EXT.push({t:p[i][0]*60000,cm:b,hi:true});else if(b<=a&&b<c)TIDE_EXT.push({t:p[i][0]*60000,cm:b,hi:false})}}
+function nextExt(t,hi){const e=TIDE_EXT.find(x=>x.hi===hi&&x.t>t);return e||null}
+function nextHigh(t){const e=nextExt(t,true);return e?e.t:T0+Math.ceil((t-T0)/PER)*PER}
+function nextLow(t){const e=nextExt(t,false);if(e)return e.t;const h=T0+Math.ceil((t-T0)/PER)*PER-PER/2;return h>t?h:h+PER}
+const wlOf=lv=>WL_LOW+lv*(WL_HIGH-WL_LOW);
+
+/* ---------- weather (기상청 초단기실황 항목: SKY, PTY, WSD, VEC, REH, T1H) ---------- */
+const WX={sky:'맑음',pty:'없음',wsd:3,vec:315,reh:60,pm:null,fog:false,temp:null,at:0,live:false};let wxManual=false;
+function fromKMA(o){/* Vercel에서 받은 값을 그대로 넣는 자리 */
+  const SKYC={1:'맑음',3:'구름많음',4:'흐림'},PTYC={0:'없음',1:'비',2:'진눈깨비',3:'눈',4:'소나기',5:'비',6:'진눈깨비',7:'눈'};
+  if(o.SKY!=null)WX.sky=SKYC[o.SKY]||WX.sky;if(o.PTY!=null)WX.pty=PTYC[o.PTY]||'없음';
+  if(o.WSD!=null)WX.wsd=+o.WSD;if(o.VEC!=null)WX.vec=+o.VEC;if(o.REH!=null)WX.reh=+o.REH;if(o.T1H!=null)WX.temp=+o.T1H;
+}
+/* 서버(/api/sea)에서 10분마다 실제 값 받기. 사람이 아무리 많아도 기관 API는 서버가 10분에 한 번만 부른다 */
+async function loadLive(){
+  try{const r=await fetch('/api/sea',{cache:'no-store'});if(!r.ok)return;const j=await r.json();
+    if(j.tide&&j.tide.points&&j.tide.points.length>100){TIDE=j.tide.points;buildExtrema()}
+    if(j.wx&&!wxManual){const w=j.wx;fromKMA({SKY:w.sky,PTY:w.pty,WSD:w.wsd,VEC:w.vec,REH:w.reh,T1H:w.t1h});
+      /* 해무: 실황에 따로 없어서 습도 97% 이상·약한 바람일 때만 추정 */
+      WX.fog=w.reh!=null&&w.reh>=97&&(w.wsd==null||w.wsd<3)&&(w.pty==null||w.pty===0);WX.at=w.at||j.fetchedAt;WX.live=true}
+    updateHud()}catch(e){}
+}
+window.bangamoriWeather=fromKMA;
+function derive(){
+  let cover={맑음:.05,구름조금:.3,구름많음:.65,흐림:.95}[WX.sky];
+  const rain={비:1,소나기:1.7,진눈깨비:.55}[WX.pty]||0,snow={눈:1,진눈깨비:.6}[WX.pty]||0;
+  if(rain||snow)cover=Math.max(cover,.9);
+  const dark=cl((cover>.55?(cover-.45)*1.05:cover*.12)+(rain?.08:0),0,.72);
+  const haze=cl(cl((WX.reh-65)/35,0,1)*.4+(WX.pm==='나쁨'?.32:WX.pm==='보통'?.12:0)+(WX.fog?.72:0),0,.9);
+  const toward=WX.vec+180,lateral=Math.sin((toward-viewAz)*RAD),onshore=Math.max(0,-Math.cos((toward-AZ0)*RAD));
+  const sea=1+WX.wsd*.045+onshore*WX.wsd*.04;
+  return {cover,rain,snow,dark,haze,lateral,sea,wsd:WX.wsd};
+}
+function wxLabel(){return WX.fog?'해무':WX.pty!=='없음'?WX.pty:WX.sky}
+
+/* ---------- color ---------- */
+const hx=h=>[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];
+const mx=(a,b,t)=>a.map((v,i)=>v+(b[i]-v)*t);
+const cs=(c,a=1)=>`rgba(${c[0]|0},${c[1]|0},${c[2]|0},${a})`;
+function cl(v,a,b){return Math.max(a,Math.min(b,v))}
+const SKY=[
+ [-18,'#060a15','#0b1224','#141c33'],
+ [-9,'#121838','#2e2a58','#5a3f66'],
+ [-3,'#262757','#9a4a6c','#ef8358'],
+ [2,'#40609a','#e07f5a','#ffbf76'],
+ [9,'#4f8ccc','#9cc6e2','#f2dcb2'],
+ [20,'#4a8fd6','#86c0e8','#cfe7f3'],
+ [60,'#3d84d0','#79b8e6','#c4e2f2']].map(k=>[k[0],hx(k[1]),hx(k[2]),hx(k[3])]);
+function skyAt(alt){
+  if(alt<=SKY[0][0])return SKY[0].slice(1);
+  for(let i=1;i<SKY.length;i++)if(alt<=SKY[i][0]){const a=SKY[i-1],b=SKY[i],t=(alt-a[0])/(b[0]-a[0]);return [mx(a[1],b[1],t),mx(a[2],b[2],t),mx(a[3],b[3],t)]}
+  return SKY[SKY.length-1].slice(1);
+}
+
+/* ---------- season marks ---------- */
+const SEASON={봄:{acc:'flower',c:['#f4a3b5','#fbe08a']},여름:{acc:'hat',c:['#e76f51','#5c8ac4']},가을:{acc:'beret',c:['#c0563c','#d6943c']},겨울:{acc:'scarf',c:['#e76f51','#e9c46a']}};
+let seasonOverride='auto';
+function season(t){if(seasonOverride!=='auto')return seasonOverride;const m=kst(t).mo;return m>=3&&m<=5?'봄':m>=6&&m<=8?'여름':m>=9&&m<=10?'가을':'겨울'}
+
+/* ---------- state ---------- */
+const st={group:'solo',partnerA:0,crowd:TEST?14:0,myStrokes:[],cur:null,traces:[],bubble:'',bubbleUntil:0,eraseShownUntil:0,erasedCount:0,sound:false};
+function rng(seed){let s=seed>>>0;return()=>((s=Math.imul(s^s>>>15,1|s)+0x6D2B79F5|0,((s^s>>>7)>>>0)%100000)/100000)}
+const R=rng(77);
+const WXMIN=(AZ_MIN-AZ0)*PPD-80,WXMAX=(AZ_MAX-AZ0)*PPD+80,WSPAN=WXMAX-WXMIN;
+const STARS=Array.from({length:420},()=>[WXMIN+R()*WSPAN,-420+R()*(HZ+400),R()*6,0.5+R()*1.1]);
+const CLOUDS=Array.from({length:30},()=>({x:WXMIN+R()*WSPAN,y:40+R()*230,w:60+R()*130,s:R()}));
+const GULLS=Array.from({length:4},()=>({x:WXMIN+R()*WSPAN,y:150+R()*110,v:.012+R()*.01,ph:R()*6}));
+const SPECKS=Array.from({length:520},()=>[WXMIN+R()*WSPAN,SAND_START-8+R()*(H-SAND_START),R()]);
+const BLOBS=Array.from({length:70},()=>[WXMIN+R()*WSPAN,MUD_END-14+R()*44,14+R()*34,2+R()*4,R()]);
+const MUDDASH=Array.from({length:150},()=>[WXMIN+R()*WSPAN,HZ+20+R()*(MUD_END-HZ-30)]);
+const POOLS=Array.from({length:14},()=>[WXMIN+R()*WSPAN,382+R()*76,18+R()*30,3+R()*3]);
+const CRABS=Array.from({length:18},()=>({x:WXMIN+R()*WSPAN,y:378+R()*84,dir:R()<.5?-1:1,ph:R()*6}));
+let RAIN=[],SNOW=[],SLOTS=[],quality=1;
+const UMB=['#c45c5c','#d8b85a','#5c8ac4','#7aa66a','#b07ac4','#d9d3c8'];
+
+function buildWorld(){
+  const r=rng(11);
+  const nR=Math.round(150*VW/390*quality),nS=Math.round(110*VW/390*quality);
+  RAIN=Array.from({length:nR},()=>({x:r()*(VW+120)-60,y:r()*H,v:.9+r()*.6}));
+  SNOW=Array.from({length:nS},()=>({x:r()*VW,y:r()*H,v:.12+r()*.12,ph:r()*6}));
+  const byDist=a=>a.sort((p,q)=>Math.abs(p)-Math.abs(q));
+  const lo=(AZ_MIN-AZ0)*PPD+20,hi=(AZ_MAX-AZ0)*PPD-20;
+  const front=[];for(let x=lo;x<hi;x+=54)if(Math.abs(x)>80)front.push(x);
+  const back=[];for(let x=lo;x<hi;x+=47)back.push(x);
+  const far=[];for(let x=lo;x<hi;x+=32)far.push(x);
+  SLOTS=[...byDist(front).map(x=>({x,b:BENCH,sc:.95,fog:.30,row:0})),
+         ...byDist(back).map(x=>({x,b:621,sc:.64,fog:.45,row:1})),
+         ...byDist(far).map(x=>({x,b:599,sc:.44,fog:.58,row:2}))];
+}
+
+/* ---------- canvas helpers ---------- */
+function resize(){
+  const land=window.innerWidth>window.innerHeight*1.05;
+  document.body.classList.toggle('land',land);LAND=land;
+  const r=stage.getBoundingClientRect();cw=r.width;ch=r.height;
+  dpr=Math.min(2,window.devicePixelRatio||1);cv.width=Math.round(cw*dpr);cv.height=Math.round(ch*dpr);
+  if(land){VW=Math.max(390,Math.round(560*cw/ch));S=cw/VW;OX=0;OY=ch-725*S}
+  else{VW=390;S=Math.max(cw/VW,ch/H);OX=(cw-VW*S)/2;OY=ch-H*S}
+  CX=VW/2;ME_X=CX;clampView();buildWorld();
+}
+function rr(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath()}
+function pill(text,x,y,bg,fg,size=12){
+  ctx.font=`${size}px 'Gowun Dodum',sans-serif`;const w=ctx.measureText(text).width+18,h=size+10;
+  rr(x-w/2,y-h/2,w,h,h/2);ctx.fillStyle=bg;ctx.fill();
+  ctx.fillStyle=fg;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(text,x,y+.5);
+}
+const vis=(x,m=80)=>x>-m&&x<VW+m;
+function accessory(type,col,x,hx_,hy,b,sc){
+  if(type==='scarf'){ctx.fillStyle=col;rr(x-8.5*sc,b-30.5*sc,17*sc,5.5*sc,2.5*sc);ctx.fill();ctx.fillRect(x+3*sc,b-27*sc,4.5*sc,11*sc)}
+  else if(type==='hat'){ctx.fillStyle='#e2bf7c';ctx.beginPath();ctx.ellipse(hx_,hy-5*sc,16.5*sc,3.4*sc,0,0,7);ctx.fill();rr(hx_-7.5*sc,hy-14.5*sc,15*sc,10.5*sc,4*sc);ctx.fill();ctx.fillStyle=col;ctx.fillRect(hx_-7.5*sc,hy-7.8*sc,15*sc,2.6*sc)}
+  else if(type==='beret'){ctx.fillStyle=col;ctx.beginPath();ctx.ellipse(hx_+1.5*sc,hy-6.5*sc,11.2*sc,5.4*sc,-.12,0,7);ctx.fill();ctx.fillRect(hx_+.6*sc,hy-13.8*sc,2*sc,3.2*sc)}
+  else if(type==='flower'){const fx=hx_+7*sc,fy=hy-6*sc;ctx.fillStyle=col;for(let k=0;k<5;k++){const a=k*1.2566;ctx.beginPath();ctx.arc(fx+Math.cos(a)*2.7*sc,fy+Math.sin(a)*2.7*sc,2.3*sc,0,7);ctx.fill()}ctx.fillStyle='#ffd166';ctx.beginPath();ctx.arc(fx,fy,1.6*sc,0,7);ctx.fill()}
+}
+function person(x,b,sc,col,o={}){
+  const kx=o.kx||1,hx_=x+((o.tilt||0)+(o.hd||0))*sc,hy=b-37.5*sc;
+  ctx.save();ctx.translate(x,0);ctx.scale(kx,1);ctx.translate(-x,0);
+  ctx.fillStyle=col;
+  ctx.beginPath();ctx.moveTo(x-13*sc,b);ctx.quadraticCurveTo(x-14.5*sc,b-21*sc,x-8*sc,b-28*sc);
+  ctx.lineTo(x+8*sc,b-28*sc);ctx.quadraticCurveTo(x+14.5*sc,b-21*sc,x+13*sc,b);ctx.closePath();ctx.fill();
+  ctx.fillRect(x-3.5*sc,b-31*sc,7*sc,5*sc);
+  if(o.rim){
+    ctx.strokeStyle=o.rim;ctx.lineWidth=Math.max(.8,1.25*sc);
+    ctx.beginPath();ctx.moveTo(x-13.2*sc,b-8*sc);ctx.quadraticCurveTo(x-14.4*sc,b-21*sc,x-8*sc,b-28*sc);ctx.lineTo(x-4*sc,b-28*sc);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(x+13.2*sc,b-8*sc);ctx.quadraticCurveTo(x+14.4*sc,b-21*sc,x+8*sc,b-28*sc);ctx.lineTo(x+4*sc,b-28*sc);ctx.stroke();
+  }
+  if(o.acc==='scarf')accessory(o.acc,o.accCol,x,hx_,hy,b,sc);
+  ctx.restore();
+  ctx.fillStyle=col;ctx.beginPath();ctx.arc(hx_,hy,9.5*sc,0,7);ctx.fill();
+  if(o.rim){ctx.strokeStyle=o.rim;ctx.lineWidth=Math.max(.8,1.25*sc);ctx.beginPath();ctx.arc(hx_,hy,9.4*sc,Math.PI*1.02,Math.PI*1.98);ctx.stroke()}
+  if(o.acc&&o.acc!=='scarf')accessory(o.acc,o.accCol,x,hx_,hy,b,sc);
+}
+const LAYOUT={solo:[[0,1,0]],couple:[[-11.5,1,1.5],[11.5,.94,-2.6]],family:[[-17,1,1],[5,.94,-1.2],[24,.6,-1.5]]};
+const GW={solo:34,couple:56,family:70};
+const PARA=['#e76f51','#2a9d8f','#e9c46a','#5c8ac4','#b07ac4'];
+const TENT=['#e9c46a','#7aa66a','#e76f51','#5c8ac4','#d9d3c8'];
+const MATS=['#c96b5c','#5c8ac4','#e9c46a','#7aa66a','#b07ac4','#8fb8c9'];
+function parasolPole(x,b,sc,type,A,kx=1){const px=x+GW[type]*sc*.45*kx;ctx.globalAlpha=A;ctx.fillStyle='rgba(70,58,50,.95)';ctx.fillRect(px-1.1*sc,b-82*sc,2.2*sc,90*sc);ctx.globalAlpha=1}
+function parasolTop(x,b,sc,type,col,A,kx=1){const px=x+GW[type]*sc*.45*kx,w=GW[type]*sc*1.7+34*sc,y=b-82*sc,ap=y-18*sc;ctx.globalAlpha=A;
+  for(let i=0;i<6;i++){const x1=px-w/2+w*i/6,x2=px-w/2+w*(i+1)/6;ctx.fillStyle=i%2?'#fbf6ec':col;ctx.beginPath();ctx.moveTo(x1,y+5*sc);ctx.quadraticCurveTo((x1+x2)/2,y+9*sc,x2,y+5*sc);ctx.lineTo(px,ap);ctx.closePath();ctx.fill()}
+  ctx.fillStyle=col;ctx.beginPath();ctx.arc(px,ap,2.2*sc,0,7);ctx.fill();ctx.globalAlpha=1}
+function mat(x,b,sc,type,col,stripe,A,kx=1,hs=0){const w=GW[type]*sc*1.4*(.55+.45*kx),dx=hs*14*sc;ctx.globalAlpha=A;ctx.fillStyle=col;ctx.beginPath();ctx.moveTo(x-w/2,b+8*sc);ctx.lineTo(x+w/2,b+8*sc);ctx.lineTo(x+w/2-5*sc+dx,b-5*sc);ctx.lineTo(x-w/2+5*sc+dx,b-5*sc);ctx.closePath();ctx.fill();
+  if(stripe){ctx.strokeStyle=stripe;ctx.lineWidth=2.4*sc;for(let k=-2;k<=2;k++){const bx=x+k*w/5.5;ctx.beginPath();ctx.moveTo(bx,b+8*sc);ctx.lineTo(bx+dx,b-5*sc);ctx.stroke()}}ctx.globalAlpha=1}
+function group(type,x,b,sc,col,o={}){
+  const A=o.alpha==null?1:o.alpha;
+  const tr=cl(o.turn||0,-75,75)*Math.PI/180,kx=.62+.38*Math.cos(tr),hs=Math.sin(tr),hd=hs*(o.headSign||1)*4.5;
+  if(o.tent){const w=GW[type]*sc*1.3*kx,h=32*sc;ctx.globalAlpha=A;ctx.fillStyle=o.tent;ctx.beginPath();ctx.moveTo(x-w/2,b+4*sc);ctx.quadraticCurveTo(x-w/2,b-h,x,b-h);ctx.quadraticCurveTo(x+w/2,b-h,x+w/2,b+4*sc);ctx.closePath();ctx.fill();
+    ctx.fillStyle='rgba(0,0,0,.25)';ctx.beginPath();ctx.ellipse(x,b+2*sc,w*.26,h*.6,0,Math.PI,0);ctx.fill();ctx.globalAlpha=1}
+  if(o.mat)mat(x,b,sc,type,o.mat,o.stripe,A,kx,-hs*(o.headSign||1));
+  if(o.parasol)parasolPole(x,b,sc,type,A,kx);
+  const order=LAYOUT[type].map((p,i)=>[p,i]);if(hs*(o.headSign||1)<0)order.reverse();
+  order.forEach(([p,i])=>{
+    const a=((o.fade!=null&&i>0)?o.fade:1)*(o.alpha==null?1:o.alpha);if(a<=0)return;
+    ctx.globalAlpha=a;
+    person(x+p[0]*sc*kx,b-p[0]*hs*(o.headSign||1)*.18*sc,sc*p[1],col,{tilt:p[2],kx,hd,rim:o.rim,acc:o.acc,accCol:o.accCols?o.accCols[i%2]:null});
+  });
+  ctx.globalAlpha=1;
+  if(o.umb){const w=GW[type]*sc,y=b-51*sc;ctx.globalAlpha=o.alpha==null?1:o.alpha;ctx.fillStyle=o.umb;ctx.beginPath();ctx.moveTo(x-w/2,y);ctx.quadraticCurveTo(x,y-28*sc,x+w/2,y);ctx.closePath();ctx.fill();
+    ctx.fillStyle='rgba(0,0,0,.35)';ctx.fillRect(x-.9*sc,y,1.8*sc,13*sc);ctx.globalAlpha=1}
+  if(o.parasol)parasolTop(x,b,sc,type,o.parasol,A,kx);
+}
+function drawMoon(x,y,r,phase,lit,shadow){
+  ctx.fillStyle=shadow;ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fill();
+  const waxing=phase<.5,k=Math.cos(phase*2*Math.PI),rx=Math.max(.01,r*Math.abs(k));
+  ctx.fillStyle=lit;ctx.beginPath();
+  if(waxing){ctx.arc(x,y,r,-Math.PI/2,Math.PI/2,false);ctx.ellipse(x,y,rx,r,0,Math.PI/2,-Math.PI/2,k>0)}
+  else{ctx.arc(x,y,r,-Math.PI/2,Math.PI/2,true);ctx.ellipse(x,y,rx,r,0,Math.PI/2,-Math.PI/2,!(k>0))}
+  ctx.fill();
+}
+
+/* ---------- counts ---------- */
+function castGroups(n){
+  const solo=Math.round(n*.45),couple=Math.round(n*.35/2),fam=Math.max(0,Math.floor((n-solo-couple*2)/3));
+  const list=[];for(let i=0;i<solo;i++)list.push('solo');for(let i=0;i<couple;i++)list.push('couple');for(let i=0;i<fam;i++)list.push('family');
+  const r=rng(n*31+7);for(let i=list.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[list[i],list[j]]=[list[j],list[i]]}
+  return {list,solo,couple,fam};
+}
+function makeTrace(zTop){
+  const r=Math.random;let x=WXMIN+120+r()*(WSPAN-240);if(Math.abs(x-PAN())<70)x+=110;
+  const y=zTop+6+r()*22;const pts=[];let px=x,py=y;for(let i=0;i<7+r()*6;i++){px+=(r()-.3)*7;py+=(r()-.5)*5;pts.push([px,py])}
+  return pts;
+}
+
+/* ---------- landmarks (방위 기준, 대략값 — 그림으로 교체할 자리) ---------- */
+/* 현장 사진 기준 배치: 남서 끝 = 송전탑 언덕·숲 곶·섬들 / 정면 = 낮은 섬과 바위섬, 먼 산줄기 / 북동 끝 = 시화방조제·풍력발전기·건물, 물 건너 송전탑 줄과 도시 */
+let turbAng=0;
+const BCOL=[[236,234,226],[214,96,86],[120,170,120],[230,226,214],[200,206,214],[196,120,150],[226,200,120]];
+function drawLandmarks(pass,sil,haze,sec,sBot,lit,night,sandC){
+  const fade=1-haze*.85;if(fade<=.05)return;
+  const X=az=>sx(wxOfAz(az));
+  const tint=(c,k)=>cs(mx(mx(sil,c,lit),sBot,k));
+  const hump=(a1,a2,h,col,peaks=0,base=0,pw=.65)=>{const x1=X(a1),x2=X(a2);if(x2<-30||x1>VW+30)return;ctx.fillStyle=col;ctx.beginPath();ctx.moveTo(x1,HZ+base);
+    for(let i=0;i<=30;i++){const u=i/30,x=x1+(x2-x1)*u;ctx.lineTo(x,HZ-h*Math.pow(Math.sin(Math.PI*u),pw)*(1+(peaks?.2*Math.sin(u*peaks*Math.PI*2+a1):0)))}
+    ctx.lineTo(x2,HZ+base);ctx.closePath();ctx.fill()};
+  const pylon=(x,yb,h,col)=>{ctx.strokeStyle=col;ctx.lineWidth=.8;ctx.beginPath();ctx.moveTo(x-h*.17,yb);ctx.lineTo(x,yb-h);ctx.lineTo(x+h*.17,yb);ctx.moveTo(x-h*.32,yb-h*.74);ctx.lineTo(x+h*.32,yb-h*.74);ctx.moveTo(x-h*.24,yb-h*.52);ctx.lineTo(x+h*.24,yb-h*.52);ctx.moveTo(x-h*.12,yb-h*.25);ctx.lineTo(x+h*.08,yb-h*.6);ctx.moveTo(x+h*.12,yb-h*.25);ctx.lineTo(x-h*.08,yb-h*.6);ctx.stroke()};
+  const blds=(a1,a2,base,hmin,hmax,seed,k)=>{const r=rng(seed);let az=a1;while(az<a2){const w=.7+r()*1.5,h=hmin+r()*(hmax-hmin),c=BCOL[Math.floor(r()*BCOL.length)],wr=r();const x1=X(az),x2=X(az+w);az+=w+r()*.25;
+    if(x2<-10||x1>VW+10)continue;const y0=HZ+base;ctx.fillStyle=tint(c,k);ctx.fillRect(x1,y0-h,x2-x1+.5,h);
+    if(night){const r2=rng(seed*7+Math.floor(wr*999));ctx.fillStyle='rgba(255,212,140,.9)';for(let j=0;j<4;j++)if(r2()<.55)ctx.fillRect(x1+(x2-x1-1.4)*r2(),y0-h+2+r2()*(h-4),1.4,1.4)}}};
+  ctx.globalAlpha=fade;
+  if(pass==='back'){
+    const green=[84,112,92];
+    /* 남서: 큰 언덕과 철탑 */
+    hump(194,233,30,tint(green,.12),1.4,0,.55);
+    const pc=cs(mx(sil,[60,60,64],.3));
+    [[206,24,13],[214,27,16],[223,22,12]].forEach(([az,bh,h])=>{const x=X(az);if(vis(x,20))pylon(x,HZ-bh,h,pc)});
+    /* 서남서: 섬들 */
+    hump(236,252,15,tint(green,.35),1.2);hump(250,268,12,tint(green,.4),1.6);hump(268,276,8,tint(green,.45));
+    /* 정면: 낮은 숲 섬, 바위섬, 먼 산줄기 */
+    hump(281,288.5,7,tint(green,.3),1.3);
+    {const x1=X(295.8),x2=X(297.4);if(vis(x1,20)){ctx.fillStyle=tint([90,88,84],.25);ctx.beginPath();ctx.moveTo(x1,HZ);ctx.lineTo(x1+(x2-x1)*.25,HZ-4.5);ctx.lineTo(x1+(x2-x1)*.6,HZ-5.2);ctx.lineTo(x2,HZ);ctx.closePath();ctx.fill()}}
+    hump(302.2,302.9,2.4,tint([90,88,84],.35));
+    hump(317,331,6.5,tint(green,.6),2.2);hump(339.5,344,4.5,tint(green,.6));
+    /* 북: 먼 도시 */
+    {const r=rng(5);ctx.globalAlpha=fade*.8;for(let az=345;az<378;){const w=.4+r()*.8,h=2+r()*(az>352&&az<372?8:4);const x1=X(az),x2=X(az+w);az+=w+r()*.5;if(x2<-4||x1>VW+4)continue;
+      ctx.fillStyle=tint([214,214,210],.55);ctx.fillRect(x1,HZ-h,x2-x1,h);if(night&&r()<.7){ctx.fillStyle='rgba(255,220,160,.8)';ctx.fillRect(x1+(x2-x1)/2,HZ-h*r(),1,1)}}ctx.globalAlpha=fade}
+    /* 송전탑 줄: 오른쪽 풍력발전기에서 북동으로 멀어지며 이어짐 */
+    {const pc2=cs(mx(sil,sBot,.28));const pts=[];for(let i=0;i<7;i++){const az=402+i*2.9,x=X(az),h=13-i*1.3;pts.push([x,HZ-h]);if(vis(x,10))pylon(x,HZ+1,h,pc2)}
+      ctx.strokeStyle=pc2;ctx.lineWidth=.5;ctx.beginPath();for(let i=0;i<pts.length-1;i++){const a=pts[i],b=pts[i+1];ctx.moveTo(a[0],a[1]);ctx.quadraticCurveTo((a[0]+b[0])/2,(a[1]+b[1])/2+2,b[0],b[1])}ctx.stroke()}
+  }else{
+    /* 남서 끝: 숲 곶과 건물들 */
+    blds(211,233,7,5,13,21,.05);
+    hump(229,243,10,tint([62,92,64],.05),2,5);
+    /* 풍력발전기: 실제 풍향을 향하고 풍속만큼 돈다 */
+    const turbine=(az,hT,base,k)=>{const x=X(az);if(!vis(x,60))return;const y0=HZ+base,hy=y0-hT,col=tint([240,240,236],k);
+      ctx.fillStyle=col;ctx.beginPath();ctx.moveTo(x-1.9,y0);ctx.lineTo(x+1.9,y0);ctx.lineTo(x+.7,hy);ctx.lineTo(x-.7,hy);ctx.closePath();ctx.fill();
+      const d=(WX.vec-az)*RAD,kx=Math.max(.12,Math.abs(Math.cos(d))),nd=Math.sin(d),nw=4.6+Math.abs(nd)*3;
+      rr(x-nw/2-nd*1.4,hy-1.7,nw,3.4,1.2);ctx.fill();
+      const R=hT*.46;ctx.strokeStyle=col;ctx.lineCap='round';ctx.lineWidth=1.5;
+      for(let k2=0;k2<3;k2++){const a=turbAng+az+k2*2.0944;ctx.beginPath();ctx.moveTo(x,hy);ctx.lineTo(x+Math.cos(a)*R*kx,hy+Math.sin(a)*R);ctx.stroke()}
+      if(night&&(sec%1.6)<.8){ctx.fillStyle='rgba(255,64,52,.95)';ctx.beginPath();ctx.arc(x,hy-2.2,1.6,0,7);ctx.fill()}};
+    turbine(377,82,9,.10);turbine(399,60,13,.05);
+    /* 북동: 왼쪽 풍력발전기 아래 방조제 끝 매립지와 건물 무리(석축 위) */
+    {const x1=X(366),x2=X(386);if(x2>-40&&x1<VW+40){ctx.fillStyle=tint([150,146,136],.12);ctx.beginPath();ctx.moveTo(x1,HZ-.6);ctx.lineTo(x2,HZ+7);ctx.lineTo(x2,HZ+12);ctx.lineTo(x1,HZ+.6);ctx.closePath();ctx.fill();
+      ctx.fillStyle=tint([96,130,88],.12);ctx.beginPath();ctx.moveTo(x1,HZ-.9);ctx.lineTo(x2,HZ+5.5);ctx.lineTo(x2,HZ+7);ctx.lineTo(x1,HZ-.6);ctx.closePath();ctx.fill()}}
+    blds(372,386,6,6,16,33,.06);
+    /* 오른쪽 풍력발전기 아래: 해변을 따라 이어지는 숲 언덕 */
+    hump(386,418,14,tint([54,86,58],.04),3,12,.4);
+    hump(391,412,19,tint([62,96,64],.03),2,12,.5);
+  }
+  ctx.globalAlpha=1;
+}
+const FOOT=Array.from({length:420},()=>[WXMIN+R()*WSPAN,SAND_START+2+R()*(H-SAND_START-40)]);
+function drawSign(shade){
+  const L='DAEBUDO',C=['#5b6f92','#2f6fb5','#f0e8d2','#c2306f','#4f9d4c','#e9b53c','#e8692c'],n=L.length;
+  const pos=[];for(let i=0;i<n;i++){const u=Math.pow(i/(n-1),1.15),az=262+u*8,yr=612+u*42;const x=sx(wxOfAz(az));pos.push([x,Y(yr,x),(16+u*18)*(.6+.4*Fx(x))])}
+  if(!vis(pos[n-1][0],60)&&!vis(pos[0][0],60))return;
+  ctx.strokeStyle=cs(shade([150,126,94]),.4);ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(pos[0][0]-3,pos[0][1]+2);ctx.lineTo(pos[n-1][0]+20,pos[n-1][1]+2);ctx.stroke();
+  for(let i=0;i<n;i++){const [px,py,ps]=pos[i],col=hx(C[i]),k=ps/30;
+    ctx.save();ctx.translate(px,py);ctx.transform(.62,.34,0,1,0,0);ctx.font=`900 ${ps}px 'Arial Black',Arial,sans-serif`;ctx.textBaseline='alphabetic';ctx.textAlign='left';
+    ctx.fillStyle=cs(shade(mx(col,[0,0,0],.4)));ctx.fillText(L[i],4*k,1.4*k);ctx.fillText(L[i],2*k,.7*k);
+    ctx.fillStyle=cs(shade(col));ctx.fillText(L[i],0,0);ctx.restore()}
+}
+
+/* ---------- draw ---------- */
+let tPrev=performance.now(),slow=0,tiltTarget=null;
+function frame(ts){
+  const dt=Math.min(50,ts-tPrev);tPrev=ts;
+  if(dt>28)slow++;else slow=Math.max(0,slow-1);
+  if(slow>40&&quality>.5){quality=.5;buildWorld();slow=0}
+  if(viewTarget!=null){viewAz+=(viewTarget-viewAz)*Math.min(1,dt/260);if(Math.abs(viewTarget-viewAz)<.2){viewAz=viewTarget;viewTarget=null}clampView()}
+  if(tiltTarget!=null){tilt+=(tiltTarget-tilt)*Math.min(1,dt/260);if(Math.abs(tiltTarget-tilt)<.5){tilt=tiltTarget;tiltTarget=null}}
+  drawScene(ts,dt);
+  const tt=now();updateEdges(sunPos(tt),moonPos(tt));
+  requestAnimationFrame(frame);
+}
+function drawScene(ts,dt){
+  const t=now(),sec=ts/1000,D=derive(),pan=PAN();
+  const sp=sunPos(t),mp=moonPos(t);
+  const level=tideNow(t),wl=wlOf(level);
+
+  let [sTop,sMid,sBot]=skyAt(sp.alt);
+  if(D.dark){const g=D.snow?hx('#a3abb5'):hx('#69717b');sTop=mx(sTop,g,D.dark);sMid=mx(sMid,g,D.dark);sBot=mx(sBot,g,D.dark)}
+  if(D.haze){const hz=mx(sBot,[200,204,210],.4);sBot=mx(sBot,hz,D.haze*.6);sMid=mx(sMid,hz,D.haze*.35)}
+  const moonLit=mp&&mp.alt>0?mp.frac*(1-D.cover*.8):0;
+  const Lf=Math.max(cl((sp.alt+11)/22,.14,1)*(1-D.dark*.3),.14+.12*moonLit);
+  const warm=sp.alt>-5&&sp.alt<9?cl(1-Math.abs(sp.alt-2)/7,0,1)*(1-D.cover*.9)*(1-D.haze*.5):0;
+  const shade=c=>mx(mx(c.map(v=>v*Lf),[38,46,78],(1-Lf)*.45),[255,150,90],warm*.16*Lf);
+  const mud=shade([104,90,76]),mudWet=shade([88,76,66]),sand=shade([214,190,148]),sandDamp=shade([186,160,120]),wood=shade([86,66,52]);
+  const dayK=cl((sp.alt+2)/16,0,1)*(1-D.cover*.7);
+  const seaDay=mx(mx(sBot,[34,70,92],.58),[44,150,204],dayK);
+  const sea=mx(mx(mx(seaDay,[10,16,30],(1-Lf)*.35),[150,160,168],D.haze*.25),[118,138,150],D.cover*.35*dayK);
+  const ink=mx([16,13,18],[46,38,42],Lf*.8);
+  const rimBase=mx(sBot,[255,238,205],.5);
+  const rimA=cl(.22+warm*.55+(1-Lf)*.5,0,.85);
+
+  ctx.setTransform(dpr,0,0,dpr,0,0);ctx.fillStyle='#0e131b';ctx.fillRect(0,0,cw,ch);
+  ctx.setTransform(dpr*S,0,0,dpr*S,dpr*OX,dpr*(OY+tilt*S));
+  const L0=-60,R0=VW+60;
+
+  /* sky */
+  const gr=ctx.createLinearGradient(0,LAND?150:-120,0,HZ);gr.addColorStop(0,cs(sTop));gr.addColorStop(.6,cs(sMid));gr.addColorStop(1,cs(sBot));
+  ctx.fillStyle=gr;ctx.fillRect(L0,-760,R0-L0,HZ+760);
+  /* 해 쪽 하늘이 더 밝게 물듦 (화면 밖이어도 그쪽 가장자리가 붉게) */
+  if(sp.alt>-12&&sp.alt<12){const gx=sx(wxOfAz(sp.az)),glow=cl(1-Math.abs(sp.alt+1)/11,0,1)*(1-D.cover*.85);
+    if(glow>0){const g2=ctx.createRadialGradient(gx,HZ,10,gx,HZ,420);g2.addColorStop(0,cs(mx(hx('#ff9a52'),sBot,.3),.55*glow));g2.addColorStop(1,cs(sBot,0));ctx.fillStyle=g2;ctx.fillRect(L0,-760,R0-L0,HZ+760)}}
+
+  const starA=cl((-sp.alt-6)/8,0,1)*(1-D.cover)*(1-D.haze*.7)*(1-moonLit*.35);
+  if(starA>0){ctx.fillStyle='#f3efe0';STARS.forEach(s=>{const x=sx(s[0]);if(!vis(x,4))return;ctx.globalAlpha=starA*(.45+.55*Math.sin(sec*.8+s[2]));ctx.fillRect(x,s[1],s[3],s[3])});ctx.globalAlpha=1}
+
+  /* sun */
+  let glitter=[];
+  const sunX=sx(wxOfAz(sp.az)),sunY=HZ-sp.alt*PPD;
+  if(sp.alt>-1.5&&D.cover<.92&&vis(sunX,140)){
+    const low=cl(1-sp.alt/25,0,1),scol=mx(hx('#fff6d6'),hx('#ffb04a'),low),r=13+low*9,dim=(1-D.cover*.8)*(1-D.haze*.55);
+    const halo=ctx.createRadialGradient(sunX,sunY,r*.6,sunX,sunY,r*4.5);halo.addColorStop(0,cs(scol,.45*dim));halo.addColorStop(1,cs(scol,0));
+    ctx.fillStyle=halo;ctx.fillRect(sunX-r*5,sunY-r*5,r*10,r*10);
+    ctx.fillStyle=cs(scol,Math.max(.25,dim));ctx.beginPath();ctx.arc(sunX,sunY,r,0,7);ctx.fill();
+    if(D.cover<.75)glitter.push([sunX,mx(hx('#ffffff'),hx('#ffcf74'),low),dim]);
+  }
+  /* moon */
+  if(mp&&mp.alt>-1){
+    const mX=sx(wxOfAz(mp.az)),mY=HZ-mp.alt*PPD;
+    if(vis(mX,40)){const day=cl((sp.alt+4)/12,0,1),a=(1-D.cover*.85)*(1-D.haze*.5);
+      ctx.globalAlpha=Math.max(.05,a*(1-day*.6));
+      drawMoon(mX,mY,10,mp.phase,cs(mx(hx('#efe8cf'),[255,255,255],day*.3)),cs(sTop,.0001+.6*(1-day)));
+      ctx.globalAlpha=1;
+      if(sp.alt<-4&&mp.frac>.15&&D.cover<.75)glitter.push([mX,hx('#e9e3cc'),mp.frac*a]);
+    }
+  }
+
+  /* clouds: 양은 기상청 하늘상태, 흐름은 풍향·풍속 */
+  const nC=Math.round(D.cover*30),cloudC=D.dark>.3?mx(sMid,hx(D.rain?'#4d545e':'#c4c9cf'),.6):mx(sMid,[255,255,255],.5+warm*.1);
+  const drift=(.004+D.lateral*D.wsd*.0016)*dt;
+  for(let i=0;i<nC;i++){const c=CLOUDS[i];c.x+=drift*(.6+c.s*.8);if(c.x>WXMAX+120)c.x=WXMIN-c.w;if(c.x<WXMIN-c.w-130)c.x=WXMAX+100;
+    const x=sx(c.x);if(!vis(x,c.w))continue;const ca=(.25+D.cover*.6)*(1-D.haze*.3);
+    const under=warm>0?mx(cloudC,hx('#ff9b6a'),warm*.5):cloudC;
+    ctx.fillStyle=cs(cloudC,ca);ctx.beginPath();ctx.ellipse(x,c.y,c.w*.5,c.w*.14,0,0,7);ctx.ellipse(x+c.w*.18,c.y-c.w*.08,c.w*.28,c.w*.13,0,0,7);ctx.ellipse(x-c.w*.16,c.y-c.w*.04,c.w*.22,c.w*.1,0,0,7);ctx.fill();
+    ctx.fillStyle=cs(under,ca*.7);ctx.beginPath();ctx.ellipse(x,c.y+c.w*.06,c.w*.42,c.w*.06,0,0,7);ctx.fill()}
+  if(D.cover>.85){ctx.fillStyle=cs(mx(sMid,[120,126,134],.35),(D.cover-.85)*3.5);ctx.fillRect(L0,-760,R0-L0,HZ-40+760)}
+
+  /* gulls */
+  if(sp.alt>-3&&!D.rain&&D.wsd<12){ctx.strokeStyle=cs(ink,.7);ctx.lineWidth=1.4;GULLS.forEach(g=>{g.x+=g.v*dt;if(g.x>WXMAX){g.x=WXMIN;g.y=150+Math.random()*110}
+    const x=sx(g.x);if(!vis(x,20))return;const f=Math.sin(sec*5+g.ph)*3;ctx.beginPath();ctx.moveTo(x-7,g.y+f*.4);ctx.quadraticCurveTo(x-3,g.y-3-f,x,g.y);ctx.quadraticCurveTo(x+3,g.y-3-f,x+7,g.y+f*.4);ctx.stroke()})}
+
+  const lit=cl((Lf-.3)/.5,0,1)*(1-D.dark*.5),night=sp.alt<-6,silC=mx(sBot,[30,32,48],.5);
+  if(dt>0)turbAng+=cl((WX.wsd-2.5)/9,0,1)*1.8*dt/1000;
+  drawLandmarks('back',silC,D.haze,sec,sBot,lit,night);
+
+  /* ground */
+  const band=(yRaw,col)=>{ctx.fillStyle=col;ctx.beginPath();ctx.moveTo(L0,H+120);for(let x=L0;x<=R0;x+=10)ctx.lineTo(x,inBeach(x)?Y(yRaw,x):HZ);ctx.lineTo(R0,H+120);ctx.closePath();ctx.fill()};
+  ctx.fillStyle=cs(mud);ctx.fillRect(L0,HZ,R0-L0,H-HZ+120);
+  band(MUD_END-8,cs(sandDamp,.45));band(MUD_END+16,cs(sandDamp,.85));band(SAND_START-14,cs(mx(sandDamp,sand,.5)));band(SAND_START,cs(sand));
+  BLOBS.forEach(b=>{const x=sx(b[0]);if(!vis(x,50))return;const f=Fx(x);ctx.fillStyle=cs(b[4]<.55?sandDamp:mud,.55);ctx.beginPath();ctx.ellipse(x,Y(b[1],x),b[2]*(.45+.55*f),b[3]*f,0,0,7);ctx.fill()});
+  ctx.fillStyle=cs(mudWet,.7);MUDDASH.forEach(p=>{const x=sx(p[0]);if(vis(x,6))ctx.fillRect(x,Y(p[1],x),5*(.4+.6*Fx(x)),1.6)});
+  ctx.fillStyle=cs(mx(sea,sBot,.35),.75);POOLS.forEach(p=>{const x=sx(p[0]);if(!vis(x,50))return;const f=Fx(x);ctx.beginPath();ctx.ellipse(x,Y(p[1],x),p[2]*(.45+.55*f),p[3]*f,0,0,7);ctx.fill()});
+  SPECKS.forEach(p=>{const x=sx(p[0]);if(!vis(x,2))return;ctx.fillStyle=cs(p[2]<.5?shade([176,150,112]):shade([234,214,176]),.7);ctx.fillRect(x,Y(p[1],x),1.4,1.4)});
+  {const fd=cs(shade([168,140,102]),.42),fl=cs(shade([242,226,192]),.5);FOOT.forEach(p=>{const x=sx(p[0]);if(!vis(x,4))return;const f=Fx(x),y=Y(p[1],x),k=.45+.55*f,z=.7+(p[1]-SAND_START)/150;
+    ctx.fillStyle=fd;ctx.beginPath();ctx.ellipse(x,y,2.6*z*k,1.1*z*f,0,0,7);ctx.fill();ctx.fillStyle=fl;ctx.fillRect(x-2*z*k,y+1.1*z*f,4*z*k,.8)})}
+
+  /* swash: 바람이 셀수록 주기가 짧고 멀리 올라옴 */
+  const CYC=Math.max(4.4,8-D.wsd*.3),ph=(sec%CYC)/CYC;
+  let run;if(ph<.3){const u=ph/.3;run=1-(1-u)*(1-u)}else{const u=(ph-.3)/.7;run=1-u*u*(3-2*u)}
+  const RM=(6+(wl-HZ)/(WL_HIGH-HZ)*16)*D.sea;
+  const baseR=x=>wl+1.4*Math.sin((x+pan)/23+sec*.5);
+  const sheetR=x=>baseR(x)+run*RM*(.92+.12*Math.sin((x+pan)/31+sec*.25));
+  const mainR=x=>baseR(x)+run*RM*.32;
+  const base=x=>inBeach(x)?Y(baseR(x),x):HZ,sheetEdge=x=>inBeach(x)?Y(sheetR(x),x):HZ,mainEdge=x=>inBeach(x)?Y(mainR(x),x):HZ;
+
+  ctx.fillStyle=cs(wl>SAND_START-20?sandDamp:mudWet,.35+.3*run);ctx.beginPath();ctx.moveTo(L0,base(L0));
+  for(let x=L0;x<=R0;x+=8)ctx.lineTo(x,base(x));for(let x=R0;x>=L0;x-=8)ctx.lineTo(x,inBeach(x)?Y(baseR(x)+RM*1.08,x):HZ);ctx.closePath();ctx.fill();
+
+  /* traces + my strokes (world coords), erased where swash reaches */
+  const reach=wxp=>inBeach(sx(wxp))?sheetR(sx(wxp))-1:HZ;
+  const P=p=>{const x=sx(p[0]);return [x,Y(p[1],x)]};
+  const zTop=Math.max(wl+RM+8,SAND_START-18);
+  st.traces=st.traces.filter(tr=>tr.every(p=>p[1]>reach(p[0])));
+  if(zTop<ZONE_B-24&&st.traces.length<Math.min(40,Math.round(st.crowd*.8))&&dt>0&&Math.random()<.03)st.traces.push(makeTrace(zTop));
+  ctx.lineCap='round';ctx.lineJoin='round';
+  st.traces.forEach(tr=>{if(!vis(sx(tr[0][0]),40))return;ctx.strokeStyle=cs(shade([150,126,94]),.55);ctx.lineWidth=1.5;ctx.beginPath();tr.forEach((p,i)=>{const q=P(p);i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])});ctx.stroke()});
+  const before=st.myStrokes.length;
+  st.myStrokes=st.myStrokes.map(s=>s.filter(p=>p[1]>reach(p[0]))).filter(s=>s.length>1);
+  if(st.myStrokes.length<before){st.eraseShownUntil=ts+7000;st.erasedCount+=before-st.myStrokes.length}
+  const groove=cs(shade([128,104,76])),lip=cs(shade([238,220,186]),.75);
+  st.myStrokes.concat(st.cur&&st.cur.length?[st.cur]:[]).forEach(s=>{
+    const f=Fx(sx(s[0][0])),pts=s.map(P);
+    ctx.strokeStyle=lip;ctx.lineWidth=2*(.5+.5*f);ctx.beginPath();pts.forEach((q,i)=>i?ctx.lineTo(q[0]+.9,q[1]+1.6*f):ctx.moveTo(q[0]+.9,q[1]+1.6*f));ctx.stroke();
+    ctx.strokeStyle=groove;ctx.lineWidth=3.4*(.5+.5*f);ctx.beginPath();pts.forEach((q,i)=>i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1]));ctx.stroke();
+  });
+
+  /* crabs */
+  CRABS.forEach(c=>{
+    c.x+=c.dir*.018*dt;if(dt>0&&(c.x<WXMIN||c.x>WXMAX||Math.random()<.002))c.dir*=-1;
+    const x=sx(c.x);if(!vis(x,10)||!inBeach(x)||c.y<mainR(x)+8||c.y>MUD_END||D.rain>1)return;
+    const cc=shade([196,86,62]),lg=Math.sin(sec*10+c.ph)*1.2,f=Fx(x),cy=Y(c.y,x),k2=.4+.6*f;
+    ctx.strokeStyle=cs(cc);ctx.lineWidth=1;for(let k=-1;k<=1;k+=2){ctx.beginPath();ctx.moveTo(x+k*3*k2,cy);ctx.lineTo(x+k*7*k2,cy+(2+lg*k)*f);ctx.stroke()}
+    ctx.fillStyle=cs(cc);ctx.beginPath();ctx.ellipse(x,cy,4.6*k2,3*k2,0,0,7);ctx.fill();
+  });
+
+  /* sea body */
+  const seaPath=new Path2D();seaPath.moveTo(L0,HZ);seaPath.lineTo(R0,HZ);for(let x=R0;x>=L0;x-=6)seaPath.lineTo(x,mainEdge(x));seaPath.closePath();
+  ctx.fillStyle=cs(sea);ctx.fill(seaPath);
+  ctx.save();ctx.clip(seaPath);ctx.fillStyle=cs(mx(sea,sBot,.3+D.haze*.4));ctx.fillRect(L0,HZ,R0-L0,Math.min(10+D.haze*20,wl-HZ));ctx.restore();
+  ctx.strokeStyle=cs(mx(sea,[255,255,255],.22),.3);ctx.lineWidth=.8;
+  for(let i=0;i<8;i++){const yy=HZ+6+(i/8)**1.5*(wl-HZ-30);if(yy>wl-24)break;const off=(sec*(4+i*2)*(1+D.wsd*.05)+i*57+pan)%70;
+    for(let x=L0-((pan%70)+70)%70+off%70;x<R0;x+=70){const x2=x+10+i*1.6;if(!inBeach(x))continue;ctx.beginPath();ctx.moveTo(x,Y(yy,x));ctx.lineTo(x2,Y(yy,x2));ctx.stroke()}}
+  /* whitecaps when windy */
+  if(D.wsd>6){const n=Math.round((D.wsd-6)*5*VW/390);ctx.fillStyle=`rgba(255,255,255,${.25+.2*Lf})`;
+    for(let i=0;i<n;i++){const cyc=(sec*.6+i*.37)%1,yy=HZ+8+((i*53)%Math.max(10,wl-HZ-20));const x=((i*97+pan*-1)%(VW+120)+VW+120)%(VW+120)-60;const w=(1-Math.abs(cyc-.5)*2)*(3+(yy-HZ)*.05);if(w>.3&&inBeach(x))ctx.fillRect(x,Y(yy,x),w*2,1.2)}}
+  /* incoming crests */
+  const span=Math.min(78,(wl-HZ)*.85);
+  if(span>12)for(let k=0;k<3;k++){
+    const p=((sec/CYC)+k/3)%1,y0=wl-(1-p)*span;if(y0<HZ+5)continue;
+    const a=(k===0?.55:.28)*Math.sin(p*Math.PI)**.6*Math.min(1.4,D.sea);
+    ctx.strokeStyle=`rgba(255,255,255,${a*(.5+.5*Lf)})`;ctx.lineWidth=.7+p*1.6*D.sea;ctx.beginPath();
+    let pen=false;for(let x=L0;x<=R0;x+=8){if(!inBeach(x)){pen=false;continue}const y=Y(y0+1.2*Math.sin((x+pan)/17+k*2+sec*.7)*(1+p),x);pen?ctx.lineTo(x,y):ctx.moveTo(x,y);pen=true}ctx.stroke();
+  }
+  /* glitter under sun/moon */
+  ctx.save();ctx.clip(seaPath);
+  glitter.forEach(([ox,col,str])=>{if(wl-HZ<14)return;
+    for(let i=0;i<24;i++){const yy=HZ+4+i*((wl-HZ-14)/24);const spread=6+(yy-HZ)*.42*(1+D.wsd*.04);
+      const fl=.5+.5*Math.sin(sec*(3.1+D.wsd*.15)+i*1.9),w=(4+fl*spread*.9)*(.6+.4*Math.sin(i*2.7+sec*.7));
+      const gx=ox-w/2+Math.sin(i*1.3+sec)*spread*.35;ctx.fillStyle=cs(col,(.22+fl*.6)*str);ctx.fillRect(gx,Y(yy,ox),w,1.6)}});
+  ctx.restore();
+  drawLandmarks('front',silC,D.haze,sec,sBot,lit,night,[cs(sand),cs(sandDamp)]);
+  /* swash sheet */
+  ctx.fillStyle=cs(mx(sea,[255,255,255],.3),.55*(.35+.65*run));ctx.beginPath();
+  for(let x=L0;x<=R0;x+=6){const y=mainEdge(x);x===L0?ctx.moveTo(x,y):ctx.lineTo(x,y)}
+  for(let x=R0;x>=L0;x-=6)ctx.lineTo(x,sheetEdge(x));ctx.closePath();ctx.fill();
+  ctx.strokeStyle=`rgba(255,255,255,${(.3+.5*run)*(.55+.45*Lf)})`;ctx.lineWidth=1.6;ctx.beginPath();
+  {let pen=false;for(let x=L0;x<=R0;x+=6){if(!inBeach(x)){pen=false;continue}const y=sheetEdge(x)+Math.sin((x+pan)/5+sec*3)*.5;pen?ctx.lineTo(x,y):ctx.moveTo(x,y);pen=true}ctx.stroke()}
+  if(ph>.3){ctx.fillStyle=`rgba(255,255,255,${.35*(1-run)})`;for(let x=L0-((pan%9)+9)%9;x<R0;x+=9){if(inBeach(x))ctx.fillRect(x,Y(baseR(x)+RM*.98+Math.sin(x+pan)*1.5,x),2.2,1)}}
+
+  /* rain ripples */
+  if(D.rain){ctx.strokeStyle='rgba(220,230,240,.35)';ctx.lineWidth=.8;const k0=Math.floor(sec*3);for(let i=0;i<Math.round(12*D.rain*VW/390);i++){const x=(i*97+k0*41)%VW,y=HZ+10+((i*53+k0*29)%Math.max(10,wl-HZ-12));const r=((sec*3+i*.37)%1)*6;ctx.beginPath();ctx.ellipse(x,Y(y,x),r,r*.3*Fx(x),0,0,7);ctx.stroke()}}
+
+  /* haze veil over horizon */
+  if(D.haze>.05){const hv=ctx.createLinearGradient(0,HZ-120,0,HZ+90);const hc=mx(sBot,[205,208,214],.35);hv.addColorStop(0,cs(hc,0));hv.addColorStop(.55,cs(hc,D.haze*.75));hv.addColorStop(1,cs(hc,0));ctx.fillStyle=hv;ctx.fillRect(L0,HZ-120,R0-L0,210)}
+
+  /* writing hint */
+  const zoneH=ZONE_B-zTop;
+  if(PHOTO){}else if(zoneH>18){if(!st.myStrokes.length&&!(st.cur&&st.cur.length))pill('모래사장에 손가락으로 써 보세요',CX,Y((zTop+ZONE_B)/2-4,CX),'rgba(16,13,18,.34)','#fbf6ec',12)}
+  else if(!st.myStrokes.length)pill('물이 모래사장까지 차서 쓸 자리가 없어요',CX,Y(ZONE_B-8,CX),'rgba(16,13,18,.38)','#fbf6ec',12);
+
+  /* people */
+  const umbOn=D.rain>0||(D.snow>0&&WX.pty==='진눈깨비');
+  const summer=season(t)==='여름'&&sp.alt>-2&&!umbOn&&!D.snow;
+  const cast=castGroups(st.crowd);let over=0;const placed=[];
+  cast.list.forEach((g,i)=>{if(i<SLOTS.length)placed.push([g,SLOTS[i],i]);else over+=g==='solo'?1:g==='couple'?2:3});
+  const drawCast=row=>placed.filter(p=>p[1].row===row).forEach(([g,sl,i])=>{const x=sx(sl.x);if(!vis(x,60))return;
+    const near=row===0?cl((Math.abs(x-ME_X)-56)/40,0,1):1;if(near<=0)return;
+    const f=Fx(x);if(f<.12)return;
+    group(g,x,Y(sl.b,x),sl.sc*(.25+.75*f),cs(mx(ink,sand,sl.fog)),{alpha:near,turn:relAz(x),headSign:-1,rim:cs(rimBase,rimA*(1-sl.fog)),mat:cs(mx(shade(hx(MATS[i%MATS.length])),sand,sl.fog*.6)),umb:umbOn?cs(mx(hx(UMB[i%UMB.length]),sand,sl.fog)):null,parasol:summer&&i%2===0?cs(mx(shade(hx(PARA[i%PARA.length])),sand,sl.fog*.5)):null,tent:summer&&row>0&&i%4===1?cs(mx(shade(hx(TENT[i%TENT.length])),sand,sl.fog*.5)):null})});
+  drawCast(2);drawCast(1);
+  if(over>0&&!PHOTO)pill('+'+over+'명',VW-34,568,'rgba(251,246,236,.85)','#4a3f3a',11);
+  drawCast(0);
+  drawSign(shade);
+
+  if(st.group!=='solo'&&st.partnerA<1)st.partnerA=Math.min(1,st.partnerA+dt/900);
+  if(st.group==='solo')st.partnerA=0;
+  const ME_SC=1.1,sea_=SEASON[season(t)];
+  group(st.group,ME_X,BENCH,ME_SC,cs(ink),{turn:(viewAz-AZ0)*.9,headSign:1,rim:cs(rimBase,Math.min(.95,rimA+.15)),acc:sea_.acc,accCols:sea_.c,fade:st.partnerA,mat:cs(shade(hx('#e76f51'))),stripe:cs(shade(hx('#fbf6ec'))),umb:umbOn?'#e76f51':null,parasol:summer?cs(shade(hx('#e76f51'))):null});
+
+  const meTop=BENCH-(summer?104:umbOn?62:sea_.acc==='hat'?54:50)*ME_SC;
+  if(!PHOTO)pill(st.group==='solo'?'나':st.group==='couple'?'우리':'우리 가족',ME_X,meTop-10,'rgba(255,255,255,.93)','#4a3f3a',12);
+  if(!PHOTO&&st.bubble&&ts<st.bubbleUntil){
+    ctx.globalAlpha=cl((st.bubbleUntil-ts)/600,0,1);
+    ctx.font=`13px 'Gowun Dodum',sans-serif`;const w=Math.min(250,ctx.measureText(st.bubble).width+22),y=meTop-44;
+    rr(ME_X-w/2,y-14,w,28,12);ctx.fillStyle='#fbf6ec';ctx.fill();
+    ctx.beginPath();ctx.moveTo(ME_X-5,y+13);ctx.lineTo(ME_X,y+20);ctx.lineTo(ME_X+5,y+13);ctx.fill();
+    ctx.fillStyle='#3a302a';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(st.bubble,ME_X,y+.5,w-16);ctx.globalAlpha=1;
+  }
+  if(!PHOTO&&st.myStrokes.length&&!(ts<st.eraseShownUntil)){
+    const ys=Math.min(...st.myStrokes.map(s=>Math.min(...s.map(p=>p[1]))));
+    let when=0;if(tideManual==null)for(let i=1;i<=170;i++){const tt=t+i*5*60000,w=wlOf(tideAt(tt));if(w+RM*.9>=ys){when=tt;break}}
+    pill(when?hhmm(when)+' 물이 들어오면 지워져요':'물이 들어오면 지워져요',CX,Y(ZONE_B+3,CX),'rgba(16,13,18,.42)','#fbf6ec',12);
+  }
+  if(!PHOTO&&ts<st.eraseShownUntil){
+    const n=(st.crowd*37+212+st.erasedCount).toLocaleString('ko-KR');
+    pill(st.crowd>0?`지금 ${n}개의 글씨가 바다로 돌아가는 중`:'내 글씨가 바다로 돌아가는 중',CX,HZ+22,'rgba(16,13,18,.46)','#fbf6ec',12);
+  }
+
+  /* precipitation (바람 따라 기울어짐) */
+  const slant=D.lateral*D.wsd*.05;
+  if(D.rain){ctx.strokeStyle='rgba(205,216,230,.55)';ctx.lineWidth=1;const n=Math.round(RAIN.length*Math.min(1,D.rain*.65));
+    for(let i=0;i<n;i++){const d=RAIN[i];d.y+=d.v*dt*.9*(1+D.rain*.2);d.x+=slant*dt*.12;if(d.y>H){d.y=LAND?140:-20;d.x=Math.random()*(VW+120)-60}if(d.x>VW+60)d.x-=VW+120;if(d.x<-60)d.x+=VW+120;
+      ctx.beginPath();ctx.moveTo(d.x,d.y);ctx.lineTo(d.x+slant*4,d.y+15);ctx.stroke()}}
+  if(D.snow){ctx.fillStyle='rgba(255,255,255,.9)';const n=Math.round(SNOW.length*D.snow);
+    for(let i=0;i<n;i++){const d=SNOW[i];d.y+=d.v*dt*.4;d.x+=Math.sin(sec+d.ph)*.25+slant*dt*.03;if(d.y>H){d.y=LAND?150:-10;d.x=Math.random()*VW}if(d.x>VW+10)d.x=-10;if(d.x<-10)d.x=VW+10;
+      ctx.beginPath();ctx.arc(d.x,d.y,1.7,0,7);ctx.fill()}}
+
+}
+
+/* ---------- 화면 밖 해·달 안내 ---------- */
+let edgeState='';
+function updateEdges(sp,mp){
+  let txt='',side=0,targetAz=null,targetAlt=0;
+  const showSun=sp.alt>-6&&sp.alt<22,sX=sx(wxOfAz(sp.az));
+  if(showSun&&(sX<0||sX>VW)){const pm=kst(now()).h>=12;txt=(sp.alt<6&&pm?'노을':sp.alt<6?'해돋이':'해');side=sX<0?-1:1;targetAz=unwrap(sp.az);targetAlt=sp.alt}
+  else if(mp&&mp.alt>0&&sp.alt<-4){const mX=sx(wxOfAz(mp.az));if(mX<0||mX>VW){txt='달';side=mX<0?-1:1;targetAz=unwrap(mp.az);targetAlt=mp.alt}}
+  const key=txt+side;
+  if(key!==edgeState){edgeState=key;$('#hintL').hidden=side!==-1;$('#hintR').hidden=side!==1;
+    if(side===-1)$('#hintL').textContent='← '+txt;if(side===1)$('#hintR').textContent=txt+' →'}
+  $('#hintL').dataset.az=$('#hintR').dataset.az=targetAz==null?'':targetAz;
+  $('#hintL').dataset.alt=$('#hintR').dataset.alt=targetAlt;
+  $('#front').hidden=Math.abs(viewAz-AZ0)<14&&Math.abs(tilt)<40;
+}
+function lookAt(az,alt=0){const keep=viewAz;viewAz=az;clampView();viewTarget=viewAz;viewAz=keep;tiltTarget=cl(150-(HZ-alt*PPD),0,TILT_MAX)}
+['#hintL','#hintR'].forEach(id=>$(id).onclick=e=>{const a=+e.currentTarget.dataset.az;if(!isNaN(a))lookAt(a,+e.currentTarget.dataset.alt||0)});
+$('#front').onclick=()=>{lookAt(AZ0,0);tiltTarget=0};
+
+/* ---------- HUD ---------- */
+function phaseLabel(alt,t){const pm=kst(t).h>=12;if(alt>9)return '낮';if(alt>-5)return pm?'노을':'해돋이';if(alt>-12)return pm?'저녁':'새벽';return '밤'}
+function tempNow(t){return WX.temp!=null?Math.round(WX.temp):null}
+function updateHud(){
+  const t=now(),sp=sunPos(t),mp=moonPos(t),ph=phaseLabel(sp.alt,t);
+  const tp=tempNow(t);$('#h1').textContent=`방아머리 · ${hhmm(t)} · ${WX.sky==='맑음'&&WX.pty==='없음'&&!WX.fog?ph:wxLabel()}`+(tp!=null?` · ${tp}℃`:'');
+  const lv=tideNow(t);let tide;
+  if(tideManual!=null)tide=lv<.12?'간조 · 갯벌 열림':lv>.9?'만조':'물 높이 '+Math.round(lv*100)+'%';
+  else if(lv<.1)tide='간조 · 갯벌 열림 · 다음 만조 '+hhmm(nextHigh(t));
+  else if(lv>.92)tide='만조 · 다음 간조 '+hhmm(nextLow(t));
+  else tide=(tideRising(t)?'물 들어오는 중 · 만조 ':'물 빠지는 중 · 간조 ')+hhmm(tideRising(t)?nextHigh(t):nextLow(t));
+  $('#h2').textContent=tide;
+  const tm=sunTimes(t);let sline='';
+  if(tm.set){const setAz=sunPos(tm.set).az;const off=Math.round(unwrap(setAz)-AZ0);sline=(t<tm.set?'오늘 노을 ':'노을 진 시각 ')+hhmm(tm.set)+` · ${dirName(setAz)}(${off<0?'정면에서 왼쪽 '+(-off):'정면에서 오른쪽 '+off}°)`}
+  $('#h4').textContent=sline;
+  $('#h5').textContent=(WX.live||wxManual?`${dirName(WX.vec)}풍 ${WX.wsd}m/s · 습도 ${WX.reh}%`+(WX.pm?` · 미세먼지 ${WX.pm}`:'')+(WX.live&&!wxManual&&WX.at?` · 기상청 ${hhmm(WX.at)} 관측`:''):'날씨 정보를 불러오는 중')+(mp?` · ${moonName(mp.phase)}`:'');
+  $('#h6').textContent=`지금 보는 방향 ${dirName(viewAz)} ${Math.round(((viewAz%360)+360)%360)}°`;
+  const verb=WX.fog?'해무 낀 바다를':WX.pty!=='없음'?(WX.pty==='눈'?'눈 오는 바다를':'비 오는 바다를'):ph==='노을'?'노을을':ph==='해돋이'?'해돋이를':ph==='낮'?'바다를':ph==='새벽'?'새벽 바다를':'밤바다를';
+  const c=castGroups(st.crowd);let so=c.solo,co=c.couple,fa=c.fam;
+  if(st.group==='solo')so++;else if(st.group==='couple')co++;else fa++;
+  if(st.crowd===0&&st.group==='solo')$('#h3').textContent='지금 나 혼자 바다를 보고 있어요';
+  else{const parts=[];if(so)parts.push(`솔로 ${so}명`);if(co)parts.push(`커플 ${co}쌍`);if(fa)parts.push(`가족 ${fa}팀`);$('#h3').textContent=`지금 ${parts.join(' · ')}이 ${verb} 보고 있어요`}
+  $('#tLab').textContent=hhmm(t);if(document.activeElement!==$('#tIn'))$('#tIn').value=kstMin(t);
+  const k=kst(t);$('#dLab').textContent=dayShift===0?'오늘':`${k.mo}월 ${k.d}일`;
+  $('#tideLab').textContent=Math.round(lv*100)+'%';if(tideManual==null)$('#tideIn').value=Math.round(lv*100);
+  $('#eraseBtn').hidden=!st.myStrokes.length;
+}
+const MORE=['#h2','#h4','#h5','#h6'];
+$('#h1').onclick=()=>{const open=$('#h2').hidden;MORE.forEach(i=>$(i).hidden=!open);$('#h1').setAttribute('aria-expanded',open)};
+
+/* ---------- calm mode ---------- */
+let idleT;
+const busy=()=>!$('#share').hidden||!$('#chat').hidden||!$('#photo').hidden||!$('#dbg').hidden||!$('#intro').hidden;
+function wake(){stage.classList.remove('calm');clearTimeout(idleT);idleT=setTimeout(function rest(){if(busy()||st.cur||drag){idleT=setTimeout(rest,3000);return}stage.classList.add('calm');MORE.forEach(i=>$(i).hidden=true);$('#h1').setAttribute('aria-expanded',false)},6000)}
+stage.addEventListener('pointerdown',wake,true);stage.addEventListener('keydown',wake,true);
+
+/* ---------- input: 쓰기 또는 고개 돌리기 ---------- */
+let drag=null;
+function toLogical(e){const r=cv.getBoundingClientRect();return[(e.clientX-r.left-OX)/S,(e.clientY-r.top-OY-tilt*S)/S]}
+function zoneTop(){const wl=wlOf(tideNow(now()));const RM=(6+(wl-HZ)/(WL_HIGH-HZ)*16)*derive().sea;return Math.max(wl+RM+8,SAND_START-18)}
+function inZone(p){const yr=Yinv(p[1],p[0]);return Fx(p[0])>.3&&yr>zoneTop()&&yr<ZONE_B&&p[0]>4&&p[0]<VW-4}
+const toWorld=p=>[p[0]-CX+PAN(),Yinv(p[1],p[0])];
+cv.addEventListener('pointerdown',e=>{const p=toLogical(e);cv.setPointerCapture(e.pointerId);
+  if(inZone(p))st.cur=[toWorld(p)];else{drag={x:e.clientX,y:e.clientY,az:viewAz,tilt};viewTarget=null;tiltTarget=null;cv.style.cursor='grabbing'}});
+cv.addEventListener('pointermove',e=>{
+  if(drag){viewAz=drag.az-(e.clientX-drag.x)/S/PPD;clampView();tilt=cl(drag.tilt+(e.clientY-drag.y)/S,TILT_MIN,TILT_MAX);return}
+  if(!st.cur)return;const p=toLogical(e);
+  if(inZone(p)){const w=toWorld(p),l=st.cur[st.cur.length-1];if(!l||Math.hypot(w[0]-l[0],w[1]-l[1])>1.2)st.cur.push(w)}
+  else if(st.cur.length>1){st.myStrokes.push(st.cur);st.cur=[]}});
+const endPtr=()=>{if(st.cur&&st.cur.length>1)st.myStrokes.push(st.cur);st.cur=null;if(drag){drag=null;cv.style.cursor='grab';updateHud()}};
+cv.addEventListener('pointerup',endPtr);cv.addEventListener('pointercancel',endPtr);
+window.addEventListener('keydown',e=>{if(e.target.tagName==='INPUT')return;if(e.key==='ArrowLeft'){viewTarget=null;viewAz-=5;clampView()}if(e.key==='ArrowRight'){viewTarget=null;viewAz+=5;clampView()}if(e.key==='ArrowUp'){tiltTarget=null;tilt=cl(tilt+30,TILT_MIN,TILT_MAX)}if(e.key==='ArrowDown'){tiltTarget=null;tilt=cl(tilt-30,TILT_MIN,TILT_MAX)}});
+$('#eraseBtn').onclick=()=>{st.myStrokes=[];updateHud()};
+
+/* ---------- UI ---------- */
+let toastT;function toast(m){const el=$('#toast');el.textContent=m;el.style.opacity=1;clearTimeout(toastT);toastT=setTimeout(()=>el.style.opacity=0,1800)}
+function openSheet(id){['share','chat'].forEach(s=>$('#'+s).hidden=s!==id);$('#dock').hidden=!!id;wake()}
+document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>openSheet(null));
+$('#sitBtn').onclick=()=>openSheet('share');
+function selectLink(){const r=document.createRange();r.selectNodeContents($('#linkTxt'));const s=getSelection();s.removeAllRanges();s.addRange(r)}
+$('#copyBtn').onclick=()=>{const txt='https://'+$('#linkTxt').textContent;
+  try{navigator.clipboard.writeText(txt).then(()=>toast('링크를 복사했어요'),()=>{selectLink();toast('링크를 길게 눌러 복사하세요')})}catch(_){selectLink();toast('링크를 길게 눌러 복사하세요')}};
+document.querySelectorAll('#share .seg button').forEach(b=>b.onclick=()=>{
+  st.group=b.dataset.g;st.partnerA=0;
+  document.querySelectorAll('#share .seg button').forEach(x=>x.setAttribute('aria-pressed',x===b));
+  $('#sitBtn').textContent=st.group==='solo'?'같이 앉기':'같이 앉는 중';$('#sitBtn').classList.toggle('on',st.group!=='solo');
+  if(st.group!=='solo')toast(st.group==='couple'?'지수 님이 옆자리에 앉았어요':'가족이 옆자리에 앉았어요');
+  renderChatTitle();updateHud();
+});
+function renderChatTitle(){$('#chatTitle').textContent=st.group==='solo'?'혼잣말':st.group==='couple'?'우리 둘':'우리 가족'}
+function addMsg(who,text,me){const d=document.createElement('div');d.className='m'+(me?' me':'');
+  if(!me){const b=document.createElement('b');b.textContent=who;d.appendChild(b)}d.appendChild(document.createTextNode(text));$('#msgs').appendChild(d);$('#msgs').scrollTop=1e6}
+const REPLIES=['파도 소리 좋다','지금 물 들어오는 거 보여?','사진 찍어서 보내줘','여기 계속 켜 둘래','우리 글씨 지워지기 전에 찍자'];
+$('#chatBtn').onclick=()=>{renderChatTitle();openSheet('chat')};
+$('#msgIn').oninput=()=>$('#chatErr').hidden=true;
+$('#compose').addEventListener('submit',e=>{e.preventDefault();const v=$('#msgIn').value.trim();if(!v){$('#chatErr').hidden=false;return}
+  addMsg('',v,true);$('#msgIn').value='';st.bubble=v.length>18?v.slice(0,18)+'…':v;st.bubbleUntil=performance.now()+4200;
+  if(TEST&&st.group!=='solo')setTimeout(()=>addMsg(st.group==='couple'?'지수':(Math.random()<.5?'엄마':'지수'),REPLIES[Math.floor(Math.random()*REPLIES.length)],false),2200)});
+
+/* 사진: 화면 캡처가 아니라 해(또는 달)를 향해 다시 구도를 잡아 고해상도로 그린다 */
+function renderShot(){
+  const t=now(),sp=sunPos(t),mp=moonPos(t);
+  let az=AZ0,objY=null;
+  if(sp.alt>-6&&sp.alt<35){az=unwrap(sp.az);objY=HZ-sp.alt*PPD}
+  else if(mp&&mp.alt>3&&sp.alt<-4){az=unwrap(mp.az);objY=HZ-mp.alt*PPD}
+  const keep={ctx,VW,CX,ME_X,S,OX,OY,dpr,cw,ch,viewAz,tilt,LAND};
+  const PW=1080,PH=1350,LW=420,LH=525;
+  const oc=document.createElement('canvas');oc.width=PW;oc.height=PH;
+  try{
+    ctx=oc.getContext('2d');VW=LW;CX=LW/2;S=PW/LW;dpr=1;cw=PW;ch=PH;OX=0;LAND=false;tilt=0;
+    let top=HZ-.42*LH;if(objY!=null&&objY-70<top)top=objY-110;
+    OY=-top*S;viewAz=az;clampView();
+    const objX=CX+(az-viewAz)*PPD;ME_X=objX<CX?LW*.7:LW*.3;
+    PHOTO=true;drawScene(performance.now(),0);
+    ctx.setTransform(1,0,0,1,0,0);
+    const vg=ctx.createRadialGradient(PW/2,PH*.42,PW*.32,PW/2,PH*.5,PW*.9);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(24,12,10,.34)');ctx.fillStyle=vg;ctx.fillRect(0,0,PW,PH);
+  }finally{PHOTO=false;({ctx,VW,CX,ME_X,S,OX,OY,dpr,cw,ch,viewAz,tilt,LAND}=keep)}
+  return oc;
+}
+$('#shotBtn').onclick=()=>{
+  let n=1;try{n=(+localStorage.getItem('bangamori_sunsets')||0)+1;localStorage.setItem('bangamori_sunsets',n)}catch(_){}
+  const t=now(),sp=sunPos(t),ph=phaseLabel(sp.alt,t),lv=tideNow(t);
+  const shot=renderShot();
+  const P2=document.createElement('canvas');P2.width=1160;P2.height=1660;const c=P2.getContext('2d');
+  c.fillStyle='#fffdf7';c.fillRect(0,0,1160,1660);
+  c.drawImage(shot,40,40,1080,1350);
+  const k=kst(t);
+  c.fillStyle='#3a302a';c.font="700 44px 'Nanum Myeongjo',serif";c.fillText(`${k.y}.${pad(k.mo)}.${pad(k.d)}  ${hhmm(t)}  방아머리`,48,1478);
+  c.fillStyle='#8a7560';c.font="34px 'Gowun Dodum',sans-serif";
+  const tideTxt=lv<.12?'갯벌 열림':lv>.9?'만조':tideRising(t)?'물 들어오는 중':'물 빠지는 중';
+  c.fillText(`${WX.sky==='맑음'&&WX.pty==='없음'&&!WX.fog?ph:wxLabel()} · ${tempNow(t)}℃ · ${dirName(WX.vec)}풍 ${WX.wsd}m/s · ${tideTxt}`,48,1538);
+  const who=st.group==='solo'?'내가':st.group==='couple'?'우리가 같이':'우리 가족이 같이';
+  c.fillText(`${who} 본 ${ph==='노을'?'노을':'바다'} ${n}번째`,48,1594);
+  $('#photoImg').src=P2.toDataURL('image/jpeg',.92);$('#photo').hidden=false;$('#dock').hidden=true;
+};
+$('#photoClose').onclick=()=>{$('#photo').hidden=true;$('#dock').hidden=false;wake()};
+document.querySelectorAll('[data-soon]').forEach(b=>b.onclick=()=>toast(`${b.dataset.soon} 길은 다음 단계에서 열려요`));
+
+/* ---------- sound: 파도 박자 + 바람 + 비 ---------- */
+let ac=null,rainG=null,surfG=null,windG=null;
+function startSound(){
+  if(ac){ac.resume();return}
+  try{
+    ac=new (window.AudioContext||window.webkitAudioContext)();
+    const mk=brown=>{const len=ac.sampleRate*5,b=ac.createBuffer(1,len,ac.sampleRate),d=b.getChannelData(0);let l=0;
+      for(let i=0;i<len;i++){const w=Math.random()*2-1;if(brown){l=(l+.02*w)/1.02;d[i]=l*3.2}else d[i]=w}
+      const s=ac.createBufferSource();s.buffer=b;s.loop=true;s.start();return s};
+    const wv=mk(true),lp=ac.createBiquadFilter();lp.type='lowpass';lp.frequency.value=480;const g=ac.createGain();g.gain.value=.26;wv.connect(lp).connect(g).connect(ac.destination);
+    const sf=mk(false),bp=ac.createBiquadFilter();bp.type='bandpass';bp.frequency.value=900;bp.Q.value=.6;surfG=ac.createGain();surfG.gain.value=0;sf.connect(bp).connect(surfG).connect(ac.destination);
+    const wn=mk(true),wbp=ac.createBiquadFilter();wbp.type='bandpass';wbp.frequency.value=320;wbp.Q.value=1.4;windG=ac.createGain();windG.gain.value=0;wn.connect(wbp).connect(windG).connect(ac.destination);
+    const rn=mk(false),hp=ac.createBiquadFilter();hp.type='highpass';hp.frequency.value=1400;rainG=ac.createGain();rainG.gain.value=0;rn.connect(hp).connect(rainG).connect(ac.destination);
+  }catch(_){ac=null}
+}
+function setSound(on){st.sound=on;$('#soundBtn').setAttribute('aria-pressed',on);$('#soundBtn').classList.toggle('on',on);if(on)startSound();else if(ac)ac.suspend()}
+$('#soundBtn').onclick=()=>setSound(!st.sound);
+(function mixer(){if(surfG&&ac&&ac.state==='running'){const D=derive(),sec=performance.now()/1000,CYC=Math.max(4.4,8-D.wsd*.3),ph=(sec%CYC)/CYC;
+  const v=ph<.3?Math.sin(ph/.3*Math.PI/2):Math.max(0,1-(ph-.3)/.7);
+  surfG.gain.setTargetAtTime((.05+.14*v*v)*Math.min(1.6,D.sea),ac.currentTime,.12);
+  windG.gain.setTargetAtTime(Math.max(0,(D.wsd-3))*.012*(1+.4*Math.sin(sec*.7)),ac.currentTime,.4);
+  rainG.gain.setTargetAtTime(D.rain*.07,ac.currentTime,.3)}setTimeout(mixer,120)})();
+document.addEventListener('visibilitychange',()=>{if(!ac)return;if(document.hidden)ac.suspend();else if(st.sound)ac.resume()});
+$('#enterBtn').onclick=()=>{$('#intro').hidden=true;setSound(true);wake()};
+
+/* ---------- debug ---------- */
+DIR16.forEach((n,i)=>{const o=document.createElement('option');o.value=i*22.5;o.textContent=n+'풍';if(n==='북서')o.selected=true;$('#vecIn').appendChild(o)});
+$('#testBtn').onclick=()=>{const o=$('#dbg').hidden;$('#dbg').hidden=!o;$('#testBtn').setAttribute('aria-expanded',o)};
+$('#tIn').addEventListener('input',e=>{const t=now();simBase=t-kstMin(t)*60000+(+e.target.value)*60000;realBase=performance.now();updateHud()});
+$('#dIn').addEventListener('input',e=>{const v=+e.target.value;simBase=now()+(v-dayShift)*86400000;realBase=performance.now();dayShift=v;updateHud()});
+$('#spd1').onclick=()=>{setSpeed(1);$('#spd1').setAttribute('aria-pressed',true);$('#spd2').setAttribute('aria-pressed',false)};
+$('#spd2').onclick=()=>{setSpeed(600);$('#spd2').setAttribute('aria-pressed',true);$('#spd1').setAttribute('aria-pressed',false)};
+$('#tideAuto').onchange=e=>{const a=e.target.checked;$('#tideIn').disabled=a;tideManual=a?null:+$('#tideIn').value/100;updateHud()};
+$('#tideIn').addEventListener('input',e=>{tideManual=+e.target.value/100;updateHud()});
+$('#skyIn').onchange=e=>{wxManual=true;WX.sky=e.target.value;updateHud()};
+$('#ptyIn').onchange=e=>{wxManual=true;WX.pty=e.target.value;updateHud()};
+$('#wsdIn').addEventListener('input',e=>{wxManual=true;WX.wsd=+e.target.value;$('#wsdLab').textContent=WX.wsd+' m/s';updateHud()});
+$('#vecIn').onchange=e=>{wxManual=true;WX.vec=+e.target.value;updateHud()};
+$('#rehIn').addEventListener('input',e=>{wxManual=true;WX.reh=+e.target.value;$('#rehLab').textContent=WX.reh+'%';updateHud()});
+$('#pmIn').onchange=e=>{wxManual=true;WX.pm=e.target.value;updateHud()};
+$('#fogIn').onchange=e=>{wxManual=true;WX.fog=e.target.checked;updateHud()};
+$('#seasonIn').onchange=e=>{seasonOverride=e.target.value};
+$('#crowdIn').addEventListener('input',e=>{st.crowd=+e.target.value;$('#crowdLab').textContent=st.crowd+'명';updateHud()});
+
+if(!TEST){$('#testBtn').hidden=true;$('#chatBtn').hidden=true}
+else{const m=document.getElementById('msgs');if(m&&!m.children.length){addMsg('지수','여기 노을 진짜 예쁘다',false);addMsg('','다음 달엔 진짜 가자',true)}}
+window.addEventListener('resize',resize);resize();updateHud();setInterval(updateHud,500);
+loadLive();setInterval(loadLive,10*60*1000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)loadLive()});
+if(navigator.wakeLock)document.addEventListener('click',()=>{navigator.wakeLock.request('screen').catch(()=>{})},{once:true});
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
