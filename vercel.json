@@ -21,6 +21,10 @@
     {
       "source": "/sea/api",
       "destination": "/api/sea"
+    },
+    {
+      "source": "/sea/room",
+      "destination": "/api/sea-room"
     }
   ],
   "headers": [
