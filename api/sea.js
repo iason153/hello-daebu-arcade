@@ -14,6 +14,8 @@
 export const config = { runtime: 'edge' };
 
 const SITE = { lat: 37.2905, lon: 126.5795, nx: 53, ny: 121 };
+// TideBED 는 바다 칸을 줘야 한다(해변 좌표는 육지 칸으로 잡혀 오류 10). 해변 정면 북서쪽 약 800m 앞바다.
+const TIDE_PT = { lat: 37.2960, lon: 126.5720 };
 const KST = 9 * 3600e3;
 const p2 = (n) => String(n).padStart(2, '0');
 
@@ -93,7 +95,7 @@ async function loadTideBed(now) {
   const days = [0, 1, 2].map((k) => ymd(kstParts(now + k * 86400e3)));
   const dayErr = [];
   const sets = await Promise.all(days.map((d) => call('1192136/tidebed/GetTidebedApiService', {
-    pageNo: 1, numOfRows: 150, type: 'json', reqDate: d, lat: SITE.lat, lot: SITE.lon, min: 10,
+    pageNo: 1, numOfRows: 150, type: 'json', reqDate: d, lat: TIDE_PT.lat, lot: TIDE_PT.lon, min: 10,
     include: 'obsvtrNm,slctdDt,slctdHgt',
   }).catch((e) => { dayErr.push(d + ' ' + e.message); return []; })));
   const seen = new Set();
