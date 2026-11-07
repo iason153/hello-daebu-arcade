@@ -81,7 +81,9 @@ body.land .dock{left:auto;width:min(440px,52%)}
 .btn.on{background:var(--ember);color:#fff}
 .signs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .sign{border:0;background:var(--wood);color:var(--wood-ink);border-radius:6px;height:34px;font-size:13px;box-shadow:0 2px 0 #b89c6c;text-decoration:none;display:flex;align-items:center;justify-content:center}
-.erase{align-self:center;border:0;background:var(--glass);color:var(--ink);font-size:12px;padding:6px 12px;border-radius:999px}
+.writebar{align-self:center;display:flex;gap:8px}
+#writeBtn[aria-pressed="true"]{background:var(--ember);color:#fff}
+.erase{border:0;background:var(--glass);color:var(--ink);font-size:12px;padding:6px 12px;border-radius:999px}
 
 .sheet{position:absolute;left:0;right:0;bottom:0;background:var(--paper);color:var(--paper-ink);border-radius:18px 18px 0 0;padding:14px max(16px,env(safe-area-inset-right,0px)) 18px max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:12px;box-shadow:0 -6px 24px rgba(0,0,0,.25)}
 body.land .sheet{left:auto;width:min(420px,60%);border-radius:18px 0 0 0}
@@ -189,7 +191,7 @@ body.land .saybar{left:auto;width:min(440px,52%)}
 
   <div class="dock fade" id="dock">
     <div class="crowd" id="h3">지금 나 혼자</div>
-    <button class="erase" id="eraseBtn" hidden>내 글씨 지우기</button>
+    <div class="writebar"><button class="erase" id="writeBtn" aria-pressed="false">✎ 모래에 쓰기</button><button class="erase" id="eraseBtn" hidden>내 글씨 지우기</button></div>
     <div class="row">
       <button class="btn main" id="sitBtn">같이 앉기</button>
       <button class="btn" id="chatBtn" hidden>말하기</button>
@@ -414,11 +416,13 @@ function renderTalk(){const box=document.getElementById('talk');if(!box)return;b
 function talkWake(){const box=document.getElementById('talk');if(!box||!TALK.length)return;box.classList.remove('fade-out');clearTimeout(talkT);
   talkT=setTimeout(function rest(){if(!document.getElementById('saybar').hidden){talkT=setTimeout(rest,4000);return}box.classList.add('fade-out')},12000)}
 function applyMembers(list){
-  const on=list.filter(m=>m.on);
-  const prev=new Set(NET.members.map(m=>m.sid));
-  on.forEach(m=>{if(m.sid!==SID&&!prev.has(m.sid)&&NET.seen.has('ready')){toast(`${m.n}님이 옆자리에 앉았어요`);st.partnerA=0}});
-  NET.members.forEach(m=>{if(m.sid!==SID&&!on.some(x=>x.sid===m.sid))toast(`${m.n}님이 자리에서 일어났어요`)});
-  NET.members=on;NET.seen.add('ready');refreshRoomUi();
+  const prev=new Map(NET.members.map(m=>[m.sid,m])),ready=NET.seen.has('ready');
+  list.forEach(m=>{if(m.sid===SID||!ready)return;const p=prev.get(m.sid);
+    if(!p){if(m.on){toast(`${m.n}님이 옆자리에 앉았어요`);st.partnerA=0}}
+    else if(p.on&&!m.on)toast(`${m.n}님이 잠깐 자리를 비웠어요`);
+    else if(!p.on&&m.on)toast(`${m.n}님이 돌아왔어요`)});
+  NET.members.forEach(m=>{if(m.sid!==SID&&ready&&!list.some(x=>x.sid===m.sid))toast(`${m.n}님이 자리에서 일어났어요`)});
+  NET.members=list;NET.seen.add('ready');refreshRoomUi();
 }
 function leaveRoom(silent){if(NET.room&&!silent)api({act:'leave',room:NET.room});NET.room='';NET.members=[];NET.friendStrokes=[];NET.sv='';LS.set('sea_room',null);refreshRoomUi()}
 async function beat(){
@@ -492,7 +496,7 @@ let seasonOverride='auto';
 function season(t){if(seasonOverride!=='auto')return seasonOverride;const m=kst(t).mo;return m>=3&&m<=5?'봄':m>=6&&m<=8?'여름':m>=9&&m<=10?'가을':'겨울'}
 
 /* ---------- state ---------- */
-const st={group:'solo',partnerA:0,crowd:TEST?14:0,myStrokes:[],cur:null,traces:[],bubble:'',bubbleUntil:0,eraseShownUntil:0,erasedCount:0,sound:false};
+const st={writeMode:false,group:'solo',partnerA:0,crowd:TEST?14:0,myStrokes:[],cur:null,traces:[],bubble:'',bubbleUntil:0,eraseShownUntil:0,erasedCount:0,sound:false};
 function rng(seed){let s=seed>>>0;return()=>((s=Math.imul(s^s>>>15,1|s)+0x6D2B79F5|0,((s^s>>>7)>>>0)%100000)/100000)}
 const R=rng(77);
 const WXMIN=(AZ_MIN-AZ0)*PPD-80,WXMAX=(AZ_MAX-AZ0)*PPD+80,WSPAN=WXMAX-WXMIN;
@@ -584,7 +588,7 @@ function group(type,x,b,sc,col,o={}){
   if(o.parasol)parasolPole(x,b,sc,type,A,kx);
   const order=(Array.isArray(type)?type:LAYOUT[type]).map((p,i)=>[p,i]);if(hs*(o.headSign||1)<0)order.reverse();
   order.forEach(([p,i])=>{
-    const a=((o.fade!=null&&i>0)?o.fade:1)*(o.alpha==null?1:o.alpha);if(a<=0)return;
+    const a=((o.fade!=null&&i>0)?o.fade:1)*(o.alpha==null?1:o.alpha)*(o.alphas&&o.alphas[i]!=null?o.alphas[i]:1);if(a<=0)return;
     ctx.globalAlpha=a;
     person(x+p[0]*sc*kx,b-p[0]*hs*(o.headSign||1)*.18*sc,sc*p[1],col,{tilt:p[2],kx,hd,rim:o.rim,acc:o.acc,accCol:o.accCols?o.accCols[i%o.accCols.length]:null});
   });
@@ -872,8 +876,8 @@ function drawScene(ts,dt){
 
   /* writing hint */
   const zoneH=ZONE_B-zTop;
-  if(PHOTO){}else if(zoneH>18){if(!st.myStrokes.length&&!(st.cur&&st.cur.length))pill('모래사장에 손가락으로 써 보세요',CX,Y((zTop+ZONE_B)/2-4,CX),'rgba(16,13,18,.34)','#fbf6ec',12)}
-  else if(!st.myStrokes.length)pill('물이 모래사장까지 차서 쓸 자리가 없어요',CX,Y(ZONE_B-8,CX),'rgba(16,13,18,.38)','#fbf6ec',12);
+  if(PHOTO||!st.writeMode){}else if(zoneH>18){if(!st.myStrokes.length&&!(st.cur&&st.cur.length))pill('앞 모래사장에 손가락으로 써 보세요',CX,Y((zTop+ZONE_B)/2-4,CX),'rgba(16,13,18,.34)','#fbf6ec',12)}
+  else if(st.writeMode&&!st.myStrokes.length)pill('물이 모래사장까지 차서 쓸 자리가 없어요',CX,Y(ZONE_B-8,CX),'rgba(16,13,18,.38)','#fbf6ec',12);
 
   /* people */
   const umbOn=D.rain>0||(D.snow>0&&WX.pty==='진눈깨비');
@@ -895,7 +899,7 @@ function drawScene(ts,dt){
   if(myL.length>1&&st.partnerA<1)st.partnerA=Math.min(1,st.partnerA+dt/900);
   if(myL.length===1)st.partnerA=0;
   const ME_SC=1.1,sea_=SEASON[season(t)];
-  group(myType,ME_X,BENCH,ME_SC,cs(ink),{turn:(viewAz-AZ0)*.9,headSign:1,rim:cs(rimBase,Math.min(.95,rimA+.15)),acc:sea_.acc,accCols:roomOn?NET.members.map(m=>memberColor(m.sid)):sea_.c,fade:st.partnerA,mat:cs(shade(hx('#e76f51'))),stripe:cs(shade(hx('#fbf6ec'))),umb:umbOn?'#e76f51':null,parasol:summer?cs(shade(hx('#e76f51'))):null});
+  group(myType,ME_X,BENCH,ME_SC,cs(ink),{turn:(viewAz-AZ0)*.9,headSign:1,rim:cs(rimBase,Math.min(.95,rimA+.15)),acc:sea_.acc,accCols:roomOn?NET.members.map(m=>memberColor(m.sid)):sea_.c,alphas:roomOn?NET.members.map(m=>m.on?1:.32):null,fade:st.partnerA,mat:cs(shade(hx('#e76f51'))),stripe:cs(shade(hx('#fbf6ec'))),umb:umbOn?'#e76f51':null,parasol:summer?cs(shade(hx('#e76f51'))):null});
 
   const meTop=BENCH-(summer?104:umbOn?62:sea_.acc==='hat'?54:50)*ME_SC;
   {const trn=cl((viewAz-AZ0)*.9,-75,75)*Math.PI/180,kxm=.62+.38*Math.cos(trn);
@@ -985,7 +989,7 @@ $('#h1').onclick=()=>{const open=$('#h2').hidden;MORE.forEach(i=>$(i).hidden=!op
 
 /* ---------- calm mode ---------- */
 let idleT;
-const busy=()=>!$('#share').hidden||!$('#saybar').hidden||!$('#photo').hidden||!$('#dbg').hidden||!$('#intro').hidden;
+const busy=()=>st.writeMode||!$('#share').hidden||!$('#saybar').hidden||!$('#photo').hidden||!$('#dbg').hidden||!$('#intro').hidden;
 function wake(){stage.classList.remove('calm');clearTimeout(idleT);idleT=setTimeout(function rest(){if(busy()||st.cur||drag){idleT=setTimeout(rest,3000);return}stage.classList.add('calm');MORE.forEach(i=>$(i).hidden=true);$('#h1').setAttribute('aria-expanded',false)},6000)}
 stage.addEventListener('pointerdown',()=>{wake();talkWake()},true);stage.addEventListener('keydown',wake,true);
 
@@ -996,7 +1000,7 @@ function zoneTop(){const wl=wlOf(tideNow(now()));const RM=(6+(wl-HZ)/(WL_HIGH-HZ
 function inZone(p){const yr=Yinv(p[1],p[0]);return Fx(p[0])>.3&&yr>zoneTop()&&yr<ZONE_B&&p[0]>4&&p[0]<VW-4}
 const toWorld=p=>[p[0]-CX+PAN(),Yinv(p[1],p[0])];
 cv.addEventListener('pointerdown',e=>{const p=toLogical(e);cv.setPointerCapture(e.pointerId);
-  if(inZone(p))st.cur=[toWorld(p)];else{drag={x:e.clientX,y:e.clientY,az:viewAz,tilt};viewTarget=null;tiltTarget=null;cv.style.cursor='grabbing'}});
+  if(st.writeMode&&inZone(p))st.cur=[toWorld(p)];else{drag={x:e.clientX,y:e.clientY,az:viewAz,tilt};viewTarget=null;tiltTarget=null;cv.style.cursor='grabbing'}});
 cv.addEventListener('pointermove',e=>{
   if(drag){viewAz=drag.az-(e.clientX-drag.x)/S/PPD;clampView();tilt=cl(drag.tilt+(e.clientY-drag.y)/S,TILT_MIN,TILT_MAX);return}
   if(!st.cur)return;const p=toLogical(e);
@@ -1009,6 +1013,8 @@ function commitStroke(s){st.myStrokes.push(s);if(TEST||tideManual!=null)return;c
 const endPtr=()=>{if(st.cur&&st.cur.length>1)commitStroke(st.cur);st.cur=null;if(drag){drag=null;cv.style.cursor='grab';updateHud()}};
 cv.addEventListener('pointerup',endPtr);cv.addEventListener('pointercancel',endPtr);
 window.addEventListener('keydown',e=>{if(e.target.tagName==='INPUT')return;if(e.key==='ArrowLeft'){viewTarget=null;viewAz-=5;clampView()}if(e.key==='ArrowRight'){viewTarget=null;viewAz+=5;clampView()}if(e.key==='ArrowUp'){tiltTarget=null;tilt=cl(tilt+30,TILT_MIN,TILT_MAX)}if(e.key==='ArrowDown'){tiltTarget=null;tilt=cl(tilt-30,TILT_MIN,TILT_MAX)}});
+function setWrite(on){st.writeMode=on;$('#writeBtn').setAttribute('aria-pressed',on);$('#writeBtn').textContent=on?'✓ 다 썼어요':'✎ 모래에 쓰기';cv.style.cursor=on?'crosshair':'grab';if(on)toast('앞 모래사장에 써 보세요. 화면 위쪽을 밀면 계속 둘러볼 수 있어요');wake()}
+$('#writeBtn').onclick=()=>setWrite(!st.writeMode);
 $('#eraseBtn').onclick=()=>{st.myStrokes=[];if(NET.room)api({act:'clear',room:NET.room});updateHud()};
 
 /* ---------- UI ---------- */
@@ -1017,7 +1023,8 @@ function openSheet(id){['share'].forEach(s=>$('#'+s).hidden=s!==id);$('#dock').h
 document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>openSheet(null));
 function refreshRoomUi(){
   const inRoom=!!NET.room,n=NET.members.length;
-  $('#sitBtn').textContent=inRoom&&n>1?`같이 앉는 중 · ${n}명`:inRoom?'친구 기다리는 중':'같이 앉기';
+  const nOn=NET.members.filter(m=>m.on).length;
+  $('#sitBtn').textContent=inRoom&&n>1?`같이 앉는 중 · ${nOn}명`+(nOn<n?` (+${n-nOn} 비움)`:''):inRoom?'친구 기다리는 중':'같이 앉기';
   $('#sitBtn').classList.toggle('on',inRoom);
   $('#chatBtn').hidden=!(inRoom||TEST);
   $('#linkBox').hidden=!inRoom;$('#sendBtn').hidden=!inRoom;$('#makeBtn').hidden=inRoom;$('#leaveBtn').hidden=!inRoom;

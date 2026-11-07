@@ -21,6 +21,7 @@ import { kv } from '@vercel/kv';
 import { randomBytes } from 'crypto';
 
 const ALIVE_MS = 35000;
+const AWAY_MS = 10 * 60e3;
 const ROOM_TTL = 86400;
 const ROOM_MAX = 6;
 const P = (x) => { if (x == null) return null; if (typeof x === 'object') return x; try { return JSON.parse(x); } catch (e) { return null; } };
@@ -75,7 +76,8 @@ async function roomState(room, sid, now, q) {
   await kv.hset(key + ':m', { [sid]: JSON.stringify(me) });
   const members = Object.entries(raw)
     .map(([s, v]) => Object.assign({ sid: s }, P(v) || {}))
-    .filter((m) => m.sid === sid || now - (m.s || 0) < ALIVE_MS)
+    // 신호가 끊겨도 10분 동안은 "잠깐 자리 비움"으로 자리를 남겨 둔다(직접 나가기를 누르면 바로 빠진다)
+    .filter((m) => m.sid === sid || now - (m.s || 0) < AWAY_MS)
     .sort((a, b) => (a.j || 0) - (b.j || 0))
     .map((m) => ({ sid: m.sid, n: m.n || '친구', on: m.sid === sid || now - (m.s || 0) < ALIVE_MS }));
   const since = Number(q.since) || 0;
