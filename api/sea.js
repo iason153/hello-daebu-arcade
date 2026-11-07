@@ -89,12 +89,13 @@ async function loadSky(now) {
   return best ? best.sky : null;
 }
 
-async function loadTide(now) {
+async function loadTideBed(now) {
   const days = [0, 1, 2].map((k) => ymd(kstParts(now + k * 86400e3)));
+  const dayErr = [];
   const sets = await Promise.all(days.map((d) => call('1192136/tidebed/GetTidebedApiService', {
     pageNo: 1, numOfRows: 150, type: 'json', reqDate: d, lat: SITE.lat, lot: SITE.lon, min: 10,
     include: 'obsvtrNm,slctdDt,slctdHgt',
-  }).catch(() => [])));
+  }).catch((e) => { dayErr.push(d + ' ' + e.message); return []; })));
   const seen = new Set();
   const pts = [];
   let ref = '';
@@ -107,8 +108,29 @@ async function loadTide(now) {
     ref = ref || it.obsvtrNm || '';
   });
   pts.sort((a, b) => a[0] - b[0]);
-  if (pts.length < 100) throw new Error('few tide points');
-  return { points: pts, ref };
+  if (pts.length < 100) throw new Error('tidebed ' + pts.length + 'pts ' + dayErr.join('; '));
+  return { points: pts, ref, src: 'tidebed' };
+}
+
+// 예비: 물길온(구봉도, 방아머리에서 약 4km)이 같은 TideBED에서 받아 둔 예측 물높이. 같은 바다라 시각·높이 차이가 거의 없다.
+async function loadTideFallback() {
+  const ctl = new AbortController();
+  const tm = setTimeout(() => ctl.abort(), 8000);
+  try {
+    const r = await fetch('https://mulgilon.com/api/tide', { signal: ctl.signal });
+    const j = await r.json();
+    if (!j.ok || !Array.isArray(j.points) || j.points.length < 100) throw new Error('mulgilon empty');
+    return { points: j.points, ref: j.ref || '', src: 'mulgilon' };
+  } finally { clearTimeout(tm); }
+}
+
+async function loadTide(now) {
+  try { return await loadTideBed(now); }
+  catch (e) {
+    const fb = await loadTideFallback();
+    fb.note = e.message;
+    return fb;
+  }
 }
 
 export default async function handler() {

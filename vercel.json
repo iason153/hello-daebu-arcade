@@ -6,8 +6,36 @@
     }
   ],
   "rewrites": [
-    { "source": "/c/:wid", "destination": "/api/wallet?share=:wid" },
-    { "source": "/d/:id", "destination": "/api/duel?share=:id" },
-    { "source": "/k/:id", "destination": "/api/castle?share=:id" }
+    {
+      "source": "/c/:wid",
+      "destination": "/api/wallet?share=:wid"
+    },
+    {
+      "source": "/d/:id",
+      "destination": "/api/duel?share=:id"
+    },
+    {
+      "source": "/k/:id",
+      "destination": "/api/castle?share=:id"
+    },
+    {
+      "source": "/sea/api",
+      "destination": "/api/sea"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/sea/sw.js",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache"
+        },
+        {
+          "key": "Service-Worker-Allowed",
+          "value": "/sea/"
+        }
+      ]
+    }
   ]
 }

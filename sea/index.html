@@ -3,14 +3,29 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="지금 방아머리 바다는 이래요. 실제 물때·날씨·해와 달을 따라 움직이는 대부도 방아머리 해변에 앉아 바다를 봐요.">
-<meta property="og:title" content="방아머리 바닷가">
+<meta name="description" content="대부도 방아머리 해변의 지금 바다. 국립해양조사원 물때와 기상청 날씨, 해와 달의 실제 위치를 따라 움직이는 해변에 앉아 노을과 갯벌을 보고, 오늘 만조·간조·노을 시각을 확인하세요.">
+<link rel="canonical" href="https://daebuseatime.com/sea/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="대부도타임">
+<meta property="og:url" content="https://daebuseatime.com/sea/">
+<meta property="og:title" content="방아머리 바닷가 — 지금 방아머리 바다">
 <meta property="og:description" content="지금 방아머리 바다는 이래요. 같이 볼래요?">
+<meta property="og:image" content="https://daebuseatime.com/sea/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#0e131b">
-<link rel="icon" href="/icons/favicon-64.png">
+<link rel="icon" href="/sea/icon-64.png">
+<link rel="apple-touch-icon" href="/sea/icon-192.png">
+<link rel="manifest" href="/sea/manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="방아머리">
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[
+{"@type":"Beach","@id":"https://daebuseatime.com/sea/#beach","name":"방아머리 해변","alternateName":"방아머리해수욕장","address":{"@type":"PostalAddress","addressLocality":"안산시 단원구 대부북동","addressRegion":"경기도","addressCountry":"KR"},"geo":{"@type":"GeoCoordinates","latitude":37.2905,"longitude":126.5795}},
+{"@type":"WebPage","name":"방아머리 해변 실시간 바다","url":"https://daebuseatime.com/sea/","inLanguage":"ko","about":{"@id":"https://daebuseatime.com/sea/#beach"},"isPartOf":{"@type":"WebSite","name":"대부도타임","url":"https://daebuseatime.com/"}}]}</script>
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-5YPGVVP49T"></script>
 <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag("js",new Date());gtag("config","G-5YPGVVP49T",{page_title:"방아머리 바닷가"});</script>
-<title>방아머리 바닷가</title>
+<title>방아머리 바닷가 — 지금 방아머리 해변 바다·물때·노을</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Nanum+Myeongjo:wght@400;700&display=swap">
 <style>
@@ -34,9 +49,8 @@ body{margin:0}
   color-scheme:dark;
 }
 [hidden]{display:none!important}
-html,body{height:100%}
-body{background:var(--night);color:var(--ink);font-family:var(--f-ui);overflow:hidden;-webkit-tap-highlight-color:transparent}
-#stage{position:relative;height:100%;max-width:480px;margin:0 auto;overflow:hidden;background:var(--night)}
+body{background:var(--night);color:var(--ink);font-family:var(--f-ui);overflow-x:hidden;-webkit-tap-highlight-color:transparent}
+#stage{position:relative;height:100vh;height:100svh;max-width:480px;margin:0 auto;overflow:hidden;background:var(--night)}
 body.land #stage{max-width:none}
 #cv{position:absolute;inset:0;width:100%;height:100%;touch-action:none;display:block;cursor:grab}
 button{font-family:var(--f-ui);cursor:pointer}
@@ -50,7 +64,8 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid 
 .hud-col{display:flex;flex-direction:column;gap:5px;align-items:flex-start;min-width:0;pointer-events:auto}
 .chip{border:0;background:var(--glass);color:var(--ink);font-size:12px;line-height:1.3;padding:4px 10px;border-radius:999px;font-variant-numeric:tabular-nums;max-width:100%;text-align:left}
 .chip.place{font-family:var(--f-serif);font-weight:700;font-size:12.5px}
-.hud .test{pointer-events:auto;margin-left:auto;flex:none}
+.hud .guide-link{margin-left:auto;flex:none}
+.hud .test{pointer-events:auto;flex:none}
 
 .edge{position:absolute;top:38%;border:0;background:var(--glass);color:var(--ink);font-size:12.5px;padding:7px 12px;border-radius:999px}
 #hintL{left:max(10px,env(safe-area-inset-left,0px))}
@@ -98,7 +113,7 @@ body.land #chat{height:78%}
 
 #intro{position:absolute;left:0;right:0;bottom:0;padding:22px max(18px,env(safe-area-inset-right,0px)) 24px max(18px,env(safe-area-inset-left,0px));background:linear-gradient(to top,rgba(10,8,12,.82),rgba(10,8,12,.55) 70%,rgba(10,8,12,0));display:flex;flex-direction:column;gap:10px}
 body.land #intro{padding-right:45%}
-#intro h1{font-family:var(--f-serif);font-weight:700;font-size:26px;margin:0;letter-spacing:-.01em;text-wrap:balance}
+#intro h2{font-family:var(--f-serif);font-weight:700;font-size:26px;margin:0;letter-spacing:-.01em;text-wrap:balance}
 #intro p{margin:0;font-size:14.5px;line-height:1.65;color:#e6dcc9;max-width:34ch}
 #intro .btn{align-self:stretch;margin-top:6px;background:var(--ember);color:#fff;font-size:16px;height:48px;max-width:420px}
 
@@ -112,6 +127,20 @@ body.land #intro{padding-right:45%}
 #dbg .two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 
 #toast{position:absolute;left:50%;top:40%;transform:translateX(-50%);background:var(--glass);color:var(--ink);padding:9px 15px;border-radius:999px;font-size:13px;white-space:nowrap;transition:opacity .3s;pointer-events:none}
+.guide-link{pointer-events:auto;text-decoration:none}
+.info{background:var(--paper);color:var(--paper-ink);padding-block:40px 56px;padding-left:max(18px,env(safe-area-inset-left,0px));padding-right:max(18px,env(safe-area-inset-right,0px))}
+.info-in{max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:28px}
+.info h1{font-family:var(--f-serif);font-weight:700;font-size:26px;line-height:1.3;margin:0;text-wrap:balance}
+.info h2{font-family:var(--f-serif);font-weight:700;font-size:19px;margin:0 0 8px}
+.info p{margin:0;font-size:15.5px;line-height:1.75;color:#4f4339}
+.info section{display:flex;flex-direction:column;gap:8px}
+.today{display:grid;grid-template-columns:auto 1fr;gap:8px 16px;margin:0;font-size:15px;font-variant-numeric:tabular-nums}
+.today dt{color:var(--paper-sub)}
+.today dd{margin:0}
+.info ul{margin:0;padding-left:20px;font-size:15.5px;line-height:1.75;color:#4f4339}
+.info a{color:#b4502f}
+.info .src{font-size:12.5px;color:var(--paper-sub);line-height:1.6}
+.back{align-self:flex-start;border:0;border-radius:999px;background:var(--ember);color:#fff;font-size:15px;padding:12px 18px;text-decoration:none}
 </style>
 
 </head>
@@ -127,6 +156,7 @@ body.land #intro{padding-right:45%}
       <span class="chip" id="h5" hidden></span>
       <span class="chip" id="h6" hidden></span>
     </div>
+    <a class="chip guide-link" href="#info">바다 안내</a>
     <button class="chip test" id="testBtn" aria-expanded="false">시험</button>
   </div>
 
@@ -205,13 +235,62 @@ body.land #intro{padding-right:45%}
   </div>
 
   <div id="intro">
-    <h1>방아머리 바닷가</h1>
+    <h2>방아머리 바닷가</h2>
     <p>방아머리 해변 돗자리에 앉아 북서쪽 바다를 보고 있어요. 해와 달, 물때, 날씨가 실제와 똑같이 움직여요. 좌우로 밀면 고개를 돌리고, 위로 밀면 하늘을 올려다볼 수 있어요. 앞 모래사장엔 글씨를 남길 수 있어요.</p>
     <button class="btn" id="enterBtn">바다 앞에 앉기</button>
   </div>
 
   <div id="toast" style="opacity:0" aria-live="polite"></div>
 </div>
+
+<main class="info" id="info">
+<div class="info-in">
+  <h1>방아머리 해변 실시간 바다</h1>
+  <p>위 화면은 지금 이 순간의 대부도 방아머리 해변이에요. 국립해양조사원 물때와 기상청 날씨, 해와 달의 실제 위치를 따라 10분마다 바뀌어요. 물이 빠지면 갯벌이 드러나고, 해가 지는 방향도 계절마다 실제처럼 옮겨 가요.</p>
+
+  <section aria-labelledby="todayH">
+    <h2 id="todayH">오늘 방아머리 바다</h2>
+    <dl class="today">
+      <dt>지금 날씨</dt><dd id="tWx">불러오는 중</dd>
+      <dt>물때</dt><dd id="tTide">불러오는 중</dd>
+      <dt>다음 만조</dt><dd id="tHigh">불러오는 중</dd>
+      <dt>다음 간조</dt><dd id="tLow">불러오는 중</dd>
+      <dt>오늘 노을</dt><dd id="tSet">불러오는 중</dd>
+      <dt>달</dt><dd id="tMoon">불러오는 중</dd>
+    </dl>
+  </section>
+
+  <section aria-labelledby="sunH">
+    <h2 id="sunH">방아머리 노을은 어느 쪽으로 지나요</h2>
+    <p>방아머리 해변은 북서쪽 바다를 보고 있어요. 하지 무렵에는 해가 거의 정면 바다로 지고, 겨울로 갈수록 왼쪽(남서쪽)으로 옮겨 가요. <span id="sunNow"></span> 화면을 왼쪽으로 밀면 그쪽 하늘을 볼 수 있어요.</p>
+  </section>
+
+  <section aria-labelledby="tideH">
+    <h2 id="tideH">물때와 갯벌</h2>
+    <p>서해 바다라 하루에 두 번 물이 들고 나요. 물이 빠지는 간조 때는 앞바다가 넓은 갯벌로 드러나고, 물이 차는 만조 때는 모래사장 가까이까지 물이 올라와요. 만조와 간조 시각은 날마다 50분쯤씩 늦어져요.</p>
+  </section>
+
+  <section aria-labelledby="doH">
+    <h2 id="doH">이 화면에서 할 수 있는 것</h2>
+    <ul>
+      <li>좌우로 밀어 남서쪽 언덕부터 풍력발전기와 시화방조제 쪽까지 둘러보기</li>
+      <li>위로 밀어 하늘과 달, 별 올려다보기</li>
+      <li>앞 모래사장에 손가락으로 글씨 남기기 — 다음 밀물에 실제로 지워져요</li>
+      <li>그 시각의 날씨와 물때가 찍힌 사진 남기기</li>
+      <li>같이 앉기 — 링크를 받은 사람이 옆자리에 앉아 같은 바다를 봐요(준비 중)</li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="whereH">
+    <h2 id="whereH">방아머리 해변은 어디인가요</h2>
+    <p>경기도 안산시 단원구 대부북동, 시화방조제를 건너 대부도에 들어서면 처음 만나는 해변이에요. 넓은 모래사장 오른쪽으로 풍력발전기와 시화방조제가 보여요.</p>
+    <p>대부도 물때와 날씨는 <a href="https://daebuseatime.com/">대부도타임</a>에서, 대부도 여행 정보는 <a href="https://daebutalk.com/">헬로대부도</a>에서 더 볼 수 있어요.</p>
+  </section>
+
+  <a class="back" href="#">바다로 돌아가기</a>
+  <p class="src">물때: 국립해양조사원 조석예보(TideBED). 날씨: 기상청 초단기실황·초단기예보. 해와 달의 위치는 방아머리 좌표로 계산해요. 화면의 섬과 건물 모양은 실제 방향에 맞춘 그림이에요.</p>
+</div>
+</main>
 
 <script src="/sea/suncalc.js"></script>
 <script>
@@ -295,7 +374,7 @@ function fromKMA(o){/* Vercel에서 받은 값을 그대로 넣는 자리 */
 }
 /* 서버(/api/sea)에서 10분마다 실제 값 받기. 사람이 아무리 많아도 기관 API는 서버가 10분에 한 번만 부른다 */
 async function loadLive(){
-  try{const r=await fetch('/api/sea',{cache:'no-store'});if(!r.ok)return;const j=await r.json();
+  try{const r=await fetch('/sea/api',{cache:'no-store'});if(!r.ok)return;const j=await r.json();
     if(j.tide&&j.tide.points&&j.tide.points.length>100){TIDE=j.tide.points;buildExtrema()}
     if(j.wx&&!wxManual){const w=j.wx;fromKMA({SKY:w.sky,PTY:w.pty,WSD:w.wsd,VEC:w.vec,REH:w.reh,T1H:w.t1h});
       /* 해무: 실황에 따로 없어서 습도 97% 이상·약한 바람일 때만 추정 */
@@ -795,6 +874,14 @@ function updateHud(){
   if(tm.set){const setAz=sunPos(tm.set).az;const off=Math.round(unwrap(setAz)-AZ0);sline=(t<tm.set?'오늘 노을 ':'노을 진 시각 ')+hhmm(tm.set)+` · ${dirName(setAz)}(${off<0?'정면에서 왼쪽 '+(-off):'정면에서 오른쪽 '+off}°)`}
   $('#h4').textContent=sline;
   $('#h5').textContent=(WX.live||wxManual?`${dirName(WX.vec)}풍 ${WX.wsd}m/s · 습도 ${WX.reh}%`+(WX.pm?` · 미세먼지 ${WX.pm}`:'')+(WX.live&&!wxManual&&WX.at?` · 기상청 ${hhmm(WX.at)} 관측`:''):'날씨 정보를 불러오는 중')+(mp?` · ${moonName(mp.phase)}`:'');
+  {const lv2=tideNow(t),nh=nextHigh(t),nl=nextLow(t),tpp=tempNow(t);
+    $('#tWx').textContent=WX.live?`${wxLabel()}`+(tpp!=null?`, ${tpp}℃`:'')+`, ${dirName(WX.vec)}풍 ${WX.wsd}m/s`:'날씨 정보를 불러오는 중';
+    $('#tTide').textContent=TIDE?(lv2<.1?'간조 무렵, 갯벌이 드러나 있어요':lv2>.92?'만조 무렵':tideRising(t)?'물이 들어오는 중':'물이 빠지는 중'):'물때 정보를 불러오는 중';
+    const kd=x=>{const a=kst(x),b=kst(t);return (a.d!==b.d?'내일 ':'')+hhmm(x)};
+    $('#tHigh').textContent=TIDE?kd(nh):'불러오는 중';$('#tLow').textContent=TIDE?kd(nl):'불러오는 중';
+    if(tm.set){const setAz=sunPos(tm.set).az,off=Math.round(unwrap(setAz)-AZ0);$('#tSet').textContent=`${hhmm(tm.set)}, ${dirName(setAz)} 하늘(정면에서 ${off<0?'왼쪽':'오른쪽'}으로 ${Math.abs(off)}°)`;
+      const k=kst(t);$('#sunNow').textContent=`오늘(${k.mo}월 ${k.d}일)은 ${dirName(setAz)}쪽, 정면에서 ${off<0?'왼쪽':'오른쪽'}으로 ${Math.abs(off)}° 떨어진 곳으로 져요.`}
+    $('#tMoon').textContent=mp?moonName(mp.phase)+` (밝기 ${Math.round(mp.frac*100)}%)`:'—'}
   $('#h6').textContent=`지금 보는 방향 ${dirName(viewAz)} ${Math.round(((viewAz%360)+360)%360)}°`;
   const verb=WX.fog?'해무 낀 바다를':WX.pty!=='없음'?(WX.pty==='눈'?'눈 오는 바다를':'비 오는 바다를'):ph==='노을'?'노을을':ph==='해돋이'?'해돋이를':ph==='낮'?'바다를':ph==='새벽'?'새벽 바다를':'밤바다를';
   const c=castGroups(st.crowd);let so=c.solo,co=c.couple,fa=c.fam;
@@ -944,7 +1031,8 @@ $('#crowdIn').addEventListener('input',e=>{st.crowd=+e.target.value;$('#crowdLab
 if(!TEST){$('#testBtn').hidden=true;$('#chatBtn').hidden=true}
 else{const m=document.getElementById('msgs');if(m&&!m.children.length){addMsg('지수','여기 노을 진짜 예쁘다',false);addMsg('','다음 달엔 진짜 가자',true)}}
 window.addEventListener('resize',resize);resize();updateHud();setInterval(updateHud,500);
-loadLive();setInterval(loadLive,10*60*1000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)loadLive()});
+loadLive();setInterval(loadLive,10*60*1000);
+if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('/sea/sw.js',{scope:'/sea/'}).catch(()=>{}));document.addEventListener('visibilitychange',()=>{if(!document.hidden)loadLive()});
 if(navigator.wakeLock)document.addEventListener('click',()=>{navigator.wakeLock.request('screen').catch(()=>{})},{once:true});
 requestAnimationFrame(frame);
 })();
