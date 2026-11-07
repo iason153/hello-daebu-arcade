@@ -133,6 +133,17 @@ body.land #intro{padding-right:45%}
 .field.dark{color:#d9ccb4;max-width:420px}
 .row2{display:flex;gap:8px}.row2 .pbtn{flex:1;padding:11px 12px;font-size:14px}
 .ghost{border:0;background:none;color:var(--paper-sub);font-size:13px;text-decoration:underline;align-self:flex-start;padding:2px 0;font-family:var(--f-ui)}
+#talk{position:absolute;left:max(12px,env(safe-area-inset-left,0px));right:max(12px,env(safe-area-inset-right,0px));bottom:150px;max-height:36%;display:flex;flex-direction:column;justify-content:flex-end;gap:6px;overflow:hidden;pointer-events:none;transition:opacity .9s ease;-webkit-mask-image:linear-gradient(to bottom,transparent,#000 28px);mask-image:linear-gradient(to bottom,transparent,#000 28px)}
+#talk.fade-out{opacity:0}
+#talk.typing{bottom:68px}
+body.land #talk{left:auto;width:min(440px,52%)}
+.tm{display:flex;gap:6px;align-items:flex-end;max-width:80%;align-self:flex-start}
+.tm.me{align-self:flex-end;flex-direction:row-reverse}
+.tm .dot{width:11px;height:11px;border-radius:50%;flex:none;margin-bottom:9px;box-shadow:0 0 0 2px rgba(251,246,236,.7)}
+.tm .b{background:rgba(251,246,236,.88);color:#3a302a;font-size:14px;line-height:1.45;padding:7px 11px;border-radius:15px 15px 15px 4px;word-break:break-word;min-width:0}
+.tm.me .b{background:rgba(246,207,152,.92);border-radius:15px 15px 4px 15px}
+.tm .nm{display:block;font-size:11px;color:#8a7560;margin-bottom:1px}
+@media (prefers-reduced-motion:reduce){#talk{transition:none}}
 .saybar{position:absolute;left:0;right:0;bottom:0;display:flex;gap:8px;align-items:center;padding:10px max(12px,env(safe-area-inset-right,0px)) max(12px,env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px));background:linear-gradient(to top,rgba(10,8,12,.55),rgba(10,8,12,0))}
 body.land .saybar{left:auto;width:min(440px,52%)}
 .saybar input{flex:1;min-width:0;font-family:var(--f-ui);font-size:16px;padding:10px 14px;border-radius:999px;border:0;background:rgba(251,246,236,.94);color:var(--paper-ink)}
@@ -174,6 +185,8 @@ body.land .saybar{left:auto;width:min(440px,52%)}
   <button class="edge fade" id="hintR" hidden></button>
   <button class="fade" id="front" hidden>정면 바다로</button>
 
+  <div id="talk" class="fade-out" aria-live="polite"></div>
+
   <div class="dock fade" id="dock">
     <div class="crowd" id="h3">지금 나 혼자</div>
     <button class="erase" id="eraseBtn" hidden>내 글씨 지우기</button>
@@ -192,7 +205,7 @@ body.land .saybar{left:auto;width:min(440px,52%)}
 
   <div class="sheet" id="share" hidden>
     <div class="sheet-head"><h2>같이 앉기</h2><button class="x" data-close aria-label="닫기">×</button></div>
-    <p>링크를 받은 사람은 로그인 없이 바로 내 옆자리에 앉아요. 같은 노을, 같은 물때를 보고, 말하면 머리 위에 말풍선으로 떠요.</p>
+    <p>링크를 받은 사람은 로그인 없이 바로 내 옆자리에 앉아요. 같은 노을, 같은 물때를 보며 바다 위에 말풍선으로 이야기해요.</p>
     <label class="field" for="nameIn"><span>내 이름 (옆자리 사람에게 보여요)</span><input id="nameIn" maxlength="10" placeholder="예: 형준" autocomplete="nickname"></label>
     <div class="linkbox" id="linkBox" hidden><code id="linkTxt"></code><button class="pbtn" id="copyBtn">복사</button></div>
     <div class="row2"><button class="pbtn" id="makeBtn">자리 링크 만들기</button><button class="pbtn" id="sendBtn" hidden>보내기</button></div>
@@ -206,7 +219,7 @@ body.land .saybar{left:auto;width:min(440px,52%)}
   </div>
 
   <form class="saybar" id="saybar" hidden autocomplete="off">
-    <input id="sayIn" maxlength="80" placeholder="말하면 머리 위에 떠요" enterkeyhint="send" aria-label="말할 내용">
+    <input id="sayIn" maxlength="80" placeholder="같이 앉은 사람에게만 보여요" enterkeyhint="send" aria-label="말할 내용">
     <button class="pbtn" type="submit">말하기</button>
     <button class="x2" type="button" id="sayClose" aria-label="닫기">×</button>
   </form>
@@ -390,7 +403,16 @@ function rid(n){const a='ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz234567
 const SID=(()=>{let s=LS.get('sea_sid');if(!/^[A-Za-z0-9]{16}$/.test(s||'')){s=rid(16);LS.set('sea_sid',s)}return s})();
 const NET={room:(/^[A-Za-z0-9]{8}$/.test(LS.get('sea_room')||'')?LS.get('sea_room'):''),name:LS.get('sea_name')||'',members:[],since:Date.now()-120000,sv:'',gv:'',counts:null,beatN:0,timer:0,friendStrokes:[],traces:[],bubbles:new Map(),seen:new Set()};
 async function api(body){try{const r=await fetch('/sea/room',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(Object.assign({sid:SID},body))});return await r.json()}catch(e){return {ok:false,err:'net'}}}
-function pushBubble(sid,text){const a=NET.bubbles.get(sid)||[];a.push({x:text,until:performance.now()+5200+Math.min(80,text.length)*110});while(a.length>2)a.shift();NET.bubbles.set(sid,a)}
+const TALK=[];let talkT=0;
+function memberColor(sid){const i=Math.max(0,NET.members.findIndex(m=>m.sid===sid));const c=SEASON[season(now())].c;return [c[0],c[1],'#5c8ac4','#7aa66a','#b07ac4','#e9c46a'][i%6]}
+function pushBubble(sid,text){const m=NET.members.find(x=>x.sid===sid);TALK.push({sid,n:sid===SID?'':(m?m.n:'친구'),x:text});while(TALK.length>8)TALK.shift();renderTalk();talkWake()}
+function renderTalk(){const box=document.getElementById('talk');if(!box)return;box.textContent='';
+  TALK.forEach(t=>{const row=document.createElement('div');row.className='tm'+(t.sid===SID?' me':'');
+    if(t.sid!==SID){const d=document.createElement('span');d.className='dot';d.style.background=memberColor(t.sid);row.appendChild(d)}
+    const b=document.createElement('div');b.className='b';if(t.n){const nm=document.createElement('span');nm.className='nm';nm.textContent=t.n;b.appendChild(nm)}
+    b.appendChild(document.createTextNode(t.x));row.appendChild(b);box.appendChild(row)})}
+function talkWake(){const box=document.getElementById('talk');if(!box||!TALK.length)return;box.classList.remove('fade-out');clearTimeout(talkT);
+  talkT=setTimeout(function rest(){if(!document.getElementById('saybar').hidden){talkT=setTimeout(rest,4000);return}box.classList.add('fade-out')},12000)}
 function applyMembers(list){
   const on=list.filter(m=>m.on);
   const prev=new Set(NET.members.map(m=>m.sid));
@@ -564,7 +586,7 @@ function group(type,x,b,sc,col,o={}){
   order.forEach(([p,i])=>{
     const a=((o.fade!=null&&i>0)?o.fade:1)*(o.alpha==null?1:o.alpha);if(a<=0)return;
     ctx.globalAlpha=a;
-    person(x+p[0]*sc*kx,b-p[0]*hs*(o.headSign||1)*.18*sc,sc*p[1],col,{tilt:p[2],kx,hd,rim:o.rim,acc:o.acc,accCol:o.accCols?o.accCols[i%2]:null});
+    person(x+p[0]*sc*kx,b-p[0]*hs*(o.headSign||1)*.18*sc,sc*p[1],col,{tilt:p[2],kx,hd,rim:o.rim,acc:o.acc,accCol:o.accCols?o.accCols[i%o.accCols.length]:null});
   });
   ctx.globalAlpha=1;
   if(o.umb){const w=gwOf(type)*sc,y=b-51*sc;ctx.globalAlpha=o.alpha==null?1:o.alpha;ctx.fillStyle=o.umb;ctx.beginPath();ctx.moveTo(x-w/2,y);ctx.quadraticCurveTo(x,y-28*sc,x+w/2,y);ctx.closePath();ctx.fill();
@@ -873,7 +895,7 @@ function drawScene(ts,dt){
   if(myL.length>1&&st.partnerA<1)st.partnerA=Math.min(1,st.partnerA+dt/900);
   if(myL.length===1)st.partnerA=0;
   const ME_SC=1.1,sea_=SEASON[season(t)];
-  group(myType,ME_X,BENCH,ME_SC,cs(ink),{turn:(viewAz-AZ0)*.9,headSign:1,rim:cs(rimBase,Math.min(.95,rimA+.15)),acc:sea_.acc,accCols:sea_.c,fade:st.partnerA,mat:cs(shade(hx('#e76f51'))),stripe:cs(shade(hx('#fbf6ec'))),umb:umbOn?'#e76f51':null,parasol:summer?cs(shade(hx('#e76f51'))):null});
+  group(myType,ME_X,BENCH,ME_SC,cs(ink),{turn:(viewAz-AZ0)*.9,headSign:1,rim:cs(rimBase,Math.min(.95,rimA+.15)),acc:sea_.acc,accCols:roomOn?NET.members.map(m=>memberColor(m.sid)):sea_.c,fade:st.partnerA,mat:cs(shade(hx('#e76f51'))),stripe:cs(shade(hx('#fbf6ec'))),umb:umbOn?'#e76f51':null,parasol:summer?cs(shade(hx('#e76f51'))):null});
 
   const meTop=BENCH-(summer?104:umbOn?62:sea_.acc==='hat'?54:50)*ME_SC;
   {const trn=cl((viewAz-AZ0)*.9,-75,75)*Math.PI/180,kxm=.62+.38*Math.cos(trn);
@@ -881,23 +903,7 @@ function drawScene(ts,dt){
     const myIdx=Math.max(0,who.indexOf(SID));
     const headX=i=>ME_X+(myL[i]?myL[i][0]:0)*ME_SC*kxm, headY=i=>meTop+(1-(myL[i]?myL[i][1]:1))*40*ME_SC;
     if(!PHOTO)pill('나',headX(myIdx),headY(myIdx)-10,'rgba(255,255,255,.93)','#4a3f3a',12);
-    const nowp=performance.now();
-    who.forEach((sid,i)=>{const arr=(NET.bubbles.get(sid)||[]).filter(b=>b.until>nowp);if(!arr.length){NET.bubbles.delete(sid);return}NET.bubbles.set(sid,arr);
-      let y=headY(i)-40;
-      for(let k=arr.length-1;k>=0;k--){const bb=arr[k],a=cl((bb.until-nowp)/700,0,1)*(k===arr.length-1?1:.8);
-        ctx.globalAlpha=a;ctx.font=`13px 'Gowun Dodum',sans-serif`;
-        const words=bb.x,maxW=Math.min(VW-24,190);let lines=[],line='';
-        for(const ch of words){if(ctx.measureText(line+ch).width>maxW-20&&line){lines.push(line);line=ch}else line+=ch}lines.push(line);lines=lines.slice(0,3);
-        const nm=sid!==SID&&k===arr.length-1?((NET.members.find(m=>m.sid===sid)||{}).n||''):'';
-        const w=Math.min(maxW,Math.max(nm?ctx.measureText(nm).width*.85:0,...lines.map(l=>ctx.measureText(l).width))+22),h=lines.length*17+12+(nm?14:0);
-        let bx=cl(headX(i),w/2+8,VW-w/2-8);
-        rr(bx-w/2,y-h,w,h,12);ctx.fillStyle=sid===SID?'#fbf6ec':'#fff4e0';ctx.fill();
-        if(k===arr.length-1){ctx.beginPath();ctx.moveTo(headX(i)-5,y-1);ctx.lineTo(headX(i),y+6);ctx.lineTo(headX(i)+5,y-1);ctx.fill()}
-        ctx.textAlign='center';ctx.textBaseline='middle';
-        if(nm){ctx.fillStyle='#9a8268';ctx.font=`11px 'Gowun Dodum',sans-serif`;ctx.fillText(nm,bx,y-h+12);ctx.font=`13px 'Gowun Dodum',sans-serif`}
-        ctx.fillStyle='#3a302a';lines.forEach((l,li)=>ctx.fillText(l,bx,y-h+14+(nm?14:0)+li*17));
-        y-=h+6;ctx.globalAlpha=1}
-    })}
+  }
   if(!PHOTO&&st.myStrokes.length&&!(ts<st.eraseShownUntil)){
     const ys=Math.min(...st.myStrokes.map(s=>Math.min(...s.map(p=>p[1]))));
     let when=0;if(tideManual==null)for(let i=1;i<=170;i++){const tt=t+i*5*60000,w=wlOf(tideAt(tt));if(w+RM*.9>=ys){when=tt;break}}
@@ -981,7 +987,7 @@ $('#h1').onclick=()=>{const open=$('#h2').hidden;MORE.forEach(i=>$(i).hidden=!op
 let idleT;
 const busy=()=>!$('#share').hidden||!$('#saybar').hidden||!$('#photo').hidden||!$('#dbg').hidden||!$('#intro').hidden;
 function wake(){stage.classList.remove('calm');clearTimeout(idleT);idleT=setTimeout(function rest(){if(busy()||st.cur||drag){idleT=setTimeout(rest,3000);return}stage.classList.add('calm');MORE.forEach(i=>$(i).hidden=true);$('#h1').setAttribute('aria-expanded',false)},6000)}
-stage.addEventListener('pointerdown',wake,true);stage.addEventListener('keydown',wake,true);
+stage.addEventListener('pointerdown',()=>{wake();talkWake()},true);stage.addEventListener('keydown',wake,true);
 
 /* ---------- input: 쓰기 또는 고개 돌리기 ---------- */
 let drag=null;
@@ -1035,8 +1041,8 @@ document.querySelectorAll('#previewSeg button').forEach(b=>b.onclick=()=>{
   st.group=b.dataset.g;st.partnerA=0;
   document.querySelectorAll('#previewSeg button').forEach(x=>x.setAttribute('aria-pressed',x===b));updateHud()});
 /* 말하기: 대화창 없이 바다 위 말풍선으로만 */
-function closeSay(){$('#saybar').hidden=true;$('#dock').hidden=false;$('#sayIn').blur();wake()}
-$('#chatBtn').onclick=()=>{$('#saybar').hidden=false;$('#dock').hidden=true;$('#sayIn').focus();wake()};
+function closeSay(){$('#saybar').hidden=true;$('#dock').hidden=false;$('#sayIn').blur();$('#talk').classList.remove('typing');talkWake();wake()}
+$('#chatBtn').onclick=()=>{$('#saybar').hidden=false;$('#dock').hidden=true;$('#talk').classList.add('typing');$('#sayIn').focus();talkWake();wake()};
 $('#sayClose').onclick=closeSay;
 $('#saybar').addEventListener('submit',async e=>{e.preventDefault();const v=$('#sayIn').value.replace(/\s+/g,' ').trim().slice(0,80);if(!v){$('#sayIn').focus();return}
   $('#sayIn').value='';pushBubble(SID,v);wake();
@@ -1127,7 +1133,7 @@ $('#crowdIn').addEventListener('input',e=>{st.crowd=+e.target.value;$('#crowdLab
 if(!TEST){$('#testBtn').hidden=true}else{$('#previewSeg').hidden=false}
 /* 초대 링크로 들어온 경우 */
 const INVITE=(()=>{const m=location.search.match(/[?&]r=([A-Za-z0-9]{8})(?:&|$)/);return m&&m[1]!==NET.room?m[1]:''})();
-if(INVITE){$('#introH').textContent='옆자리로 초대받았어요';$('#introP').textContent='방아머리 해변, 친구 옆 돗자리가 비어 있어요. 앉으면 같은 노을과 물때를 같이 보고, 말하면 서로의 머리 위에 말풍선으로 떠요.';
+if(INVITE){$('#introH').textContent='옆자리로 초대받았어요';$('#introP').textContent='방아머리 해변, 친구 옆 돗자리가 비어 있어요. 앉으면 같은 노을과 물때를 같이 보며 바다 위에 말풍선으로 이야기할 수 있어요.';
   $('#joinField').hidden=false;$('#joinName').value=NET.name;$('#enterBtn').textContent='옆자리에 앉기'}
 if(/[?&]r=/.test(location.search))try{history.replaceState(null,'',location.pathname+location.search.replace(/([?&])r=[^&]*&?/,'$1').replace(/[?&]$/,'')+location.hash)}catch(e){}
 refreshRoomUi();beat();
