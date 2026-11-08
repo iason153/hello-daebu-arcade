@@ -143,7 +143,7 @@ async function loadAir() {
 // 조위관측소 최신 관측(실제로 잰 물높이·수온·기온·기압·바람). 오퍼레이션 이름과 응답 항목명을 실제 응답으로 확인하는 단계라
 // 가까운 관측소 순서로 시도하고, 받은 마지막 관측 한 줄을 그대로 돌려준다(화면 연결은 항목명 확인 뒤).
 const OBS_STATIONS = ['DT_0008', 'DT_0043', 'DT_0052', 'DT_0001']; // 안산·영흥도·인천송도·인천(코드는 응답의 관측소명으로 확인)
-const OBS_OPS = ['dtRecent/GetDTRecentApiService', 'dtRecent/GetDtRecentApiService'];
+const OBS_OPS = ['dtRecent/GetDTRecentApiService'];
 async function loadObs(now) {
   const d = ymd(kstParts(now));
   const tried = [];
@@ -153,7 +153,14 @@ async function loadObs(now) {
       if (Date.now() > until) { tried.push('시간 초과'); break; }
       try {
         const items = await call('1192136/' + op, { pageNo: 1, numOfRows: 300, type: 'json', obsCode: code, reqDate: d, min: 10 }, 3000);
-        if (items.length) return { op, code, n: items.length, last: items[items.length - 1] };
+        if (items.length) {
+          // 최신 관측이 맨 앞에 온다. 시각으로 가장 늦은 줄을 고른다
+          let it = items[0], tb = kstToMs(it.obsrvnDt);
+          items.forEach((x) => { const t = kstToMs(x.obsrvnDt); if (t > tb) { it = x; tb = t; } });
+          const n = (x) => { const v = parseFloat(x); return isFinite(v) && v > -90 ? v : null; };
+          return { station: it.obsvtrNm || code, code, at: tb, wtem: n(it.wtem), artmp: n(it.artmp), atmpr: n(it.atmpr),
+            wspd: n(it.wspd), wndrct: n(it.wndrct), tide: n(it.bscTdlvHgt), slnt: n(it.slntQty) };
+        }
         tried.push(code + ' 0건');
       } catch (e) {
         tried.push(op.split('/')[1].slice(0, 12) + ' ' + code + ' ' + e.message.slice(0, 50));
@@ -163,6 +170,23 @@ async function loadObs(now) {
     }
   }
   throw new Error(tried.slice(0, 4).join(' | '));
+}
+
+// 기상특보 현황: 방아머리에 걸린 특보만 고른다(바다는 경기남부앞바다, 땅은 안산)
+const WRN_AREA = /경기남부앞바다|안산|서해중부앞바다/;
+async function loadWarn() {
+  const items = await call('1360000/WthrWrnInfoService/getPwnStatus', { pageNo: 1, numOfRows: 10, dataType: 'JSON' }, 5000);
+  const it = items[0] || {};
+  const text = Object.values(it).filter((v) => typeof v === 'string').join('\n');
+  const on = [], all = [];
+  const re = /(풍랑|강풍|대설|호우|태풍|폭풍해일|한파|폭염|건조|황사|안개)\s*(주의보|경보)\s*:\s*([^\n]*?)(?=\s*o\s|\n|$)/g;
+  let m;
+  while ((m = re.exec(text))) {
+    const name = m[1] + m[2];
+    if (!all.includes(name)) all.push(name);
+    if (WRN_AREA.test(m[3]) && !on.includes(name)) on.push(name);
+  }
+  return { on, all, tm: it.tmFc || it.tmEf || '' };
 }
 
 async function loadTideBed(now) {
@@ -211,7 +235,7 @@ async function loadTide(now) {
 
 export default async function handler() {
   const now = Date.now();
-  const [nc, ul, tide, vil, air, obs] = await Promise.allSettled([loadNowcast(now), loadUltra(now), loadTide(now), loadVilage(now), loadAir(), loadObs(now)]);
+  const [nc, ul, tide, vil, air, obs, wrn] = await Promise.allSettled([loadNowcast(now), loadUltra(now), loadTide(now), loadVilage(now), loadAir(), loadObs(now), loadWarn()]);
   const errors = [], notes = [];
   const out = { ok: true, fetchedAt: now, site: SITE };
   if (nc.status === 'fulfilled') out.wx = nc.value; else errors.push('nowcast:' + (nc.reason && nc.reason.message));
@@ -222,6 +246,7 @@ export default async function handler() {
   if (vil.status === 'fulfilled') out.sea = vil.value; else notes.push('sea:' + (vil.reason && vil.reason.message));
   if (air.status === 'fulfilled') out.air = air.value; else notes.push('air:' + (air.reason && air.reason.message));
   if (obs.status === 'fulfilled') out.obs = obs.value; else notes.push('obs:' + (obs.reason && obs.reason.message));
+  if (wrn.status === 'fulfilled') out.wrn = wrn.value; else notes.push('wrn:' + (wrn.reason && wrn.reason.message));
   if (errors.length) out.errors = errors;
   if (notes.length) out.notes = notes;
   const anyData = !!(out.wx || out.tide);

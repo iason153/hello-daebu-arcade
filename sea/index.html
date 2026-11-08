@@ -393,7 +393,7 @@ function nextLow(t){const e=nextExt(t,false);if(e)return e.t;const h=T0+Math.cei
 const wlOf=lv=>WL_LOW+lv*(WL_HIGH-WL_LOW);
 
 /* ---------- weather (기상청 초단기실황 항목: SKY, PTY, WSD, VEC, REH, T1H) ---------- */
-const WX={sky:'맑음',pty:'없음',wsd:3,vec:315,reh:60,pm:null,pmv:null,fog:false,temp:null,rn1:0,lgt:0,wav:null,sno:0,at:0,live:false};let wxManual=false;
+const WX={sky:'맑음',pty:'없음',wsd:3,vec:315,reh:60,pm:null,pmv:null,fog:false,temp:null,rn1:0,lgt:0,wav:null,sno:0,at:0,live:false,wtem:null,atmpr:null,obsSt:'',wrn:[]};let wxManual=false;
 function fromKMA(o){/* Vercel에서 받은 값을 그대로 넣는 자리 */
   const SKYC={1:'맑음',3:'구름많음',4:'흐림'},PTYC={0:'없음',1:'비',2:'진눈깨비',3:'눈',4:'소나기',5:'비',6:'진눈깨비',7:'눈'};
   if(o.SKY!=null)WX.sky=SKYC[o.SKY]||WX.sky;if(o.PTY!=null)WX.pty=PTYC[o.PTY]||'없음';
@@ -471,6 +471,14 @@ async function loadLive(){
     if(j.sea&&!wxManual){WX.wav=j.sea.wav;WX.sno=j.sea.sno||0}
     if(j.air&&!wxManual){const a=j.air,g10=a.pm10==null?0:a.pm10<=30?1:a.pm10<=80?2:a.pm10<=150?3:4,g25=a.pm25==null?0:a.pm25<=15?1:a.pm25<=35?2:a.pm25<=75?3:4,g=Math.max(g10,g25);
       WX.pm=g?['좋음','보통','나쁨','매우나쁨'][g-1]:null;WX.pmv={pm10:a.pm10,pm25:a.pm25}}
+    /* 국립해양조사원 조위관측소(안산) 실측: 바닷물 온도·기압 */
+    if(j.obs&&!wxManual){WX.wtem=j.obs.wtem;WX.atmpr=j.obs.atmpr;WX.obsSt=j.obs.station||''}
+    /* 기상특보: 방아머리(경기남부앞바다·안산)에 걸린 것만 */
+    if(j.wrn&&!wxManual)WX.wrn=Array.isArray(j.wrn.on)?j.wrn.on:[];
+    if(!wxManual){
+      /* 해무 추정: 따뜻하고 습한 공기가 찬 바닷물 위로 오면 안개가 깔린다(봄·초여름 서해 해무) */
+      if(WX.wtem!=null&&WX.temp!=null&&WX.temp-WX.wtem>=1.5&&WX.reh>=93&&WX.wsd<8&&WX.pty==='없음')WX.fog=true;
+      if(WX.wrn.some(w=>/안개/.test(w)))WX.fog=true}
     updateHud()}catch(e){}
 }
 window.bangamoriWeather=fromKMA;
@@ -481,13 +489,20 @@ function derive(){
   if(rain&&WX.live&&!wxManual&&WX.rn1>0)rain*=WX.rn1<1?.6:WX.rn1<3?1:WX.rn1<10?1.5:2;
   if(rain||snow)cover=Math.max(cover,.9);
   const dark=cl((cover>.55?(cover-.45)*1.05:cover*.12)+(rain?.08:0),0,.72);
-  const haze=cl(cl((WX.reh-65)/35,0,1)*.4+(WX.pm==='매우나쁨'?.48:WX.pm==='나쁨'?.32:WX.pm==='보통'?.1:0)+(WX.fog?.72:0),0,.9);
+  /* 기압: 고기압이면 공기가 맑고, 저기압이면 뿌옇다 */
+  const prs=WX.atmpr==null?0:WX.atmpr<1005?.1:WX.atmpr>1025?-.06:0;
+  const haze=cl(cl((WX.reh-65)/35,0,1)*.4+(WX.pm==='매우나쁨'?.48:WX.pm==='나쁨'?.32:WX.pm==='보통'?.1:0)+(WX.fog?.72:0)+prs,0,.9);
   const toward=WX.vec+180,lateral=Math.sin((toward-viewAz)*RAD),onshore=Math.max(0,-Math.cos((toward-AZ0)*RAD));
   /* 파고: 기상청 단기예보 WAV(m). 없으면 바람으로 짐작(앞바다로 부는 바람일수록 크게) */
-  const H=WX.wav!=null&&!wxManual?cl(WX.wav,.05,4):cl(.08+.018*Math.pow(WX.wsd,1.45)*(.5+onshore),.05,3);
+  let H=WX.wav!=null&&!wxManual?cl(WX.wav,.05,4):cl(.08+.018*Math.pow(WX.wsd,1.45)*(.5+onshore),.05,3);
+  /* 풍랑특보 중이면 예보 파고가 늦게 따라와도 거친 바다로 */
+  const wrn=wxManual?[]:WX.wrn||[];
+  if(wrn.includes('풍랑경보'))H=Math.max(H,3);else if(wrn.includes('풍랑주의보'))H=Math.max(H,1.8);
   const sea=.55+H*.6;
   const snowGround=(snow&&WX.temp!=null&&WX.temp<=1)||WX.sno>0?.5:0;
-  return {cover,rain,snow,dark,haze,lateral,sea,H,wsd:WX.wsd,lgt:WX.lgt>0&&(rain>0||cover>.8),snowGround};
+  /* 물안개(김): 바닷물이 공기보다 훨씬 따뜻하고 바람이 약하면 수면에서 김이 피어오른다(겨울 아침 서해) */
+  const steam=WX.wtem!=null&&WX.temp!=null&&!WX.fog?cl((WX.wtem-WX.temp-5)/8,0,1)*cl(1-WX.wsd/7,0,1)*(rain||snow?.4:1):0;
+  return {cover,rain,snow,dark,haze,lateral,sea,H,wsd:WX.wsd,lgt:WX.lgt>0&&(rain>0||cover>.8),snowGround,steam};
 }
 function wxLabel(){return WX.fog?'해무':WX.pty!=='없음'?WX.pty:WX.sky}
 
@@ -923,6 +938,20 @@ function drawScene(ts,dt){
   /* rain ripples */
   if(D.rain){ctx.strokeStyle='rgba(220,230,240,.35)';ctx.lineWidth=.8;const k0=Math.floor(sec*3);for(let i=0;i<Math.round(12*D.rain*VW/390);i++){const x=(i*97+k0*41)%VW,y=HZ+10+((i*53+k0*29)%Math.max(10,wl-HZ-12));const r=((sec*3+i*.37)%1)*6;ctx.beginPath();ctx.ellipse(x,Y(y,x),r,r*.3*Fx(x),0,0,7);ctx.stroke()}}
 
+  /* 물안개: 수면 위로 낮게 깔린 김 띠 + 피어오르는 김 줄기 */
+  if(D.steam>.02){const mc=mx(sBot,[226,231,238],.55),k=D.steam;ctx.save();ctx.lineCap='round';
+    for(let b=0;b<5;b++){const yy=HZ+(wl-HZ)*(.12+b*.17),a=k*(.10+.05*b),w0=(5+b*3)*Fx(VW/2);
+      ctx.beginPath();let on=false;for(let x=L0;x<=R0;x+=14){if(!inBeach(x)){on=false;continue}
+        const y=Y(yy+Math.sin(x*.012+sec*.18+b*1.7)*4+Math.sin(x*.031-sec*.11)*2,x);if(on)ctx.lineTo(x,y);else{ctx.moveTo(x,y);on=true}}
+      /* 넓고 옅게 + 좁고 조금 진하게 두 번 그어 번진 느낌 */
+      ctx.strokeStyle=cs(mc,a*.35);ctx.lineWidth=w0*2.6;ctx.stroke();ctx.strokeStyle=cs(mc,a*.55);ctx.lineWidth=w0;ctx.stroke()}
+    const n=Math.round(22*k*VW/390*quality);
+    for(let i=0;i<n;i++){const c0=sec/8+i*.379,cyc=c0%1,x0=L0+((i*137.3+Math.floor(c0)*53)%(R0-L0));if(!inBeach(x0))continue;
+      const y0=HZ+(wl-HZ)*(.3+((i*.61)%1)*.6),f=Fx(x0),x=x0+Math.sin(i+sec*.35)*6*cyc,y=Y(y0-cyc*24,x0),r=(7+cyc*16)*f,a=k*.16*Math.sin(cyc*Math.PI);
+      const g=ctx.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,cs(mc,a));g.addColorStop(1,cs(mc,0));
+      ctx.fillStyle=g;ctx.beginPath();ctx.ellipse(x,y,r*1.5,r,0,0,7);ctx.fill()}
+    ctx.restore()}
+
   /* haze veil over horizon */
   if(D.haze>.05){const hv=ctx.createLinearGradient(0,HZ-120,0,HZ+90);const hc=mx(sBot,[205,208,214],.35);hv.addColorStop(0,cs(hc,0));hv.addColorStop(.55,cs(hc,D.haze*.75));hv.addColorStop(1,cs(hc,0));ctx.fillStyle=hv;ctx.fillRect(L0,HZ-120,R0-L0,210)}
 
@@ -1017,9 +1046,10 @@ function updateHud(){
   const tm=sunTimes(t);let sline='';
   if(tm.set){const setAz=sunPos(tm.set).az;const off=Math.round(unwrap(setAz)-AZ0);sline=(t<tm.set?'오늘 노을 ':'노을 진 시각 ')+hhmm(tm.set)+` · ${dirName(setAz)}(${off<0?'정면에서 왼쪽 '+(-off):'정면에서 오른쪽 '+off}°)`}
   $('#h4').textContent=sline;
-  $('#h5').textContent=(WX.live||wxManual?`${dirName(WX.vec)}풍 ${WX.wsd}m/s · 파고 ${derive().H.toFixed(1)}m${WX.wav==null||wxManual?'(바람 기준)':''} · 습도 ${WX.reh}%`+(WX.pm?` · 미세먼지 ${WX.pm}`:'')+(WX.lgt>0?' · 낙뢰':'')+(WX.live&&!wxManual&&WX.at?` · 기상청 ${hhmm(WX.at)} 관측`:''):'날씨 정보를 불러오는 중')+(mp?` · ${moonName(mp.phase)}`:'');
+  const Dh=derive(),wrnTxt=!wxManual&&WX.wrn.length?WX.wrn.join('·')+' 중 · ':'',seaT=WX.wtem!=null&&!wxManual?` · 바닷물 ${Math.round(WX.wtem)}℃`:'',mist=Dh.steam>.25?' · 물안개':'';
+  $('#h5').textContent=(WX.live||wxManual?wrnTxt+`${dirName(WX.vec)}풍 ${WX.wsd}m/s · 파고 ${derive().H.toFixed(1)}m${WX.wav==null||wxManual?'(바람 기준)':''} · 습도 ${WX.reh}%`+seaT+mist+(WX.pm?` · 미세먼지 ${WX.pm}`:'')+(WX.lgt>0?' · 낙뢰':'')+(WX.live&&!wxManual&&WX.at?` · 기상청 ${hhmm(WX.at)} 관측`:''):'날씨 정보를 불러오는 중')+(mp?` · ${moonName(mp.phase)}`:'');
   {const lv2=tideNow(t),nh=nextHigh(t),nl=nextLow(t),tpp=tempNow(t);
-    $('#tWx').textContent=WX.live?`${wxLabel()}`+(tpp!=null?`, ${tpp}℃`:'')+`, ${dirName(WX.vec)}풍 ${WX.wsd}m/s, 파고 ${derive().H.toFixed(1)}m`+(WX.pm?`, 미세먼지 ${WX.pm}`:''):'날씨 정보를 불러오는 중';
+    $('#tWx').textContent=WX.live?wrnTxt+`${wxLabel()}`+(tpp!=null?`, ${tpp}℃`:'')+`, ${dirName(WX.vec)}풍 ${WX.wsd}m/s, 파고 ${derive().H.toFixed(1)}m`+(WX.wtem!=null?`, 바닷물 ${Math.round(WX.wtem)}℃`:'')+(Dh.steam>.25?', 물안개':'')+(WX.pm?`, 미세먼지 ${WX.pm}`:''):'날씨 정보를 불러오는 중';
     $('#tTide').textContent=TIDE?(lv2<.1?'간조 무렵, 갯벌이 드러나 있어요':lv2>.92?'만조 무렵':tideRising(t)?'물이 들어오는 중':'물이 빠지는 중'):'물때 정보를 불러오는 중';
     const kd=x=>{const a=kst(x),b=kst(t);return (a.d!==b.d?'내일 ':'')+hhmm(x)};
     $('#tHigh').textContent=TIDE?kd(nh):'불러오는 중';$('#tLow').textContent=TIDE?kd(nl):'불러오는 중';
