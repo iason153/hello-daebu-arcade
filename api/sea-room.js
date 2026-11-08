@@ -11,7 +11,8 @@
 //   sea:p            ZSET  member = "sid|room" , score = 마지막 신호 시각(ms)
 //   sea:cnt          STR   집계 결과 JSON, 5초
 //   sea:r:{id}:m     HASH  sid -> {"n":이름,"j":들어온 시각,"s":마지막 신호}
-//   sea:r:{id}:msg   LIST  말 {"i","s","n","x","t"} 최근 40개, 24시간
+//   sea:r:{id}:msg   LIST  말 {"i","s","n","x","t"} 최근 300개, 30일
+//   sea:r:{id}:mc    STR   지금까지 쌓인 말 개수(새 말만 내려주기 위한 번호)
 //   sea:r:{id}:st    LIST  모래 글씨 {"i","s","p":[[x,y],...],"e":지워지는 시각} 최근 40개
 //   sea:r:{id}:v     STR   글씨 버전(숫자)
 //   sea:g            LIST  모든 사람의 최근 글씨(다른 사람에겐 흐린 흔적으로만) 30개
@@ -22,7 +23,9 @@ import { randomBytes } from 'crypto';
 
 const ALIVE_MS = 35000;
 const AWAY_MS = 10 * 60e3;
-const ROOM_TTL = 86400;
+// 자리는 마지막으로 쓴 날부터 30일 남는다(누가 들어오거나 말할 때마다 다시 30일). 대화는 최근 300개까지
+const ROOM_TTL = 30 * 86400;
+const MSG_MAX = 300;
 const ROOM_MAX = 6;
 const P = (x) => { if (x == null) return null; if (typeof x === 'object') return x; try { return JSON.parse(x); } catch (e) { return null; } };
 const idOk = (s, n) => typeof s === 'string' && new RegExp('^[A-Za-z0-9]{' + n + '}$').test(s);
@@ -74,20 +77,40 @@ async function roomState(room, sid, now, q) {
   const raw = await kv.hgetall(key + ':m');
   if (!raw || !raw[sid]) return { gone: true };
   const me = P(raw[sid]) || {};
+  const lastSeen = me.s || 0;
   me.s = now;
   await kv.hset(key + ':m', { [sid]: JSON.stringify(me) });
+  // 자리 수명 연장은 가끔만(10분 넘게 비웠다 돌아왔을 때, 또는 드물게) — 명령 수를 아낀다
+  if (now - lastSeen > 600e3 || Math.random() < 0.02) await touchRoom(key);
   const members = Object.entries(raw)
     .map(([s, v]) => Object.assign({ sid: s }, P(v) || {}))
     // 신호가 끊겨도 10분 동안은 "잠깐 자리 비움"으로 자리를 남겨 둔다(직접 나가기를 누르면 바로 빠진다)
     .filter((m) => m.sid === sid || now - (m.s || 0) < AWAY_MS)
     .sort((a, b) => (a.j || 0) - (b.j || 0))
     .map((m) => ({ sid: m.sid, n: m.n || '친구', on: m.sid === sid || now - (m.s || 0) < ALIVE_MS }));
-  const since = Number(q.since) || 0;
-  const msgs = (await kv.lrange(key + ':msg', -40, -1)).map(P).filter((m) => m && m.t > since);
+  // 말 번호(mc): 클라이언트가 가진 번호와 같으면 목록을 읽지 않는다. 다르면 모자란 만큼만 읽는다
+  let mc = Number(await kv.get(key + ':mc'));
+  if (!mc) { mc = Number(await kv.llen(key + ':msg')) || 0; if (mc) await kv.set(key + ':mc', mc, { ex: ROOM_TTL }); }
+  let msgs = [];
+  if (q.mc != null) {
+    const have = Math.max(0, Number(q.mc) || 0);
+    if (have !== mc) {
+      const want = have > mc ? mc : mc - have; // 번호가 앞서 있으면(자리가 새로 생긴 경우) 전부
+      const n = Math.min(want, MSG_MAX);
+      if (n > 0) msgs = (await kv.lrange(key + ':msg', -n, -1)).map(P).filter(Boolean);
+    }
+  } else {
+    const since = Number(q.since) || 0; // 예전 화면 호환
+    msgs = (await kv.lrange(key + ':msg', -40, -1)).map(P).filter((m) => m && m.t > since);
+  }
   const v = Number(await kv.get(key + ':v')) || 0;
   let strokes;
   if (String(v) !== String(q.sv || '')) strokes = (await kv.lrange(key + ':st', 0, -1)).map(P).filter((s) => s && s.e > now);
-  return { members, msgs, sv: v, strokes };
+  return { members, msgs, mc, sv: v, strokes };
+}
+
+async function touchRoom(key) {
+  await Promise.all([':m', ':msg', ':mc', ':st', ':v'].map((s) => kv.expire(key + s, ROOM_TTL)));
 }
 
 async function globalTraces(q, now) {
@@ -138,7 +161,8 @@ export default async function handler(req, res) {
         const raw = await kv.hgetall(key + ':m');
         if (!raw) return res.status(200).json({ ok: false, err: 'gone' });
         if (!raw[sid]) {
-          const live = Object.values(raw).map(P).filter((m) => m && now - (m.s || 0) < ROOM_TTL * 1000);
+          // 만석 계산은 최근 3일 안에 들른 사람만(오래 안 온 자리·다른 브라우저에 남은 옛 자리는 세지 않음)
+          const live = Object.values(raw).map(P).filter((m) => m && now - (m.s || 0) < 3 * 86400e3);
           if (live.length >= ROOM_MAX) return res.status(200).json({ ok: false, err: 'full' });
         }
         const name = cleanText(q.name, 10) || '친구';
@@ -168,9 +192,10 @@ export default async function handler(req, res) {
         const me = P(meRaw) || {};
         const msg = { i: randomBytes(4).toString('hex'), s: sid, n: me.n || '친구', x: text, t: now };
         await kv.rpush(key + ':msg', JSON.stringify(msg));
-        await kv.ltrim(key + ':msg', -40, -1);
-        await kv.expire(key + ':msg', ROOM_TTL);
-        return res.status(200).json({ ok: true, msg });
+        await kv.ltrim(key + ':msg', -MSG_MAX, -1);
+        const mc = await kv.incr(key + ':mc');
+        await touchRoom(key);
+        return res.status(200).json({ ok: true, msg, mc });
       }
       case 'stroke': {
         const pts = Array.isArray(q.p) ? q.p.slice(0, 120).map((a) => [Math.round(+a[0]) || 0, Math.round(+a[1]) || 0]) : [];

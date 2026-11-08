@@ -18,6 +18,7 @@
 <link rel="icon" href="/sea/icon-64.png">
 <link rel="apple-touch-icon" href="/sea/icon-192.png">
 <link rel="manifest" href="/sea/manifest.webmanifest">
+<script src="/sea/pwa.js" defer></script>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="방아머리">
 <script type="application/ld+json">{"@context":"https://schema.org","@graph":[
@@ -64,7 +65,10 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid 
 .hud-col{display:flex;flex-direction:column;gap:5px;align-items:flex-start;min-width:0;pointer-events:auto}
 .chip{border:0;background:var(--glass);color:var(--ink);font-size:12px;line-height:1.3;padding:4px 10px;border-radius:999px;font-variant-numeric:tabular-nums;max-width:100%;text-align:left}
 .chip.place{font-family:var(--f-serif);font-weight:700;font-size:12.5px}
-.hud .guide-link{margin-left:auto;flex:none}
+.hud .pwa-slot{margin-left:auto;flex:none;pointer-events:auto}
+.hud .pwa-slot:empty{display:none}
+.hud .pwa-slot:empty+.guide-link{margin-left:auto}
+.hud .guide-link{flex:none}
 .hud .test{pointer-events:auto;flex:none}
 
 .edge{position:absolute;top:38%;border:0;background:var(--glass);color:var(--ink);font-size:12.5px;padding:7px 12px;border-radius:999px}
@@ -182,6 +186,7 @@ body.land .saybar{left:auto;width:min(440px,52%)}
       <span class="chip" id="h5" hidden></span>
       <span class="chip" id="h6" hidden></span>
     </div>
+    <span class="pwa-slot" data-pwa-install="small"></span>
     <a class="chip guide-link" href="#info">바다 안내</a>
     <button class="chip test" id="testBtn" aria-expanded="false">시험</button>
   </div>
@@ -214,7 +219,8 @@ body.land .saybar{left:auto;width:min(440px,52%)}
     <label class="field" for="nameIn"><span>내 이름 (옆자리 사람에게 보여요)</span><input id="nameIn" maxlength="10" placeholder="예: 형준" autocomplete="nickname"></label>
     <div class="linkbox" id="linkBox" hidden><code id="linkTxt"></code><button class="pbtn" id="copyBtn">복사</button></div>
     <div class="row2"><button class="pbtn" id="makeBtn">자리 링크 만들기</button><button class="pbtn" id="sendBtn" hidden>보내기</button></div>
-    <div class="note" id="roomNote">대화는 이 링크를 가진 사람만 열어 볼 수 있게 잠겨요. 서버에도 잠긴 글자로만 남고 24시간 뒤 지워져요. 한 자리에 6명까지 앉을 수 있어요.</div>
+    <div class="note" id="roomNote">대화는 이 링크를 가진 사람만 열어 볼 수 있게 잠겨요. 서버에도 잠긴 글자로만 남아요. 자리는 마지막으로 이야기한 날부터 30일 동안 남고, 그동안은 언제 들어와도 지난 대화에 이어서 말할 수 있어요. 한 자리에 6명까지 앉을 수 있어요.</div>
+    <button class="pbtn" id="installRoomBtn" hidden>앱으로 설치하고 이 자리로 바로 오기</button>
     <button class="ghost" id="leaveBtn" hidden>혼자 앉기로 돌아가기</button>
     <div class="seg" role="group" aria-label="미리보기" id="previewSeg" hidden>
       <button data-g="solo" aria-pressed="true">혼자</button>
@@ -267,6 +273,7 @@ body.land .saybar{left:auto;width:min(440px,52%)}
     <h2 id="introH">방아머리 바닷가</h2>
     <p id="introP">방아머리 해변 돗자리에 앉아 북서쪽 바다를 보고 있어요. 해와 달, 물때, 날씨가 실제와 똑같이 움직여요. 좌우로 밀면 고개를 돌리고, 위로 밀면 하늘을 올려다볼 수 있어요. 앞 모래사장엔 글씨를 남길 수 있어요.</p>
     <label class="field dark" for="joinName" id="joinField" hidden><span>내 이름 (옆자리 사람에게 보여요)</span><input id="joinName" maxlength="10" placeholder="예: 지수" autocomplete="nickname"></label>
+    <form class="field dark" id="pasteForm" hidden autocomplete="off"><span>받은 초대 링크가 있으면 붙여 넣어 이어가세요</span><input id="pasteIn" placeholder="daebuseatime.com/sea/?r=…" inputmode="url"><button class="pbtn" type="submit">이어가기</button></form>
     <button class="btn" id="enterBtn">바다 앞에 앉기</button>
   </div>
 
@@ -405,14 +412,19 @@ function fromKMA(o){/* Vercel에서 받은 값을 그대로 넣는 자리 */
 /* ---------- 함께 있는 공간: 접속 신호·같이 앉기·말풍선·모래 글씨 공유 (/sea/room) ---------- */
 const LS={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{if(v==null)localStorage.removeItem(k);else localStorage.setItem(k,v)}catch(e){}}};
 function rid(n){const a='ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';const r=new Uint8Array(n);(window.crypto||{}).getRandomValues?crypto.getRandomValues(r):r.forEach((_,i)=>r[i]=Math.random()*256);let s='';r.forEach(v=>s+=a[v%a.length]);return s}
+/* 카톡 → 크롬으로 넘어온 경우: # 뒤에 실어 온 내 자리 번호(s)·이름(n)을 이어받아 같은 사람으로 앉는다(# 뒤는 서버로 가지 않음) */
+(()=>{const h=location.hash,s=h.match(/[#&]s=([A-Za-z0-9]{16})(?:&|$)/),n=h.match(/[#&]n=([^&]*)/);if(s)LS.set('sea_sid',s[1]);if(n)try{const v=decodeURIComponent(n[1]).slice(0,10);if(v)LS.set('sea_name',v)}catch(e){}})();
+const STANDALONE=(window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true;
 const SID=(()=>{let s=LS.get('sea_sid');if(!/^[A-Za-z0-9]{16}$/.test(s||'')){s=rid(16);LS.set('sea_sid',s)}return s})();
-const NET={sent:new Set(),room:(/^[A-Za-z0-9]{8}$/.test(LS.get('sea_room')||'')?LS.get('sea_room'):''),name:LS.get('sea_name')||'',members:[],since:Date.now()-86400000,sv:'',gv:'',counts:null,beatN:0,timer:0,friendStrokes:[],traces:[],bubbles:new Map(),seen:new Set()};
+const NET={sent:new Set(),room:(/^[A-Za-z0-9]{8}$/.test(LS.get('sea_room')||'')?LS.get('sea_room'):''),name:LS.get('sea_name')||'',members:[],since:0,mc:0,seenMsg:new Set(),sv:'',gv:'',counts:null,beatN:0,timer:0,friendStrokes:[],traces:[],bubbles:new Map(),seen:new Set()};
 async function api(body){try{const r=await fetch('/sea/room',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(Object.assign({sid:SID},body))});return await r.json()}catch(e){return {ok:false,err:'net'}}}
 const TALK=[];let talkT=0;
 function memberColor(sid){const i=Math.max(0,NET.members.findIndex(m=>m.sid===sid));const c=SEASON[season(now())].c;return [c[0],c[1],'#5c8ac4','#7aa66a','#b07ac4','#e9c46a'][i%6]}
 /* 대화 숨기기: 둘러보고 싶을 땐 감추고, 숨긴 동안 친구 말이 오면 그 한마디만 잠깐 보여 준다 */
 const TV={hidden:false,unread:0,peekT:0};try{TV.hidden=localStorage.getItem('sea_talk_hidden')==='1'}catch(e){}
-function pushBubble(sid,text,nm,fresh=true){const m=NET.members.find(x=>x.sid===sid);TALK.push({sid,n:sid===SID?'':(nm||(m?m.n:'친구')),x:text});while(TALK.length>40)TALK.shift();renderTalk();
+function pushBubble(sid,text,nm,fresh=true,t=Date.now()){const m=NET.members.find(x=>x.sid===sid);const it={sid,n:sid===SID?'':(nm||(m?m.n:'친구')),x:text,t};
+  /* 늦게 도착한 말도 시간 순서대로 끼워 넣는다 */
+  let i=TALK.length;while(i>0&&TALK[i-1].t>t)i--;TALK.splice(i,0,it);while(TALK.length>300)TALK.shift();renderTalk();
   if(TV.hidden&&sid!==SID&&fresh){TV.unread++;peekTalk()}talkWake();talkBtnUi()}
 function peekTalk(){const box=document.getElementById('talk');if(!box)return;clearTimeout(TV.peekT);box.classList.add('peek');TV.peeking=true;talkWake();
   TV.peekT=setTimeout(()=>{TV.peeking=false;talkWake();setTimeout(()=>{if(!TV.peeking)box.classList.remove('peek')},650)},4500)}
@@ -436,19 +448,21 @@ function applyMembers(list){
   NET.members.forEach(m=>{if(m.sid!==SID&&ready&&!list.some(x=>x.sid===m.sid))toast(`${m.n}님이 자리에서 일어났어요`)});
   NET.members=list;NET.seen.add('ready');refreshRoomUi();
 }
-function leaveRoom(silent){if(NET.room&&!silent)api({act:'leave',room:NET.room});TALK.length=0;renderTalk();talkWake();NET.room='';NET.members=[];NET.friendStrokes=[];NET.sv='';LS.set('sea_room',null);refreshRoomUi()}
+function leaveRoom(silent){if(NET.room&&!silent)api({act:'leave',room:NET.room});TALK.length=0;NET.mc=0;NET.seenMsg.clear();renderTalk();talkWake();NET.room='';NET.members=[];NET.friendStrokes=[];NET.sv='';LS.set('sea_room',null);refreshRoomUi()}
 async function beat(){
   clearTimeout(NET.timer);
   if(document.hidden){NET.timer=setTimeout(beat,30000);return}
   NET.beatN++;
-  const j=await api({act:'beat',room:NET.room,since:NET.since,sv:NET.sv,gv:NET.gv,wantG:NET.beatN%3===1});
+  const askRoom=NET.room;const j=await api({act:'beat',room:NET.room,mc:NET.mc,sv:NET.sv,gv:NET.gv,wantG:NET.beatN%3===1});
   let next=30000;
   if(j&&j.ok){
     NET.counts=j.c;
     if(j.gone){leaveRoom(true)}
     else{
       if(j.members)applyMembers(j.members);
-      if(j.msgs){const room=NET.room;for(const m of j.msgs){if(m.t<=NET.since)continue;NET.since=m.t;if(m.s===SID&&NET.sent.has(m.i))continue;pushBubble(m.s,await unlock(room,m.x),m.n,Date.now()-m.t<90000)}}
+      /* 말 번호(mc)로 새 말만 받는다. 같은 말이 두 번 와도(신호가 겹칠 때) 한 번만 보인다 */
+      if(j.msgs&&askRoom===NET.room){const room=NET.room;if(j.mc!=null)NET.mc=Math.max(NET.mc,j.mc);
+        for(const m of j.msgs){if(!m||!m.i||NET.seenMsg.has(m.i))continue;NET.seenMsg.add(m.i);if(m.s===SID&&NET.sent.has(m.i))continue;pushBubble(m.s,await unlock(room,m.x),m.n,Date.now()-m.t<90000,m.t)}}
       if(j.strokes){NET.sv=String(j.sv);NET.friendStrokes=j.strokes.filter(x=>x.s!==SID).map(x=>x.p)}
     }
     if(j.traces)NET.traces=j.traces.filter(x=>x.s!==SID&&(!NET.room||x.r!==NET.room)).map(x=>x.p);
@@ -1125,6 +1139,7 @@ function refreshRoomUi(){
   $('#sitBtn').textContent=inRoom&&n>1?`같이 앉는 중 · ${nOn}명`+(nOn<n?` (+${n-nOn} 비움)`:''):inRoom?'친구 기다리는 중':'같이 앉기';
   $('#sitBtn').classList.toggle('on',inRoom);
   $('#chatBtn').hidden=!(inRoom||TEST);$('#talkBtn').hidden=!(inRoom||TEST);talkBtnUi();
+  $('#installRoomBtn').hidden=!inRoom||STANDALONE||!window.SeaPWA;
   $('#linkBox').hidden=!inRoom;$('#sendBtn').hidden=!inRoom;$('#makeBtn').hidden=inRoom;$('#leaveBtn').hidden=!inRoom;
   if(inRoom)$('#linkTxt').textContent=myLink().replace(/^https?:\/\//,'').replace(/#k=.*/,' (잠김)');
   updateHud();
@@ -1134,13 +1149,14 @@ $('#nameIn').addEventListener('change',e=>{NET.name=e.target.value.trim().slice(
 $('#makeBtn').onclick=async()=>{NET.name=$('#nameIn').value.trim().slice(0,10);LS.set('sea_name',NET.name||null);
   $('#makeBtn').disabled=true;const j=await api({act:'create',name:NET.name||'나'});$('#makeBtn').disabled=false;
   if(!j||!j.ok){toast('자리를 만들지 못했어요. 잠시 뒤 다시 눌러 주세요');return}
-  NET.room=j.room;LS.set('sea_room',NET.room);try{LS.set('sea_key_'+j.room,b64u(crypto.getRandomValues(new Uint8Array(16))))}catch(e){}NET.members=[{sid:SID,n:NET.name||'나',on:true}];NET.since=Date.now()-1000;refreshRoomUi();beat()};
+  NET.room=j.room;LS.set('sea_room',NET.room);try{LS.set('sea_key_'+j.room,b64u(crypto.getRandomValues(new Uint8Array(16))))}catch(e){}NET.members=[{sid:SID,n:NET.name||'나',on:true}];NET.mc=0;NET.seenMsg.clear();TALK.length=0;renderTalk();refreshRoomUi();beat()};
 function selectLink(){const r=document.createRange();r.selectNodeContents($('#linkTxt'));const s=getSelection();s.removeAllRanges();s.addRange(r)}
 $('#copyBtn').onclick=()=>{const txt=myLink();
   try{navigator.clipboard.writeText(txt).then(()=>toast('링크를 복사했어요'),()=>{selectLink();toast('링크를 길게 눌러 복사하세요')})}catch(_){selectLink();toast('링크를 길게 눌러 복사하세요')}};
 $('#sendBtn').onclick=async()=>{const url=myLink(),who=NET.name?NET.name+'님이':'친구가';
   if(navigator.share){try{await navigator.share({title:'방아머리 바닷가',text:`${who} 방아머리 바다 옆자리로 불렀어요. 같이 볼래요?`,url});return}catch(e){if(e&&e.name==='AbortError')return}}
   $('#copyBtn').click()};
+$('#installRoomBtn').onclick=()=>{if(window.SeaPWA)window.SeaPWA.open('room_sheet')};
 $('#leaveBtn').onclick=()=>{leaveRoom(false);toast('혼자 앉기로 돌아왔어요');openSheet(null)};
 document.querySelectorAll('#previewSeg button').forEach(b=>b.onclick=()=>{
   st.group=b.dataset.g;st.partnerA=0;
@@ -1222,7 +1238,7 @@ document.addEventListener('visibilitychange',()=>{if(!ac)return;if(document.hidd
 $('#enterBtn').onclick=async()=>{
   if(INVITE){NET.name=$('#joinName').value.trim().slice(0,10);LS.set('sea_name',NET.name||null);
     $('#enterBtn').disabled=true;const j=await api({act:'join',room:INVITE,name:NET.name||'친구'});$('#enterBtn').disabled=false;
-    if(j&&j.ok){if(NET.room&&NET.room!==INVITE)api({act:'leave',room:NET.room});NET.room=INVITE;LS.set('sea_room',NET.room);NET.since=Date.now()-86400000;TALK.length=0;renderTalk();toast(j.host?`${j.host}님 옆에 앉았어요`:'옆자리에 앉았어요');refreshRoomUi();beat()}
+    if(j&&j.ok){if(NET.room&&NET.room!==INVITE)api({act:'leave',room:NET.room});NET.room=INVITE;LS.set('sea_room',NET.room);NET.mc=0;NET.seenMsg.clear();TALK.length=0;renderTalk();toast(j.host?`${j.host}님 옆에 앉았어요`:'옆자리에 앉았어요');refreshRoomUi();beat()}
     else toast(j&&j.err==='full'?'자리가 다 찼어요(6명). 혼자 앉을게요':j&&j.err==='gone'?'이 자리는 이미 끝났어요. 혼자 앉을게요':'자리에 앉지 못했어요. 혼자 앉을게요')}
   $('#intro').hidden=true;setSound(true);wake()};
 
@@ -1245,6 +1261,12 @@ $('#fogIn').onchange=e=>{wxManual=true;WX.fog=e.target.checked;updateHud()};
 $('#seasonIn').onchange=e=>{seasonOverride=e.target.value};
 $('#crowdIn').addEventListener('input',e=>{st.crowd=+e.target.value;$('#crowdLab').textContent=st.crowd+'명';updateHud()});
 
+/* 설치 앱(PWA)으로 열렸는지, 다른 브라우저로 넘길 때 실을 주소 */
+window.seaRoomLink=()=>NET.room?myLink():'';
+window.seaHandoffUrl=()=>{const room=INVITE||NET.room,k=room?roomKeyStr(room):'';
+  const q=new URLSearchParams(location.search);q.delete('r');q.delete('pwa');if(room)q.set('r',room);
+  let h='';if(room&&k)h='#k='+k+'&s='+SID+(NET.name?'&n='+encodeURIComponent(NET.name):'');
+  return location.origin+'/sea/'+(q.toString()?'?'+q.toString():'')+h};
 if(!TEST){$('#testBtn').hidden=true}else{$('#previewSeg').hidden=false}
 /* 초대 링크로 들어온 경우 */
 const INVITE=(()=>{const m=location.search.match(/[?&]r=([A-Za-z0-9]{8})(?:&|$)/);const k=location.hash.match(/k=([A-Za-z0-9_-]{16,32})/);
@@ -1253,6 +1275,12 @@ if(/k=/.test(location.hash))try{history.replaceState(null,'',location.pathname+l
 if(INVITE){$('#introH').textContent='옆자리로 초대받았어요';$('#introP').textContent='방아머리 해변, 친구 옆 돗자리가 비어 있어요. 앉으면 같은 노을과 물때를 같이 보며 바다 위에 말풍선으로 이야기할 수 있어요.';
   $('#joinField').hidden=false;$('#joinName').value=NET.name;$('#enterBtn').textContent='옆자리에 앉기'}
 if(/[?&]r=/.test(location.search))try{history.replaceState(null,'',location.pathname+location.search.replace(/([?&])r=[^&]*&?/,'$1').replace(/[?&]$/,''))}catch(e){}
+/* 같이 앉던 자리가 있으면 첫 화면에서 알려 준다 / 설치 앱인데 자리가 없으면(아이폰은 저장공간이 따로) 초대 링크 붙여넣기 */
+if(!INVITE&&NET.room){$('#introH').textContent='같이 앉던 자리';$('#introP').textContent='지난 대화가 그대로 남아 있어요. 앉으면 이어서 이야기할 수 있어요.';$('#enterBtn').textContent='자리로 돌아가기'}
+else if(!INVITE&&STANDALONE)$('#pasteForm').hidden=false;
+$('#pasteForm').addEventListener('submit',e=>{e.preventDefault();const v=$('#pasteIn').value.trim(),m=v.match(/[?&]r=([A-Za-z0-9]{8})/),k=v.match(/[#&]k=([A-Za-z0-9_-]{16,32})/);
+  if(!m){toast('초대 링크가 아니에요. 받은 링크를 통째로 붙여 넣어 주세요');return}
+  location.href='/sea/?r='+m[1]+(k?'#k='+k[1]:'')});
 refreshRoomUi();beat();
 window.addEventListener('resize',resize);resize();updateHud();setInterval(updateHud,500);
 loadLive();setInterval(loadLive,10*60*1000);
