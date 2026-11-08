@@ -62,6 +62,8 @@ async function counts(now) {
 
 function nextInterval(total, inRoom, roomN) {
   if (inRoom && roomN > 1) return total > 3000 ? 8000 : 3000;
+  // 자리를 만들고 친구를 기다리는 동안엔 조금 자주 물어, 친구가 들어오면 몇 초 안에 알아챈다
+  if (inRoom) return total > 3000 ? 20000 : 6000;
   if (total > 3000) return 60000;
   if (total > 500) return 30000;
   return 15000;

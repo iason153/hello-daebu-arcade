@@ -135,8 +135,11 @@ body.land #intro{padding-right:45%}
 .field.dark{color:#d9ccb4;max-width:420px}
 .row2{display:flex;gap:8px}.row2 .pbtn{flex:1;padding:11px 12px;font-size:14px}
 .ghost{border:0;background:none;color:var(--paper-sub);font-size:13px;text-decoration:underline;align-self:flex-start;padding:2px 0;font-family:var(--f-ui)}
-#talk{position:absolute;left:max(12px,env(safe-area-inset-left,0px));right:max(12px,env(safe-area-inset-right,0px));bottom:150px;top:56px;display:flex;flex-direction:column;justify-content:flex-end;gap:6px;overflow:hidden;pointer-events:none;transition:opacity .6s ease;-webkit-mask-image:linear-gradient(to bottom,transparent 0%,rgba(0,0,0,.25) 22%,#000 52%);mask-image:linear-gradient(to bottom,transparent 0%,rgba(0,0,0,.25) 22%,#000 52%)}
+#talk{position:absolute;left:max(12px,env(safe-area-inset-left,0px));right:max(12px,env(safe-area-inset-right,0px));bottom:calc(var(--dockH,150px) + 6px);top:56px;display:flex;flex-direction:column;justify-content:flex-end;gap:6px;overflow:hidden;pointer-events:none;transition:opacity .6s ease;-webkit-mask-image:linear-gradient(to bottom,transparent 0%,rgba(0,0,0,.25) 22%,#000 52%);mask-image:linear-gradient(to bottom,transparent 0%,rgba(0,0,0,.25) 22%,#000 52%)}
 #talk.fade-out{opacity:0}
+#talk.looking{opacity:.12;transition:opacity .25s ease}
+#talk.peek>:not(:last-child){display:none}
+.erase.unread{background:rgba(251,246,236,.94);color:var(--paper-ink)}
 #talk.typing{bottom:68px}
 body.land #talk{left:auto;width:min(440px,52%)}
 .tm{display:flex;gap:6px;align-items:flex-end;max-width:80%;align-self:flex-start}
@@ -191,7 +194,7 @@ body.land .saybar{left:auto;width:min(440px,52%)}
 
   <div class="dock fade" id="dock">
     <div class="crowd" id="h3">지금 나 혼자</div>
-    <div class="writebar"><button class="erase" id="writeBtn" aria-pressed="false">✎ 모래에 쓰기</button><button class="erase" id="eraseBtn" hidden>내 글씨 지우기</button></div>
+    <div class="writebar"><button class="erase" id="writeBtn" aria-pressed="false">✎ 모래에 쓰기</button><button class="erase" id="eraseBtn" hidden>내 글씨 지우기</button><button class="erase" id="talkBtn" hidden aria-pressed="false">대화 숨기기</button></div>
     <div class="row">
       <button class="btn main" id="sitBtn">같이 앉기</button>
       <button class="btn" id="chatBtn" hidden>말하기</button>
@@ -407,14 +410,23 @@ const NET={sent:new Set(),room:(/^[A-Za-z0-9]{8}$/.test(LS.get('sea_room')||'')?
 async function api(body){try{const r=await fetch('/sea/room',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(Object.assign({sid:SID},body))});return await r.json()}catch(e){return {ok:false,err:'net'}}}
 const TALK=[];let talkT=0;
 function memberColor(sid){const i=Math.max(0,NET.members.findIndex(m=>m.sid===sid));const c=SEASON[season(now())].c;return [c[0],c[1],'#5c8ac4','#7aa66a','#b07ac4','#e9c46a'][i%6]}
-function pushBubble(sid,text,nm){const m=NET.members.find(x=>x.sid===sid);TALK.push({sid,n:sid===SID?'':(nm||(m?m.n:'친구')),x:text});while(TALK.length>40)TALK.shift();renderTalk();talkWake()}
+/* 대화 숨기기: 둘러보고 싶을 땐 감추고, 숨긴 동안 친구 말이 오면 그 한마디만 잠깐 보여 준다 */
+const TV={hidden:false,unread:0,peekT:0};try{TV.hidden=localStorage.getItem('sea_talk_hidden')==='1'}catch(e){}
+function pushBubble(sid,text,nm,fresh=true){const m=NET.members.find(x=>x.sid===sid);TALK.push({sid,n:sid===SID?'':(nm||(m?m.n:'친구')),x:text});while(TALK.length>40)TALK.shift();renderTalk();
+  if(TV.hidden&&sid!==SID&&fresh){TV.unread++;peekTalk()}talkWake();talkBtnUi()}
+function peekTalk(){const box=document.getElementById('talk');if(!box)return;clearTimeout(TV.peekT);box.classList.add('peek');TV.peeking=true;talkWake();
+  TV.peekT=setTimeout(()=>{TV.peeking=false;talkWake();setTimeout(()=>{if(!TV.peeking)box.classList.remove('peek')},650)},4500)}
+function setTalkHidden(h){TV.hidden=h;if(!h){TV.unread=0;TV.peeking=false;clearTimeout(TV.peekT);const b=document.getElementById('talk');if(b)b.classList.remove('peek')}
+  try{localStorage.setItem('sea_talk_hidden',h?'1':'0')}catch(e){}talkWake();talkBtnUi()}
+function talkBtnUi(){const b=document.getElementById('talkBtn');if(!b)return;b.textContent=TV.hidden?(TV.unread?`대화 보기 · 새 말 ${TV.unread}`:'대화 보기'):'대화 숨기기';
+  b.setAttribute('aria-pressed',TV.hidden);b.classList.toggle('unread',TV.hidden&&TV.unread>0)}
 function renderTalk(){const box=document.getElementById('talk');if(!box)return;box.textContent='';
   TALK.forEach(t=>{const row=document.createElement('div');row.className='tm'+(t.sid===SID?' me':'');
     if(t.sid!==SID){const d=document.createElement('span');d.className='dot';d.style.background=memberColor(t.sid);row.appendChild(d)}
     const b=document.createElement('div');b.className='b';if(t.n){const nm=document.createElement('span');nm.className='nm';nm.textContent=t.n;b.appendChild(nm)}
     b.appendChild(document.createTextNode(t.x));row.appendChild(b);box.appendChild(row)})}
 /* 대화는 자리에 있는 동안 계속 보인다(한마디 하고 사라지지 않게) */
-function talkWake(){const box=document.getElementById('talk');if(!box)return;box.classList.toggle('fade-out',!TALK.length||!NET.room)}
+function talkWake(){const box=document.getElementById('talk');if(!box)return;box.classList.toggle('fade-out',!TALK.length||!NET.room||(TV.hidden&&!TV.peeking))}
 function applyMembers(list){
   const prev=new Map(NET.members.map(m=>[m.sid,m])),ready=NET.seen.has('ready');
   list.forEach(m=>{if(m.sid===SID||!ready)return;const p=prev.get(m.sid);
@@ -436,7 +448,7 @@ async function beat(){
     if(j.gone){leaveRoom(true)}
     else{
       if(j.members)applyMembers(j.members);
-      if(j.msgs){const room=NET.room;for(const m of j.msgs){if(m.t<=NET.since)continue;NET.since=m.t;if(m.s===SID&&NET.sent.has(m.i))continue;pushBubble(m.s,await unlock(room,m.x),m.n)}}
+      if(j.msgs){const room=NET.room;for(const m of j.msgs){if(m.t<=NET.since)continue;NET.since=m.t;if(m.s===SID&&NET.sent.has(m.i))continue;pushBubble(m.s,await unlock(room,m.x),m.n,Date.now()-m.t<90000)}}
       if(j.strokes){NET.sv=String(j.sv);NET.friendStrokes=j.strokes.filter(x=>x.s!==SID).map(x=>x.p)}
     }
     if(j.traces)NET.traces=j.traces.filter(x=>x.s!==SID&&(!NET.room||x.r!==NET.room)).map(x=>x.p);
@@ -1112,7 +1124,7 @@ function refreshRoomUi(){
   const nOn=NET.members.filter(m=>m.on).length;
   $('#sitBtn').textContent=inRoom&&n>1?`같이 앉는 중 · ${nOn}명`+(nOn<n?` (+${n-nOn} 비움)`:''):inRoom?'친구 기다리는 중':'같이 앉기';
   $('#sitBtn').classList.toggle('on',inRoom);
-  $('#chatBtn').hidden=!(inRoom||TEST);
+  $('#chatBtn').hidden=!(inRoom||TEST);$('#talkBtn').hidden=!(inRoom||TEST);talkBtnUi();
   $('#linkBox').hidden=!inRoom;$('#sendBtn').hidden=!inRoom;$('#makeBtn').hidden=inRoom;$('#leaveBtn').hidden=!inRoom;
   if(inRoom)$('#linkTxt').textContent=myLink().replace(/^https?:\/\//,'').replace(/#k=.*/,' (잠김)');
   updateHud();
@@ -1135,7 +1147,17 @@ document.querySelectorAll('#previewSeg button').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('#previewSeg button').forEach(x=>x.setAttribute('aria-pressed',x===b));updateHud()});
 /* 말하기: 대화창 없이 바다 위 말풍선으로만 */
 function closeSay(){$('#saybar').hidden=true;$('#dock').hidden=false;$('#sayIn').blur();$('#talk').classList.remove('typing');talkWake();wake()}
-$('#chatBtn').onclick=()=>{$('#saybar').hidden=false;$('#dock').hidden=true;$('#talk').classList.add('typing');$('#sayIn').focus();talkWake();wake()};
+$('#talkBtn').onclick=()=>{setTalkHidden(!TV.hidden);wake()};
+/* 대화는 아래 버튼 묶음 바로 위에서 쌓인다(버튼과 겹치지 않게 높이를 재서 맞춤) */
+{const setDockH=()=>{const d=$('#dock');if(d&&!d.hidden&&d.offsetHeight)document.documentElement.style.setProperty('--dockH',d.offsetHeight+'px')};
+  setDockH();addEventListener('resize',setDockH);try{new ResizeObserver(setDockH).observe($('#dock'))}catch(e){}}
+/* 고개를 돌리는(끌기) 동안엔 대화가 옅어져 바다가 보이고, 손을 떼면 돌아온다 */
+{let p0=null,lt=0;const tk=()=>document.getElementById('talk');
+  stage.addEventListener('pointerdown',e=>{p0=[e.clientX,e.clientY]},true);
+  stage.addEventListener('pointermove',e=>{if(!p0||st.writeMode)return;if(Math.hypot(e.clientX-p0[0],e.clientY-p0[1])>10){clearTimeout(lt);tk().classList.add('looking')}},true);
+  const up=()=>{p0=null;clearTimeout(lt);lt=setTimeout(()=>tk().classList.remove('looking'),700)};
+  stage.addEventListener('pointerup',up,true);stage.addEventListener('pointercancel',up,true)}
+$('#chatBtn').onclick=()=>{if(TV.hidden)setTalkHidden(false);$('#saybar').hidden=false;$('#dock').hidden=true;$('#talk').classList.add('typing');$('#sayIn').focus();talkWake();wake()};
 $('#sayClose').onclick=closeSay;
 $('#saybar').addEventListener('submit',async e=>{e.preventDefault();const v=$('#sayIn').value.replace(/\s+/g,' ').trim().slice(0,80);if(!v){$('#sayIn').focus();return}
   $('#sayIn').value='';pushBubble(SID,v);wake();
