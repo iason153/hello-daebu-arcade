@@ -35,10 +35,15 @@ async function call(path, params, timeoutMs = 8000) {
     const r = await fetch('https://apis.data.go.kr/' + path + '?serviceKey=' + encodeURIComponent(k) + '&' + qs, { signal: ctl.signal });
     const text = await r.text();
     let j;
-    try { j = JSON.parse(text); } catch (e) { throw new Error('not json'); }
+    try { j = JSON.parse(text); } catch (e) { const m = text.match(/<returnAuthMsg>([^<]+)|<errMsg>([^<]+)|<resultMsg>([^<]+)/); throw new Error('not json ' + (m ? (m[1] || m[2] || m[3]) : text.replace(/\s+/g, ' ').slice(0, 40))); }
     const root = j.response || j;
     const code = root.header && root.header.resultCode;
-    if (code !== '00') throw new Error('api ' + code);
+    if (code !== '00') {
+      // 활용신청이 안 된 키는 기관 형식과 다른 오류가 온다. 원인을 알 수 있게 메시지를 짧게 남긴다(키는 남기지 않음)
+      const h = (root.cmmMsgHeader || root.header || root);
+      const msg = h.returnAuthMsg || h.errMsg || h.resultMsg || text.replace(/\s+/g, ' ').slice(0, 60);
+      throw new Error('api ' + (code || h.returnReasonCode || h.resultCode || '?') + ' ' + msg);
+    }
     const items = root.body && root.body.items;
     const it = items && (items.item !== undefined ? items.item : items);
     return Array.isArray(it) ? it : it ? [it] : [];
