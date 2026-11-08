@@ -36,7 +36,7 @@ async function call(path, params, timeoutMs = 8000) {
     const text = await r.text();
     let j;
     try { j = JSON.parse(text); } catch (e) { const m = text.match(/<returnAuthMsg>([^<]+)|<errMsg>([^<]+)|<resultMsg>([^<]+)/); throw new Error('not json ' + (m ? (m[1] || m[2] || m[3]) : text.replace(/\s+/g, ' ').slice(0, 40))); }
-    const root = j.response || j;
+    const root = j.response || j.OpenAPI_ServiceResponse || j;
     const code = root.header && root.header.resultCode;
     if (code !== '00') {
       // 활용신청이 안 된 키는 기관 형식과 다른 오류가 온다. 원인을 알 수 있게 메시지를 짧게 남긴다(키는 남기지 않음)
@@ -140,6 +140,31 @@ async function loadAir() {
   return { pm10: n(it.pm10Value), pm25: n(it.pm25Value), grade: n(it.khaiGrade), at: it.dataTime || '' };
 }
 
+// 조위관측소 최신 관측(실제로 잰 물높이·수온·기온·기압·바람). 오퍼레이션 이름과 응답 항목명을 실제 응답으로 확인하는 단계라
+// 가까운 관측소 순서로 시도하고, 받은 마지막 관측 한 줄을 그대로 돌려준다(화면 연결은 항목명 확인 뒤).
+const OBS_STATIONS = ['DT_0008', 'DT_0043', 'DT_0052', 'DT_0001']; // 안산·영흥도·인천송도·인천(코드는 응답의 관측소명으로 확인)
+const OBS_OPS = ['dtRecent/GetDTRecentApiService', 'dtRecent/GetDtRecentApiService'];
+async function loadObs(now) {
+  const d = ymd(kstParts(now));
+  const tried = [];
+  const until = now + 6000; // 다른 자료를 붙잡지 않도록 전체 6초 안에서만 시도
+  for (const op of OBS_OPS) {
+    for (const code of OBS_STATIONS) {
+      if (Date.now() > until) { tried.push('시간 초과'); break; }
+      try {
+        const items = await call('1192136/' + op, { pageNo: 1, numOfRows: 300, type: 'json', obsCode: code, reqDate: d, min: 10 }, 3000);
+        if (items.length) return { op, code, n: items.length, last: items[items.length - 1] };
+        tried.push(code + ' 0건');
+      } catch (e) {
+        tried.push(op.split('/')[1].slice(0, 12) + ' ' + code + ' ' + e.message.slice(0, 50));
+        if (/NOT_REGISTERED|no key/.test(e.message)) throw new Error(tried.join(' | ')); // 활용신청 전이면 더 시도하지 않는다
+        if (/not json|api 0?[1-4] |404|NO_OPENAPI|SERVICE ERROR/i.test(e.message) && code === OBS_STATIONS[0]) break; // 오퍼레이션 자체가 틀리면 다음 이름으로
+      }
+    }
+  }
+  throw new Error(tried.slice(0, 4).join(' | '));
+}
+
 async function loadTideBed(now) {
   const days = [0, 1, 2].map((k) => ymd(kstParts(now + k * 86400e3)));
   const dayErr = [];
@@ -186,7 +211,7 @@ async function loadTide(now) {
 
 export default async function handler() {
   const now = Date.now();
-  const [nc, ul, tide, vil, air] = await Promise.allSettled([loadNowcast(now), loadUltra(now), loadTide(now), loadVilage(now), loadAir()]);
+  const [nc, ul, tide, vil, air, obs] = await Promise.allSettled([loadNowcast(now), loadUltra(now), loadTide(now), loadVilage(now), loadAir(), loadObs(now)]);
   const errors = [], notes = [];
   const out = { ok: true, fetchedAt: now, site: SITE };
   if (nc.status === 'fulfilled') out.wx = nc.value; else errors.push('nowcast:' + (nc.reason && nc.reason.message));
@@ -196,6 +221,7 @@ export default async function handler() {
   // 보조 자료(파고·적설·미세먼지)는 없어도 화면은 돈다
   if (vil.status === 'fulfilled') out.sea = vil.value; else notes.push('sea:' + (vil.reason && vil.reason.message));
   if (air.status === 'fulfilled') out.air = air.value; else notes.push('air:' + (air.reason && air.reason.message));
+  if (obs.status === 'fulfilled') out.obs = obs.value; else notes.push('obs:' + (obs.reason && obs.reason.message));
   if (errors.length) out.errors = errors;
   if (notes.length) out.notes = notes;
   const anyData = !!(out.wx || out.tide);
