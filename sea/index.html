@@ -135,7 +135,7 @@ body.land #intro{padding-right:45%}
 .field.dark{color:#d9ccb4;max-width:420px}
 .row2{display:flex;gap:8px}.row2 .pbtn{flex:1;padding:11px 12px;font-size:14px}
 .ghost{border:0;background:none;color:var(--paper-sub);font-size:13px;text-decoration:underline;align-self:flex-start;padding:2px 0;font-family:var(--f-ui)}
-#talk{position:absolute;left:max(12px,env(safe-area-inset-left,0px));right:max(12px,env(safe-area-inset-right,0px));bottom:150px;max-height:36%;display:flex;flex-direction:column;justify-content:flex-end;gap:6px;overflow:hidden;pointer-events:none;transition:opacity .9s ease;-webkit-mask-image:linear-gradient(to bottom,transparent,#000 28px);mask-image:linear-gradient(to bottom,transparent,#000 28px)}
+#talk{position:absolute;left:max(12px,env(safe-area-inset-left,0px));right:max(12px,env(safe-area-inset-right,0px));bottom:150px;top:56px;display:flex;flex-direction:column;justify-content:flex-end;gap:6px;overflow:hidden;pointer-events:none;transition:opacity .6s ease;-webkit-mask-image:linear-gradient(to bottom,transparent 0%,rgba(0,0,0,.25) 22%,#000 52%);mask-image:linear-gradient(to bottom,transparent 0%,rgba(0,0,0,.25) 22%,#000 52%)}
 #talk.fade-out{opacity:0}
 #talk.typing{bottom:68px}
 body.land #talk{left:auto;width:min(440px,52%)}
@@ -211,7 +211,7 @@ body.land .saybar{left:auto;width:min(440px,52%)}
     <label class="field" for="nameIn"><span>내 이름 (옆자리 사람에게 보여요)</span><input id="nameIn" maxlength="10" placeholder="예: 형준" autocomplete="nickname"></label>
     <div class="linkbox" id="linkBox" hidden><code id="linkTxt"></code><button class="pbtn" id="copyBtn">복사</button></div>
     <div class="row2"><button class="pbtn" id="makeBtn">자리 링크 만들기</button><button class="pbtn" id="sendBtn" hidden>보내기</button></div>
-    <div class="note" id="roomNote">자리와 말은 24시간 뒤 지워져요. 한 자리에 6명까지 앉을 수 있어요.</div>
+    <div class="note" id="roomNote">대화는 이 링크를 가진 사람만 열어 볼 수 있게 잠겨요. 서버에도 잠긴 글자로만 남고 24시간 뒤 지워져요. 한 자리에 6명까지 앉을 수 있어요.</div>
     <button class="ghost" id="leaveBtn" hidden>혼자 앉기로 돌아가기</button>
     <div class="seg" role="group" aria-label="미리보기" id="previewSeg" hidden>
       <button data-g="solo" aria-pressed="true">혼자</button>
@@ -393,7 +393,7 @@ function nextLow(t){const e=nextExt(t,false);if(e)return e.t;const h=T0+Math.cei
 const wlOf=lv=>WL_LOW+lv*(WL_HIGH-WL_LOW);
 
 /* ---------- weather (기상청 초단기실황 항목: SKY, PTY, WSD, VEC, REH, T1H) ---------- */
-const WX={sky:'맑음',pty:'없음',wsd:3,vec:315,reh:60,pm:null,fog:false,temp:null,at:0,live:false};let wxManual=false;
+const WX={sky:'맑음',pty:'없음',wsd:3,vec:315,reh:60,pm:null,pmv:null,fog:false,temp:null,rn1:0,lgt:0,wav:null,sno:0,at:0,live:false};let wxManual=false;
 function fromKMA(o){/* Vercel에서 받은 값을 그대로 넣는 자리 */
   const SKYC={1:'맑음',3:'구름많음',4:'흐림'},PTYC={0:'없음',1:'비',2:'진눈깨비',3:'눈',4:'소나기',5:'비',6:'진눈깨비',7:'눈'};
   if(o.SKY!=null)WX.sky=SKYC[o.SKY]||WX.sky;if(o.PTY!=null)WX.pty=PTYC[o.PTY]||'없음';
@@ -403,18 +403,18 @@ function fromKMA(o){/* Vercel에서 받은 값을 그대로 넣는 자리 */
 const LS={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{if(v==null)localStorage.removeItem(k);else localStorage.setItem(k,v)}catch(e){}}};
 function rid(n){const a='ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';const r=new Uint8Array(n);(window.crypto||{}).getRandomValues?crypto.getRandomValues(r):r.forEach((_,i)=>r[i]=Math.random()*256);let s='';r.forEach(v=>s+=a[v%a.length]);return s}
 const SID=(()=>{let s=LS.get('sea_sid');if(!/^[A-Za-z0-9]{16}$/.test(s||'')){s=rid(16);LS.set('sea_sid',s)}return s})();
-const NET={room:(/^[A-Za-z0-9]{8}$/.test(LS.get('sea_room')||'')?LS.get('sea_room'):''),name:LS.get('sea_name')||'',members:[],since:Date.now()-120000,sv:'',gv:'',counts:null,beatN:0,timer:0,friendStrokes:[],traces:[],bubbles:new Map(),seen:new Set()};
+const NET={sent:new Set(),room:(/^[A-Za-z0-9]{8}$/.test(LS.get('sea_room')||'')?LS.get('sea_room'):''),name:LS.get('sea_name')||'',members:[],since:Date.now()-86400000,sv:'',gv:'',counts:null,beatN:0,timer:0,friendStrokes:[],traces:[],bubbles:new Map(),seen:new Set()};
 async function api(body){try{const r=await fetch('/sea/room',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(Object.assign({sid:SID},body))});return await r.json()}catch(e){return {ok:false,err:'net'}}}
 const TALK=[];let talkT=0;
 function memberColor(sid){const i=Math.max(0,NET.members.findIndex(m=>m.sid===sid));const c=SEASON[season(now())].c;return [c[0],c[1],'#5c8ac4','#7aa66a','#b07ac4','#e9c46a'][i%6]}
-function pushBubble(sid,text){const m=NET.members.find(x=>x.sid===sid);TALK.push({sid,n:sid===SID?'':(m?m.n:'친구'),x:text});while(TALK.length>8)TALK.shift();renderTalk();talkWake()}
+function pushBubble(sid,text,nm){const m=NET.members.find(x=>x.sid===sid);TALK.push({sid,n:sid===SID?'':(nm||(m?m.n:'친구')),x:text});while(TALK.length>40)TALK.shift();renderTalk();talkWake()}
 function renderTalk(){const box=document.getElementById('talk');if(!box)return;box.textContent='';
   TALK.forEach(t=>{const row=document.createElement('div');row.className='tm'+(t.sid===SID?' me':'');
     if(t.sid!==SID){const d=document.createElement('span');d.className='dot';d.style.background=memberColor(t.sid);row.appendChild(d)}
     const b=document.createElement('div');b.className='b';if(t.n){const nm=document.createElement('span');nm.className='nm';nm.textContent=t.n;b.appendChild(nm)}
     b.appendChild(document.createTextNode(t.x));row.appendChild(b);box.appendChild(row)})}
-function talkWake(){const box=document.getElementById('talk');if(!box||!TALK.length)return;box.classList.remove('fade-out');clearTimeout(talkT);
-  talkT=setTimeout(function rest(){if(!document.getElementById('saybar').hidden){talkT=setTimeout(rest,4000);return}box.classList.add('fade-out')},12000)}
+/* 대화는 자리에 있는 동안 계속 보인다(한마디 하고 사라지지 않게) */
+function talkWake(){const box=document.getElementById('talk');if(!box)return;box.classList.toggle('fade-out',!TALK.length||!NET.room)}
 function applyMembers(list){
   const prev=new Map(NET.members.map(m=>[m.sid,m])),ready=NET.seen.has('ready');
   list.forEach(m=>{if(m.sid===SID||!ready)return;const p=prev.get(m.sid);
@@ -424,7 +424,7 @@ function applyMembers(list){
   NET.members.forEach(m=>{if(m.sid!==SID&&ready&&!list.some(x=>x.sid===m.sid))toast(`${m.n}님이 자리에서 일어났어요`)});
   NET.members=list;NET.seen.add('ready');refreshRoomUi();
 }
-function leaveRoom(silent){if(NET.room&&!silent)api({act:'leave',room:NET.room});NET.room='';NET.members=[];NET.friendStrokes=[];NET.sv='';LS.set('sea_room',null);refreshRoomUi()}
+function leaveRoom(silent){if(NET.room&&!silent)api({act:'leave',room:NET.room});TALK.length=0;renderTalk();talkWake();NET.room='';NET.members=[];NET.friendStrokes=[];NET.sv='';LS.set('sea_room',null);refreshRoomUi()}
 async function beat(){
   clearTimeout(NET.timer);
   if(document.hidden){NET.timer=setTimeout(beat,30000);return}
@@ -436,7 +436,7 @@ async function beat(){
     if(j.gone){leaveRoom(true)}
     else{
       if(j.members)applyMembers(j.members);
-      if(j.msgs)j.msgs.forEach(m=>{if(m.t>NET.since)NET.since=m.t;if(m.s!==SID)pushBubble(m.s,m.x)});
+      if(j.msgs){const room=NET.room;for(const m of j.msgs){if(m.t<=NET.since)continue;NET.since=m.t;if(m.s===SID&&NET.sent.has(m.i))continue;pushBubble(m.s,await unlock(room,m.x),m.n)}}
       if(j.strokes){NET.sv=String(j.sv);NET.friendStrokes=j.strokes.filter(x=>x.s!==SID).map(x=>x.p)}
     }
     if(j.traces)NET.traces=j.traces.filter(x=>x.s!==SID&&(!NET.room||x.r!==NET.room)).map(x=>x.p);
@@ -446,7 +446,18 @@ async function beat(){
   NET.timer=setTimeout(beat,next);
 }
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)beat()});
-function myLink(){return location.origin+'/sea/?r='+NET.room}
+/* 대화 잠금: 자리마다 열쇠를 만들어 링크의 # 뒤에만 싣는다(# 뒤는 서버로 가지 않음). 서버엔 잠긴 글자만 저장된다 */
+const KEYS={};
+const b64u=u=>btoa(String.fromCharCode(...u)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+const ub64=s=>Uint8Array.from(atob(s.replace(/-/g,'+').replace(/_/g,'/')+'==='.slice((s.length+3)%4)),c=>c.charCodeAt(0));
+function roomKeyStr(room){return LS.get('sea_key_'+room)||''}
+async function roomKey(room){const k=roomKeyStr(room);if(!k||!window.crypto||!crypto.subtle)return null;if(KEYS[room])return KEYS[room];
+  try{KEYS[room]=await crypto.subtle.importKey('raw',ub64(k),'AES-GCM',false,['encrypt','decrypt'])}catch(e){return null}return KEYS[room]}
+async function lock(room,text){const key=await roomKey(room);if(!key)return text;const iv=crypto.getRandomValues(new Uint8Array(12));
+  const ct=new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv},key,new TextEncoder().encode(text)));const all=new Uint8Array(12+ct.length);all.set(iv);all.set(ct,12);return 'e1:'+b64u(all)}
+async function unlock(room,x){if(!/^e1:/.test(x))return x;const key=await roomKey(room);if(!key)return '(열쇠가 있는 링크로 들어와야 볼 수 있는 말이에요)';
+  try{const all=ub64(x.slice(3));return new TextDecoder().decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:all.slice(0,12)},key,all.slice(12)))}catch(e){return '(열 수 없는 말이에요)'}}
+function myLink(){const k=roomKeyStr(NET.room);return location.origin+'/sea/?r='+NET.room+(k?'#k='+k:'')}
 function myCount(){return NET.room&&NET.members.length>1?NET.members.length:1}
 function groupLayout(n){if(n<=1)return LAYOUT.solo;if(n===2)return LAYOUT.couple;const a=[];for(let i=0;i<n;i++)a.push([(i-(n-1)/2)*21,i%2?.94:1,i%2?-1.8:1.4]);return a}
 /* 서버(/api/sea)에서 10분마다 실제 값 받기. 사람이 아무리 많아도 기관 API는 서버가 10분에 한 번만 부른다 */
@@ -455,19 +466,28 @@ async function loadLive(){
     if(j.tide&&j.tide.points&&j.tide.points.length>100){TIDE=j.tide.points;buildExtrema()}
     if(j.wx&&!wxManual){const w=j.wx;fromKMA({SKY:w.sky,PTY:w.pty,WSD:w.wsd,VEC:w.vec,REH:w.reh,T1H:w.t1h});
       /* 해무: 실황에 따로 없어서 습도 97% 이상·약한 바람일 때만 추정 */
-      WX.fog=w.reh!=null&&w.reh>=97&&(w.wsd==null||w.wsd<3)&&(w.pty==null||w.pty===0);WX.at=w.at||j.fetchedAt;WX.live=true}
+      WX.fog=w.reh!=null&&w.reh>=97&&(w.wsd==null||w.wsd<3)&&(w.pty==null||w.pty===0);WX.at=w.at||j.fetchedAt;WX.live=true;
+      WX.rn1=+w.rn1||0;WX.lgt=+w.lgt||0}
+    if(j.sea&&!wxManual){WX.wav=j.sea.wav;WX.sno=j.sea.sno||0}
+    if(j.air&&!wxManual){const a=j.air,g10=a.pm10==null?0:a.pm10<=30?1:a.pm10<=80?2:a.pm10<=150?3:4,g25=a.pm25==null?0:a.pm25<=15?1:a.pm25<=35?2:a.pm25<=75?3:4,g=Math.max(g10,g25);
+      WX.pm=g?['좋음','보통','나쁨','매우나쁨'][g-1]:null;WX.pmv={pm10:a.pm10,pm25:a.pm25}}
     updateHud()}catch(e){}
 }
 window.bangamoriWeather=fromKMA;
 function derive(){
   let cover={맑음:.05,구름조금:.3,구름많음:.65,흐림:.95}[WX.sky];
-  const rain={비:1,소나기:1.7,진눈깨비:.55}[WX.pty]||0,snow={눈:1,진눈깨비:.6}[WX.pty]||0;
+  let rain={비:1,소나기:1.7,진눈깨비:.55}[WX.pty]||0;const snow={눈:1,진눈깨비:.6}[WX.pty]||0;
+  /* 1시간 강수량(RN1)으로 빗줄기 굵기 */
+  if(rain&&WX.live&&!wxManual&&WX.rn1>0)rain*=WX.rn1<1?.6:WX.rn1<3?1:WX.rn1<10?1.5:2;
   if(rain||snow)cover=Math.max(cover,.9);
   const dark=cl((cover>.55?(cover-.45)*1.05:cover*.12)+(rain?.08:0),0,.72);
-  const haze=cl(cl((WX.reh-65)/35,0,1)*.4+(WX.pm==='나쁨'?.32:WX.pm==='보통'?.12:0)+(WX.fog?.72:0),0,.9);
+  const haze=cl(cl((WX.reh-65)/35,0,1)*.4+(WX.pm==='매우나쁨'?.48:WX.pm==='나쁨'?.32:WX.pm==='보통'?.1:0)+(WX.fog?.72:0),0,.9);
   const toward=WX.vec+180,lateral=Math.sin((toward-viewAz)*RAD),onshore=Math.max(0,-Math.cos((toward-AZ0)*RAD));
-  const sea=1+WX.wsd*.045+onshore*WX.wsd*.04;
-  return {cover,rain,snow,dark,haze,lateral,sea,wsd:WX.wsd};
+  /* 파고: 기상청 단기예보 WAV(m). 없으면 바람으로 짐작(앞바다로 부는 바람일수록 크게) */
+  const H=WX.wav!=null&&!wxManual?cl(WX.wav,.05,4):cl(.08+.018*Math.pow(WX.wsd,1.45)*(.5+onshore),.05,3);
+  const sea=.55+H*.6;
+  const snowGround=(snow&&WX.temp!=null&&WX.temp<=1)||WX.sno>0?.5:0;
+  return {cover,rain,snow,dark,haze,lateral,sea,H,wsd:WX.wsd,lgt:WX.lgt>0&&(rain>0||cover>.8),snowGround};
 }
 function wxLabel(){return WX.fog?'해무':WX.pty!=='없음'?WX.pty:WX.sky}
 
@@ -477,8 +497,8 @@ const mx=(a,b,t)=>a.map((v,i)=>v+(b[i]-v)*t);
 const cs=(c,a=1)=>`rgba(${c[0]|0},${c[1]|0},${c[2]|0},${a})`;
 function cl(v,a,b){return Math.max(a,Math.min(b,v))}
 const SKY=[
- [-18,'#060a15','#0b1224','#141c33'],
- [-9,'#121838','#2e2a58','#5a3f66'],
+ [-18,'#0b1430','#16244d','#273a66'],
+ [-9,'#152052','#2f3570','#5b4c7c'],
  [-3,'#262757','#9a4a6c','#ef8358'],
  [2,'#40609a','#e07f5a','#ffbf76'],
  [9,'#4f8ccc','#9cc6e2','#f2dcb2'],
@@ -719,14 +739,17 @@ function drawScene(ts,dt){
   if(D.dark){const g=D.snow?hx('#a3abb5'):hx('#69717b');sTop=mx(sTop,g,D.dark);sMid=mx(sMid,g,D.dark);sBot=mx(sBot,g,D.dark)}
   if(D.haze){const hz=mx(sBot,[200,204,210],.4);sBot=mx(sBot,hz,D.haze*.6);sMid=mx(sMid,hz,D.haze*.35)}
   const moonLit=mp&&mp.alt>0?mp.frac*(1-D.cover*.8):0;
-  const Lf=Math.max(cl((sp.alt+11)/22,.14,1)*(1-D.dark*.3),.14+.12*moonLit);
+  const Lf=Math.max(cl((sp.alt+11)/22,.3,1)*(1-D.dark*.3),.3+.12*moonLit);
   const warm=sp.alt>-5&&sp.alt<9?cl(1-Math.abs(sp.alt-2)/7,0,1)*(1-D.cover*.9)*(1-D.haze*.5):0;
-  const shade=c=>mx(mx(c.map(v=>v*Lf),[38,46,78],(1-Lf)*.45),[255,150,90],warm*.16*Lf);
-  const mud=shade([104,90,76]),mudWet=shade([88,76,66]),sand=shade([214,190,148]),sandDamp=shade([186,160,120]),wood=shade([86,66,52]);
+  /* 밤엔 검게 죽지 않고 하늘빛(푸른 회색)을 받은 모래로 */
+  const shade=c=>mx(mx(c.map(v=>v*Lf),[66,80,118],(1-Lf)*.6),[255,150,90],warm*.16*Lf);
+  const snowT=c=>D.snowGround?mx(c,shade([236,240,246]),D.snowGround):c;
+  const mud=shade([104,90,76]),mudWet=shade([88,76,66]),sand=snowT(shade([214,190,148])),sandDamp=snowT(shade([186,160,120])),wood=shade([86,66,52]);
   const dayK=cl((sp.alt+2)/16,0,1)*(1-D.cover*.7);
   const seaDay=mx(mx(sBot,[34,70,92],.58),[44,150,204],dayK);
-  const sea=mx(mx(mx(seaDay,[10,16,30],(1-Lf)*.35),[150,160,168],D.haze*.25),[118,138,150],D.cover*.35*dayK);
-  const ink=mx([16,13,18],[46,38,42],Lf*.8);
+  const seaNight=mx(sBot,[30,52,92],.45);
+  const sea=mx(mx(mx(mx(seaDay,seaNight,1-cl((sp.alt+8)/10,0,1)),[10,16,30],(1-Lf)*.12),[150,160,168],D.haze*.25),[118,138,150],D.cover*.35*dayK);
+  const ink=mx([16,13,18],[40,34,40],Lf*.8);
   const rimBase=mx(sBot,[255,238,205],.5);
   const rimA=cl(.22+warm*.55+(1-Lf)*.5,0,.85);
 
@@ -794,22 +817,28 @@ function drawScene(ts,dt){
   {const fd=cs(shade([168,140,102]),.42),fl=cs(shade([242,226,192]),.5);FOOT.forEach(p=>{const x=sx(p[0]);if(!vis(x,4))return;const f=Fx(x),y=Y(p[1],x),k=.45+.55*f,z=.7+(p[1]-SAND_START)/150;
     ctx.fillStyle=fd;ctx.beginPath();ctx.ellipse(x,y,2.6*z*k,1.1*z*f,0,0,7);ctx.fill();ctx.fillStyle=fl;ctx.fillRect(x-2*z*k,y+1.1*z*f,4*z*k,.8)})}
 
-  /* swash: 바람이 셀수록 주기가 짧고 멀리 올라옴 */
-  const CYC=Math.max(4.4,8-D.wsd*.3),ph=(sec%CYC)/CYC;
-  let run;if(ph<.3){const u=ph/.3;run=1-(1-u)*(1-u)}else{const u=(ph-.3)/.7;run=1-u*u*(3-2*u)}
-  const RM=(6+(wl-HZ)/(WL_HIGH-HZ)*16)*D.sea;
-  const baseR=x=>wl+1.4*Math.sin((x+pan)/23+sec*.5);
-  const sheetR=x=>baseR(x)+run*RM*(.92+.12*Math.sin((x+pan)/31+sec*.25));
-  const mainR=x=>baseR(x)+run*RM*.32;
+  /* 파도: 파고(H)로 주기·높이·올라오는 거리가 정해지고, 세 번에 한 번 큰 파도가 온다 */
+  const WH=D.H,TW=cl(5.2+WH*1.7,5,10.5);
+  const wi=Math.floor(sec/TW),ph=(sec%TW)/TW;
+  const ampOf=k=>[.8,.94,1.2][((k%3)+3)%3]*(.9+.2*Math.sin(k*1.7));
+  const amp=ampOf(wi);
+  let run;if(ph<.26){const u=ph/.26;run=1-(1-u)*(1-u)*(1-u)}else{const u=(ph-.26)/.74;run=1-u*u*(3-2*u)}
+  run*=amp;
+  const RM=runup(wl,D);
+  const lobe=(x,k)=>Math.sin((x+pan)/9.3+k*2.1)*1.1+Math.sin((x+pan)/4.1+k*5.3)*.45;
+  const baseR=x=>wl+1.3*Math.sin((x+pan)/23+sec*.45);
+  const sheetR=x=>baseR(x)+run*RM*(.9+.12*Math.sin((x+pan)/37+wi))+lobe(x,wi)*Math.min(1,run*1.5);
+  const mainR=x=>baseR(x)+run*RM*.34+lobe(x,wi)*.4*run;
   const base=x=>inBeach(x)?Y(baseR(x),x):HZ,sheetEdge=x=>inBeach(x)?Y(sheetR(x),x):HZ,mainEdge=x=>inBeach(x)?Y(mainR(x),x):HZ;
-
-  ctx.fillStyle=cs(wl>SAND_START-20?sandDamp:mudWet,.35+.3*run);ctx.beginPath();ctx.moveTo(L0,base(L0));
-  for(let x=L0;x<=R0;x+=8)ctx.lineTo(x,base(x));for(let x=R0;x>=L0;x-=8)ctx.lineTo(x,inBeach(x)?Y(baseR(x)+RM*1.08,x):HZ);ctx.closePath();ctx.fill();
+  /* 직전 파도가 적시고 간 자리: 물러가는 동안 반짝이다가 마른다 */
+  {const pk=ph<.26?ampOf(wi-1):amp,dry=ph<.26?1:1-(ph-.26)/.74;
+    ctx.fillStyle=cs(mx(wl>SAND_START-20?sandDamp:mudWet,[40,50,70],.18),.2+.32*dry);ctx.beginPath();ctx.moveTo(L0,base(L0));
+    for(let x=L0;x<=R0;x+=8)ctx.lineTo(x,base(x));for(let x=R0;x>=L0;x-=8)ctx.lineTo(x,inBeach(x)?Y(baseR(x)+RM*pk*1.02+lobe(x,ph<.26?wi-1:wi)*.8,x):HZ);ctx.closePath();ctx.fill()}
 
   /* traces + my strokes (world coords), erased where swash reaches */
   const reach=wxp=>inBeach(sx(wxp))?sheetR(sx(wxp))-1:HZ;
   const P=p=>{const x=sx(p[0]);return [x,Y(p[1],x)]};
-  const zTop=Math.max(wl+RM+8,SAND_START-18);
+  const zTop=Math.max(wl+RM*1.25+8,SAND_START-18);
   if(TEST){st.traces=st.traces.filter(tr=>tr.every(p=>p[1]>reach(p[0])));if(zTop<ZONE_B-24&&st.traces.length<Math.min(40,Math.round(st.crowd*.8))&&dt>0&&Math.random()<.03)st.traces.push(makeTrace(zTop))}
   else st.traces=NET.traces=NET.traces.map(tr=>tr.filter(p=>p[1]>reach(p[0]))).filter(tr=>tr.length>1);
   NET.friendStrokes=NET.friendStrokes.map(tr=>tr.filter(p=>p[1]>reach(p[0]))).filter(tr=>tr.length>1);
@@ -834,39 +863,62 @@ function drawScene(ts,dt){
     ctx.fillStyle=cs(cc);ctx.beginPath();ctx.ellipse(x,cy,4.6*k2,3*k2,0,0,7);ctx.fill();
   });
 
-  /* sea body */
+  /* sea body: 수평선 쪽은 하늘을 비추고, 가까울수록 깊은 색, 물가는 얕아 비쳐 보임 */
   const seaPath=new Path2D();seaPath.moveTo(L0,HZ);seaPath.lineTo(R0,HZ);for(let x=R0;x>=L0;x-=6)seaPath.lineTo(x,mainEdge(x));seaPath.closePath();
-  ctx.fillStyle=cs(sea);ctx.fill(seaPath);
-  ctx.save();ctx.clip(seaPath);ctx.fillStyle=cs(mx(sea,sBot,.3+D.haze*.4));ctx.fillRect(L0,HZ,R0-L0,Math.min(10+D.haze*20,wl-HZ));ctx.restore();
-  ctx.strokeStyle=cs(mx(sea,[255,255,255],.22),.3);ctx.lineWidth=.8;
-  for(let i=0;i<8;i++){const yy=HZ+6+(i/8)**1.5*(wl-HZ-30);if(yy>wl-24)break;const off=(sec*(4+i*2)*(1+D.wsd*.05)+i*57+pan)%70;
-    for(let x=L0-((pan%70)+70)%70+off%70;x<R0;x+=70){const x2=x+10+i*1.6;if(!inBeach(x))continue;ctx.beginPath();ctx.moveTo(x,Y(yy,x));ctx.lineTo(x2,Y(yy,x2));ctx.stroke()}}
+  {const g=ctx.createLinearGradient(0,HZ,0,Math.max(HZ+2,wl));g.addColorStop(0,cs(mx(sea,sBot,.5+D.haze*.3)));g.addColorStop(.35,cs(sea));g.addColorStop(1,cs(mx(sea,[8,22,30],.16)));
+    ctx.fillStyle=g;ctx.fill(seaPath)}
+  ctx.save();ctx.clip(seaPath);
+  /* 얕은 물가: 모래색이 비침 */
+  {const sh=ctx.createLinearGradient(0,wl-26,0,wl+RM*.4);sh.addColorStop(0,cs(sea,0));sh.addColorStop(1,cs(mx(sea,sandDamp,.45),.75));ctx.fillStyle=sh;ctx.fillRect(L0,wl-26,R0-L0,26+RM*.4+4)}
+  /* 잔물결: 멀수록 촘촘하고 가늘게, 가까울수록 길게. 파고가 낮으면 잔잔하게 */
+  {const rows=26,calm=cl(WH/1.2,.15,1.6),dark=cs(mx(sea,[0,10,20],.28),.32+.18*calm),light=cs(mx(sea,mx(sBot,[255,255,255],.25),.55),.22+.2*calm);
+    const drift=sec*(3+D.wsd*.5)*(D.lateral||.15);
+    for(let r=0;r<rows;r++){const f=r/(rows-1),yy=HZ+3+Math.pow(f,1.8)*(wl-HZ-8);if(yy>wl-4)break;
+      const len=(2+f*16)*(.6+.5*calm),gap=10+f*30,bob=Math.sin(sec*(.9+calm*.6)+r*1.7)*(.3+f*1.4*calm);
+      const off=((r*37.3+drift*(.4+f))%gap+gap)%gap;
+      for(let x=L0-gap+off-((pan*(.6+f*.4))%gap);x<R0;x+=gap){if(!inBeach(x))continue;const jit=Math.sin(x*.37+r*2.3)*gap*.3,xx=x+jit;
+        const tw=.5+.5*Math.sin(sec*1.3+x*.11+r);
+        ctx.fillStyle=(r+Math.floor(x/gap))%2?dark:light;ctx.globalAlpha=.55+.45*tw;
+        ctx.fillRect(xx,Y(yy+bob,xx),len*(.6+.4*tw),Math.max(.7,f*1.6))}}
+    ctx.globalAlpha=1}
+  /* 너울: 먼바다에서 밀려와 물가에서 부서진다(한 주기에 한 줄씩 도착) */
+  {const span=wl-HZ;if(span>18)for(let k=0;k<4;k++){const p=((sec/(4*TW))+k/4)%1,e=Math.pow(p,1.9),y0=HZ+4+e*(span-6);
+      const A=cl(WH,.08,3)*(.4+e*1.1)*ampOf(wi+1+((3-k)%4));
+      const crest=cs(mx(sea,mx(sBot,[255,255,255],.4),.55),Math.min(.6,.15+A*.22)*(.4+.6*e));
+      const trough=cs(mx(sea,[0,8,18],.35),Math.min(.5,.1+A*.2)*(.4+.6*e));
+      ctx.lineWidth=.6+e*2.2*Math.min(1.6,A);
+      for(const [col,dy] of [[trough,1.2+e*2.5*A],[crest,0]]){ctx.strokeStyle=col;ctx.beginPath();let pen=false;
+        for(let x=L0;x<=R0;x+=8){if(!inBeach(x)){pen=false;continue}const y=Y(y0+dy+Math.sin((x+pan)/(26+k*5)+k*1.3+sec*.35)*(.6+e*1.6),x);pen?ctx.lineTo(x,y):ctx.moveTo(x,y);pen=true}ctx.stroke()}
+      /* 부서지는 마루: 물가 가까이에서 하얀 거품 */
+      if(p>.8){const b2=(p-.8)/.2,fa=b2*Math.min(1,.25+A*.5)*(.55+.45*Lf);ctx.fillStyle=`rgba(255,255,255,${fa})`;
+        for(let x=L0;x<=R0;x+=5){if(!inBeach(x))continue;const n=Math.sin((x+pan)*.71+k*3)*.5+.5;if(n<.25)continue;const y=Y(y0-1+Math.sin((x+pan)/7+sec*2)*.6,x);ctx.fillRect(x,y,3+n*4,.8+b2*1.6*A)}}}}
+  ctx.restore();
   /* whitecaps when windy */
   if(D.wsd>6){const n=Math.round((D.wsd-6)*5*VW/390);ctx.fillStyle=`rgba(255,255,255,${.25+.2*Lf})`;
     for(let i=0;i<n;i++){const cyc=(sec*.6+i*.37)%1,yy=HZ+8+((i*53)%Math.max(10,wl-HZ-20));const x=((i*97+pan*-1)%(VW+120)+VW+120)%(VW+120)-60;const w=(1-Math.abs(cyc-.5)*2)*(3+(yy-HZ)*.05);if(w>.3&&inBeach(x))ctx.fillRect(x,Y(yy,x),w*2,1.2)}}
-  /* incoming crests */
-  const span=Math.min(78,(wl-HZ)*.85);
-  if(span>12)for(let k=0;k<3;k++){
-    const p=((sec/CYC)+k/3)%1,y0=wl-(1-p)*span;if(y0<HZ+5)continue;
-    const a=(k===0?.55:.28)*Math.sin(p*Math.PI)**.6*Math.min(1.4,D.sea);
-    ctx.strokeStyle=`rgba(255,255,255,${a*(.5+.5*Lf)})`;ctx.lineWidth=.7+p*1.6*D.sea;ctx.beginPath();
-    let pen=false;for(let x=L0;x<=R0;x+=8){if(!inBeach(x)){pen=false;continue}const y=Y(y0+1.2*Math.sin((x+pan)/17+k*2+sec*.7)*(1+p),x);pen?ctx.lineTo(x,y):ctx.moveTo(x,y);pen=true}ctx.stroke();
-  }
-  /* glitter under sun/moon */
+  /* glitter under sun/moon: 파고가 높을수록 넓고 잘게 흩어짐 */
   ctx.save();ctx.clip(seaPath);
   glitter.forEach(([ox,col,str])=>{if(wl-HZ<14)return;
-    for(let i=0;i<24;i++){const yy=HZ+4+i*((wl-HZ-14)/24);const spread=6+(yy-HZ)*.42*(1+D.wsd*.04);
-      const fl=.5+.5*Math.sin(sec*(3.1+D.wsd*.15)+i*1.9),w=(4+fl*spread*.9)*(.6+.4*Math.sin(i*2.7+sec*.7));
-      const gx=ox-w/2+Math.sin(i*1.3+sec)*spread*.35;ctx.fillStyle=cs(col,(.22+fl*.6)*str);ctx.fillRect(gx,Y(yy,ox),w,1.6)}});
+    for(let i=0;i<30;i++){const yy=HZ+3+Math.pow(i/29,1.4)*(wl-HZ-10);const spread=5+(yy-HZ)*.4*(.7+WH*.35);
+      const fl=.5+.5*Math.sin(sec*(2.6+WH*.9)+i*1.9),w=(3+fl*spread*.85)*(.55+.45*Math.sin(i*2.7+sec*.7));
+      const gx=ox-w/2+Math.sin(i*1.3+sec*(.8+WH*.3))*spread*.35;ctx.fillStyle=cs(col,(.2+fl*.62)*str);ctx.fillRect(gx,Y(yy,ox),w,1.2+i/29*1.2)}});
   ctx.restore();
   drawLandmarks('front',silC,D.haze,sec,sBot,lit,night,[cs(sand),cs(sandDamp)]);
-  /* swash sheet */
-  ctx.fillStyle=cs(mx(sea,[255,255,255],.3),.55*(.35+.65*run));ctx.beginPath();
-  for(let x=L0;x<=R0;x+=6){const y=mainEdge(x);x===L0?ctx.moveTo(x,y):ctx.lineTo(x,y)}
-  for(let x=R0;x>=L0;x-=6)ctx.lineTo(x,sheetEdge(x));ctx.closePath();ctx.fill();
-  ctx.strokeStyle=`rgba(255,255,255,${(.3+.5*run)*(.55+.45*Lf)})`;ctx.lineWidth=1.6;ctx.beginPath();
-  {let pen=false;for(let x=L0;x<=R0;x+=6){if(!inBeach(x)){pen=false;continue}const y=sheetEdge(x)+Math.sin((x+pan)/5+sec*3)*.5;pen?ctx.lineTo(x,y):ctx.moveTo(x,y);pen=true}ctx.stroke()}
-  if(ph>.3){ctx.fillStyle=`rgba(255,255,255,${.35*(1-run)})`;for(let x=L0-((pan%9)+9)%9;x<R0;x+=9){if(inBeach(x))ctx.fillRect(x,Y(baseR(x)+RM*.98+Math.sin(x+pan)*1.5,x),2.2,1)}}
+  /* 밀려오는 얇은 물: 모래가 비치는 반투명한 물막, 앞자락엔 레이스 같은 거품 */
+  {const film=mx(sea,[255,255,255],.22);
+    ctx.fillStyle=cs(film,.36*(.3+.7*Math.min(1,run)));ctx.beginPath();
+    for(let x=L0;x<=R0;x+=6){const y=mainEdge(x);x===L0?ctx.moveTo(x,y):ctx.lineTo(x,y)}
+    for(let x=R0;x>=L0;x-=6)ctx.lineTo(x,sheetEdge(x));ctx.closePath();ctx.fill();
+    const up=ph<.26;
+    ctx.strokeStyle=`rgba(255,255,255,${(up?.75:.45*(1-(ph-.26)/.74))*(.55+.45*Lf)})`;ctx.lineWidth=up?1.8:1.2;ctx.beginPath();
+    {let pen=false;for(let x=L0;x<=R0;x+=5){if(!inBeach(x)){pen=false;continue}const y=sheetEdge(x)+Math.sin((x+pan)/3.3+sec*4)*.4;pen?ctx.lineTo(x,y):ctx.moveTo(x,y);pen=true}ctx.stroke()}
+    /* 레이스 거품: 물막 안쪽에 점점이, 물러갈수록 흩어지며 사라짐 */
+    const la=(up?.55:.5*(1-(ph-.26)/.74))*(.5+.5*Lf);if(la>.03){ctx.fillStyle=`rgba(255,255,255,${la})`;
+      for(let x=L0-((pan%6)+6)%6;x<R0;x+=6){if(!inBeach(x))continue;const h1=Math.sin((x+pan)*12.9898+wi*78.2)*43758.5,r1=h1-Math.floor(h1);if(r1<.35)continue;
+        const back=(1-r1)*(up?3:5+ (ph-.26)*14);const y=Y(sheetR(x)-back,x);ctx.fillRect(x+r1*3,y,1+r1*2.2,.9)}}
+    /* 지난 파도가 남긴 거품 줄: 최고점에서 잠시 남았다가 꺼짐 */
+    if(!up){const ra=.3*(1-(ph-.26)/.74)**2*(.5+.5*Lf);ctx.fillStyle=`rgba(255,255,255,${ra})`;
+      for(let x=L0-((pan%9)+9)%9;x<R0;x+=9){if(inBeach(x))ctx.fillRect(x,Y(baseR(x)+RM*amp*1.0+lobe(x,wi)*.8,x),2.4,.9)}}}
 
   /* rain ripples */
   if(D.rain){ctx.strokeStyle='rgba(220,230,240,.35)';ctx.lineWidth=.8;const k0=Math.floor(sec*3);for(let i=0;i<Math.round(12*D.rain*VW/390);i++){const x=(i*97+k0*41)%VW,y=HZ+10+((i*53+k0*29)%Math.max(10,wl-HZ-12));const r=((sec*3+i*.37)%1)*6;ctx.beginPath();ctx.ellipse(x,Y(y,x),r,r*.3*Fx(x),0,0,7);ctx.stroke()}}
@@ -918,6 +970,9 @@ function drawScene(ts,dt){
     pill(ne>1?`지금 ${ne.toLocaleString('ko-KR')}개의 글씨가 바다로 돌아가는 중`:'내 글씨가 바다로 돌아가는 중',CX,HZ+22,'rgba(16,13,18,.46)','#fbf6ec',12);
   }
 
+  /* 낙뢰(기상청 초단기예보 LGT): 먼바다 쪽 번쩍임 */
+  if(D.lgt&&!PHOTO&&dt>0){if(!st.flashNext)st.flashNext=ts+3000+Math.random()*9000;if(ts>st.flashNext){st.flashAt=ts;st.flashNext=ts+6000+Math.random()*15000}
+    const e=ts-(st.flashAt||-1e9),fa=Math.max(0,1-e/240)+(e>330&&e<430?.45:0);if(fa>0){ctx.fillStyle=`rgba(226,232,255,${fa*.42})`;ctx.fillRect(L0,-800,R0-L0,H+900)}}
   /* precipitation (바람 따라 기울어짐) */
   const slant=D.lateral*D.wsd*.05;
   if(D.rain){ctx.strokeStyle='rgba(205,216,230,.55)';ctx.lineWidth=1;const n=Math.round(RAIN.length*Math.min(1,D.rain*.65));
@@ -962,9 +1017,9 @@ function updateHud(){
   const tm=sunTimes(t);let sline='';
   if(tm.set){const setAz=sunPos(tm.set).az;const off=Math.round(unwrap(setAz)-AZ0);sline=(t<tm.set?'오늘 노을 ':'노을 진 시각 ')+hhmm(tm.set)+` · ${dirName(setAz)}(${off<0?'정면에서 왼쪽 '+(-off):'정면에서 오른쪽 '+off}°)`}
   $('#h4').textContent=sline;
-  $('#h5').textContent=(WX.live||wxManual?`${dirName(WX.vec)}풍 ${WX.wsd}m/s · 습도 ${WX.reh}%`+(WX.pm?` · 미세먼지 ${WX.pm}`:'')+(WX.live&&!wxManual&&WX.at?` · 기상청 ${hhmm(WX.at)} 관측`:''):'날씨 정보를 불러오는 중')+(mp?` · ${moonName(mp.phase)}`:'');
+  $('#h5').textContent=(WX.live||wxManual?`${dirName(WX.vec)}풍 ${WX.wsd}m/s · 파고 ${derive().H.toFixed(1)}m${WX.wav==null||wxManual?'(바람 기준)':''} · 습도 ${WX.reh}%`+(WX.pm?` · 미세먼지 ${WX.pm}`:'')+(WX.lgt>0?' · 낙뢰':'')+(WX.live&&!wxManual&&WX.at?` · 기상청 ${hhmm(WX.at)} 관측`:''):'날씨 정보를 불러오는 중')+(mp?` · ${moonName(mp.phase)}`:'');
   {const lv2=tideNow(t),nh=nextHigh(t),nl=nextLow(t),tpp=tempNow(t);
-    $('#tWx').textContent=WX.live?`${wxLabel()}`+(tpp!=null?`, ${tpp}℃`:'')+`, ${dirName(WX.vec)}풍 ${WX.wsd}m/s`:'날씨 정보를 불러오는 중';
+    $('#tWx').textContent=WX.live?`${wxLabel()}`+(tpp!=null?`, ${tpp}℃`:'')+`, ${dirName(WX.vec)}풍 ${WX.wsd}m/s, 파고 ${derive().H.toFixed(1)}m`+(WX.pm?`, 미세먼지 ${WX.pm}`:''):'날씨 정보를 불러오는 중';
     $('#tTide').textContent=TIDE?(lv2<.1?'간조 무렵, 갯벌이 드러나 있어요':lv2>.92?'만조 무렵':tideRising(t)?'물이 들어오는 중':'물이 빠지는 중'):'물때 정보를 불러오는 중';
     const kd=x=>{const a=kst(x),b=kst(t);return (a.d!==b.d?'내일 ':'')+hhmm(x)};
     $('#tHigh').textContent=TIDE?kd(nh):'불러오는 중';$('#tLow').textContent=TIDE?kd(nl):'불러오는 중';
@@ -996,7 +1051,8 @@ stage.addEventListener('pointerdown',()=>{wake();talkWake()},true);stage.addEven
 /* ---------- input: 쓰기 또는 고개 돌리기 ---------- */
 let drag=null;
 function toLogical(e){const r=cv.getBoundingClientRect();return[(e.clientX-r.left-OX)/S,(e.clientY-r.top-OY-tilt*S)/S]}
-function zoneTop(){const wl=wlOf(tideNow(now()));const RM=(6+(wl-HZ)/(WL_HIGH-HZ)*16)*derive().sea;return Math.max(wl+RM+8,SAND_START-18)}
+function runup(w,D){return (5+(w-HZ)/(WL_HIGH-HZ)*14)*D.sea}
+function zoneTop(){const wl=wlOf(tideNow(now()));const RM=runup(wl,derive());return Math.max(wl+RM*1.25+8,SAND_START-18)}
 function inZone(p){const yr=Yinv(p[1],p[0]);return Fx(p[0])>.3&&yr>zoneTop()&&yr<ZONE_B&&p[0]>4&&p[0]<VW-4}
 const toWorld=p=>[p[0]-CX+PAN(),Yinv(p[1],p[0])];
 cv.addEventListener('pointerdown',e=>{const p=toLogical(e);cv.setPointerCapture(e.pointerId);
@@ -1006,7 +1062,7 @@ cv.addEventListener('pointermove',e=>{
   if(!st.cur)return;const p=toLogical(e);
   if(inZone(p)){const w=toWorld(p),l=st.cur[st.cur.length-1];if(!l||Math.hypot(w[0]-l[0],w[1]-l[1])>1.2)st.cur.push(w)}
   else if(st.cur.length>1){commitStroke(st.cur);st.cur=[]}});
-function eraseAt(ys){const t=now(),D=derive();for(let i=1;i<=400;i++){const tt=t+i*5*60000,w=wlOf(tideAt(tt)),RM=(6+(w-HZ)/(WL_HIGH-HZ)*16)*D.sea;if(w+RM*.9>=ys)return Date.now()+(tt-t)}return Date.now()+36*3600e3}
+function eraseAt(ys){const t=now(),D=derive();for(let i=1;i<=400;i++){const tt=t+i*5*60000,w=wlOf(tideAt(tt)),RM=runup(w,D)*1.2;if(w+RM*.9>=ys)return Date.now()+(tt-t)}return Date.now()+36*3600e3}
 function commitStroke(s){st.myStrokes.push(s);if(TEST||tideManual!=null)return;const ys=Math.min(...s.map(p=>p[1]));
   const pts=s.filter((p,i)=>i%2===0||i===s.length-1).slice(0,120).map(p=>[Math.round(p[0]),Math.round(p[1])]);
   api({act:'stroke',room:NET.room,p:pts,e:eraseAt(ys)}).then(j=>{if(j&&j.ok)NET.gv=''})}
@@ -1028,7 +1084,7 @@ function refreshRoomUi(){
   $('#sitBtn').classList.toggle('on',inRoom);
   $('#chatBtn').hidden=!(inRoom||TEST);
   $('#linkBox').hidden=!inRoom;$('#sendBtn').hidden=!inRoom;$('#makeBtn').hidden=inRoom;$('#leaveBtn').hidden=!inRoom;
-  if(inRoom)$('#linkTxt').textContent=myLink().replace(/^https?:\/\//,'');
+  if(inRoom)$('#linkTxt').textContent=myLink().replace(/^https?:\/\//,'').replace(/#k=.*/,' (잠김)');
   updateHud();
 }
 $('#sitBtn').onclick=()=>{$('#nameIn').value=NET.name;refreshRoomUi();openSheet('share')};
@@ -1036,7 +1092,7 @@ $('#nameIn').addEventListener('change',e=>{NET.name=e.target.value.trim().slice(
 $('#makeBtn').onclick=async()=>{NET.name=$('#nameIn').value.trim().slice(0,10);LS.set('sea_name',NET.name||null);
   $('#makeBtn').disabled=true;const j=await api({act:'create',name:NET.name||'나'});$('#makeBtn').disabled=false;
   if(!j||!j.ok){toast('자리를 만들지 못했어요. 잠시 뒤 다시 눌러 주세요');return}
-  NET.room=j.room;LS.set('sea_room',NET.room);NET.members=[{sid:SID,n:NET.name||'나',on:true}];NET.since=Date.now()-1000;refreshRoomUi();beat()};
+  NET.room=j.room;LS.set('sea_room',NET.room);try{LS.set('sea_key_'+j.room,b64u(crypto.getRandomValues(new Uint8Array(16))))}catch(e){}NET.members=[{sid:SID,n:NET.name||'나',on:true}];NET.since=Date.now()-1000;refreshRoomUi();beat()};
 function selectLink(){const r=document.createRange();r.selectNodeContents($('#linkTxt'));const s=getSelection();s.removeAllRanges();s.addRange(r)}
 $('#copyBtn').onclick=()=>{const txt=myLink();
   try{navigator.clipboard.writeText(txt).then(()=>toast('링크를 복사했어요'),()=>{selectLink();toast('링크를 길게 눌러 복사하세요')})}catch(_){selectLink();toast('링크를 길게 눌러 복사하세요')}};
@@ -1053,7 +1109,7 @@ $('#chatBtn').onclick=()=>{$('#saybar').hidden=false;$('#dock').hidden=true;$('#
 $('#sayClose').onclick=closeSay;
 $('#saybar').addEventListener('submit',async e=>{e.preventDefault();const v=$('#sayIn').value.replace(/\s+/g,' ').trim().slice(0,80);if(!v){$('#sayIn').focus();return}
   $('#sayIn').value='';pushBubble(SID,v);wake();
-  if(NET.room&&!TEST){const j=await api({act:'say',room:NET.room,text:v});if(j&&j.ok&&j.msg){if(j.msg.t>NET.since)NET.since=j.msg.t}else if(j&&j.err==='slow')toast('조금 천천히 말해 주세요');else if(j&&j.err==='notin'){leaveRoom(true);toast('자리가 끝났어요')}}});
+  if(NET.room&&!TEST){const j=await api({act:'say',room:NET.room,text:await lock(NET.room,v)});if(j&&j.ok&&j.msg){NET.sent.add(j.msg.i)}else if(j&&j.err==='slow')toast('조금 천천히 말해 주세요');else if(j&&j.err==='notin'){leaveRoom(true);toast('자리가 끝났어요')}}});
 $('#sayIn').addEventListener('keydown',e=>{if(e.key==='Escape')closeSay()});
 
 /* 사진: 지금 보고 있는 구도 그대로, 글자·버튼 없이 고해상도로 다시 그린다 */
@@ -1114,7 +1170,7 @@ document.addEventListener('visibilitychange',()=>{if(!ac)return;if(document.hidd
 $('#enterBtn').onclick=async()=>{
   if(INVITE){NET.name=$('#joinName').value.trim().slice(0,10);LS.set('sea_name',NET.name||null);
     $('#enterBtn').disabled=true;const j=await api({act:'join',room:INVITE,name:NET.name||'친구'});$('#enterBtn').disabled=false;
-    if(j&&j.ok){if(NET.room&&NET.room!==INVITE)api({act:'leave',room:NET.room});NET.room=INVITE;LS.set('sea_room',NET.room);NET.since=Date.now()-60000;toast(j.host?`${j.host}님 옆에 앉았어요`:'옆자리에 앉았어요');refreshRoomUi();beat()}
+    if(j&&j.ok){if(NET.room&&NET.room!==INVITE)api({act:'leave',room:NET.room});NET.room=INVITE;LS.set('sea_room',NET.room);NET.since=Date.now()-86400000;TALK.length=0;renderTalk();toast(j.host?`${j.host}님 옆에 앉았어요`:'옆자리에 앉았어요');refreshRoomUi();beat()}
     else toast(j&&j.err==='full'?'자리가 다 찼어요(6명). 혼자 앉을게요':j&&j.err==='gone'?'이 자리는 이미 끝났어요. 혼자 앉을게요':'자리에 앉지 못했어요. 혼자 앉을게요')}
   $('#intro').hidden=true;setSound(true);wake()};
 
@@ -1139,10 +1195,12 @@ $('#crowdIn').addEventListener('input',e=>{st.crowd=+e.target.value;$('#crowdLab
 
 if(!TEST){$('#testBtn').hidden=true}else{$('#previewSeg').hidden=false}
 /* 초대 링크로 들어온 경우 */
-const INVITE=(()=>{const m=location.search.match(/[?&]r=([A-Za-z0-9]{8})(?:&|$)/);return m&&m[1]!==NET.room?m[1]:''})();
+const INVITE=(()=>{const m=location.search.match(/[?&]r=([A-Za-z0-9]{8})(?:&|$)/);const k=location.hash.match(/k=([A-Za-z0-9_-]{16,32})/);
+  if(m&&k)LS.set('sea_key_'+m[1],k[1]);return m&&m[1]!==NET.room?m[1]:''})();
+if(/k=/.test(location.hash))try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}
 if(INVITE){$('#introH').textContent='옆자리로 초대받았어요';$('#introP').textContent='방아머리 해변, 친구 옆 돗자리가 비어 있어요. 앉으면 같은 노을과 물때를 같이 보며 바다 위에 말풍선으로 이야기할 수 있어요.';
   $('#joinField').hidden=false;$('#joinName').value=NET.name;$('#enterBtn').textContent='옆자리에 앉기'}
-if(/[?&]r=/.test(location.search))try{history.replaceState(null,'',location.pathname+location.search.replace(/([?&])r=[^&]*&?/,'$1').replace(/[?&]$/,'')+location.hash)}catch(e){}
+if(/[?&]r=/.test(location.search))try{history.replaceState(null,'',location.pathname+location.search.replace(/([?&])r=[^&]*&?/,'$1').replace(/[?&]$/,''))}catch(e){}
 refreshRoomUi();beat();
 window.addEventListener('resize',resize);resize();updateHud();setInterval(updateHud,500);
 loadLive();setInterval(loadLive,10*60*1000);

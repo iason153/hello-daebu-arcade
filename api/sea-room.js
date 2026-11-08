@@ -153,7 +153,9 @@ export default async function handler(req, res) {
       }
       case 'say': {
         if (!room) return res.status(400).json({ ok: false });
-        const text = cleanText(q.text, 80);
+        // 잠긴 말(e1:…)은 그대로 저장한다. 열쇠는 링크의 # 뒤에만 있어 서버는 내용을 볼 수 없다
+        const raw = String(q.text || '');
+        const text = /^e1:[A-Za-z0-9_-]{20,700}$/.test(raw) ? raw : cleanText(raw, 80);
         if (!text) return res.status(400).json({ ok: false, err: 'empty' });
         const key = 'sea:r:' + room;
         const meRaw = await kv.hget(key + ':m', sid);

@@ -39,7 +39,8 @@ async function call(path, params, timeoutMs = 8000) {
     const root = j.response || j;
     const code = root.header && root.header.resultCode;
     if (code !== '00') throw new Error('api ' + code);
-    const it = root.body && root.body.items && root.body.items.item;
+    const items = root.body && root.body.items;
+    const it = items && (items.item !== undefined ? items.item : items);
     return Array.isArray(it) ? it : it ? [it] : [];
   } finally { clearTimeout(tm); }
 }
@@ -76,19 +77,62 @@ async function loadNowcast(now) {
   };
 }
 
-async function loadSky(now) {
-  // 초단기예보는 매시 30분 발표, 45분부터 받을 수 있다
+// 초단기예보: 하늘상태 SKY, 낙뢰 LGT(실황에는 없어서 가장 가까운 시각 예보로 채운다). 매시 30분 발표, 45분부터 받을 수 있다
+async function loadUltra(now) {
   const p = kstParts(now - 46 * 60e3);
   const items = await call('1360000/VilageFcstInfoService_2.0/getUltraSrtFcst', {
     pageNo: 1, numOfRows: 60, dataType: 'JSON', base_date: ymd(p), base_time: p2(p.h) + '30', nx: SITE.nx, ny: SITE.ny,
   });
-  let best = null;
-  items.filter((it) => it.category === 'SKY').forEach((it) => {
-    const t = kstToMs(it.fcstDate + it.fcstTime);
-    const d = Math.abs(t - now);
-    if (!best || d < best.d) best = { d, sky: parseInt(it.fcstValue, 10) };
+  const near = (cat) => {
+    let best = null;
+    items.filter((it) => it.category === cat).forEach((it) => {
+      const d = Math.abs(kstToMs(it.fcstDate + it.fcstTime) - now);
+      if (!best || d < best.d) best = { d, v: it.fcstValue };
+    });
+    return best ? best.v : null;
+  };
+  const sky = near('SKY'), lgt = near('LGT');
+  return { sky: sky != null ? parseInt(sky, 10) : null, lgt: lgt != null ? parseFloat(lgt) || 0 : null };
+}
+
+// 단기예보: 파고 WAV(바다 격자에서만 나온다), 적설 SNO. 하루 8번(02·05·…·23시) 발표, 10분 뒤부터
+const SEA_CELLS = [[52, 121], [52, 122]];
+async function loadVilage(now) {
+  const base = [2, 5, 8, 11, 14, 17, 20, 23];
+  const q = kstParts(now - 15 * 60e3);
+  let day = now - 15 * 60e3, h = base.filter((x) => x <= q.h).pop();
+  if (h === undefined) { day -= 86400e3; h = 23; }
+  const bd = ymd(kstParts(day)), bt = p2(h) + '00';
+  for (const [nx, ny] of SEA_CELLS) {
+    const items = await call('1360000/VilageFcstInfoService_2.0/getVilageFcst', {
+      pageNo: 1, numOfRows: 400, dataType: 'JSON', base_date: bd, base_time: bt, nx, ny,
+    }).catch(() => []);
+    const pick = (cat) => {
+      let best = null;
+      items.filter((it) => it.category === cat).forEach((it) => {
+        const d = Math.abs(kstToMs(it.fcstDate + it.fcstTime) - now);
+        if (!best || d < best.d) best = { d, v: it.fcstValue };
+      });
+      return best ? best.v : null;
+    };
+    const wav = pick('WAV');
+    if (wav != null && isFinite(parseFloat(wav))) {
+      const sno = pick('SNO');
+      return { wav: parseFloat(wav), sno: sno && /\d/.test(sno) ? parseFloat(sno) || 0 : 0, cell: [nx, ny] };
+    }
+  }
+  throw new Error('no WAV');
+}
+
+// 에어코리아 대부동 측정소: 미세먼지(PM10)·초미세먼지(PM2.5)·통합대기 등급. 같은 공공데이터 키에 활용신청이 되어 있어야 한다
+async function loadAir() {
+  const items = await call('B552584/ArpltnInforInqireSvc/getMsrstnAcctoRltmMesureDnsty', {
+    pageNo: 1, numOfRows: 1, returnType: 'json', stationName: '대부동', dataTerm: 'DAILY', ver: '1.3',
   });
-  return best ? best.sky : null;
+  const it = items[0];
+  if (!it) throw new Error('no air');
+  const n = (x) => { const v = parseFloat(x); return isFinite(v) ? v : null; };
+  return { pm10: n(it.pm10Value), pm25: n(it.pm25Value), grade: n(it.khaiGrade), at: it.dataTime || '' };
 }
 
 async function loadTideBed(now) {
@@ -137,13 +181,18 @@ async function loadTide(now) {
 
 export default async function handler() {
   const now = Date.now();
-  const [nc, sky, tide] = await Promise.allSettled([loadNowcast(now), loadSky(now), loadTide(now)]);
-  const errors = [];
+  const [nc, ul, tide, vil, air] = await Promise.allSettled([loadNowcast(now), loadUltra(now), loadTide(now), loadVilage(now), loadAir()]);
+  const errors = [], notes = [];
   const out = { ok: true, fetchedAt: now, site: SITE };
   if (nc.status === 'fulfilled') out.wx = nc.value; else errors.push('nowcast:' + (nc.reason && nc.reason.message));
-  if (sky.status === 'fulfilled' && sky.value != null) (out.wx = out.wx || {}).sky = sky.value; else if (sky.status === 'rejected') errors.push('sky:' + (sky.reason && sky.reason.message));
+  if (ul.status === 'fulfilled') { out.wx = out.wx || {}; if (ul.value.sky != null) out.wx.sky = ul.value.sky; if (ul.value.lgt != null) out.wx.lgt = ul.value.lgt; }
+  else errors.push('sky:' + (ul.reason && ul.reason.message));
   if (tide.status === 'fulfilled') out.tide = tide.value; else errors.push('tide:' + (tide.reason && tide.reason.message));
+  // 보조 자료(파고·적설·미세먼지)는 없어도 화면은 돈다
+  if (vil.status === 'fulfilled') out.sea = vil.value; else notes.push('sea:' + (vil.reason && vil.reason.message));
+  if (air.status === 'fulfilled') out.air = air.value; else notes.push('air:' + (air.reason && air.reason.message));
   if (errors.length) out.errors = errors;
+  if (notes.length) out.notes = notes;
   const anyData = !!(out.wx || out.tide);
   out.ok = anyData;
   return new Response(JSON.stringify(out), {
