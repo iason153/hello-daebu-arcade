@@ -203,7 +203,7 @@
       t = '홈 화면에 바닷가 설치하기';
       d = '크롬 메뉴에서 추가할 수 있어요.';
       steps = ['화면 오른쪽 위 ' + chip('', I.dots) + ' 메뉴를 눌러요.', chip('홈 화면에 추가') + ' 또는 ' + chip('앱 설치') + '를 눌러요.', chip('설치') + '(또는 "추가")를 눌러요.'];
-      note = '이미 설치했다면 홈 화면의 방아머리 아이콘으로 열어 주세요.';
+      note = '크롬은 페이지를 30초쯤 보고 나면 버튼 한 번 설치를 열어 줘요. 그때 위에 [지금 설치]가 뜨고, 그 전엔 메뉴로 설치하면 돼요. 이미 설치했다면 홈 화면의 방아머리 아이콘으로 열어 주세요.';
     } else {
       t = 'PC에도 설치할 수 있어요';
       d = '크롬·엣지 주소창 오른쪽의 설치 아이콘을 누르면 창 하나짜리 앱이 돼요. 휴대폰에서 보려면 아래 주소를 보내세요.';
@@ -255,14 +255,31 @@
     }
   });
 
+  // 크롬은 페이지에 머문 시간·터치가 조금 쌓여야(약 30초) 버튼 한 번 설치 신호를 준다.
+  // 카톡에서 막 넘어온 직후엔 신호가 없어 메뉴 안내만 보이므로, 신호가 늦게 오면 위에 [지금 설치] 띠를 띄운다
+  var handoff = new URLSearchParams(location.search).get('pwa') === 'install';
+  var readyBar = null;
+  function showReadyBar() {
+    if (readyBar || !installPrompt) return;
+    readyBar = el('<div class="pwa-banner" role="note"><p><b>이제 버튼 한 번으로 설치할 수 있어요.</b><br>홈 화면에 방아머리 아이콘이 생겨요.</p>' +
+      '<button type="button" class="go">지금 설치</button><button type="button" class="x" aria-label="닫기">×</button></div>');
+    readyBar.querySelector('.go').addEventListener('click', function () { track('pwa_ready_bar_click'); promptInstall(); if (readyBar) { readyBar.remove(); readyBar = null; } });
+    readyBar.querySelector('.x').addEventListener('click', function () { readyBar.remove(); readyBar = null; try { sessionStorage.setItem('sea:ready-dismissed', '1'); } catch (e) {} });
+    document.body.appendChild(readyBar);
+  }
   window.addEventListener('beforeinstallprompt', function (e) {
     e.preventDefault();
     installPrompt = e;
     track('pwa_install_available');
     if (!sheet.hidden) render();
+    else {
+      var dis = false; try { dis = sessionStorage.getItem('sea:ready-dismissed') === '1'; } catch (er) {}
+      if (handoff && !dis) showReadyBar();
+    }
   });
   window.addEventListener('appinstalled', function () {
     closeSheet();
+    if (readyBar) { readyBar.remove(); readyBar = null; }
     document.querySelectorAll('[data-pwa-install]').forEach(function (n) { n.hidden = true; });
     track('pwa_installed', { platform: env.platform });
     toast('설치됐어요! 홈 화면의 방아머리 아이콘으로 열어 보세요', 5000);
