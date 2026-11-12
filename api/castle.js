@@ -22,7 +22,7 @@
 //   castle:{wid}          → { nick, pub:{lanes,capt,len,at,fame}, draft:{lanes,capt,at}, flag:{by,bw,until}, wall, dw, dl, basic }
 //   castle:pool (정렬)    → wid ↦ 공개할 때의 명성(공략 상대 고르기)
 //   cday:{wid}:{날짜}     → { lost, gained, r:{대상wid}:1 }  하루 제한(이틀 뒤 삭제)
-//   crev:{wid} (해시)     → 나를 함락한 사람 wid → { nick, until }  복수 한 번(3일)
+//   crev:{wid} (해시)     → 내 성을 털러 온 사람 wid → { nick, until }  복수 한 번(3일). (11/12) 함락이든 실패든 생긴다. 복수로 온 것에는 안 생긴다
 //   craidp:{id}           → 공략 시작 기록(성 그대로 복사, 40분)
 //   craid:{id}            → 공략 결과·입력 기록(다시보기, 14일)
 //   cinbox:{wid} (목록)   → 내 성 소식 30개(14일)
@@ -403,13 +403,15 @@ async function settleRaid(s, me, b, forcedWhy) {
   const inputs = Array.isArray(b.inputs) ? b.inputs.slice(0, 6000) : [];
   const rec = { id, a: s.a, an: me.nick, o: s.o, on: s.on, lanes: s.lanes, capt: s.capt, len: s.len, guard: s.guard, ok: win, row, t: Math.round(t * 100) / 100, inputs, dA, dO, rev: s.rev, at: Date.now(), why: why || null };
   await kv.set(`craid:${id}`, rec, { ex: 14 * 24 * 3600 });
-  // 성 주인에게 소식 + 휴대폰 알림. 함락당하면 복수 한 번(3일)
+  // 성 주인에게 소식 + 휴대폰 알림.
+  // (11/12 대표 결정) 복수 규칙 단순화: 누가 내 성을 털러 오면 성공했든 실패했든 복수 한 번(3일). 그냥 털기 하루 한 번과 따로.
+  // 복수로 들어온 공략에는 새 복수가 생기지 않는다(서로 끝없이 주고받는 것 방지)
   const item = { k: 'raid', id, by: me.nick, bw: me.wid, r: win ? 'l' : 'w', row, len: s.len, dr: dO, t: rec.t, at: Date.now() };
   await kv.lpush(`cinbox:${s.o}`, JSON.stringify(item)); await kv.ltrim(`cinbox:${s.o}`, 0, 29); await kv.expire(`cinbox:${s.o}`, 14 * 24 * 3600);
-  if (win) { await kv.hset(`crev:${s.o}`, { [s.a]: JSON.stringify({ nick: me.nick, until: Date.now() + 3 * 24 * 3600 * 1000 }) }); await kv.expire(`crev:${s.o}`, 3 * 24 * 3600); }
+  if (!s.rev) { await kv.hset(`crev:${s.o}`, { [s.a]: JSON.stringify({ nick: me.nick, until: Date.now() + 3 * 24 * 3600 * 1000 }) }); await kv.expire(`crev:${s.o}`, 3 * 24 * 3600); }
   await sendPush('w:' + s.o, {
     title: win ? '🏴 내 성이 함락됐어요!' : '🛡️ 내 성이 막아 냈어요!',
-    body: win ? `${me.nick}님이 보물방까지 왔어요 · 명성 ${dO} · 다시보기·복수하러 가요!` : `${me.nick}님이 ${Math.max(0, row - 1)}줄까지 왔다가 막혔어요 · 명성 +${dO} · 🛡철벽 +1`,
+    body: win ? `${me.nick}님이 보물방까지 왔어요 · 명성 ${dO} · 다시보기·복수하러 가요!` : `${me.nick}님이 ${Math.max(0, row - 1)}줄까지 왔다가 막혔어요 · 명성 +${dO} · 🛡철벽 +1 · 복수하러 가요!`,
     url: `${PATH}?raid=${id}&utm_source=push&utm_medium=notification&utm_campaign=castle_raid`, tag: 'castle-' + id,
   }).catch(() => 0);
   return { ok: true, win, why: why || null, dA, dO, fame: nA.r, id, flag: win };

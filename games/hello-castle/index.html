@@ -769,7 +769,7 @@ function showResult(ok, msg) {
     $('rT').textContent = '▶ 다시보기 끝'; $('rS').textContent = rc.an + ' → ' + rc.on + '의 성 · ' + (rc.ok ? '함락 (' + clock(rc.t) + ')' : rc.len + '줄 중 ' + Math.max(0, rc.row - 1) + '줄에서 막힘');
     if (Boolean(ok) !== Boolean(rc.ok)) add('<p class="small">다시보기가 실제 결과와 조금 다르게 끝났어요(기기 차이). 실제 결과: ' + (rc.ok ? '함락' : '막힘') + '</p>');
     again.textContent = '▶ 한 번 더 보기'; again.onclick = () => openReplay(rc.id);
-    const revOk = ME && ME.wid === rc.o && rc.ok && (ME.revenge || []).some(x => x.wid === rc.a);
+    const revOk = ME && ME.wid === rc.o && !rc.rev && (ME.revenge || []).some(x => x.wid === rc.a); // (11/12) 막아 냈어도 복수 가능
     if (revOk) { more.hidden = false; more.textContent = '🔥 ' + rc.an + '에게 복수하러 가기'; more.onclick = () => startRaid(rc.a, true); }
     else if (!AUTH.loggedIn) { more.hidden = false; more.textContent = '🏰 나도 헬로 캐슬 하기'; more.onclick = goHome; }
   } else {
@@ -1486,7 +1486,7 @@ function newsEl(x, isNew) {
   const lost = x.r === 'l', n = el('div', 'news' + (isNew ? ' new' : ''));
   n.innerHTML = '<span class="ic">' + (lost ? '🏴' : '🛡️') + '</span><div><b>' + esc(x.by) + (lost ? '님이 내 성을 함락했어요!' : '님이 ' + Math.max(0, x.row - 1) + '줄까지 왔다가 막혔어요') + '</b><small>명성 ' + (x.dr > 0 ? '+' : '') + x.dr + ' · ' + new Date(x.at).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit' }) + '</small></div>';
   const acts = el('div', 'acts'); addBtn(acts, '▶ 다시보기', 'sub mini', () => openReplay(x.id));
-  if (lost && ME && (ME.revenge || []).some(r => r.wid === x.bw)) addBtn(acts, '🔥 복수하기', 'mini', () => startRaid(x.bw, true));
+  if (ME && (ME.revenge || []).some(r => r.wid === x.bw)) addBtn(acts, '🔥 복수하기', 'mini', () => startRaid(x.bw, true));
   n.appendChild(acts); return n;
 }
 function showBest() { const b = Number(ls.get('hc_best') || 0), d = Number(ls.get('hc_best_' + DAY) || 0); $('bestT').textContent = (d ? '오늘 내 최고 ' + d + '줄 · ' : '') + (b ? '전체 최고 ' + b + '줄' : '25줄마다 새 구역 · 100줄이 올림포스 정상'); $('bGods').textContent = '⛅ 오늘의 신들의 성 · ' + kstDay().label; }
@@ -1500,7 +1500,7 @@ $('lBack').onclick = goHome;
 function openRaid() {
   if (!ME) return needLogin('남의 성을 털려면 로그인이 필요해요. 내 성도 같이 생겨요!');
   showList('⚔ 남의 성 공략', b => api('targets=1').then(d => {
-    b.innerHTML = '<p class="small">내 명성 <b>' + (d.fame || ME.fame) + '</b> 근처(±100)의 추천 성이에요. 같은 성은 하루 한 번 · 털면 명성 ↑, 막히면 걸린 명성의 절반을 잃어요.</p>';
+    b.innerHTML = '<p class="small">내 명성 <b>' + (d.fame || ME.fame) + '</b> 근처(±100)의 추천 성이에요. 같은 성은 하루 한 번 · 털면 명성 ↑, 막히면 걸린 명성의 절반을 잃어요.<br>🔥 누가 내 성을 털러 오면(성공·실패 상관없이) <b>복수 한 번</b>이 따로 생겨요(3일 안에).</p>';
     if (d.error) { b.insertAdjacentHTML('beforeend', '<p class="msg bad">' + esc(d.error) + '</p>'); return; }
     (d.revenge || []).forEach(x => b.appendChild(targetEl(x, true)));
     (d.list || []).forEach(x => b.appendChild(targetEl(x, false)));
