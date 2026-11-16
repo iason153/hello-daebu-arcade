@@ -567,7 +567,7 @@ $id('shareBtn').addEventListener('click', async (e) => {
           const up = await fetch('/api/kakao-upload', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ imageBase64: await blobToB64(blob) }) });
           if (up.ok) {
             const { url } = await up.json();
-            const link = { mobileWebUrl: 'https://daebugame.com/games/hello-swing/', webUrl: 'https://daebugame.com/games/hello-swing/' };
+            const link = { mobileWebUrl: 'https://daebugame.com/games/hello-swing/?utm_source=kakaotalk&utm_medium=share&utm_campaign=swing_share', webUrl: 'https://daebugame.com/games/hello-swing/?utm_source=kakaotalk&utm_medium=share&utm_campaign=swing_share' };
             window.Kakao.Share.sendDefault({ objectType: 'feed',
               content: { title: `헬로 스윙에서 ${finalScore}m 날아갔어요!`, description: '파도 괴물에게서 도망쳐라! · daebugame.com', imageUrl: url, link },
               buttons: [{ title: '나도 도전하기', link }] });

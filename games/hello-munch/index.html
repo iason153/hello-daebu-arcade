@@ -1643,7 +1643,7 @@ document.getElementById('shareBtn').addEventListener('click', async (e) => {
           const up = await fetch('/api/kakao-upload', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ imageBase64: await blobToB64(blob) }) });
           if (up.ok) {
             const { url } = await up.json();
-            const link = { mobileWebUrl: 'https://daebugame.com/games/hello-munch/', webUrl: 'https://daebugame.com/games/hello-munch/' };
+            const link = { mobileWebUrl: 'https://daebugame.com/games/hello-munch/?utm_source=kakaotalk&utm_medium=share&utm_campaign=munch_share', webUrl: 'https://daebugame.com/games/hello-munch/?utm_source=kakaotalk&utm_medium=share&utm_campaign=munch_share' };
             window.Kakao.Share.sendDefault({ objectType: 'feed',
               content: { title: `헬로 먼치에서 ${score}m 도망쳤어요!`, description: '우주괴물에게서 살아남아라! · daebugame.com', imageUrl: url, link },
               buttons: [{ title: '나도 도전하기', link }] });

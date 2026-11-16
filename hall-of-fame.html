@@ -638,8 +638,10 @@ async function shareThroneCard(cfg, champ, btn) {
     const canvas = await buildThroneCard(cfg, champ);
     const blob = await new Promise((ok) => canvas.toBlob(ok, 'image/png'));
     if (!blob) throw new Error('no blob');
-    const hallUrl = `${SITE}/hall-of-fame.html?g=${cfg.key}`;
-    const gameUrl = `${SITE}/${cfg.href}`;
+    const hallUrl0 = `${SITE}/hall-of-fame.html?g=${cfg.key}`, gameUrl0 = `${SITE}/${cfg.href}`;
+    // 공유 이름표(11/16): 카톡으로 나가는 주소와 공유창으로 나가는 주소를 구분
+    const tagUrl = (u, src) => u + (u.includes('?') ? '&' : '?') + 'utm_source=' + src + '&utm_medium=share&utm_campaign=throne_share';
+    const hallUrl = tagUrl(hallUrl0, 'kakaotalk'), gameUrl = tagUrl(gameUrl0, 'kakaotalk');
 
     // 1) 카카오톡
     if (window.Kakao && window.Kakao.isInitialized && window.Kakao.isInitialized()) {
@@ -672,7 +674,7 @@ async function shareThroneCard(cfg, champ, btn) {
     const file = new File([blob], `throne-${cfg.key}.png`, { type: 'image/png' });
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
       try {
-        await navigator.share({ files: [file], title: `${cfg.name} 왕좌 카드`, text: `${champ.nickname}님이 ${cfg.name} 왕좌에 올랐어요! ${hallUrl}` });
+        await navigator.share({ files: [file], title: `${cfg.name} 왕좌 카드`, text: `${champ.nickname}님이 ${cfg.name} 왕좌에 올랐어요! ${tagUrl(hallUrl0, 'webshare')}` });
         toast('공유했어요 👑');
         return;
       } catch (e) { if (e && e.name === 'AbortError') return; }

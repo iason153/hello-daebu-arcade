@@ -74,6 +74,18 @@ Object.assign(CARD_BRAG, {
 });
 export const GODS = Object.keys(CARD_NEED); // (이름은 예전 그대로 두었지만 지금은 "모든 카드" 목록)
 export const SITE_ORIGIN = process.env.SITE_ORIGIN || 'https://daebugame.com';
+
+// 공유 주소 이름표(UTM) — 짧은 주소(/k/ /d/ /c/) 뒤에 ?f=k|w|c|n 이 붙어 오면, 게임으로 넘길 주소에
+// utm_source(kakaotalk·webshare·copy·naver) / utm_medium=share / utm_campaign 을 붙인다. (2026-11-16)
+// f 가 없거나 모르는 값이면 아무것도 붙이지 않는다(전에 나간 주소는 그대로 동작).
+const SHARE_SRC = { k: 'kakaotalk', w: 'webshare', c: 'copy', n: 'naver' };
+export function shareTag(dest, f, campaign, content) {
+  const src = SHARE_SRC[String(f || '')];
+  if (!src || !/^[a-z0-9_]{1,40}$/.test(String(campaign || ''))) return dest;
+  let out = `${dest}${String(dest).includes('?') ? '&' : '?'}utm_source=${src}&utm_medium=share&utm_campaign=${campaign}`;
+  if (/^[a-z0-9_]{1,40}$/.test(String(content || ''))) out += `&utm_content=${content}`;
+  return out;
+}
 const COOKIE = 'hs';
 const MAX_AGE = 60 * 60 * 24 * 180; // 180일
 

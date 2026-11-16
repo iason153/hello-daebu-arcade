@@ -11,6 +11,8 @@
   gtag("config", "G-5YPGVVP49T");
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <title>헬로런 | 헬로 대부도 오락실</title>
 <meta name="description" content="대부도 다섯 곳을 오늘의 실제 날씨·시간대에 맞게 달리는 원버튼 러너 게임. 헬로 대부도 오락실.">
 <meta property="og:type" content="website">
@@ -985,9 +987,9 @@ async function shareCard(){
                 title: '헬로런에서 ' + displayM + 'm 달렸어요!',
                 description: '오늘의 ' + station.name + ' · daebugame.com',
                 imageUrl: url,
-                link: { mobileWebUrl: 'https://daebugame.com/games/hello-run/', webUrl: 'https://daebugame.com/games/hello-run/' }
+                link: { mobileWebUrl: 'https://daebugame.com/games/hello-run/?utm_source=kakaotalk&utm_medium=share&utm_campaign=run_share', webUrl: 'https://daebugame.com/games/hello-run/?utm_source=kakaotalk&utm_medium=share&utm_campaign=run_share' }
               },
-              buttons: [{ title: '나도 도전하기', link: { mobileWebUrl: 'https://daebugame.com/games/hello-run/', webUrl: 'https://daebugame.com/games/hello-run/' } }]
+              buttons: [{ title: '나도 도전하기', link: { mobileWebUrl: 'https://daebugame.com/games/hello-run/?utm_source=kakaotalk&utm_medium=share&utm_campaign=run_share', webUrl: 'https://daebugame.com/games/hello-run/?utm_source=kakaotalk&utm_medium=share&utm_campaign=run_share' } }]
             });
             showToast('카카오톡 공유창을 열었어요! 📤');
             return;
@@ -999,7 +1001,7 @@ async function shareCard(){
       const file = new File([blob], 'hello-run-'+displayM+'m.png', {type:'image/png'});
       if(navigator.canShare && navigator.canShare({files:[file]})){
         try{
-          await navigator.share({files:[file], title:'헬로런 '+displayM+'m', text:'헬로런에서 '+displayM+'m 기록했어요! https://daebugame.com/games/hello-run/'});
+          await navigator.share({files:[file], title:'헬로런 '+displayM+'m', text:'헬로런에서 '+displayM+'m 기록했어요! https://daebugame.com/games/hello-run/?utm_source=webshare&utm_medium=share&utm_campaign=run_share'});
           showToast('공유했어요! 🎉');
           return;
         }catch(e){

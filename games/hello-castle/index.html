@@ -3,6 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <meta name="description" content="몰래 들어가 보물을 털어라! 내 성을 짓고, 남의 성을 털고, 신들의 성에 도전하는 헬로 대부도 오락실 게임.">
 <meta property="og:type" content="website"><meta property="og:site_name" content="헬로 대부도 오락실">
 <meta property="og:title" content="헬로 캐슬 | 헬로 대부도 오락실"><meta property="og:description" content="몰래 들어가 보물을 털어라! 내 성을 짓고, 남의 성을 털고, 신들의 성에 도전해요.">
@@ -1797,16 +1799,18 @@ function shareBox(parent, kind, make) {
   function go(how) {
     kb.disabled = cb.disabled = true; msg.textContent = '만드는 중…';
     ready().then(async (o) => {
-      if (how === 'copy') { const txt = o.title + '\n' + o.desc + '\n' + o.short; try { await navigator.clipboard.writeText(txt); msg.textContent = '주소를 복사했어요! 카톡·카페에 붙여 넣으세요: ' + o.short; } catch (e) { msg.textContent = '아래 주소를 길게 눌러 복사해 주세요: ' + o.short; } track('castle_share', { kind, method: 'copy' }); return; }
+      const sC = o.short + '?f=c', sW = o.short + '?f=w'; /* 공유 이름표(11/16): 서버가 f를 utm으로 바꿔 붙인다 */
+      if (how === 'copy') { const txt = o.title + '\n' + o.desc + '\n' + sC; try { await navigator.clipboard.writeText(txt); msg.textContent = '주소를 복사했어요! 카톡·카페에 붙여 넣으세요: ' + sC; } catch (e) { msg.textContent = '아래 주소를 길게 눌러 복사해 주세요: ' + sC; } track('castle_share', { kind, method: 'copy' }); return; }
       let url = o.img; if (!url) { const cv = await buildCard(o.bg, o.card); if (!img) { img = new Image(); img.alt = '공유 카드'; box.appendChild(img); } img.src = cv.toDataURL('image/jpeg', .8);
         url = await fetch('/api/kakao-upload', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ imageBase64: cv.toDataURL('image/jpeg', .86) }) }).then(r => r.ok ? r.json() : {}).then(u => u.url || null).catch(() => null); o.img = url; }
       const imageUrl = url || (location.origin + PATH + 'share/' + o.bg + '.jpg');
       if (window.Kakao && Kakao.isInitialized && Kakao.isInitialized() && Kakao.Share) {
-        const link = { mobileWebUrl: o.link, webUrl: o.link };
+        const kUrl = o.link + (String(o.link).includes('?') ? '&' : '?') + 'utm_source=kakaotalk&utm_medium=share&utm_campaign=castle_share&utm_content=' + kind;
+        const link = { mobileWebUrl: kUrl, webUrl: kUrl };
         Kakao.Share.sendDefault({ objectType: 'feed', content: { title: o.title, description: o.desc, imageUrl, imageWidth: CW, imageHeight: CH, link }, buttons: [{ title: o.btn, link }] });
         msg.textContent = '카카오톡 공유창을 열었어요!'; track('castle_share', { kind, method: 'kakao' });
-      } else if (navigator.share) { navigator.share({ title: o.title, text: o.desc, url: o.short }).catch(() => {}); msg.textContent = '공유창을 열었어요. 주소: ' + o.short; track('castle_share', { kind, method: 'webshare' }); }
-      else { try { await navigator.clipboard.writeText(o.title + '\n' + o.desc + '\n' + o.short); msg.textContent = '주소를 복사했어요: ' + o.short; } catch (e) { msg.textContent = '주소: ' + o.short; } track('castle_share', { kind, method: 'copy' }); }
+      } else if (navigator.share) { navigator.share({ title: o.title, text: o.desc, url: sW }).catch(() => {}); msg.textContent = '공유창을 열었어요. 주소: ' + sW; track('castle_share', { kind, method: 'webshare' }); }
+      else { try { await navigator.clipboard.writeText(o.title + '\n' + o.desc + '\n' + sC); msg.textContent = '주소를 복사했어요: ' + sC; } catch (e) { msg.textContent = '주소: ' + sC; } track('castle_share', { kind, method: 'copy' }); }
     }).catch((e) => { msg.textContent = (e && e.message) || '만들지 못했어요. 다시 해 주세요.'; }).then(() => { kb.disabled = cb.disabled = false; });
   }
 }

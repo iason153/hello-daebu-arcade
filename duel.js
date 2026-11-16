@@ -373,12 +373,13 @@
         ui.msg.textContent = '카카오톡 공유창을 열었어요! 내 도전장 결과는 이 주소를 다시 열면 볼 수 있어요: ' + r.short;
         track('duel_send', { method: 'kakao' });
       } else if (how === 'kakao' && navigator.share) {
-        navigator.share({ title: title, text: desc, url: r.short }).catch(function () {});
-        ui.msg.textContent = '공유창을 열었어요. 주소: ' + r.short; track('duel_send', { method: 'webshare' });
+        navigator.share({ title: title, text: desc, url: r.short + '?f=w' }).catch(function () {});
+        ui.msg.textContent = '공유창을 열었어요. 주소: ' + r.short + '?f=w'; track('duel_send', { method: 'webshare' });
       } else {
-        var done = function () { ui.msg.textContent = '링크를 복사했어요! 카톡이나 단톡방에 붙여 넣으세요: ' + r.short; track('duel_send', { method: 'copy' }); };
-        var fail = function () { ui.msg.textContent = '아래 주소를 길게 눌러 복사해 주세요: ' + r.short; };
-        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(title + '\n' + desc + '\n' + r.short).then(done, fail); else fail();
+        var sC = r.short + '?f=c'; /* 공유 이름표(11/16) */
+        var done = function () { ui.msg.textContent = '링크를 복사했어요! 카톡이나 단톡방에 붙여 넣으세요: ' + sC; track('duel_send', { method: 'copy' }); };
+        var fail = function () { ui.msg.textContent = '아래 주소를 길게 눌러 복사해 주세요: ' + sC; };
+        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(title + '\n' + desc + '\n' + sC).then(done, fail); else fail();
       }
       if (window.HelloPush && !ui.pb && HelloPush.state() !== 'on') { ui.pb = HelloPush.box(); ui.msg.parentNode.insertBefore(ui.pb, ui.msg.nextSibling); }
       if (!auth.loggedIn && !ui.lb) { ui.lb = loginBox('로그인하면 이 도전장의 결과가 결투장에 남아요', '보낸 뒤에 로그인해도 이 폰이면 이어서 기록돼요', '카카오로 로그인', 'send', false); ui.msg.parentNode.insertBefore(ui.lb, ui.msg.nextSibling); }

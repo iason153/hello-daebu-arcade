@@ -30,7 +30,7 @@
 
 import { kv } from '@vercel/kv';
 import { randomBytes, createHmac, timingSafeEqual } from 'crypto';
-import { sessionUser, cleanNick, SITE_ORIGIN } from './_session.js';
+import { sessionUser, cleanNick, SITE_ORIGIN, shareTag } from './_session.js';
 import { sendPush, moveSubs } from './_push.js';
 
 const GAMES = {
@@ -180,7 +180,7 @@ export default async function handler(req, res) {
     }
     if (req.method !== 'GET') return res.status(405).json({ error: 'method not allowed' });
     const q = req.query || {};
-    if (q.share) return await sharePage(res, String(q.share).toLowerCase());
+    if (q.share) return await sharePage(res, String(q.share).toLowerCase(), q.f);
     if (q.arena) return await arena(req, res, String(q.arena));
     if (q.inbox) return await inbox(req, res, q);
     const d = await getDuel(String(q.id || '').toLowerCase());
@@ -334,7 +334,7 @@ async function claim(req, res, b) {
 }
 
 // 짧은 주소 /d/번호 — 카톡·카페에 주소를 붙였을 때 도전장 카드가 미리보기로 뜨고, 누르면 게임으로 간다
-async function sharePage(res, id) {
+async function sharePage(res, id, f) {
   const d = await getDuel(id);
   let title = '헬로 대부도 오락실 도전장', desc = '기한이 지난 도전장이에요. 오락실에서 새로 도전해 보세요!',
     img = `${SITE_ORIGIN}/games/hello-swing/assets/thumb-helloswing-wide.jpg`, dest = `${SITE_ORIGIN}/`;
@@ -343,7 +343,7 @@ async function sharePage(res, id) {
     title = `🔥 ${d.nick}님의 ${G.name} 도전장 · ${d.dist}${G.unit}`;
     desc = `"${PHRASES[d.msg] || ''}" ${d.dist}${G.unit}를 넘으면 승리 · 단판 승부 · 로그인 없이 바로`;
     img = d.card || `${SITE_ORIGIN}${G.thumb}`;
-    dest = `${SITE_ORIGIN}${G.path}?duel=${d.id}`;
+    dest = shareTag(`${SITE_ORIGIN}${G.path}?duel=${d.id}`, f, G.utm);
   }
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.setHeader('Cache-Control', 'public, s-maxage=120');

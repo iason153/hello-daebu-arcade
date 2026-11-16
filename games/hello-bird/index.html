@@ -11,6 +11,8 @@
   gtag("config", "G-5YPGVVP49T");
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <title>헬로버드</title>
 <meta name="description" content="시화방조제부터 탄도항까지, 대부도 다섯 곳을 날아서 통과하는 플래피버드 스타일 게임. 헬로 대부도 오락실.">
 <meta property="og:type" content="website">
@@ -1308,9 +1310,9 @@ async function shareCard(){
                 title: '헬로버드에서 ' + score + 'm 비행했어요!',
                 description: station.name + '까지 도착 · daebugame.com',
                 imageUrl: url,
-                link: { mobileWebUrl: 'https://daebugame.com/games/hello-bird/', webUrl: 'https://daebugame.com/games/hello-bird/' }
+                link: { mobileWebUrl: 'https://daebugame.com/games/hello-bird/?utm_source=kakaotalk&utm_medium=share&utm_campaign=bird_share', webUrl: 'https://daebugame.com/games/hello-bird/?utm_source=kakaotalk&utm_medium=share&utm_campaign=bird_share' }
               },
-              buttons: [{ title: '나도 도전하기', link: { mobileWebUrl: 'https://daebugame.com/games/hello-bird/', webUrl: 'https://daebugame.com/games/hello-bird/' } }]
+              buttons: [{ title: '나도 도전하기', link: { mobileWebUrl: 'https://daebugame.com/games/hello-bird/?utm_source=kakaotalk&utm_medium=share&utm_campaign=bird_share', webUrl: 'https://daebugame.com/games/hello-bird/?utm_source=kakaotalk&utm_medium=share&utm_campaign=bird_share' } }]
             });
             showToast('카카오톡 공유창을 열었어요! 📤');
             return;
@@ -1320,7 +1322,7 @@ async function shareCard(){
       const file = new File([blob], 'hello-bird-'+score+'m.png', {type:'image/png'});
       if(navigator.canShare && navigator.canShare({files:[file]})){
         try{
-          await navigator.share({files:[file], title:'헬로버드 '+score+'m', text:'헬로버드에서 '+score+'m 비행했어요! https://daebugame.com/games/hello-bird/'});
+          await navigator.share({files:[file], title:'헬로버드 '+score+'m', text:'헬로버드에서 '+score+'m 비행했어요! https://daebugame.com/games/hello-bird/?utm_source=webshare&utm_medium=share&utm_campaign=bird_share'});
           showToast('공유했어요! 🎉');
           return;
         }catch(e){

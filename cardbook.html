@@ -10,6 +10,7 @@ gtag("js", new Date());
 gtag("config", "G-5YPGVVP49T");
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <link rel="manifest" href="/manifest.webmanifest">
 <meta name="theme-color" content="#0b0f24">
 <link rel="icon" type="image/png" sizes="64x64" href="/icons/favicon-64.png">
@@ -626,10 +627,11 @@ function shareImage(w, g) {
   return { imageUrl: 'https://daebugame.com/assets/cards/share.jpg', imageWidth: 1200, imageHeight: 630 };
 }
 // 자랑용 주소 — /c/카드첩주소 (붙여 넣으면 이름과 카드 그림이 미리보기로 뜸). g를 주면 그 카드 한 장을 자랑.
-const shareUrl = (w, g) => `${location.origin}/c/${encodeURIComponent(w.wid)}${g ? '?g=' + g.key : ''}`;
+// f = 어디로 보냈는지(k 카톡 · w 공유창 · c 복사 · n 네이버) — 서버가 utm으로 바꿔 붙인다(11/16)
+const shareUrl = (w, g, f) => `${location.origin}/c/${encodeURIComponent(w.wid)}${g ? '?g=' + g.key : ''}${f ? (g ? '&' : '?') + 'f=' + f : ''}`;
 const shareTitle = (w, g) => (g ? `${w.nick}님이 '${g.name}' 카드를 얻었어요!` : `${w.nick}님의 올림포스 카드첩 (${w.count}/${w.total}장)`);
 async function share(w, g) {
-  const url = shareUrl(w, g), title = shareTitle(w, g);
+  const url = shareUrl(w, g, 'k'), title = shareTitle(w, g);
   track('cardbook_share', { count: w.count, to: 'kakao', card: g ? g.key : '' });
   try {
     if (window.Kakao && window.Kakao.isInitialized()) {
@@ -641,17 +643,18 @@ async function share(w, g) {
       return;
     }
   } catch (e) {}
-  try { if (navigator.share) { await navigator.share({ title, url }); return; } } catch (e) { return; }
-  try { await navigator.clipboard.writeText(url); toast('카드첩 주소를 복사했어요!'); } catch (e) { prompt('아래 주소를 복사하세요', url); }
+  try { if (navigator.share) { await navigator.share({ title, url: shareUrl(w, g, 'w') }); return; } } catch (e) { return; }
+  const cUrl = shareUrl(w, g, 'c');
+  try { await navigator.clipboard.writeText(cUrl); toast('카드첩 주소를 복사했어요!'); } catch (e) { prompt('아래 주소를 복사하세요', cUrl); }
 }
 // 네이버 카페(또는 블로그)에 자랑 — 네이버 공유 창이 열리고, 거기서 카페와 게시판을 고르면 글에 링크와 카드 그림이 들어간다
 function shareNaver(w, g) {
   track('cardbook_share', { count: w.count, to: 'naver', card: g ? g.key : '' });
-  window.open('https://share.naver.com/web/shareView?url=' + encodeURIComponent(shareUrl(w, g)) + '&title=' + encodeURIComponent(shareTitle(w, g)), '_blank', 'noopener');
+  window.open('https://share.naver.com/web/shareView?url=' + encodeURIComponent(shareUrl(w, g, 'n')) + '&title=' + encodeURIComponent(shareTitle(w, g)), '_blank', 'noopener');
 }
 // 카페 글에 그대로 붙여 넣을 문장 복사
 async function copyBrag(w, g) {
-  const text = `${shareTitle(w, g)}\n${g ? `전체 ${w.cards[g.key].serial}번째로 얻은 ${g.name} 카드예요.` : '오락실에서 모은 카드를 구경하러 오세요.'}\n${shareUrl(w, g)}`;
+  const text = `${shareTitle(w, g)}\n${g ? `전체 ${w.cards[g.key].serial}번째로 얻은 ${g.name} 카드예요.` : '오락실에서 모은 카드를 구경하러 오세요.'}\n${shareUrl(w, g, 'c')}`;
   try { await navigator.clipboard.writeText(text); toast('자랑 글을 복사했어요. 카페 글쓰기에 붙여 넣으세요!'); } catch (e) { prompt('아래 글을 복사하세요', text); }
   track('cardbook_share', { to: 'copy', card: g ? g.key : '' });
 }

@@ -11,6 +11,8 @@
   gtag("config", "G-5YPGVVP49T");
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <title>헬로타워 | 헬로 대부도 오락실</title>
 <meta name="description" content="대부도 캐릭터들을 쓰러지지 않게 쌓아 올려 하늘 끝 신들의 나라까지 도전하는 균형 게임. 헬로 대부도 오락실.">
 <meta property="og:type" content="website">
@@ -1762,9 +1764,9 @@ async function shareCard() {
                 title: '헬로타워에서 ' + floorCount + '층 쌓았어요!',
                 description: '대부도 캐릭터 균형쌓기 게임 · daebugame.com',
                 imageUrl: url,
-                link: { mobileWebUrl: 'https://daebugame.com', webUrl: 'https://daebugame.com' },
+                link: { mobileWebUrl: 'https://daebugame.com/?utm_source=kakaotalk&utm_medium=share&utm_campaign=tower_share', webUrl: 'https://daebugame.com/?utm_source=kakaotalk&utm_medium=share&utm_campaign=tower_share' },
               },
-              buttons: [{ title: '나도 도전하기', link: { mobileWebUrl: 'https://daebugame.com', webUrl: 'https://daebugame.com' } }],
+              buttons: [{ title: '나도 도전하기', link: { mobileWebUrl: 'https://daebugame.com/?utm_source=kakaotalk&utm_medium=share&utm_campaign=tower_share', webUrl: 'https://daebugame.com/?utm_source=kakaotalk&utm_medium=share&utm_campaign=tower_share' } }],
             });
             showToast('카카오톡 공유창을 열었어요! 📤');
             return;

@@ -19,7 +19,7 @@
 // 카카오 회원번호는 절대 내보내지 않는다.
 
 import { kv } from '@vercel/kv';
-import { GODS, CARD_NAME, CARD_BRAG, NO_OG, bestCard, SITE_ORIGIN, sessionUser, getUser, getCards, claimCards, cleanNick, isAdminRequest, saveMemberRow, listMembers, getNotes, saveNotes, publicNotes, cleanNote, newId, REPLY_MAX, REPLY_KEEP } from './_session.js';
+import { GODS, CARD_NAME, CARD_BRAG, NO_OG, bestCard, SITE_ORIGIN, sessionUser, getUser, getCards, claimCards, cleanNick, isAdminRequest, saveMemberRow, listMembers, getNotes, saveNotes, publicNotes, cleanNote, newId, REPLY_MAX, REPLY_KEEP, shareTag } from './_session.js';
 
 const publicCards = (cards) => {
   const out = {};
@@ -145,6 +145,7 @@ export default async function handler(req, res) {
           if (pick && !NO_OG.has(pick)) img = `${SITE_ORIGIN}/assets/cards/og/${pick}.jpg?v=2`;
         }
       }
+      dest = shareTag(dest, q.f, 'cardbook_share');
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
       res.setHeader('Cache-Control', 'public, s-maxage=300');
       return res.status(200).send(`<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">

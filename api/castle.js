@@ -38,7 +38,7 @@
 
 import { kv } from '@vercel/kv';
 import { randomBytes } from 'crypto';
-import { sessionUser, cleanNick, SITE_ORIGIN, getCards, saveMemberRow, CARD_NEED } from './_session.js';
+import { sessionUser, cleanNick, SITE_ORIGIN, getCards, saveMemberRow, CARD_NEED, shareTag } from './_session.js';
 import { sendPush } from './_push.js';
 import { TIERS } from './duel.js';
 
@@ -200,7 +200,7 @@ export default async function handler(req, res) {
     }
     if (req.method !== 'GET') return res.status(405).json({ error: 'method not allowed' });
     const q = req.query || {};
-    if (q.share) return await sharePage(res, String(q.share));
+    if (q.share) return await sharePage(res, String(q.share), q.f);
     if (q.raid) { const r = ID_RE.test(String(q.raid)) ? parse(await kv.get(`craid:${q.raid}`)) : null; return r ? res.status(200).json({ raid: r }) : res.status(404).json({ error: 'gone' }); }
     if (q.ghost) { const g = ID_RE.test(String(q.ghost)) ? parse(await kv.get(`cghost:${q.ghost}`)) : null; return g ? res.status(200).json({ ghost: g }) : res.status(404).json({ error: 'gone' }); }
     if (q.tshare) { const g = ID_RE.test(String(q.tshare)) ? parse(await kv.get(`ctshare:${q.tshare}`)) : null; return g ? res.status(200).json({ tshare: g }) : res.status(404).json({ error: 'gone' }); }
@@ -510,7 +510,7 @@ async function tshare(req, res, b) {
 }
 
 // 짧은 주소 /k/{종류}{번호}: g 신들의 성 도전장 · t 신의 시험 · r 공략 다시보기 · c 내 성 도전장
-async function sharePage(res, key) {
+async function sharePage(res, key, f) {
   const kind = key[0], id = key.slice(1);
   let title = '🏰 헬로 캐슬 · 헬로 대부도 오락실', desc = '몰래 들어가 보물을 털어라! 오락실에서 바로 해 보세요.', img = `${SITE_ORIGIN}${PATH}share/card_gods.jpg`, dest = `${SITE_ORIGIN}${PATH}`;
   if (kind === 'g' && ID_RE.test(id)) { const g = parse(await kv.get(`cghost:${id}`));
@@ -522,6 +522,7 @@ async function sharePage(res, key) {
     if (r) { title = r.ok ? `🏴 ${r.an}님이 ${r.on}님의 성을 털었어요!` : `🛡️ ${r.on}님의 성이 ${r.an}님을 막아 냈어요`; desc = '공략 다시보기 · 로그인 없이 바로 보기'; img = `${SITE_ORIGIN}${PATH}share/card_raid.jpg`; dest = `${SITE_ORIGIN}${PATH}?raid=${id}`; } }
   if (kind === 'c' && WID_RE.test(id)) { const c = parse(await kv.get(`castle:${id}`));
     if (c && c.pub) { title = `🏰 ${c.nick}님의 성 · ${c.pub.len}줄 — 깨 봐!`; desc = '들어올 테면 와 봐 · 로그인 없이 바로 도전'; img = `${SITE_ORIGIN}${PATH}share/card_mycastle.jpg`; dest = `${SITE_ORIGIN}${PATH}?castle=${id}`; } }
+  dest = shareTag(dest, f, 'castle_share', { g: 'gods', t: 'trial', r: 'raid', c: 'mycastle' }[kind]);
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.setHeader('Cache-Control', 'public, s-maxage=120');
   return res.status(200).send(`<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
